@@ -1,0 +1,76 @@
+{
+  "engine": "task-graph",
+  "iteration": 5,
+  "max_loops": 9,
+  "status": "completed",
+  "original_goal": "北原さんの全体メッセージ（2026-11-03 共有・成果を出す人の原理原則）を新規ソース1件として検知し、6カテゴリのナレッジと原則DBへ反映し、目標設定の基準として参照できる状態にする",
+  "original_goal_hash": "641af2299cedb88ba2bd9ed6dd1a5406796afa879365b58653e7d4de64e8069f",
+  "open_issues": [
+    "辺の過去分の埋め戻しが未実施。RUNBOOK の完了判定 edges>0 が差分5本で満たされ、WARN edges=0 も消えたため、未完了が見えなくなっている",
+    "検知の除外漏れ: EXCLUDED_SUBDIRS が利用者の記録（提出用月報/・北原さんへの報告/ など）を除いていない",
+    "残りの NEW 56件が未処理（除外の修正後に仕分ける）",
+    "usage-log の正式な保存先 eval-log/ubm-goal-setting/knowledge/ が、ナレッジ同期の書き込み範囲の外にある",
+    "capability graph の記録スクリプトが絶対パスを書くため、knowledge/ への記録を見送った",
+    "case-studies-success.json が 492行で、500行の上限に近い"
+  ],
+  "checklist": [
+    {
+      "id": "C1",
+      "text": "Phase1-detect を実行し、差分の一覧か差分0件の証跡を得る",
+      "status": "done",
+      "depends_on": [],
+      "verify_by": "script",
+      "evidence": "detect rc=0・NEW 57件/MODIFIED 0件。対象は LINE/2026-11-03 の1件に限定"
+    },
+    {
+      "id": "C2",
+      "text": "Phase2-extract を終える（一時 knowledge_dir で抽出・検証）",
+      "status": "done",
+      "depends_on": [
+        "C1"
+      ],
+      "verify_by": "reasoning",
+      "evidence": "抽出6件(MS-150/AG-233/PR-434〜437)を一時コピーへ書込み。source 契約 rc=0・quote は原文の部分文字列・ハッシュ一致・既存との重複なし（同じ人/連続/指導力/人作り等で照合）。background の『位置づけている』は北原さんの考えを説明する動詞で受講生の記録の混入ではない。正式保存は一時コピー昇格方式で C4 の後に1つの manifest にまとめる"
+    },
+    {
+      "id": "C3",
+      "text": "Phase3-split-check を終え、後段が読むコーパスを確定する",
+      "status": "done",
+      "depends_on": [
+        "C2"
+      ],
+      "verify_by": "script",
+      "evidence": "check-knowledge-split rc=0（全ファイル500行以内）・validate-knowledge-entry-source rc=0（129ファイル・988エントリ）"
+    },
+    {
+      "id": "C4",
+      "text": "確定したコーパスに対して Phase5-graph-sync を終える",
+      "status": "done",
+      "depends_on": [
+        "C3"
+      ],
+      "verify_by": "script",
+      "evidence": "辺5本(PR-434→AG-233 depends_on / AG-233→MS-150 derived_from / PR-435→MS-150 derived_from / PR-437→MS-150 derived_from / PR-436→PR-435 depends_on・全て pending_review・evidence 逐語)を relations-20261103/relations-candidate.json から merge。--merge-relations の再実行で辺数不変(冪等)。正式保存は guard-staged-publication で12件 saved(manifest f891c0d8…・completion 受領書 7c786de6…・status executed-successfully)。保存後に validate-knowledge-entry-source rc=0(988件)・check-knowledge-split rc=0・validate-knowledge-graph rc=0(nodes=988 edges=5 associations=2056)・再生成グラフが正式 knowledge-graph.json と cmp 一致。capability graph は61ノード・79辺・gaps 0 を eval-log に残し、knowledge への記録は見送り(絶対パスが配布物に混ざる・前例なし)。"
+    },
+    {
+      "id": "C5",
+      "text": "Phase4-report に C1〜C4 の結果・飛ばした理由・未解決をまとめる",
+      "status": "done",
+      "depends_on": [
+        "C4"
+      ],
+      "verify_by": "reasoning",
+      "evidence": "Phase4 の報告を eval-log/ubm-goal-setting/run-ubm-knowledge-sync/report-20261103.md に保存。C1〜C4 の結果(NEW57→対象1件の理由・抽出6件の格納先・分割不要・辺5本と冪等・正式保存12件と受領書)、見送り4件(辺の埋め戻し・capability の knowledge 記録・usage-log 正式保存・残り NEW 56件)と理由、未解決6件(埋め戻し完了判定の誤り・除外漏れ・NEW 56件・usage-log 境界・capability の絶対パス・492行)を記載。"
+    },
+    {
+      "id": "C6",
+      "text": "task-graph 消費と Anchor の検証がどちらも exit 0",
+      "status": "done",
+      "depends_on": [
+        "C5"
+      ],
+      "verify_by": "script",
+      "evidence": "C6 着手前に validate-inline-goal-seek-anchor rc=0(iterations=5)・validate-knowledge-sync-task-graph rc=0(checklist=6)・ready=[C6]。完了状態でも両検査を再実行して exit 0 を確認する。"
+    }
+  ]
+}

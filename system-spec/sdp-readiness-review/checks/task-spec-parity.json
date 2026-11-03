@@ -1,0 +1,14 @@
+{
+  "name": "task-spec-parity",
+  "argv": [
+    "python3",
+    "-c",
+    "import json,re,pathlib; root=pathlib.Path(\"plugin-plans/system-dev-planner\"); graph=json.loads((root/\"task-graph.json\").read_text()); nodes={n[\"id\"]:n for n in graph[\"nodes\"]}; ids=(\"B-C07\",\"B-C09\"); [None for i in ids if nodes[i][\"acceptance_criterion\"]==json.loads(re.search(r\"^acceptance_criterion: (.+)$\",(root/\"task-specs\"/(i+\".md\")).read_text(),re.M).group(1)) or (_ for _ in ()).throw(AssertionError(i))]; print(\"B-C07/B-C09 acceptance parity: PASS\")"
+  ],
+  "cwd": ".",
+  "started_at": "2026-11-03T14:28:11.020451+00:00",
+  "duration_seconds": 0.028,
+  "exit_code": 0,
+  "result": "pass",
+  "log": "system-spec/sdp-readiness-review/checks/task-spec-parity.log"
+}

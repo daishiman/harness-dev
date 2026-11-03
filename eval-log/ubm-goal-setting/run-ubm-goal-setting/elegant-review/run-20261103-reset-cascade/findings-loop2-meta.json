@@ -1,0 +1,867 @@
+{
+  "agent_id": "elegant-meta-divergent-analyst",
+  "version": 1,
+  "target": {
+    "plugin": "ubm-goal-setting",
+    "skill": "run-ubm-goal-setting",
+    "scope_mode": "plugin"
+  },
+  "loop_count": 2,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "正本の一本化はおおむね進んでいる。「本ファイルが勝つ」の宣言は output-formats.md L7 だけになった。期日の逆算規則の本文も L542 の1箇所だけになり、テンプレートの注記は L1053 のような1行参照に置き換わった。残りは agent-output-formatter-rules.md L3 の1箇所だけで、10-b で数える。再掲を数えて止める lint は tests/ にまだ無い（「勝つ」「再掲」で grep して 0 件）。",
+        "共通部品G（output-formats.md L176-190）は、R3 L43・R4 L43・goal-reviewer.md L62・phase3-coordinator.md L151・thinking-guide.md L474 の5箇所から1行で参照されている。参照先の見出しはすべて実在する。ただし G を入れる前からあった「関係構築ファースト／接点が軸」の基準は置き換えられていない。R5 が自分を正本と名乗ったまま、別の基準として残っている（10-a）。",
+        "13項目の名前と内訳を突き合わせた。goal-reviewer.md L47-76 と agent-goal-reviewer-report-template.md L18-37・L76 は、項目6 関係構築軸、項目7 行動行の形、項目11 実績から行動を見直しているか、項目12 未達の挽回が3点骨格か を含め、番号も名前も一致する。SKILL.md L205、workflow-manifest.json L64、execution-prompts.md L136 も同じ「基本2＋合宿整合性3＋関係構築3＋三層分離5」で一致する。R5 L43 は、R5 と goal-reviewer の項目数が違うのは意図的だと明記している。",
+        "引用と当てはめは原則DBで分けられている。kitahara-principles-db.md L15 が「引用は北原さんの言葉、「適用:」の行は運用上の当てはめ」と書き、G L178 は「ここには写像だけを置く」と書いている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "メタの観点で独立した矛盾は無い。矛盾は思考法13・15・16で数えた。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "G の参照先はすべて実在する（output-formats.md L176）。参照漏れは思考法11で数えた。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "R5-step5-final-check.md L41 が「本節が正本」と宣言し、L58-61 に G を参照しない関係構築の3項目を持っている。output-formats.md L14 の「G が全層の大前提」と食い違い、正本が2つになっている。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "R3 L43、R4 L43、goal-reviewer L62、coordinator L151、thinking-guide L474 の参照先「共通部品G 原理原則の基準」は output-formats.md L176 に実在する。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "condition": "C3",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md",
+            "line": 58,
+            "section": "2.2 関係構築チェック (3 項目)"
+          },
+          "description": "output-formats.md L14 は G を全層の大前提の基準と定め、G の正本を1箇所に置く方針になっている。ところが R5 は L41 で「本節が正本」と宣言し、L58-61 に G を参照しない独自の3項目（売上を追わない／関係を育む／接点が軸＝接点の増加→成果→売上）を持っている。同じ旧基準が次の場所にも本文ごと残っている。\n- interview-quick-templates.md の【関係構築チェック】3箇所（L130-133、L249-252、L387-390。「「接点を増やす」が軸」）\n- thinking-guide.md L470-473\n- SKILL.md L293\n- R3 L24\n- phase3-coordinator.md L49\n旧基準の「接点を増やす」が軸、という考え方は、G L183・L188 の「挑戦への YES。前回 YES をくれた人と連続し、新規の人だけを並べない」と向きが違う。このため Step 5 の最終確認と goal-reviewer の項目6が、別々の基準で同じ目標を判定することになる。",
+          "recommended_intervention": "【意味の変更あり】R5 L58-61 を次の1行に置き換える。「関係構築チェック: `output-formats.md` の「共通部品G 原理原則の基準」の設計の問い（成果は誰からのどの YES か・前回 YES をくれた人と連続しているか、行動は原理原則のどの動きか）を当てる」。interview-quick-templates.md の3箇所の2・3行目、thinking-guide.md L470-473、SKILL.md L293、R3 L24、coordinator L49 も、G への1行参照に置き換える。",
+          "root_cause": "G を追加したとき、参照する1行を足しただけで、それ以前からある「関係構築ファースト」の基準を G に置き換えなかった。"
+        },
+        {
+          "severity": "low",
+          "bucket": "rubric-governance",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/ubm-goal-setting/references/agent-output-formatter-rules.md",
+            "line": 3,
+            "section": "冒頭（正本の宣言）"
+          },
+          "description": "output-formats.md L7 は「この宣言は本ファイルのここだけに置き、各テンプレートや他ファイルで繰り返さない」と定めている。CHANGELOG.md L8 にも同じ記録がある。それなのに agent-output-formatter-rules.md L3 には「ここと矛盾した場合は正本が勝つ」が残っている。loop1 で14箇所あった宣言のうち、この1箇所だけが残った形になる。再掲を検出する lint も入っていないので、再掲がまた増えても止まらない。",
+          "recommended_intervention": "L3 の「で、ここと矛盾した場合は正本が勝つ」を削り、「内容規則の正本は `skills/run-ubm-goal-setting/references/output-formats.md`」だけを残す。意味は変わらない。",
+          "root_cause": "宣言を一本化したとき、plugin 直下の references/agent-*.md を置き換えの対象から外していた。",
+          "loop1_ref": "10-0"
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "A〜G は抽象としてうまく機能している。A L21 の「提出用＝管理用の射影」、B の貢献0を3形にまとめた規則、D L108 の対応行の1書式、F L168-174 の「名前→正本の場所」表は、どれも1箇所で4層を覆う抽象になっている。",
+        "G の表（L180-185）は、目標の要素ごとに「原理原則での意味」と「設計の問い」の2列を持っている。見出しを増やさずに逆算の問いへ落とす抽象として妥当である。",
+        "一方で、入口の SKILL.md の参照一覧は A〜F で止まっている（11-a）。また、週報の振り返りチェックリストという入れ物（{{checklist}}）が抽象化されていない。正本の手本はここで行動と成果を写し直しており、確定事項H の「唯一の場所」に反している（11-b）。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "golden-sample-weekly.md L214 が行動行 L166 を振り返りでもう一度チェックしている。output-formats.md L1050「週の行動の済／未済を付ける唯一の場所」と矛盾する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "SKILL.md L283-288 の内容規則の参照一覧に共通部品G が無い（A〜F だけ）。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "共通部品A〜F の参照名は、SKILL.md L283-288 と output-formats.md L16/L35/L68/L99/L131/L151 で一致する。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "F L170-174 の正本の場所（coordinator Layer 4、validation-gates の決定論ゲート、SKILL の OUT1）は名前だけを持ち、値を写していない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/SKILL.md",
+            "line": 283,
+            "section": "守ること 出力の内容規則の正本（参照一覧）"
+          },
+          "description": "SKILL.md L282 は「Phase3 に入る前に該当節を Read で読む」と指示し、L283-288 に読む節の一覧を置いている。ところがその一覧は共通部品A〜F だけで、output-formats.md L14 が「全層の目標の大前提」とする共通部品G が入っていない。入口の手順だけを見る実行者は G を読む対象と認識しない。G の参照元を挙げた CHANGELOG.md L20 にも SKILL.md は入っていない。",
+          "recommended_intervention": "L288 の後に1行足す。「- 目標の各層に何を置くかの基準（全層の大前提）→ `output-formats.md` の「共通部品G 原理原則の基準」」。意味は変わらない。",
+          "root_cause": "A〜F の参照一覧を作ったあとに G を追加し、入口の一覧を更新し忘れた。"
+        },
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/golden-sample-weekly.md",
+            "line": 214,
+            "section": "今週末の振り返りチェックリスト ▼ 関係構築・行動目標"
+          },
+          "description": "output-formats.md L1050（確定事項H）は、行動目標の行を「週の行動の済／未済を付ける唯一の場所」と定めている。output-formats.md L411 で一貫例の正本とされる golden は、次のように同じものを何度もチェックしている。\n- L214「- [ ] 個別メッセージを20件以上送れた（4件/日×5日）」は、行動行 L166 を再チェックしている。\n- L215-218 は、成果目標 L127-137 と、チェックボックス付きの最重要数字 L113-114 をもう一度チェックしている。\n結果として、週報の中で行動は2箇所、成果は3箇所でチェックされる。テンプレート L1113-1114 の {{checklist}} には、何を書いてよいかの規則が無い。",
+          "recommended_intervention": "output-formats.md L1113 の直下に「（※ 行動目標・成果目標の行を写さない。済／未済は行動目標の行だけに付ける）」を足す。golden L214-218 は削り、L219 の着地確認だけを残す。規則は変わらない（手本を確定事項Hに合わせるだけ）。",
+          "root_cause": "確定事項Hで行動目標をチェックの唯一の場所にしたとき、振り返りチェックリストという入れ物を対象にしなかった。"
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "前提そのものを問い直した結果を書く。確定事項Gの「項目名に人名を入れない」と、G の人中心の原理（同じ人と連続）は矛盾しない。人は本文に残る（A L22、R3 L234-238）。管理用の成果目標の本文には相手が書かれ（golden L127「提案の受諾：Bさんの受諾1件」）、提出用だけが人名を外す（A L21）。提出用で人名を外すのは承認済みの方針なので、指摘しない。",
+        "ただし、成果目標を生み出す問い（R3 の3C-2）の前提が、G を入れたあとも変わっていない。G は「何を基準に選ぶか」を変えたが、「どう相手を挙げさせるか」という問いは更新されていない。一段のループで止まっている（12-a）。",
+        "loop1 の 12-0（簡潔版の月報を既定にする件）はユーザーが不採用としたので、obsolete とする。12-1・12-2 は、version-history.md L3 の凍結の明記と、CHANGELOG.md L8・L16-17 で解消した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "確定事項G〜L どうしの矛盾は見つからなかった。項目名に人名なし（A L22）と人中心の原理（G L183）は、人を本文に置くことで両立している。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "R3-step3-goal-setting.md L214 のターン3C-2が、前回 YES をくれた人から先に挙げさせる問いを持たない。G L188 を実際の発話に落としていない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "CHANGELOG.md L20 に記録された G の参照元5箇所は、grep の結果（R3 L43、R4 L43、goal-reviewer L62、coordinator L151、thinking-guide L474）と一致する。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "SKILL.md L322 は版履歴の参照先を CHANGELOG.md とし、version-history.md L3 は凍結を明記している。台帳の依存は切れていない。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "bucket": "doc",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md",
+            "line": 214,
+            "section": "ターン3C-2（売上の内訳＝相手の列挙）"
+          },
+          "description": "G L183 の設計の問いは「誰から、どの YES を取るか。前回 YES をくれた人と連続しているか」で、L188 は「前回 YES をくれた人…との次の挑戦を先に置き、新規の人だけを並べない」と定めている。R3 は L43 で G を参照しているが、実際の発話の正本（L187 のターンテンプレート）の3C-2 L214 は「相手を、名前で挙げてください（既存の継続・見込み・新規のいずれでも構いません）」となっている。前回 YES をくれた人から挙げさせる問いが無く、連続を確かめるターンも 7.1 の表に無い。G は、goal-reviewer の項目6で事後に指摘する形でしか効かない。",
+          "recommended_intervention": "【意味の変更あり】L214 の括弧を次の文に置き換える。「まず前回 YES をくれた人（前回の成果目標で応じてくれた相手）から挙げ、そのあと新規の人を足してください。基準は `output-formats.md` の「共通部品G 原理原則の基準」」。",
+          "root_cause": "G を Layer 2 の設計原則に1行で足しただけで、成果目標を生み出すターンの問いを G に合わせて作り直さなかった。"
+        }
+      ],
+      "score": 0.6
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "G を見出しを増やさずに見せる場所の案を洗い出した。\n① 既にある月報の【北原さんの原則（今月特に守ること）】（output-formats.md L1429）。ただし G につながっていない（思考法14で数える）。\n② R4 のターン4A-1 の問いに、原理原則のどの動きかを1語だけ足す。\n③ goal-reviewer の項目6。\n④ thinking-guide の5-C L474。\n既存の見出しを使う案①が最も筋がよい。",
+        "引用の回数を数えた。固定ターンの引用は、必須ターンの R3 3C-1 L206 と R4 4C L241 で、すでに2回ある。条件付きのターン（R3 L193・L251・L280、R4 L209）が加わると、SKILL.md L301 の上限1〜2回を超える（13-a）。",
+        "loop1 の 13-0（スタブ。references/thinking-process.md が残っている）は、保留と判断済みなので数えない。13-1（selection-focus-goal-frame.md L52 に1年の列）、13-2（RUNBOOK.md L179 の C16 に1年／yearly）、13-3（data-contract.md L272 で表の軸を明記）は解消した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "SKILL.md L301「北原さんの原則引用は1対話あたり1〜2回まで」に対し、必須ターンの固定引用だけで2回ある（R3 L206、R4 L241）。条件付きのターン（R3 L251・L280、R4 L209）で必ず上限を超える。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "selection-focus-goal-frame.md L52 の表は、週間・月間・期報・1年の4列を持っている。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "RUNBOOK.md L179 の C16 は、1年目標と --type yearly を含んでいる。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "引用の原文は kitahara-principles-db.md と knowledge_candidates の source_ref で確かめる経路がある（G L178、goal-reviewer L134）。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/SKILL.md",
+            "line": 301,
+            "section": "守ること 思考法駆動"
+          },
+          "description": "SKILL.md L301 は「北原さんの原則引用は1対話あたり1〜2回まで」と上限を定めている。一方、実際の発話の正本であるターンテンプレートには、引用が固定で埋め込まれている。\n- 必須ターン: R3 3C-1 L206、R4 4C L241 の2回。\n- 条件付きターン: R3 3A L193、3C-4 L251（検出したら必須）、3D L280、R4 4A-2 L209。\nこのため、条件付きのターンを1つ通るだけで構造的に上限を超える。R3 L210 には、引用に似た標語「売上を追わない。人数で追う」も別にある。",
+          "recommended_intervention": "【意味の変更あり】L301 を次の文に改める。「北原さんの原則引用は、ターンテンプレートに固定した引用のほかに、1対話あたり1〜2回まで」。",
+          "root_cause": "引用の上限は、ターンテンプレートに引用を固定で埋め込む前に書かれた。その後、固定の引用を数え直していない。"
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "G の「見出しを増やさない」を横から見ると、ユーザーが原理原則を目にできる既存の見出しは、月報の【北原さんの原則（今月特に守ること）】（L1429）しかない。しかしこの見出しは G とも data-contract ともつながっていない（14-a）。",
+        "週報の振り返りの H3「▼ プロジェクト進捗」（output-formats.md L1104、golden L203）は名前だけが残っている。週報ではプロジェクト別タスクを出力しない（F L158。出力すると validate-goal-output.py L1590-1591 で FAIL）ので、素直に読むと探す先が無い（14-b）。",
+        "loop1 の 14-0（期日の入れ直しは E L147 と L1106 に置く）と 14-1（L1050 の唯一の場所、F L158・L159）は解消した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "横展開の観点で独立した矛盾は無い。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "週報の行動の済／未済は、行動目標の行に一本化されている（output-formats.md L1050、F L158）。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "期日の入れ直しの記録先は、E L147 と週報の振り返り L1106 で一致している。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "output-formats.md L1430 の {{principles}} は、data-contract.md に生成元のフィールドが無い（principles の出現は L145 のカテゴリ列挙だけ）。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "schema",
+          "condition": "C4",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 1430,
+            "section": "月報テンプレート【北原さんの原則（今月特に守ること）】"
+          },
+          "description": "月報の【北原さんの原則（今月特に守ること）】のテンプレート変数 {{principles}} には、生成元が無い。data-contract.md の #1-37 にも1年層のフィールドにも該当するものが無く、principles の出現は L145 のカテゴリ列挙だけである。G との対応も書かれていない。\n- 月報: interview-quick-templates.md L231 が「北原さんの原則で今月特に守ることは？」と聞き、「[ナレッジから適切な原則を提案]」でその場で選ばせている。\n- 期報: L370 も同じ問いをするが、期報のテンプレートには出力の見出しが無く、答えの置き場が無い。\nG L189 が見出しを増やさないと決めた以上、この既存の見出しは G を各月に見せる場所として自然な候補である。それなのにつながっていない。",
+          "recommended_intervention": "【意味の変更あり】data-contract.md に月報だけのフィールドを足す（例: #38 principles: string[]、Step 4、月報以外は null）。output-formats.md L1429 の直下に「（※ 共通部品G の行動の動きから、今月特に守るものを1〜2行。引用ではなく当てはめで書く）」を置く。期報の問い（interview-quick-templates.md L370 の3）は削るか、置き場を決める。",
+          "root_cause": "この見出しは、G と data-contract の番号付けより前からあった。G を入れたとき、原理原則を扱う既存の見出しを洗い出さなかった。"
+        },
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 1104,
+            "section": "週報テンプレート 今週末の振り返りチェックリスト"
+          },
+          "description": "週報ではプロジェクト別タスクを出力しない（F L158、validate-goal-output.py L1590-1591）。それなのに、振り返りの H3 が「▼ プロジェクト進捗」のまま残っている（L1102、L1104、golden L203）。中身は行動目標と見直し記録のチェックなので、名前が実体を表していない。",
+          "recommended_intervention": "Daily.md の embed がこの H3 を参照していないことを確かめたうえで、L1102・L1104 と golden L203 の「プロジェクト進捗」を「行動目標の進捗」に改める。意味は変わらない。",
+          "root_cause": "確定事項Hで週報のプロジェクト別タスクを廃止したとき、振り返りの小見出しの名前を対象にしなかった。"
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "逆説1。G は「すべての行動を原理原則の動きに集中させる」と言う。一方、正本のテンプレートと手本そのものが、どの動きにも当たらない（土台）の行を必須に近い形で持っている。その結果、手本を書いたとおりに作るとレビューで指摘される（15-a）。",
+        "逆説2。「前回 YES をくれた人との挑戦を先に置く」（G L188）と「貢献額の大きいグループを上に置く」（A L32）は、継続相手の貢献額が小さいとき両立しない（15-b）。",
+        "「売上を追わない」と「売上目標を1つ置く」は逆説に見えるが、G L182・L187（売上は結果、逆算の順序は C のまま）で整合している。loop1 の 15-0（validate-goal-output.py L476-486・L1559-1564 で行末の期日がないと FAIL、今週は週報だけ）、15-1（L759・L950・L970）、15-2（thinking-guide.md L406）、15-3（data-contract.md L60 は F を参照）は解消した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "goal-reviewer.md L62 の「原理原則のどの動きにも当たらない行を挙げる」と、テンプレート L1062-1063・golden L168-169 の（土台）習慣チェックが矛盾する。",
+            "G L188「先に置き」と A L32「売上貢献額の大きい成果グループを上」が、並び順で衝突する。"
+          ],
+          "violation_count": 2
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "期日トークンの集合は、A L27 と validate-goal-output.py L476-477 で一致している（土曜・日曜を含み、今週は週報だけ）。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "実績欄の記号禁止は L759・L950・L970・L1297・L1389 で一貫している。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "（土台）・（関係維持）の括弧名は、R4 L61・L136 と output-formats.md L511 で2つに限定され、一致している。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/goal-reviewer.md",
+            "line": 62,
+            "section": "関係構築チェック 項目6 関係構築軸"
+          },
+          "description": "G L184 は行動目標を5つの動きに写像し、L178 は「原理原則の動きに集中した挑戦として組む」と定めている。goal-reviewer の項目6のチェック方法は「原理原則のどの動きにも当たらない行…を挙げる」で、例外が無い。一方で、次の正本は動きに当たらない行を持っている。\n- output-formats.md L499-513: 成果が測りにくい行動を `### → （土台）`／`（関係維持）` に置くと定めている。\n- 週報テンプレート L1062-1063 と golden L168-169: `習慣チェック：習慣目標の各カテゴリをチェックする　期日毎日` を（土台）に置いている。\nこのため、手本どおりに作った週報が項目6で必ず指摘される。また項目6は「前回 YES をくれた人との連続が無い成果を挙げる」と、成果を1件ずつ咎める書き方になっている。G L188 は「新規の人だけを並べない」で新規の成果を許しているので、項目6のほうが厳しい。",
+          "recommended_intervention": "【意味の変更あり】goal-reviewer.md L62 のチェック方法を次の文に改める。「`### → （土台）` グループの行を除いて行動目標を1行ずつ読み、原理原則のどの動きにも当たらない行と、成果目標が新規の人だけで前回 YES をくれた人との連続が1件も無い状態を挙げる」。G L189 にも「（土台）の行は対象外」と1語足す。",
+          "root_cause": "G を成果と行動の側から設計し、以前からある逃がし先の（土台）・（関係維持）グループとの関係を決めないまま、レビューの基準に組み込んだ。"
+        },
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 188,
+            "section": "共通部品G 同じ人と連続する"
+          },
+          "description": "G L188 は「前回 YES をくれた人・可愛がってくれた人との次の挑戦を先に置き」と書いている。共通部品A L32（R4 L40・L60 も同じ）は、並び順を「売上貢献額の大きい成果グループを上」と定めており、golden L150 は「並び順がそのまま優先順位」と説明している。継続相手の挑戦の貢献額が小さいとき、「先に置く」を並び順と読むと A に反する。選ぶ順の意味なのか並び順の意味なのかが、本文から決まらない。",
+          "recommended_intervention": "【意味の変更あり】L188 を次の文に改める。「前回 YES をくれた人・可愛がってくれた人との次の挑戦を、成果目標の候補として先に検討し（並び順は共通部品A）、新規の人だけを並べない」。",
+          "root_cause": "G の文言を、既にある並び順の規則（A）と突き合わせずに書いた。"
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "4層の類推はよく保たれている。対応行の書式（D L108）は4層共通で、golden の L48・L66・L84-85 はすべてこの書式に合っている。validate-goal-output.py L490-535 が4層を同じ規則で検査する。初回マーカー（D L112）も4層共通である。",
+        "類推が崩れている箇所が2つある。\n① 最重要数字。週報だけが金額を見出しの数字にしており、月報・1年の「人数・回数」と逆向きになっている（16-a）。\n② #37。週報の仕組みを月報へ類推して広げたが、data-contract の他の箇所が週報だけのまま残っている（16-b）。",
+        "loop1 の 16-0（A L21、validate-goal-output.py L460-464 の提出用と管理用の照合）、16-1（A L25、L1149）、16-2（B L52-65、validate-goal-output.py L901-909・L1146・L1264-1271）は解消した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "output-formats.md L1016「売上数字＋核心成果数値」と golden L113-114「（売上100000）」が、R3 L49「最重要数字は金額でなく人数・回数」と L1375・L1571 に矛盾する。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "#37 の生成元は、data-contract.md L238 で週報・月報の両方に定義された。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "data-contract.md L238（#37 は週報・月報）と、L307（#37・週報固有）・L407（週報は前週のやらないことの確認）が食い違う。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "月報の L1419 と週報の L1085 は、どちらも #37 を生成元に指定している。参照先 data-contract.md L238 は実在する。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 1016,
+            "section": "週報テンプレート【今週の最重要数字】"
+          },
+          "description": "最重要数字は、金額でなく人数・回数で追う規則になっている。\n- R3 L49（全層）: 「最重要数字は金額でなく人数・回数…売上目標の数値は結果指標として置くだけで、追う対象にしない」\n- 月報 L1375: 「金額でなく人数・回数で書く」\n- 1年 L1571: 「金額でなく人数を第1優先」\n- G L182・L187: 売上は結果\n- data-contract.md L298-300: 週の最重要数字は期・月の最重要数字を今週分へ割った内訳で、例は「…件数：3件」\nところが毎日見る週報だけが、逆の向きになっている。\n- テンプレート L1016: 「売上数字＋核心成果数値」\n- golden L113-114: 「Bさんの提案受諾を取る（売上100000）」「（初月分の売上50000）」\n最も使われる層で、原理原則を逆向きに運用することになる。この規則自体も R3 L49・L1375・L1571 の3箇所に言い換えて書かれている。",
+          "recommended_intervention": "【意味の変更あり】L1016 を「（※ 必ず `- [ ]` チェックボックス形式。期・月の最重要数字を今週分へ割った人数・回数を1-2個。金額は書かない）」に改める。golden L113-114 を件数の形（例: `- [ ] 提案の受諾：1件`、`- [ ] 月額顧問の成約：1件`）に直す。",
+          "root_cause": "週報の最重要数字の注記は「人数で追う」規則より前に書かれた。月報・1年を直したとき、週報に同じ直しを当てなかった。"
+        },
+        {
+          "severity": "low",
+          "bucket": "schema",
+          "condition": "C3",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md",
+            "line": 307,
+            "section": "層間一致検査の対象一覧 対象外"
+          },
+          "description": "#37 prev_not_doing_check の扱いが、data-contract の中で食い違っている。\n- 週報・月報の両方: data-contract.md L238（週報は前週の日付索引の注記、月報は前月の【今月やらないこと】から作る）と output-formats.md L1418-1420。\n- 週報固有: L307「前回のやらないことの確認（#37・週報固有）」。\n- 週報だけ: Step 1 の完了条件 L407「週報は前週のやらないことの確認」。\nそのため、月報で #37 を集める手順が Step 1 の完了条件に入っていない。iter2 の確定事項Kは #37 を週報だけとしており、月報へ広げたことが K にも L307・L407 にも反映されていない。",
+          "recommended_intervention": "L307 を「前回のやらないことの確認（#37。週報と月報で範囲が違う）」に、L407 を「週報・月報は前回のやらないことの確認」に改める。L238 と L1419 に合わせるだけで、意味は変わらない。月報へ広げたことを K の変更として記録するかどうかは、オーケストレーターが判断する。",
+          "root_cause": "#37 を月報へ広げたとき、フィールドの定義の行と月報のテンプレートだけを直し、同じファイルの別の節（対象外一覧と Step の遷移条件）を直さなかった。"
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "best（最良）の場合。前回の成果目標が1項目1相手（golden L51「継続申込：Bさんの…1件」）なら、前回正本の本文の相手と実績の件数から、前回 YES をくれた人を読める。G の「連続」は判定できる。",
+        "worst（最悪）の場合。前回の成果目標が相手をまとめた項目（golden L136「体験診断の申込：新規の申込2件」、output-formats.md L753「参加者7名」）だと、実績は件数だけになる（L748、D L105）。誰が YES と言ったかはどこにも残らず、goal-reviewer の項目6は連続を推測で判定するしかない（17-a）。",
+        "edge（境界）の場合。初回は D L112 の初回マーカーで照合を飛ばす。1年の初回は R2 L42 が直近の期報・月報と挑戦宣言で代える。--no-yearly のときに1年目標があれば、validate-cross-level.py L454-475 が WARN を出す。提出用は人名を外す（A L21）ので北原さんからは連続が見えないが、承認済みの方針なので指摘しない。",
+        "loop1 の 17-0〜17-6 はすべて解消した。17-6 の生成元は data-contract.md L238 で定義された。月報への拡張との食い違いは、思考法16で別に数えた。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "初回マーカーの扱いは、D L112、validate-goal-output.py L226・L392・L515-527、golden の前週ブロックで一致している。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "G L183・L188 と goal-reviewer L62 が前提にする「前回 YES をくれた人」の取得元が、D・実績の書式（L748）・data-contract #8/#9 のどこにも定義されていない。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "--yearly の扱いは、validation-gates の IN3 を正本とする1行参照にそろった（output-formats.md L97・L586、data-contract.md L322）。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "週報の前週12見出しは、D L129 と validate-goal-output.py L1431-1442 で必須になっていて一致している。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "schema",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 188,
+            "section": "共通部品G 同じ人と連続する"
+          },
+          "description": "G L183・L188 と goal-reviewer の項目6（L62）は、「前回 YES をくれた人」が分かることを前提にしている。ところが前回正本で人が残るのは、成果目標の本文だけである。実績は件数と完了日だけ（L748、D L105、golden L58-59）で、data-contract の #8・#9 にも人を持つ欄が無い。R1 と R2 も、誰が YES と言ったかを聞かない。相手をまとめた項目（golden L136「新規の申込2件」など）では YES をくれた人が記録されず、連続を判定する材料が無い。",
+          "recommended_intervention": "G L188 の後に1行足す。「前回 YES をくれた人は、前回正本の成果目標の本文にある相手と、同じ項目の実績から読む。相手をまとめた項目は対話で名前を確かめ、分からなければ確認中とする」。出力の書式は変えない。",
+          "root_cause": "G は判定の基準だけを定め、その判定に必要な入力が前回ブロックのどこから来るかを決めていない。"
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "素人の目で読んだ。週報の必須見出しは約20個ある（validate-goal-output.py L1433-1442）。golden も約220行あり、目安の5〜8分（F L164）に対して重く見える。ただし前週ブロックの12見出しを必須にしたのは承認済みの既定なので、指摘しない。",
+        "「項目名に個人名を入れない」は、A L22 の例（`提案書：Bさんへ提出する`）があるので、素人にも分かる。",
+        "素人が迷う箇所が2つある。\n① 「管理用【確認された情報】」という置き場が、テンプレート上の管理用の群に存在しない（18-a）。\n② 提出用の挽回の注記が、提出用には無い要因分析の3点を求めている（18-b）。",
+        "loop1 の 18-0（output-formats.md L409-418 で golden を参照）、18-1（R4 L91、data-contract.md L215-216）、18-2（A L27、validate-goal-output.py L476-477）は解消した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "素人の観点で独立した矛盾は無い。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "行動の見直しの行は、validate-goal-output.py L538-589 が5つの欄・項目の実在・変更前と変更後の違いまで検査している。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "E L143・L144、F L163、L1375 の「月報の管理用【確認された情報】」に対し、テンプレートの【確認された情報】は両群に共通のヘッダー（L1137、L1160）で、管理用の群（L1252-）には無い。",
+            "提出用の挽回の注記（L1198、L1212）は3点の骨格を求めるが、提出用には要因分析の H3 が無い。L643 は各挽回の見出しに H3 を求めている。"
+          ],
+          "violation_count": 2
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "validate-goal-output.py L583 は、月報の【確認された情報】を見出し名で探す。テンプレートの L1160 にある見出しを実際に検査しているので、検査は機能している。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "bucket": "doc",
+          "condition": "C3",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 163,
+            "section": "共通部品F 軌道修正の記録先"
+          },
+          "description": "月報の軌道修正の記録先は、E L143・L144、F L163、L1375 で「管理用【確認された情報】」と書かれている。validate-goal-output.py L553 と tests/test_goal_alignment.py L206 も同じ呼び方をしている。ところが月報のテンプレートでは、【確認された情報】は両群に共通のヘッダーとして群の前に1回だけ置かれている（L1137、L1160-1163。中身はフェーズ・形態・期間だけ）。管理用の群（L1252-）にこの見出しは無く、テストも見出しを MANAGED_MONTH の前に置いている（L211）。素人が管理用の群を探しても見つからない。また、名前のとおりだと思って管理用の群に新しい見出しを作ると、validate-goal-output.py の重複見出し検査に当たるおそれがある。",
+          "recommended_intervention": "E L143・L144、F L163、L1375 の「管理用【確認された情報】」を「冒頭の【確認された情報】（両群に共通のヘッダー。公式21ブロックの外）」に改める。テンプレート L1160 の直下に「（※ 月報の軌道修正の記録は、共通部品E の書式でここに置く）」を足す。置き場所そのものは変えないので、意味は変わらない。",
+          "root_cause": "【確認された情報】を両群に共通のヘッダーへ移したとき、E・F が使っていた「管理用」という修飾語を直さなかった。"
+        },
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C3",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 1198,
+            "section": "月報 提出用【前月の売上に対して未達を挽回するための行動（提出）】"
+          },
+          "description": "提出用の挽回の見出しの注記は、L1198 で「骨格は…3点」、L1212 で「上と同じ3点の骨格」と求めている。3点は対応行と要因分析で分担する（L655-659）。L643 は、各挽回の見出しで対応行の直後に H3 の要因分析を付けるよう求めている。しかし提出用のテンプレート（L1196-1199、L1210-1213）は対応行だけで、H3 が無い。そのため、提出用で3点をそろえる方法が素人には分からない。L643 を文字どおりに読むと、提出用にも H3 が要ることになり、提出用を簡潔に保つ方針とぶつかる。",
+          "recommended_intervention": "L1198 を「（※ 共通部品D の対応行だけ。要因分析と3点の骨格は管理用の同じ見出しに置く）」に改め、L1212 の「上と同じ3点の骨格。」を削る。L643 に「（月報は管理用の見出しだけ）」を足す。テンプレートの実態に合わせるだけなので、意味は変わらない。",
+          "root_cause": "3点の骨格を対応行と要因分析で分担する形に組み直したとき、提出用の注記を前の表現のまま残した。"
+        }
+      ],
+      "score": 0.6
+    }
+  ],
+  "loop1_resolution": [
+    {
+      "paradigm_id": 10,
+      "issue_index": 0,
+      "status": "partially",
+      "evidence": "output-formats.md L7 と L542：宣言と期日の逆算規則は1箇所になった。ただし agent-output-formatter-rules.md L3 に「正本が勝つ」が残り、tests/ に再掲を検出する lint も無い。"
+    },
+    {
+      "paradigm_id": 10,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "interview-quick-templates.md L17：所要時間は共通部品F への1行参照になった。F L164 は4層の値を持つ。"
+    },
+    {
+      "paradigm_id": 10,
+      "issue_index": 2,
+      "status": "resolved",
+      "evidence": "output-formats.md L168-174：上限の表は名前と正本の場所だけになり、値は写されていない。"
+    },
+    {
+      "paradigm_id": 11,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "output-formats.md L107-111：対応行の書式は1つになり、golden-sample-weekly.md L48・L66・L84-85 と validate-goal-output.py L490-535 も同じ書式で一致する。"
+    },
+    {
+      "paradigm_id": 11,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "validate-goal-output.py L538-589：行動の見直しの行で、5つの欄・項目名の実在・変更前と変更後の違いを検査している。"
+    },
+    {
+      "paradigm_id": 12,
+      "issue_index": 0,
+      "status": "obsolete",
+      "evidence": "output-formats.md L158・L204：簡潔版の月報を既定にしない方針はユーザーが不採用とし、現在の仕様（明示したときだけ簡潔版）と一致している。"
+    },
+    {
+      "paradigm_id": 12,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "version-history.md L3 が凍結を明記して CHANGELOG を正本にし、SKILL.md L322 も CHANGELOG を版履歴の参照先にしている。"
+    },
+    {
+      "paradigm_id": 12,
+      "issue_index": 2,
+      "status": "resolved",
+      "evidence": "CHANGELOG.md L8・L16-17：共通部品A〜G と、スクリプト2本の 0.4.0 の内容が記録された。"
+    },
+    {
+      "paradigm_id": 13,
+      "issue_index": 0,
+      "status": "unresolved",
+      "evidence": "references/thinking-process.md：スタブは残っている。消さずに残すと判断済み（保留）なので、今回は数えない。"
+    },
+    {
+      "paradigm_id": 13,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "selection-focus-goal-frame.md L52：表に1年の列が加わった（L54 に1年の判定がある）。"
+    },
+    {
+      "paradigm_id": 13,
+      "issue_index": 2,
+      "status": "resolved",
+      "evidence": "RUNBOOK.md L179：C16 が1年目標と --type yearly を含むようになった。"
+    },
+    {
+      "paradigm_id": 13,
+      "issue_index": 3,
+      "status": "resolved",
+      "evidence": "data-contract.md L272：表はヒアリングの要否と継承元を示し、出力見出しの要否の正本は §4.5 だと軸を分けて明記した。"
+    },
+    {
+      "paradigm_id": 14,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "output-formats.md L147 と L1106：期日を入れ直したときの記録先を、共通部品E の見直し記録に一本化した。"
+    },
+    {
+      "paradigm_id": 14,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "output-formats.md L1050 と F L158：週の済／未済は行動目標の行だけにした（行動行のチェックの重複は無い。振り返りでの写し直しは新しい指摘 11-b で別に数えた）。"
+    },
+    {
+      "paradigm_id": 15,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "validate-goal-output.py L476-486・L1559-1564：行末に期日トークンが無ければ FAIL。今週は週報だけ認める。"
+    },
+    {
+      "paradigm_id": 15,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "output-formats.md L759・L950・L970：実績欄では記号・状態説明を書かないことに統一した。"
+    },
+    {
+      "paradigm_id": 15,
+      "issue_index": 2,
+      "status": "resolved",
+      "evidence": "thinking-guide.md L406：「トリガー付き」を、期日トークン毎日／毎朝と共通部品A への参照に置き換えた。"
+    },
+    {
+      "paradigm_id": 15,
+      "issue_index": 3,
+      "status": "resolved",
+      "evidence": "data-contract.md L60：ファイルを1本にする理由は共通部品F（output-formats.md L166）を参照する形になり、本文の重複は消えた。"
+    },
+    {
+      "paradigm_id": 16,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "output-formats.md L21 で、提出用を管理用の射影と定め、合算を禁じた。validate-goal-output.py L460-464 が数量・単位・期日の一致を照合する。"
+    },
+    {
+      "paradigm_id": 16,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "output-formats.md L25 と L1149：具体的な日付は行末の期日欄だけに書き、本文には埋め込まないと定めた。"
+    },
+    {
+      "paradigm_id": 16,
+      "issue_index": 2,
+      "status": "resolved",
+      "evidence": "output-formats.md L52-65 と validate-goal-output.py L901-909・L1146・L1264-1271：貢献0の3つの形、参照先が無ければ FAIL、0円の見出しは（0円）だけ、を検査している。"
+    },
+    {
+      "paradigm_id": 17,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "validate-goal-output.py L1431-1442：週報の前週12見出しを必須見出しにした。"
+    },
+    {
+      "paradigm_id": 17,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "output-formats.md L112-113 と validate-goal-output.py L226・L392・L515-527：初回マーカー、空欄なら FAIL、旧形式は WARN、を区別している。"
+    },
+    {
+      "paradigm_id": 17,
+      "issue_index": 2,
+      "status": "resolved",
+      "evidence": "output-formats.md L112 と R2-step2-gap-analysis.md L42：1年の初回は差分欄に置かず、root_cause の材料にすると定めた。"
+    },
+    {
+      "paradigm_id": 17,
+      "issue_index": 3,
+      "status": "resolved",
+      "evidence": "validate-cross-level.py L454-475：--no-yearly のとき、同じフォルダに期報の期間を含む1年目標があれば WARN を出す（rc は変えない）。"
+    },
+    {
+      "paradigm_id": 17,
+      "issue_index": 4,
+      "status": "resolved",
+      "evidence": "output-formats.md L97・L586 と data-contract.md L322：--yearly の扱いは validation-gates の IN3 を正本とする1行参照になった。"
+    },
+    {
+      "paradigm_id": 17,
+      "issue_index": 5,
+      "status": "resolved",
+      "evidence": "output-formats.md L105・L777：[要確認] を「確認中」に置き換えた。"
+    },
+    {
+      "paradigm_id": 17,
+      "issue_index": 6,
+      "status": "resolved",
+      "evidence": "data-contract.md L238：#37 の生成元を、週報（日付索引の注記）と月報（前月の【今月やらないこと】）の両方で定義した（L307 との食い違いは新しい指摘 16-b）。"
+    },
+    {
+      "paradigm_id": 18,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "output-formats.md L409-418：一貫した例は golden-sample-weekly.md を正本として参照する形になった。golden L127-169 は売上・成果・行動の金額と項目名が一致する。"
+    },
+    {
+      "paradigm_id": 18,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "R4-step4-action-plan.md L91 と data-contract.md L215-216：行動は #14 actions に統合し、毎日の行動も deadline_token で同じ配列に入れた。#15 は欠番。"
+    },
+    {
+      "paradigm_id": 18,
+      "issue_index": 2,
+      "status": "resolved",
+      "evidence": "output-formats.md L27 と validate-goal-output.py L476-477：期日トークンに {月火水木金土日}曜を含め、文書と正規表現の集合を一致させた。"
+    }
+  ],
+  "residual_verdicts": [
+    {
+      "residual": 1,
+      "status": "resolved",
+      "evidence": "output-formats.md L411-416：一貫した例を golden へ移し、提案書の作成は段として立てずに提出の行動に含めると明記した（golden L160）。"
+    },
+    {
+      "residual": 2,
+      "status": "resolved",
+      "evidence": "output-formats.md L25・L1149：具体的な日付は期日欄だけに書く。"
+    },
+    {
+      "residual": 3,
+      "status": "resolved",
+      "evidence": "output-formats.md L759・L950・L970：○/△/× などの記号を禁止した。"
+    },
+    {
+      "residual": 4,
+      "status": "resolved",
+      "evidence": "selection-focus-goal-frame.md L52：1年の列がある。"
+    },
+    {
+      "residual": 5,
+      "status": "resolved",
+      "evidence": "thinking-guide.md L406：トリガー付きを期日トークンへ置き換えた。"
+    },
+    {
+      "residual": 6,
+      "status": "resolved",
+      "evidence": "RUNBOOK.md L179：C16 に1年目標と yearly がある。"
+    },
+    {
+      "residual": 7,
+      "status": "deferred",
+      "evidence": "references/thinking-process.md：スタブは消さずに残すと判断済み。"
+    },
+    {
+      "residual": 8,
+      "status": "resolved",
+      "evidence": "version-history.md L3 の凍結と SKILL.md L322：CHANGELOG.md を版履歴の正本にした。"
+    },
+    {
+      "residual": 9,
+      "status": "resolved",
+      "evidence": "data-contract.md L272・L278-279：1年の列は「必須」だけになり、出力見出しの要否は §4.5 だと分けて書いた。"
+    },
+    {
+      "residual": 10,
+      "status": "resolved",
+      "evidence": "validate-goal-output.py L538-589：見直しの行の書式まで検査している（見出しの有無だけではない）。"
+    },
+    {
+      "residual": 11,
+      "status": "resolved",
+      "evidence": "CHANGELOG.md L16-17：validate-goal-output.py と validate-cross-level.py の 0.4.0 が記録された。"
+    }
+  ]
+}

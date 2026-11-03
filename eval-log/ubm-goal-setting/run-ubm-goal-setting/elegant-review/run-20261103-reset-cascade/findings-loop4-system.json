@@ -1,0 +1,738 @@
+{
+  "agent_id": "loop4-system",
+  "version": 1,
+  "target": {
+    "type": "plugin",
+    "path": "plugins/ubm-goal-setting",
+    "representative_skill": "run-ubm-goal-setting",
+    "run_dir": "eval-log/ubm-goal-setting/run-ubm-goal-setting/elegant-review/run-20261103-reset-cascade"
+  },
+  "loop_count": 4,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "（システム思考）1年→期報→月報→週報の売上の逆算が切れていないかを、validate-cross-level.py の ANCHORS（:165-231）でたどった。1年の【今年の最重要数字】にある到達点2件（output-formats.md:1583、:1630）は、期報では【今期の売上以外の成果目標】の注記（:1542）、月報では【今月の最重要数字】の注記（:1452-1453）に同じ値で写す。当月の売上目標は、期報の【事業計画書数値】の「月別の売上目標」（cross-level:199-201）、月報の【今月の売上目標】（:202）、週報の日割りの根拠行（:203）の順につながる。内訳3値も、期報の当月分と月報の【今月の最重要数字】で対になっている（:207-230）。逆算はどこでも切れていない。",
+        "確定事項Q で足した `今月の売上目標：{金額}` の行（output-formats.md:1381、例は :1455）は写しで、ANCHORS のどの抽出にも入らない。照合の流れには加わらない（値の一致を確かめていない点は paradigm 22 で数える）。",
+        "共通部品G の初回の規則（output-formats.md:192）がどこで使われるかをたどった。レビュー側（goal-reviewer.md:62、agent-goal-reviewer-report-template.md:28）は「確認は対話の側で行う」として、初回を判定の対象から外している。しかし対話の側には、既存の取引先・紹介元を聞く問いが無い（R1 ターン1B・1C :165-177、R3 ターン3C-2 :216、iqt :65/:208/:344）。knowledge/ の外で「紹介元」「可愛がってくれた人」を grep すると、当たるのは G :190/:192 と goal-reviewer.md:62 だけだった。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "output-formats.md:192 と goal-reviewer.md:62 は、初回を連続の判定の対象外とする点で同じことを言っていて、矛盾しない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "validate-cross-level.py:192-230 に、今期の売上目標・当月の売上目標・内訳3値の4層の対応がそろっている"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "agent-goal-reviewer-report-template.md:28 の初回・確認中の扱いは goal-reviewer.md:62 と同じ"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "goal-reviewer.md:62 は初回の候補の確認を「対話の側」に任せている。ところが、任せた先の R3-step3-goal-setting.md:216、R1-step1-current-review.md:165-177、interview-quick-templates.md:65/:208/:344 に、その確認をする問いが無い"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "condition": "C4",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md",
+            "line": 216,
+            "section": "ターン3C-2（売上の内訳＝相手の列挙）"
+          },
+          "description": "G（output-formats.md:192）は「初回（前回正本なし）は、対話で既存の取引先・紹介元・可愛がってくれた人を確かめて候補にする」と定めている。goal-reviewer.md:62 と report-template:28 は、この確認を対話の側で行う前提で、初回の文書を連続の判定から外している。しかし実際の発話は、R3:216 が初回でも常に「まず前回 YES をくれた人（前回の成果目標で応じてくれた相手）から挙げ」と聞くだけで、初回の分岐が無い。初回専用のターン R1 1B・1C（:165-177）も、名前・仕事・フェーズ・月商しか聞かない。iqt :65/:208/:344 も R3 と同じ書き方をしている。1年層は初回が必ず「前年なし」になる（data-contract.md:422）。このため、どの利用者も一度はこの経路を通る。その回は、レビューは対象外とし、対話も確かめない。G の初回規則はどこでも働かない。さらに、存在しない「前回の成果目標」の相手を聞かれることになる。",
+          "recommended_intervention": "R3 ターン3C-2（:216）の括弧の中に、初回の分岐を1文足す。文例は「前回の目標が無い初回は、すでに取引のある方・紹介してくれた方・可愛がってくれた方から挙げ、そのあと新規の人を足してください」。iqt の :65/:208/:344 にも同じ1文を足す。G :193 の利用箇所は「Step 3 の R3」から「R3 ターン3C-2」へ、ターンの単位まで書く。",
+          "root_cause": "なぜ初回の候補の確認がどこでも行われないのか → G :192 に初回の扱いを足したとき、レビュー側（goal-reviewer:62）は確認を対話の側に任せたが、任せた先の発話テンプレートを同じ変更で直していないから → G の利用箇所の一覧（G :193）は「Step 3 の R3」と段階の名前しか挙げず、どのターンの発話に入れるかを指していないから → 閉包テストは DC のフィールドと問いの対応しか見ないので、フィールドを持たない G の運用規則（初回の候補の確認）は検査の外にあるから。plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:216",
+          "bucket": "doc",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.75
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "（因果関係分析）CHANGELOG.md:26 の「R1 ターン1A と iqt の週報ターン1・月報ターン2・期報ターン2 で成果を項目ごとに名前まで聞き」という主張を、それぞれの発話と照らした。R1:162 は「項目ごと」「名前」「確認中」の3つとも満たす。iqt:158 と :282 は項目ごとに名前まで聞くが、「確認中」の一言が無い。iqt:32 の週報ターン1 は「行動目標の達成状況（何件やったか）と、成果目標で YES をくれた人（名前）」で、成果を項目ごとに聞いていない。",
+        "因果の流れは「#9 の粒度（data-contract.md:212。#8 と同じ項目名・順序・件数）→ #36 の差分（:239）→ G の連続の判定（output-formats.md:191）」。週報の問いだけが、この流れの起点の粒度を満たしていない。ただし iqt は言い回し集で、R 側が正本（iqt:5）。R1 ターン1A は週報にもかかるので、実害は小さい。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "R1-step1-current-review.md:162 と data-contract.md:212 は、項目ごと・名前・確認中で一致している"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "#9 の集める問いの列（data-contract.md:212）に挙がった4か所すべてに、YES をくれた相手の名前を聞く問いがある（R1:162、iqt:32/:158/:282）"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "interview-quick-templates.md:32 は成果を項目ごとに聞かず、行動の問いと名前の問いを1行にまとめている。R1:162・iqt:158/:282・CHANGELOG.md:26 の「項目ごと」と書き方がそろっていない"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "iqt:5 で R 側が正本と宣言されており、週報も R1 ターン1A（:162）を通るので、#9 の生成元はつながっている"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "condition": "C3",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md",
+            "line": 32,
+            "section": "週報ターン1（先週の実績）"
+          },
+          "description": "週報ターン1 の問2は「行動目標の達成状況（何件やったか）と、成果目標で YES をくれた人（名前）」となっている。成果目標を項目ごとに聞いていない。このため #9（data-contract.md:212。#8 と同じ項目名・順序・件数、不明は確認中）を項目に対応させて埋める材料がそろわない。同じ問いの写しである R1:162、iqt 月報ターン2（:158）、期報ターン2（:282）は「項目ごとにどうなりましたか」と聞いている。CHANGELOG.md:26 も、週報ターン1 で項目ごとに聞くと書いている。週報は最も回数の多い層なので、ずれの影響が一番大きい。あわせて :158 と :282 には、R1:162 にある「分からない分は確認中」が無い。",
+          "recommended_intervention": "iqt:32 を2問に分ける。「2. 成果目標は、項目ごとにどうなりましたか？ YES をくれた相手の名前も（人数でまとめた項目は、その人たちの名前を。分からない分は「確認中」で）」と「3. 行動目標の達成状況（何件やったか）」にし、続く問いの番号を1つずつ下げる。:158 と :282 の末尾には「分からない分は「確認中」でかまいません」を足し、R1:162 と同じ文にそろえる。",
+          "root_cause": "なぜ週報の問いだけが項目ごとになっていないのか → 週報ターン1 は、行動目標を聞く行に名前の問いを足した形になっていて、R1:162 の文をそのまま写していないから → iqt は R 側の言い回しを3層ぶん別々に持っているのに、正本の文との一致を確かめる手順が無いから → 閉包テストの (d)（test_field_closure.py:427-439）は、DC の「集める問い」の列に書かれたターンの見出しがあるかだけを見ていて、そのターンの問いがフィールドの粒度（項目ごと・確認中）を満たすかは見ないから。plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:32",
+          "bucket": "doc",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "（因果ループ）軌道修正のループを確かめた。月報の当月の売上目標と内訳3値は ADJUSTABLE_ANCHORS（validate-cross-level.py:254-256）で調整できる。調整した記録は冒頭の【確認された情報】に置き（output-formats.md:165）、照合は記録つきの不一致を調整として扱う。このループは閉じていて、切れていない。`今月の売上目標：` の行は、このループの外にある写しになる（写しが古いまま残りうる点は paradigm 22 で数える）。",
+        "旧基準が何度も戻ってくる強化ループ（loop2→loop3 で、手本・GF-07・DB の状況列に再び入った）は、閉包テスト (e) で止まった。発話の `>` 行も走査に含め（test_field_closure.py:459-460）、類型3種（:454-458）で拾う。knowledge/ の外で .md 以外のファイルを同じ3パターンで grep しても、当たるのはテスト自身だけだった。対象外の knowledge/ の json を除けば、漏れはいま起きていない。",
+        "--peer は最重要数字を比べず、SKIP 行で理由を出す（validate-goal-output.py:152-162）。層ごとに値が違うのが正しい数字を無理にそろえさせる、誤った FAIL のループは生まれない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "validate-goal-output.py:152-162 の SKIP の理由と data-contract.md:290 の層間一致検査の列（対象外）は同じことを言っている"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "validate-cross-level.py:254-256 の調整できる項目は、月報の4値（当月の売上目標と内訳3値）がすべてそろっている"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "CHANGELOG.md:27 と data-contract.md:299-305 は、--peer で比べるのが金額2値だけだと同じに書いている"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "test_field_closure.py:472-476 の走査範囲には、R1〜R5 と iqt の `>` 行が含まれる"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "（トレードオン）確定事項Q は「最重要数字に売上の金額も並べて読みやすくする」ことと「抽出ラベルを壊さない」ことを両立させている。新しい行は `今月の売上目標：600000`（output-formats.md:1455）。validate-cross-level.py の内訳の抽出は `延べ回数…回`（:211）、`実人数：…名`（:219）、`件数：…件`（:227）の3つで、どれもこの行に当たらない。:1461 は、この行に人数・回数・件数を書き足すことを禁じている。validate-goal-output.py は、売上目標を見出し【今月の売上目標】から読み（:943-949）、--peer では最重要数字を比べない（:152-162）。月報の必須見出しの一覧（:1424-1431）も変わらない。2つのスクリプトのどちらとも干渉しない。",
+        "その代わり、同じ金額を【今月の売上目標】とこの行の2か所に持つことになった。一致は散文（:1381「金額は【今月の売上目標】と同じ値」、:1461）でしか定めていない。knowledge/ の外で `売上目標：` を *.py に grep すると、validate-goal-output.py:153 のコメントとテストの fixture（test_validate_goal_output.py:322）にしか当たらない。この行を読む検査は1つも無い。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "output-formats.md:1381・:1461・:1465 と CHANGELOG.md:23 は、行の位置と値（【今月の売上目標】と同じ値）について同じことを言っている"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "同じ値を2か所に持つのに、一致を確かめる検査が無い（validate-goal-output.py と validate-cross-level.py のどちらも `今月の売上目標：` の行を読まない）。formatter の Step 2（agent-output-formatter-steps.md:22-29）にも、この行を【今月の売上目標】から写す指示が無い"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "validate-cross-level.py:211/:219/:227 の抽出パターンと、output-formats.md:1461 の禁止事項がそろっている"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "validate-goal-output.py:943-949 は見出しから売上目標を読むので、新しい行の影響を受けない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 1461,
+            "section": "1年目標がある期の到達点の注記（月報）／`今月の売上目標：` の行の規則"
+          },
+          "description": "月報の【今月の最重要数字】に置く `今月の売上目標：{金額}` は、【今月の売上目標】と同じ値と定められている（:1381、:1461）。しかし一致を確かめる仕組みがどこにも無い。月報の当月の売上目標は軌道修正で調整できる値（validate-cross-level.py:254-256）である。調整したとき、照合されるのは見出し【今月の売上目標】だけで（:202）、写しの行は古いまま残っても見つからない。これは、output-formats.md:168 が避けると宣言している「片方だけ直して他方が古いまま残る、という構造」を1つ新しく作ったことになる。formatter の Step 2 にも写す指示が無い。閉包テストも key_number を派生として検査から外している（test_field_closure.py:81）。",
+          "recommended_intervention": "validate-goal-output.py の月報検査に1件足す。【今月の最重要数字】の中から `今月の売上目標：` の行の金額を取り、_current_sales_target()（:943）の値と比べる。行が無いとき、または金額が食い違うときは FAIL にする。テストは、一致する例と食い違う例の2件を足す。agent-output-formatter-steps.md の Step 2 にも「`今月の売上目標：` の行は【今月の売上目標】の値を写す」の1行を足す。",
+          "root_cause": "なぜ2か所に置いた同じ値の一致が保証されないのか → 確定事項Q で、読みやすさのために売上の金額を最重要数字の節にも置いたが、置き場が2つになる代わりの照合を足していないから → 抽出ラベルとの衝突は避けた（:1461）が、検査器は最重要数字を「層ごとに値が違うので比べない」対象として丸ごと外しており（validate-goal-output.py:152-162）、同じ文書の中での一致は別の問題として扱われなかったから → 閉包テストでも key_number は派生として変数の検査から外れており（test_field_closure.py:81）、変数の中身の作り方を確かめる仕組みが無いから。plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1461",
+          "bucket": "doc",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "（プラスサム）--peer で比べる値を金額2値（validate-goal-output.py:147-150）に絞った。これで誤った FAIL が減り、照合の厳しさも落ちていない。1年の到達点の継承は、引き続き validate-cross-level.py が rc を持って照合する（data-contract.md:290、CHANGELOG.md:27）。精度と網羅は両立している。",
+        "G（output-formats.md:189）は、北原さんの「売上目標は追わない」と、根本で追うのは売上（確定事項O）とを、「売上に至る手段として人数・回数を日々管理する」という読み方でつないでいる。引用の本文は変えていない。当てはめの書き方は、DB の状況列（kitahara-principles-db.md:314/:335/:345）と GF-07（consult-frames.md:46）まで同じ向きにそろった。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "kitahara-principles-db.md:314 の状況列「売上の数字だけを追い、その売上に至る人数・回数が置かれていない」は、G :189 の読み方と矛盾しない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "validate-goal-output.py:147-150 の2値は、data-contract.md:299-305 の --peer の対象一覧と同じ"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "consult-frames.md:46 と phase3-coordinator.md:48 は、どちらも「人数・回数は売上に至る手段」の向きで書かれている"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "consult-frames.md:25 から G への参照がつながっている"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "（価値提案）CHANGELOG.md:23 は「4層とも『売上＋人数』の対にそろう」と約束している。data-contract.md:290 も、最重要数字を各層とも「その層の売上目標と、その売上に至る人数・回数・件数」としている。R3:49 は「層ごとの置き方は…各層の【…の最重要数字】の注記」を参照し、R3:130 は層を問わず売上と人数の対を求めるチェックになっている。",
+        "output-formats.md で最重要数字の中身が決まっているのは、週報（:1019）・月報（:1381）・1年（:1583）の3層だけだった。「今期の最重要数字」を grep すると0件。期報は月報のセクション順を読み替えで受け継ぐだけで（:1471、:1481）、最重要数字についての読み替えは無い。期報では任意の見出しとして扱われている（:1613「期報と違い必須」、data-contract.md:556、検査器の期報の必須一覧、test_validate_goal_output.py:211-212）。共通部品F の層別差分表（:155-166）にも、最重要数字の行が無い。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "data-contract.md:275 は、§3.1.3 の表をヒアリングの要否、出力見出しの要否を §4.5 と分けて定めている。DC:290 の「期報 必須」と §4.5（:553）は、言っていることがぶつからない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "期報の【今期の最重要数字】の中身（売上の行を置くか、到達点の注記をどこに置くか、そもそも出すかどうか）が output-formats.md のどこにも決まっていない。CHANGELOG.md:23 と R3:49/:130 が前提とする期報の規則が無い"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "週報 :1019、月報 :1381、1年 :1583 の3層は、どれも売上の数字と人数・件数の対で書かれていてそろっている"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "1年の到達点が期報の【今期の売上以外の成果目標】（:1542）へ渡るつながりは保たれている"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 1477,
+            "section": "期報（3ヶ月目標）フォーマット／読み替え規則"
+          },
+          "description": "期報の最重要数字の規則が無い。期報は月報のセクション順をそのまま受け継ぐ（:1471）。ところが月報の【今月の最重要数字】の注記（:1381）には、月報でしか成り立たない語が入っている。「人数・回数・件数は期報の当月配分を基準」「validate-cross-level.py はこの節を読む」「1年目標がある期は見出しの直後に到達点2件の注記」の3つで、期報では到達点の注記を【今期の売上以外の成果目標】に置く（:1542）。このため、:1481 の一般的な読み替え（今月→今期）を当てはめると、期報の最重要数字は自分自身を基準にし、到達点の注記の置き場も2か所になる。読み替えないなら、中身が決まっていない。CHANGELOG.md:23 の「4層とも」、data-contract.md:290、R3:49 の「各層の…注記」、R3:130 のチェックは、どれも期報の規則があることを前提にしている。しかし実際に規則があるのは週・月・年の3層だけ。",
+          "recommended_intervention": "期報の読み替え規則（:1490 の後）に1行足す。案は「【今月の最重要数字】は期報では【今期の最重要数字】（任意）とし、置くときは `今期の売上目標：{金額}`（【今期の売上目標】と同じ値）と、その売上につながる人数・件数を書く。到達点の注記はここに置かず【今期の売上以外の成果目標】に置く（:1542）」。出さない方針にするなら「期報では出力しない」と書き、CHANGELOG.md:23・data-contract.md:290・R3:130 を「週・月・年」に直す。どちらにしても、共通部品F の層別差分表（:155-166）に最重要数字の行を足し、4層の要否と中身を1か所にまとめる。",
+          "root_cause": "なぜ期報の最重要数字だけ中身が決まっていないのか → 確定事項Q は月報の行を決め、週報と1年はそれぞれの節に注記を持つが、期報は月報の節を読み替えで受け継ぐだけで、自分の注記を持たないから → 読み替え規則（:1477-1490）は「出力しない」見出しを並べる方式で、月報の注記の中身（月報だけの語）が期報でどう読めるかを見直す手順が無いから → 層ごとの要否をまとめる共通部品F（:155-166）に最重要数字の行が無く、CHANGELOG:23・DC:290・R3:130 の「全層」という主張と突き合わせる場所が無いから。plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1477",
+          "bucket": "doc",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "（戦略的思考）根本で追うのが売上（確定事項O）である流れは、R3 ターン3C-1（:207-212）で崩れていない。まず売上目標を決め、次にその売上につながる成果、最後に行動の順で逆算している。1年の初回は Step 2 を飛ばさず、直近の期報・月報の積み上げと挑戦宣言の到達点の差を見る（data-contract.md:422、:594、R2:124）。",
+        "1年の初回で現在地をどう作るかが、R2 の中で2通りに書かれている。R2:43 は「すでに在る期報・月報の売上実績と最重要数字を足し上げ、現在地として扱う」。R2:191 の発話は「今年の累計売上実績 / 継続コンサル {{現在の人数}} 人」で、実績だけを使っている。確定事項Q で月報の最重要数字に目標の金額（`今月の売上目標：`）が入ったので、:43 どおりに足すと、目標の金額が現在地に混ざる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "R3-step3-goal-setting.md:209 の「根本で追うのはこの売上です」と G :189 は同じ向き"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "data-contract.md:422/:594 と R2:109/:124 に、1年の初回の現在地と到達点の出所が書かれている"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "R2-step2-gap-analysis.md:43 は「売上実績と最重要数字を足し上げ」て現在地にするが、:191 の発話は累計売上実績と現在の人数（実績）だけを使う。月報の最重要数字には目標の金額が入る（output-formats.md:1381）"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "R3:147 は R2 の 2.2・6.2 を参照してつながっている"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "condition": "C3",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md",
+            "line": 43,
+            "section": "2.2 1年層の初回（前年の1年目標が存在しない）の扱い"
+          },
+          "description": "1年の初回で現在地をどう作るかの書き方が、R2 の中で食い違っている。:43 は「すでに在る期報・月報の売上実績と最重要数字を足し上げ、現在地として扱う」としている。:191 のターンの発話では、現在地は「今年の累計売上実績 / 継続コンサル {{現在の人数}} 人」で、実績だけを使う。最重要数字は目標の値（output-formats.md:1381「期報の当月配分を基準」）で、確定事項Q からは `今月の売上目標：{金額}` の行で目標の金額も持つ。:43 の文字どおりに足し上げると、売上実績に売上目標が加わって現在地が実際より大きくなる。挑戦宣言の到達点との差（root_cause / bottleneck の材料）が小さく出てしまう。",
+          "recommended_intervention": ":43 の①の括弧の中を、:191 と同じ中身に直す。文例は「すでに在る期報・月報の売上実績（累計売上実績）と、継続コンサルの現在の人数などの実績を現在地として扱う。最重要数字は目標の値（月報は `今月の売上目標：` の行を含む）なので、現在地に足さない」。",
+          "root_cause": "なぜ目標の金額が現在地に混ざりうるのか → :43 は、最重要数字を実績の側の値のように扱う書き方のまま残っているから → 確定事項Q で月報の最重要数字に目標の金額の行を足したとき、最重要数字を読む側（R2 の1年初回の積み上げ）を洗い出さなかったから → 最重要数字は DC のフィールドではなく派生（key_number。test_field_closure.py:81）として扱われ、どこで読まれるかの一覧が無いから。plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md:43",
+          "bucket": "doc",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "（なぜなぜ分析）loop3 の根本原因は「規則を正本（G・DC）に足しても、規則が使われる側（発話・写し・検査器）を同じ変更で直さない」ことだった。iter4 は DC §3.1 に「集める問い」「出力する層」の2列を足し（data-contract.md:200）、閉包テストで機械的に確かめるようにした。loop3 の20件は、この仕組みと個別の修正で、すべて同じ形では再発していない（loop3_resolution）。",
+        "今回の5件（paradigm 19・20・22・24・25 の各1件）も、同じ根本原因から出ている。共通点は、どれもフィールドを持たない規則（G の運用・最重要数字の中身・写しの一致）だったこと。仕組みの穴の側は paradigm 27 で数え、ここでは重ねて数えない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "data-contract.md:200 の閉包の宣言と test_field_closure.py の (a)〜(e) は、検査する範囲について同じことを言っている"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "loop3 の20件それぞれに、修正した箇所がある（loop3_resolution）"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "CHANGELOG.md:24-29 の記述と、実際に修正した箇所が一致している"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "test_field_closure.py:427-439 で、DC の問いの列からターンの見出しへの参照が実在することを確かめている"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "（カイゼン）閉包テスト（test_field_closure.py）が何を検査していて何をしていないかを確かめた。(a) 2列が埋まっているか、(b) 週報・月報のテンプレート変数と出力層の対応、(c) 月報だけの見出しを期報・1年が「出力しない」と書いているか、(d) ターンの見出しの実在、(e) 旧基準の類型3種。(e) で .md 以外のファイルが走査されない点は、knowledge/ の外の非 md ファイルに当たりが無いことを確かめた。いまは実害が無いので指摘しない。",
+        "今回の指摘のうち4件は、このテストでは見つからない。paradigm 19（G の運用規則にはフィールドが無い）、paradigm 20（(d) は見出しがあるかしか見ない）、paradigm 22（key_number が DERIVED で検査されない）、paradigm 24（(b) は期報・1年を見ない）。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "test_field_closure.py:280 の docstring「週報・月報テンプレートの変数」と、実装（:284 の層の並び）は一致している"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "test_field_closure.py:427-439 はターンの見出しがあるかしか見ない。:284 は週報・月報だけを走査する。:81 は key_number を検査から外す。フィールドを持たない G の運用規則と、層ごとの要否（共通部品F）は対象外。CHANGELOG.md:28 と data-contract.md:200 が「閉包」と呼ぶ範囲より、検査の範囲が狭い"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "test_field_closure.py:462-469 の走査から外す範囲は、範囲外の指定（knowledge/・CHANGELOG・version-history）と一致する"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "test_field_closure.py は data-contract.md §3.1 の表を読んで検査していて、参照がつながっている"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/tests/test_field_closure.py",
+            "line": 427,
+            "section": "(d) test_question_turns_exist／(b) variable_errors（:279-304）／DERIVED（:73-85）"
+          },
+          "description": "閉包テストは、iter4 で塞ごうとした型の再発を一部しか止められない。(d) はターンの見出しがあるかしか見ないので、iqt:32 のように問いの粒度が足りなくても通る（paradigm 20）。(b) は週報・月報だけを走査し、key_number を DERIVED で外している。このため、月報の `今月の売上目標：` の行の一致（paradigm 22）も、期報の最重要数字の規則が無いこと（paradigm 24）も見つからない。G の初回規則のように DC のフィールドを持たない運用規則は、検査の外にある（paradigm 19）。CHANGELOG.md:28 と data-contract.md:200 は、このテストを「フィールドの閉包を機械で確かめる」ものと説明している。読む側は、規則全体が閉じていると受け取りやすい。",
+          "recommended_intervention": "4つ足す。(1) (d) に、フィールドごとに問いに含むべき語の小さな表（例: #9 は「項目ごと」「名前」「確認中」）を足し、参照先のターンの本文にその語があるかを確かめる。(2) key_number は DERIVED のまま、生成規則の検査を1件足す。月報テンプレートの節に `今月の売上目標：` が、期報の節に最重要数字の扱い（読み替えか、出力しないか）が書かれているかを確かめる。(3) 共通部品F の層別差分表に挙がった見出しについて、4層それぞれの節に対応する規則があるかを確かめる。(4) G :193 の利用箇所をターンの単位で書き、そのターンの見出しが実在するかを (d) と同じ方法で確かめる。あわせて data-contract.md:200 の説明に、検査の範囲（フィールドの単位）を1文書き添える。",
+          "root_cause": "なぜ閉包テストが今回の4件を見逃すのか → テストの対象が DC §3.1 のフィールド表と見出しの実在に限られているから → iter4 は loop3 の「フィールドがテンプレートと問いに入っていない」型に合わせてテストを作り、問いの中身、派生変数の中身、フィールドを持たない運用規則は対象に入れなかったから → 閉包の定義（data-contract.md:200）がフィールドの単位で、規則の単位（G の運用・共通部品F の層別の要否）で閉じているかを確かめるための正本の一覧が無いから。plugins/ubm-goal-setting/tests/test_field_closure.py:427",
+          "bucket": "doc",
+          "auto_fixable": false
+        }
+      ],
+      "score": 0.85
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "（仮説思考）仮説1「新しい `今月の売上目標：` の行が validate-cross-level.py の内訳の抽出に当たる」は棄却した。抽出パターン（:211 `延べ回数…回`、:219 `実人数：…名`、:227 `件数：…件`）はどれも `今月の売上目標：600000` に当たらない。到達点のラベル（`月間売上到達点`・`継続コンサル人数`）もこの行には使われていない。output-formats.md:1462 の「最初に当たった行を取る」という前提も崩れない。",
+        "仮説2「validate-goal-output.py と干渉する」も棄却した。売上目標は見出しから読み（:943-949）、--peer は最重要数字を比べない（:152-162）。月報の必須見出し（:1424-1431）も変わらない。月報の --peer のテスト（test_validate_goal_output.py:314-327）は、この行を含む fixture で通る形になっている。",
+        "仮説3「#37・#38 の見出しが期報・1年にまだ漏れている」も棄却した。読み替え規則の output-formats.md:1490（期報）と :1619（1年）、共通部品F の :161-162 に「出力しない」とある。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "output-formats.md:1461 の禁止事項と validate-cross-level.py:211/:219/:227 の抽出パターンは矛盾しない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "output-formats.md:1490/:1619/:161-162 で、#37・#38 の除外が期報・1年・層別差分表の3か所にそろっている"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "test_validate_goal_output.py:314-327 の fixture は、output-formats.md:1455 の書き方と同じ"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "validate-goal-output.py:943-949 は見出しを基準にしていて、新しい行に依存しない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "（論点思考）今回の中心の問いを「売上を根本に、1年→期→月→週の逆算がつながっているか」と置いて確かめた。G :189（金額を追い、成果・行動はその手段）、R3:209-212（売上→成果→行動の順に聞く）、validate-cross-level.py の当月の売上目標の4層の対応（:198-205）で、つながっている。",
+        "調整できるのは月報の4値だけ（validate-cross-level.py:254-256）で、年間の到達点と期全体の同値の継承は厳しく照合される（CHANGELOG.md:7）。中心の問いを揺らす矛盾は見つからなかった。各層の最重要数字が層ごとに違う値になるのは、設計どおりである（data-contract.md:290、validate-goal-output.py:152-162）。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "G :189 と R3:209 の「根本で追うのはこの売上」は同じ向き"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "validate-cross-level.py:192-205 で、今期と当月の売上目標が4層でそろってつながっている"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "CHANGELOG.md:7 と validate-cross-level.py:254-256 は、調整できる範囲について同じことを言っている"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "R3:212 から成果・行動の逆算（R3・R4）へつながる流れが切れていない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.9
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "（KJ法）loop3 の20件を6群にまとめ、群ごとに修正を確かめた。(a) 売上を最重要数字に置く（#1・#4・#8）、(b) YES をくれた人の名前と初回・確認中（#6・#13・#14・#17）、(c) 旧基準の言い換え（#5・#11・#12・#15・#18・#19）、(d) DB の例と coordinator（#2・#3・#7・#10）、(e) 期報・1年の継承と問いの順（#9・#16）、(f) 再発防止の仕組み（#20）。6群とも直っている。",
+        "今回の新しい指摘は3群にまとまる。「規則を使う側までたどれていない」（paradigm 19・20・25）、「写しと層ごとの定義」（paradigm 22・24）、「再発防止の網羅性」（paradigm 27）。群どうしで食い違いは無く、同じ根本原因（paradigm 26 の観察）から出ている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "loop3_resolution の6群の修正どうしで、互いを打ち消す変更は無い（G :189-193 を共通の参照先にしている）"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "loop3 の20件すべてに修正の根拠がある"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "goal-reviewer.md:62、agent-goal-reviewer-report-template.md:28、thinking-guide.md:322、R5:163 の G の参照の仕方がそろっている"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "SKILL.md:290 の索引から G と各層の【…の最重要数字】の注記へたどれる"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.9
+    }
+  ],
+  "loop3_resolution": [
+    {
+      "loop3_issue_no": 1,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1378",
+      "resolved": true,
+      "evidence": "output-formats.md:1381 で、【今月の最重要数字】に `今月の売上目標：{金額}` の1行を置くことが定まった。例は :1455、置く位置の規則は :1461。:1465 は「1年目標が無い期も `今月の売上目標：` の行は置く」としている。1年目標が無い期の月報にも売上の数字が入り、G :189 と食い違わなくなった。"
+    },
+    {
+      "loop3_issue_no": 2,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md:104",
+      "resolved": true,
+      "evidence": "kitahara-principles-db.md:104-106 で、例が共通部品A の形に直った。NG は「相手に情報を送る」（何を・いつまでが無い）。OK は `- [ ] 事例共有：AI集客の事例3つをまとめて送る　期日{M/D}` で、思い・考えは行動行に書かず内部で検討する、と注記している。"
+    },
+    {
+      "loop3_issue_no": 3,
+      "location": "plugins/ubm-goal-setting/agents/phase3-coordinator.md:32",
+      "resolved": true,
+      "evidence": "phase3-coordinator.md:29 が G を参照するだけになり、参照なしで繰り返していた「人と人とのつながりを大事にする行動設計」の文が無くなった。:32 は今はターン数の上限の行。"
+    },
+    {
+      "loop3_issue_no": 4,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/SKILL.md:290",
+      "resolved": true,
+      "evidence": "SKILL.md:290 の索引が「最重要数字（売上と人数の対） → 「共通部品G 原理原則の基準」と各層の【…の最重要数字】の注記」になった。最重要数字の正本へたどれる。"
+    },
+    {
+      "loop3_issue_no": 5,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/golden-sample-weekly.md:197",
+      "resolved": true,
+      "evidence": "golden-sample-weekly.md:197 が「前回 YES をくれた人から、次の YES（提案の受諾）を取れたか」に直った。接点の件数を基準にする文は無い。"
+    },
+    {
+      "loop3_issue_no": 6,
+      "location": "plugins/ubm-goal-setting/agents/goal-reviewer.md:62",
+      "resolved": true,
+      "evidence": "goal-reviewer.md:62 に「前回ブロックが初回マーカーの文書では、連続の判定を対象外にする」と「相手が確認中の項目は連続の判定から外し、確認中と書く」が入った。agent-goal-reviewer-report-template.md:28 も同じ扱い。1年層の初回が必ず誤って指摘されることは無くなった（初回の候補の確認を対話の側で行っていない点は、paradigm 19 の新しい指摘）。"
+    },
+    {
+      "loop3_issue_no": 7,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md:98",
+      "resolved": true,
+      "evidence": "kitahara-principles-db.md:99 が「次の3問は、行動を選ぶための内部の検討に使う。出力する行動行は共通部品A の形（何をする＋期日）で書き、考え・思いは行動行に書かない」になった。:106 の OK 例にも期日のトークンがある。"
+    },
+    {
+      "loop3_issue_no": 8,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:130",
+      "resolved": true,
+      "evidence": "R3:130 が「最重要数字に売上の数字があり、その売上につながる人数・件数が対で置かれている（共通部品G）」になり、月報は output-formats.md:1381 の `今月の売上目標：` の行で満たせる。R3:49 からも、ありもしない「成果目標の最重要数字」という概念が消えた（期報の最重要数字の規則が無い点は、paradigm 24 の新しい指摘）。"
+    },
+    {
+      "loop3_issue_no": 9,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:65",
+      "resolved": true,
+      "evidence": "interview-quick-templates.md の :65、:208、:344 が、どれも「まず前回 YES をくれた人（前回の成果目標で応じてくれた相手）との「先方が下す判断・受諾・合意・継続」を挙げ、そのあと新規の人を足してください」になった。R3:216 と同じ順番で聞く。"
+    },
+    {
+      "loop3_issue_no": 10,
+      "location": "plugins/ubm-goal-setting/agents/phase3-coordinator.md:93",
+      "resolved": true,
+      "evidence": "phase3-coordinator.md:92 の CONST_004 に「`run-ubm-goal-setting` では、ターンテンプレートに固定した引用を数えない（SKILL.md の「守ること」にある引用上限）」という例外が入り、SKILL.md と同じ規則になった。"
+    },
+    {
+      "loop3_issue_no": 11,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-consult/references/consult-frames.md:46",
+      "resolved": true,
+      "evidence": "consult-frames.md:46 の GF-07 が「その売上に至る YES を、誰から何をもらうかで考えると？ まず前回 YES をくれた人から挙げると？（人数・回数は売上に至る手段）」になった。:17 と :25 からは G を参照している。"
+    },
+    {
+      "loop3_issue_no": 12,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md:314",
+      "resolved": true,
+      "evidence": "kitahara-principles-db.md:314 の状況列が「売上の数字だけを追い、その売上に至る人数・回数が置かれていない」になった。:335 と :345 も、売上に至る手段が欠けている状況を指す向きにそろった。引用の列は変えていない。"
+    },
+    {
+      "loop3_issue_no": 13,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:189",
+      "resolved": true,
+      "evidence": "G の output-formats.md:191-192 に、前回 YES をくれた人の読み方と、初回（前回正本なし）・確認中の扱いが入った。data-contract.md:212 の #9 も、不明な相手を `確認中` として名前を含めて記録する形になった。"
+    },
+    {
+      "loop3_issue_no": 14,
+      "location": "plugins/ubm-goal-setting/agents/goal-reviewer.md:62",
+      "resolved": true,
+      "evidence": "goal-reviewer.md:62 のチェック方法が「管理用セクションの行動目標を、`### → （土台）` グループの行を除いて1行ずつ読み」「同じセクションの成果目標から」になり、どのセクションを読むかが決まった。"
+    },
+    {
+      "loop3_issue_no": 15,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md:163",
+      "resolved": true,
+      "evidence": "R5:163 が「売上目標に向けて、誰からどの YES をもらうかが決まっていますか？ 前回 YES をくれた人がいれば、その人との次の挑戦は入っていますか？」になり、ラベルだけでなく基準を示す問いになった。thinking-guide.md:322 にも G の中身が書かれている。"
+    },
+    {
+      "loop3_issue_no": 16,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1464",
+      "resolved": true,
+      "evidence": "output-formats.md:1490（期報）と :1619（1年）に「【前回のやらないことが守れたか】と【北原さんの原則（今月特に守ること）】は出力しない（読み替え後の名前でも出さない）」と書かれた。共通部品F の :161-162 にも、層ごとの要否の行が足された。閉包テストの (c) が、この記述を確かめている。"
+    },
+    {
+      "loop3_issue_no": 17,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md:160",
+      "resolved": true,
+      "evidence": "R1:162（ターン1A、全層にかかる発話の正本）が「成果目標は、項目ごとにどうなりましたか？ YES をくれた相手の名前も…分からない分は「確認中」でかまいません」になった。iqt の :158（月報）と :282（期報）も、項目ごとに名前まで聞く。data-contract.md:212 の集める問いの列もそろっている（週報の iqt:32 の言い回しのずれは、paradigm 20 の新しい low 指摘）。"
+    },
+    {
+      "loop3_issue_no": 18,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/golden-sample-weekly.md:197",
+      "resolved": true,
+      "evidence": "golden-sample-weekly.md:197 が「前回 YES をくれた人から、次の YES（提案の受諾）を取れたか」に、action-goals-best-practices.md:221 が「前回 YES をくれた人から、次の YES を取れたか」になった。閉包テスト (e) の類型「接点.{0,8}増」も、今後これが戻らないよう見張っている。"
+    },
+    {
+      "loop3_issue_no": 19,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-consult/references/consult-frames.md:46",
+      "resolved": true,
+      "evidence": "consult-frames.md:46 の GF-07 の問いは「売上に至る YES」を起点にし、「人数・回数は売上に至る手段」と書いている。確定事項O と G :189 と同じ向きになった。"
+    },
+    {
+      "loop3_issue_no": 20,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:198",
+      "resolved": true,
+      "evidence": "data-contract.md:200 で、§3.1 の表に「集める問い」「出力する層」の2列が足された。tests/test_field_closure.py が (a)〜(e) を検査する。(a) 2列が埋まっているか、(b) 週報・月報の変数と出力層の対応（:279-304）、(c) 月報だけの見出しを期報・1年が出さないこと（:307-325）、(d) ターンの見出しの実在（:427-439）、(e) 旧基準の類型3種（:454-458）。検査の範囲に残る穴は、paradigm 27 の新しい指摘。"
+    }
+  ]
+}

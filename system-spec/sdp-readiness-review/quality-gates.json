@@ -1,0 +1,225 @@
+{
+  "schema_version": "1.0",
+  "ran_at": "2026-11-03T14:28:11.092596+00:00",
+  "beads_ids": [
+    "harness-86kh"
+  ],
+  "graph_node_id": "task-sdp-readiness-review",
+  "mvp": true,
+  "minimal_functional_gates": "pass",
+  "merge_readiness": "incomplete-fresh-live-evidence-required",
+  "publication": "draft-with-known-evidence-failures",
+  "gates": [
+    {
+      "name": "devgraph-current-criteria-x86",
+      "argv": [
+        "arch",
+        "-x86_64",
+        "python3",
+        "-m",
+        "pytest",
+        "plugins/dev-graph/tests/test_skill_criteria_evidence.py",
+        "-k",
+        "independent_scenario_receipt_covers_exact_criteria",
+        "-q"
+      ],
+      "cwd": ".",
+      "started_at": "2026-11-03T14:25:08.607213+00:00",
+      "duration_seconds": 3.53,
+      "exit_code": 1,
+      "result": "fail",
+      "log": "system-spec/sdp-readiness-review/checks/devgraph-current-criteria-x86.log",
+      "requirement": "supplemental-live-evidence",
+      "classification": "6 passed / 3 stale behavior-closure receipts / 31 deselected; new actor trials pending"
+    },
+    {
+      "name": "devgraph-current-criteria",
+      "argv": [
+        "python3",
+        "-m",
+        "pytest",
+        "plugins/dev-graph/tests/test_skill_criteria_evidence.py",
+        "-k",
+        "independent_scenario_receipt_covers_exact_criteria",
+        "-q"
+      ],
+      "cwd": ".",
+      "started_at": "2026-11-03T14:24:04.810493+00:00",
+      "duration_seconds": 1.049,
+      "exit_code": 2,
+      "result": "fail",
+      "log": "system-spec/sdp-readiness-review/checks/devgraph-current-criteria.log",
+      "requirement": "supplemental-live-evidence",
+      "classification": "environment-error: arm64 Python cannot load x86_64 rpds; rerun as devgraph-current-criteria-x86"
+    },
+    {
+      "name": "release-check",
+      "argv": [
+        "python3",
+        "scripts/build-plugin-release.py",
+        "--check",
+        "--only",
+        "system-dev-planner"
+      ],
+      "cwd": ".",
+      "started_at": "2026-11-03T14:24:04.810490+00:00",
+      "duration_seconds": 0.174,
+      "exit_code": 0,
+      "result": "pass",
+      "log": "system-spec/sdp-readiness-review/checks/release-check.log",
+      "requirement": "required-minimal-gate"
+    },
+    {
+      "name": "script-frontmatter",
+      "argv": [
+        "python3",
+        "plugins/skill-governance-lint/scripts/lint-script-frontmatter.py",
+        "plugins/system-dev-planner/hooks/guard-implementation-readiness.py",
+        "plugins/system-dev-planner/scripts/resolve-project-context.py"
+      ],
+      "cwd": ".",
+      "started_at": "2026-11-03T14:24:04.810498+00:00",
+      "duration_seconds": 0.046,
+      "exit_code": 0,
+      "result": "pass",
+      "log": "system-spec/sdp-readiness-review/checks/script-frontmatter.log",
+      "requirement": "required-minimal-gate"
+    },
+    {
+      "name": "sdp-regression",
+      "argv": [
+        "python3",
+        "-m",
+        "pytest",
+        "plugins/system-dev-planner/tests/test_coverage.py",
+        "plugins/system-dev-planner/tests/test_runtime.py",
+        "plugins/system-dev-planner/tests/test_system_plan_lock.py",
+        "-q"
+      ],
+      "cwd": ".",
+      "started_at": "2026-11-03T14:24:04.810486+00:00",
+      "duration_seconds": 13.376,
+      "exit_code": 0,
+      "result": "pass",
+      "log": "system-spec/sdp-readiness-review/checks/sdp-regression.log",
+      "requirement": "required-minimal-gate"
+    },
+    {
+      "name": "strict-graph-final",
+      "argv": [
+        "python3",
+        "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "--graph",
+        ".dev-graph/state/graph.json",
+        "--repo-root",
+        ".",
+        "--require-canonical-envelope",
+        "--strict-artifact-readiness"
+      ],
+      "cwd": ".",
+      "started_at": "2026-11-03T14:26:24.783544+00:00",
+      "duration_seconds": 0.113,
+      "exit_code": 0,
+      "result": "pass",
+      "log": "system-spec/sdp-readiness-review/checks/strict-graph-final.log",
+      "requirement": "required-minimal-gate"
+    },
+    {
+      "name": "strict-graph",
+      "argv": [
+        "python3",
+        "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "--graph",
+        ".dev-graph/state/graph.json",
+        "--repo-root",
+        ".",
+        "--require-canonical-envelope",
+        "--strict-artifact-readiness"
+      ],
+      "cwd": ".",
+      "started_at": "2026-11-03T14:24:04.810488+00:00",
+      "duration_seconds": 0.165,
+      "exit_code": 0,
+      "result": "pass",
+      "log": "system-spec/sdp-readiness-review/checks/strict-graph.log",
+      "requirement": "required-minimal-gate"
+    },
+    {
+      "name": "task-spec-parity",
+      "argv": [
+        "python3",
+        "-c",
+        "import json,re,pathlib; root=pathlib.Path(\"plugin-plans/system-dev-planner\"); graph=json.loads((root/\"task-graph.json\").read_text()); nodes={n[\"id\"]:n for n in graph[\"nodes\"]}; ids=(\"B-C07\",\"B-C09\"); [None for i in ids if nodes[i][\"acceptance_criterion\"]==json.loads(re.search(r\"^acceptance_criterion: (.+)$\",(root/\"task-specs\"/(i+\".md\")).read_text(),re.M).group(1)) or (_ for _ in ()).throw(AssertionError(i))]; print(\"B-C07/B-C09 acceptance parity: PASS\")"
+      ],
+      "cwd": ".",
+      "started_at": "2026-11-03T14:28:11.020451+00:00",
+      "duration_seconds": 0.028,
+      "exit_code": 0,
+      "result": "pass",
+      "log": "system-spec/sdp-readiness-review/checks/task-spec-parity.log",
+      "requirement": "required-minimal-gate"
+    },
+    {
+      "name": "ubm-task-regression",
+      "argv": [
+        "python3",
+        "-m",
+        "pytest",
+        "plugins/ubm-goal-setting/tests/test_field_closure.py",
+        "plugins/ubm-goal-setting/tests/test_goal_alignment.py",
+        "plugins/ubm-goal-setting/tests/test_turn_question_limit.py",
+        "plugins/ubm-goal-setting/tests/test_validate_goal_output.py",
+        "plugins/ubm-goal-setting/tests/test_validate_cross_level.py",
+        "plugins/ubm-goal-setting/tests/test_validate_goal_linkage.py",
+        "plugins/ubm-goal-setting/tests/test_validate_knowledge_graph.py",
+        "plugins/ubm-goal-setting/tests/test_build_journal_context.py",
+        "-q"
+      ],
+      "cwd": ".",
+      "started_at": "2026-11-03T14:24:04.810479+00:00",
+      "duration_seconds": 18.998,
+      "exit_code": 0,
+      "result": "pass",
+      "log": "system-spec/sdp-readiness-review/checks/ubm-task-regression.log",
+      "requirement": "required-minimal-gate"
+    },
+    {
+      "name": "scoped-whitespace",
+      "result": "pass",
+      "ordinary_files": 45,
+      "ordinary_exit_code": 0,
+      "c02_generated_files": [
+        "architecture/sdp-readiness-review.md",
+        "docs/sdp-readiness-review.md",
+        "features/sdp-readiness-review.md",
+        "specs/sdp-readiness-review.md",
+        "tasks/sdp-readiness-review.md"
+      ],
+      "c02_exit_code": 0,
+      "exceptions": [
+        "C02正規writerの末尾空行はreceipt SHAを保持するためblank-at-eofのみ許容。",
+        "過去eval-logと今回のコマンド出力は原bytes保存のため整形しない。過去証跡191件はpublication-manifestのSHAで照合済み。"
+      ],
+      "raw_or_command_output_files": 200
+    }
+  ],
+  "not_run": [
+    "新しい有料actor実走",
+    "全プラグイン網羅テスト",
+    "30思考法の再評価"
+  ],
+  "remaining": [
+    {
+      "component": "C02/run-dev-graph-node",
+      "reason": "C07/C09変更後のclosure digestに対するlive-trial受領書が必要"
+    },
+    {
+      "component": "C04/run-dev-graph-requirements",
+      "reason": "同上"
+    },
+    {
+      "component": "C14/run-dev-graph-decompose",
+      "reason": "同上"
+    }
+  ]
+}

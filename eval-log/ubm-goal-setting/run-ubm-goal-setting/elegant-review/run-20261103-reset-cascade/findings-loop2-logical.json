@@ -1,0 +1,818 @@
+{
+  "agent_id": "elegant-logical-structural-analyst",
+  "version": 1,
+  "target": {
+    "plugin": "ubm-goal-setting",
+    "skill": "run-ubm-goal-setting",
+    "scope_mode": "plugin"
+  },
+  "loop_count": 2,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:176-190 共通部品G は1箇所にだけある。R3-step3-goal-setting.md:43、R4-step4-action-plan.md:43、agents/phase3-coordinator.md:151、agents/goal-reviewer.md:62、references/thinking-guide.md:474 は1行の参照で使っている。G のための出力見出しは増えていない（output-formats.md:189）",
+        "plugins/ubm-goal-setting/agents/phase3-coordinator.md:146 の評価優先度は「行動の具体性 > 合宿整合性 > 関係構築軸」。直下の表（:150-152）の行名は「精神論排除／関係構築軸／やらないこと」で名前が合わず、合宿整合性の行もない。大前提の G（output-formats.md:178）を最下位に置いている",
+        "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md:80 は「月商◯◯円を達成する」を関係構築の文言へ書き換えさせる。:82 は人名のない行動目標を修正の対象にする。phase3-coordinator.md:203 は Phase 3 の開始時にこの DB を読み、goal-reviewer.md:134 も「適用:」の行で場面を確かめる",
+        "loop1 の 1-0〜1-2 は解消した（plugin-composition.yaml:21、thinking-guide.md:406、agent-goal-reviewer-report-template.md:29）"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/ubm-goal-setting/agents/phase3-coordinator.md:146",
+            "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md:80"
+          ],
+          "violation_count": 2
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "G の4行（output-formats.md:182-185）は売上・成果・行動・到達点のすべての要素を覆い、批判的に見ても抜けている要素はない"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "見つかった食い違いはどちらも合否の判断そのものが逆になる矛盾なので C1 に計上した。表記の揺れとして別に数える箇所はない"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "G から原則DB への参照（output-formats.md:178）と、DB から G への参照（kitahara-principles-db.md:15）はどちらも実在し、参照切れはない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/agents/phase3-coordinator.md",
+            "line": 146,
+            "section": "Layer 4 出力評価基準"
+          },
+          "description": "評価優先度が「行動の具体性 > 合宿整合性 > 関係構築軸」で、G の基準（関係構築軸 :151）を最下位に置いている。共通部品G は全目標の「大前提の基準」（output-formats.md:178）で、原則DB も「最上位原則」（kitahara-principles-db.md:60）としているので、これと逆になる。さらに優先度の名前が表の行（精神論排除／関係構築軸／やらないこと :150-152）と合わず、「合宿整合性」は表に行がない。項目が競合したときにどれを先に直すかが決まらない",
+          "recommended_intervention": "【意味の変更あり】146行目を表の行名で書き直し、G を上位に置く（例:「関係構築軸（共通部品G）> 精神論排除 > やらないこと」）。合宿整合性を残すなら、表に行と合格条件を足す",
+          "root_cause": "iter2 で G を大前提に上げたとき、表の行（:151）だけを書き換え、優先度の行が旧版のまま残った"
+        },
+        {
+          "severity": "medium",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md",
+            "line": 80,
+            "section": "関係構築 > 軌道修正の判断基準"
+          },
+          "description": "80行目は「月商◯◯円を達成する」が目的化していたら「◯◯さんとの関係を深め、相談を受ける」に修正すると指示する。82行目は行動目標に人名がなければ修正の対象にする。前者は R3-step3-goal-setting.md:24（売上目標は1つ置いたまま、関係構築の文言に置き換えない）、phase3-coordinator.md:151、G の逆算順序の維持（output-formats.md:187）と矛盾する。後者は共通部品A の合格基準（output-formats.md:25「人名は必須にせず」）と矛盾する。coordinator は Phase 3 の開始時にこの DB を読む（:203）ため、対話の中で売上目標の削除や人名の強制が起きうる",
+          "recommended_intervention": "【意味の変更あり】80行目を「売上目標は置いたまま、成果目標を相手側で起きる事実（相談の依頼・紹介）で書く（R3 の関係構築ファースト）」に改める。82行目を「判定に必要な相手が管理用の本文で特定できない → 本文に相手を足す（共通部品A）」に改める",
+          "root_cause": "軌道修正の判断基準が、A と R3:24 の確定より前の文言のまま残った。iter2 の G 導入時は、82行目に括弧書きを足すだけにとどまった"
+        }
+      ],
+      "score": 0.72
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:476-481 の期日トークンの正規表現は、output-formats.md:27 のトークン集合（M/D・YYYY-MM-DD・曜・毎日・毎朝・毎週・今週）と一致する。A から検査器への演繹は通っている",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:566 の OK 例「3/15までに作成したセミナー資料を先方へ提示する」は本文に具体日を埋め込み、行末に期日トークンがない。A（output-formats.md:25-26）を当てはめると FAIL になる",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:143-144、:163、:1375 は記録先を「月報の管理用【確認された情報】」と定める。一方、月報テンプレートは【確認された情報】を両群の前に1回だけ置く（:1137/:1160/:1254）。前提を当てはめると、記録先が存在しない",
+        "共通部品E の行書式（output-formats.md:144）は、validate-goal-output.py:552-589 の check_revision_records で、5欄・項目名の実在・変更前後の差まで検査している（残件10は解消）",
+        "loop1 の 2-0〜2-4 は解消した（interview-quick-templates.md:65/208/345、golden-sample-weekly.md:160、output-formats.md:1149/:970、data-contract.md:209-210）"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:566",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1160"
+          ],
+          "violation_count": 2
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "A の行書式・期日トークン・日付索引の各規則には、validate-goal-output.py の対応する検査（:476-486、:593-645）がそろっている"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "貢献0の3形（output-formats.md:60-65）と data-contract.md:496 は同じ形で、表記は一致している"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "data-contract.md:60 と :62 の output-formats.md への参照先（共通部品F、月報の2セクション規定）は実在する"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md",
+            "line": 566,
+            "section": "5. 数値ルール > 行動目標の期日"
+          },
+          "description": "OK 例「3/15までに作成したセミナー資料を先方へ提示する」は、具体日を本文に埋め込み、行末に `期日` トークンがない。共通部品A の「具体日は行末の期日欄だけ」（output-formats.md:25）と「行末に期日トークンが無ければ FAIL」（:26）から演繹すると、この OK 例は validate-goal-output.py:476-486 で FAIL になる。手本が不合格の形を示している",
+          "recommended_intervention": "OK 例を `- [ ] セミナー資料：先方へ提示する　期日3/15` に置き換え、書式は「共通部品A 行動行」に従うと1行で参照する",
+          "root_cause": "A を新設して期日を行末へ移したとき、data-contract §5 の表が置き換えの対象から漏れた"
+        },
+        {
+          "severity": "medium",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 1160,
+            "section": "月報テンプレート 【確認された情報】"
+          },
+          "description": "共通部品E（:143/:144）、F（:163）、:1375 は、上位配分と行動の見直しの記録先を「月報の管理用【確認された情報】」と定めている。しかし月報テンプレートは【確認された情報】を両群に共通のヘッダーとして、`# 北原さん提出用（シンプル）` の前に1回だけ置く（:1137/:1160/:1254）。管理用の【確認された情報】は存在しない。記録を書くと提出用の読み手にも見える位置に入り、:149「平常時の月報と提出用には記録を追加しない」と両立しない。validate-goal-output.py:552-589 は月報の【確認された情報】をすべて走査し、管理用かどうかを区別しないので、この食い違いは検出されない",
+          "recommended_intervention": "【意味の変更あり】どちらかに揃える。(a) 記録先を「群の前の【確認された情報】」と書き直し（E :143-144、F :163、:1375）、:149 を「提出時は記録行を残すか除くか」を明記する形に改める。(b) 記録だけを管理用群の中に置く規定に改め、テンプレート :1137 にその位置を書く。必須見出しの完全一致（:1134）を崩さない方を選ぶ",
+          "root_cause": "E を新設したとき「管理用」という語で記録先を指定したが、月報テンプレートの群の構成（:1137 の共通ヘッダー規定）と照合しなかった"
+        }
+      ],
+      "score": 0.74
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "#37 prev_not_doing_check の出現を集めると、二手に割れる。「週報・月報」は data-contract.md:238、R1-step1-current-review.md:62、references/agent-output-formatter-steps.md:23、output-formats.md:1418-1420、CHANGELOG.md:13 の5箇所。「週報のみ」は data-contract.md:307/:407、R1-step1-current-review.md:120、agents/output-formatter.md:92 の4箇所",
+        "goal-reviewer の13項目は、goal-reviewer.md:3、agent-goal-reviewer-report-template.md:19-37、SKILL.md:205、workflow-manifest:64、execution-prompts.md:136 の5箇所で一致する",
+        "--yearly/--no-yearly の規則本文は validation-gates.md:49-52 にだけある。output-formats.md:97/:586、data-contract.md:322/:352、SKILL.md:97、goal-reviewer.md:247、output-formatter.md:269 は「IN3 の1年層の引数」への参照か、返却項目の列挙になった（3-0 解消）",
+        "差分の不明値は output-formats.md:777 で「確認中」に統一された（3-1 解消）。月報を1ファイルにする理由は、data-contract.md:60 では共通部品F への参照だけになった（3-2 解消）"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:238",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:307"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "36フィールド（data-contract.md:19/:198）と #14 actions（:215）・#15 欠番（:216）は、集めた全出現で一致している"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "13項目と --yearly の記述は、出現を集めても表記が揃っている"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "「IN3 の1年層の引数」への参照は、すべて validation-gates.md:49-52 に着地する"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md",
+            "line": 238,
+            "section": "#37 prev_not_doing_check"
+          },
+          "description": "同じフィールド #37 の対象層が、ファイルによって違う。「週報・月報」としているのは data-contract.md:238、R1-step1-current-review.md:62、agent-output-formatter-steps.md:23、output-formats.md:1418-1420（月報テンプレートの【前回のやらないことが守れたか】）、CHANGELOG.md:13。「週報固有／週報のみ」としているのは data-contract.md:307、:407（Step 1「週報は前週のやらないことの確認」）、R1-step1-current-review.md:120、agents/output-formatter.md:92。Step 1 の定義（:407）に従うと、月報では #37 が集められない。このため月報テンプレートの {{prev_not_doing_check}}（:1420）は生成元を持たない。承認済みの方針K（#37 は週報のみ）とも、月報側の記述が食い違う",
+          "recommended_intervention": "【意味の変更あり】方針Kに合わせる場合は、data-contract.md:238、R1:62、agent-output-formatter-steps.md:23 から「月報」を外し、output-formats.md:1418-1420 の月報の節を削除し、CHANGELOG.md:13 を直す。月報への拡張を採る場合は、方針Kを改めたうえで data-contract.md:307/:407、R1:120、output-formatter.md:92 に月報を足し、月報の Step 1 の問いも追加する",
+          "root_cause": "#37 を新設したとき、月報への拡張を定義・テンプレート・CHANGELOG にだけ入れ、Step の定義・受け渡し・エージェントの入力の側を週報のままにした"
+        }
+      ],
+      "score": 0.78
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md:15 は「写像は共通部品G」と書く。しかし :21/:27/:33/:44/:50/:54 の「適用:」行が、Step と層への当てはめを書き直している。:54 は PR-437 を1年・期報だけに当て、output-formats.md:184 の行動目標の行（全層で、可愛がる＝直下を導く）より狭い。:27 の「売上を先に追わない」には、output-formats.md:187 の「逆算の順序（共通部品C）は変えない」が無い",
+        "最も筋の通る説明は次のとおり。G を写像の正本にしたとき、DB 側の適用行を引用と参照に縮めず、iter2 より前の当てはめを残した。coordinator（phase3-coordinator.md:110/:203）と goal-reviewer（goal-reviewer.md:96/:134）はどちらも適用行を読むので、G と適用行のどちらを優先するかで判断が分かれうる",
+        "phase3-coordinator.md:146 が旧版のまま残ったことも、同じ仮説（表の行だけ書き換え、周辺の行を見直さなかった）で説明できる（計上は critical）",
+        "loop1 4-0 は解消した（output-formats.md:147、golden-sample-weekly.md:205）"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "適用行と G は範囲の広さが違うだけで、判断が正反対になる行はない。:80/:82 の矛盾は critical に計上した"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "原理原則6段（kitahara-principles-db.md:17-54）は、G の4行（output-formats.md:182-185）のどれかに写像されている"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md:54"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "DB から G への参照（kitahara-principles-db.md:15）は実在する"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C3",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md",
+            "line": 54,
+            "section": "成果を出す人の原理原則 > 適用行"
+          },
+          "description": "DB は写像の正本を G とする（:15）が、各段の「適用:」行が当てはめを独自に書き直していて、G とずれる。:54 は PR-437（直下を導く指導）を1年・期報だけに当てる。一方 G の行動目標の行（output-formats.md:184）は、全層の行動の選び方に「可愛がる（直下を導く）」を含む。:27 は「売上を先に追わない」だけを書き、G :187 の「売上→成果→行動の逆算順序は変えない」を欠く。同じ原理原則について、写像の記述が2箇所に並んでいる",
+          "recommended_intervention": "適用行は「どの G の行に当たるか」の1行参照（例:「適用: 共通部品G の行動目標の行」）に縮め、層・Step の範囲は G にだけ置く。:54 の範囲を G と揃える",
+          "root_cause": "G を新設したとき、DB 側の既存の適用行を縮めず、写像を二重に持った"
+        }
+      ],
+      "score": 0.8
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "縦の連鎖はつながっている。原則DB（kitahara-principles-db.md:10-54）→ 共通部品G（output-formats.md:176-190）→ R3/R4（R3-step3-goal-setting.md:43、R4-step4-action-plan.md:43）→ goal-reviewer の6（goal-reviewer.md:62）→ coordinator の評価（phase3-coordinator.md:151）",
+        "G を使う Step は output-formats.md:189 で「成果は Step 3 の R3、行動は Step 4 の R4」とレビューに限られている。R1-step1-current-review.md と R2-step2-gap-analysis.md には G への参照がない（grep で0件）。一方 G の成果目標の行（:183「前回 YES をくれた人と連続しているか」）と :188 は、前回の実績を判断の材料にする",
+        "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md:88/:92 は、行動目標に考えと感情を書かせる。上位の原則が、下位の行の書式（output-formats.md:30、phase3-coordinator.md:50 の「内部の検討で出力しない」）を上書きしている",
+        "selection-focus-goal-frame.md:52 の表は、週間・月間・期報・1年の4列になった（5-0 解消）。RUNBOOK.md:179 と EVALS.json:23 も4層を含む"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md:92"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:189"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "1年→期報→月報→週報の層名は、plugin-composition.yaml:17、RUNBOOK.md:179、selection-focus-goal-frame.md:52 で一致している"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "R3:43、R4:43、goal-reviewer.md:62、phase3-coordinator.md:151 から G への参照は実在する"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "bucket": "doc",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 189,
+            "section": "共通部品G 原理原則の基準"
+          },
+          "description": "承認した方針では、G を逆算（R1〜R4・phase3-coordinator・thinking-guide）で使う。しかし G :189 は使う場面を R3（成果）・R4（行動）とレビューに限っていて、R1-step1-current-review.md と R2-step2-gap-analysis.md には G の参照がない。G の成果目標の行（:183）と :188 の「同じ人と連続する」は、前回 YES をくれた人を Step 1/2 で拾っておかないと Step 3 で判断できない。原則DB の kitahara-principles-db.md:44 も、PR-435 を「前回比較と成果目標（Step 1〜3）」に当てている。上位の原則から Step 1〜2 の情報収集への縦のつながりが欠けている",
+          "recommended_intervention": "G :189 を「前回 YES をくれた人の確認は Step 1 の R1（前回実績）と Step 2 の R2（差分）、成果は R3、行動は R4」に広げる。R1 の前回実績の確認と R2 の差分の節に、G への1行参照を足す（見出しは増やさない）",
+          "root_cause": "G を新設したとき、R3/R4 の逆算だけに参照を通し、前回比較の Step を写像の対象に入れなかった"
+        },
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md",
+            "line": 92,
+            "section": "思考→感情→行動の連動"
+          },
+          "description": ":88 は「数字だけの行動目標ではなく、相手の感情と自分の思考が見える目標にする」、:92 は「メッセージを3件送る」を「相手が何を求めているかを理解した上で、相手が喜ぶ情報を3件届ける」に変えるよう求める。どちらも、共通部品A の注記規則（output-formats.md:30「【考え】【思い】や理由・背景は依頼されたときだけ。内部で検討する」）、合格基準（:25 判定に必要な要素だけ）、phase3-coordinator.md:50（考え→思い→行動は内部の検討で、出力しない）と矛盾する。coordinator がこの DB を読むので、行動行が長文化する",
+          "recommended_intervention": ":88 を「行動を設計するとき、考えと感情を内部で検討する。行動行には書かない（共通部品A の注記）」に改める。:92 の書き換え例を A に従う行（例: `- [ ] 情報提供：相手の関心に合う情報を3件届ける　期日{M/D}`）に改める",
+          "root_cause": "原則DB の適用文が、A の確定（注記は依頼時だけ）より前の形のまま残った"
+        }
+      ],
+      "score": 0.72
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "共通部品A（output-formats.md:20-33）は、管理用・提出用・項目名・転記・合格基準・期日トークン・日付索引・注記・NG 語・優先順位に分かれ、各要素の正本が1つに決まっている",
+        "日付索引の書式（output-formats.md:29）は、validate-goal-output.py:593-597 の DATE_INDEX_RX と build-journal-context.py:693-736 の extract_day_index で、同じ形に分解されている",
+        "#14 actions は data-contract.md:215 と agent-output-formatter-steps.md:24 で同じ4要素。全36フィールドで、#15 は欠番（data-contract.md:19/:198/:216）",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:254/:392 の【前回のやらないことが守れたかチェック】は #37（data-contract.md:238）と同じ名前だが、問いの意味・Step・層が違う。#37 を集めるはずの週報ターン1（:24-35）に、その問いがない",
+        "loop1 の 6-0〜6-2 は解消した（output-formatter.md:120、golden-sample-weekly.md:162/:165、data-contract.md:219）"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "A の分解単位どうしで判断が逆になる箇所はない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "#14 actions の4要素（item_name・what・deadline_token・outcome_group）は、行動行の要素（output-formats.md:20）をすべて覆う"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:254"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "日付索引の分解は、生成（output-formats.md:1412）・読み取り（build-journal-context.py:693-736）・検査（validate-goal-output.py:593-645）の3つで同じ形を使い、どれも切れていない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C3",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md",
+            "line": 254,
+            "section": "月報フロー ターン8 整合性チェック"
+          },
+          "description": "月報ターン8（:254）と期報ターン9（:392）の【前回のやらないことが守れたかチェック】は「前回設定した「やらないこと」を今回も繰り返していないか？」で、今回の案にやらないことが重複していないかを見る問いになっている。#37（data-contract.md:238）の「守れた／守れなかった（M/D）」とは意味が違う。実施する Step も、#37 の Step 1 ではなく Step 5 で、期報まで含む。さらに、#37 を集める週報ターン1（:24-35）には、前週のやらないことを聞く問いがない。同じ名前の確認が、意味・Step・層の単位でずれている",
+          "recommended_intervention": ":254/:392 の見出しを「やらないことの重複チェック」に改名し、#37 と区別する。週報ターン1（:30-32）に「3. 前週のやらない（日付索引の `｜やらない：`）を守れたか」を足す。月報の扱いは、induction で挙げた #37 の範囲の決定に従う",
+          "root_cause": "#37 を新設したとき、対話テンプレートの旧チェック名を定義し直さず、名前だけが一致した"
+        }
+      ],
+      "score": 0.82
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:272 は、出力見出しの要否の正本を §4.5 とする。しかし :548（月報4件）と :549（期報6件）は、validate-goal-output.py:1448-1455（月報23件）と :1460-1467（期報22件）を覆っていない。週報（:547）と1年（:550）は、全件の列挙か正本への参照がある",
+        "期間語の列挙は揃っていない。output-formats.md:420 は前週／前月／前期／前年の4つだが、:643 と :783-785 は前{週/月/期} の3つで、前年が欠ける",
+        "共通部品の列挙も揃っていない。resource-map.yaml:9 は「共通部品A〜F の正本」と書く。output-formatter.md:111 は「共通部品の判定行をすべて適用する」と書きながら、A〜F だけを並べる。どちらも G が抜けている",
+        "貢献0の3形（output-formats.md:60-65、data-contract.md:496）と、層の4分類（plugin-composition.yaml:17）は、漏れも重複もない"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "列挙の欠けはあるが、列挙どうしで判断が逆になる箇所はない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:548",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:783",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/resource-map.yaml:9"
+          ],
+          "violation_count": 3
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "貢献0の3形の表記は、B と data-contract で一致している"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "data-contract.md:550 から output-formats.md の「必須見出し23件」への参照は実在する"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md",
+            "line": 548,
+            "section": "4.5 goal_type 別の必須セクション"
+          },
+          "description": "§4.5 は出力見出しの要否の正本（:272）だが、月報の行（:548）は売上目標・成果目標・行動目標・やらないことの4件しか挙げない。期報の行（:549）も6件だけ。検査器は月報23件（validate-goal-output.py:1448-1455：前月ブロック12件、確認された情報、振り返りチェックリストなど）、期報22件（:1460-1467）を必須にしている。正本の列挙が実際の必須集合を覆っていない。さらに :549 の「3ヶ月の目標」は、検査器の期報の一覧にない",
+          "recommended_intervention": ":548/:549 を :550 と同じ形にする（「必須見出しは N 件。全件の逐語一覧は output-formats.md の該当フォーマットが正本」）。「3ヶ月の目標」を必須とするかどうかは、検査器の一覧と揃える",
+          "root_cause": "1年の行だけを正本参照の形に直し、月報・期報の行は旧版の短い列挙のまま残った"
+        },
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 783,
+            "section": "未達を挽回するための行動の見出し"
+          },
+          "description": ":643 の「前週/前月/前期の◯◯に対して未達を挽回するための行動」と、:783-785 の「【前{週/月/期}の…】」は、前期間語を3つしか挙げず、1年層の「前年」が欠けている。:420 と検査器（validate-goal-output.py:1474-1479 の前年の見出し）は4層を前提にしている",
+          "recommended_intervention": ":643 を「前週/前月/前期/前年」に、:783-785 を「【前{週/月/期/年}の…】」に置き換える",
+          "root_cause": "loop1 の 7-2 の修正で data-contract と interview-quick-templates だけを直し、output-formats の本文が漏れた",
+          "loop1_ref": "7-2"
+        },
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/resource-map.yaml",
+            "line": 9,
+            "section": "output-formats.md の topic"
+          },
+          "description": "resource-map.yaml:9 は output-formats.md を「共通部品A〜F の正本」と紹介し、G が抜けている。agents/output-formatter.md:111 も「共通部品の判定行をすべて適用する」と書きながら A〜F だけを並べ、G がない。保存前の確認項目5（:115）の関係構築の項目も、G を参照していない。共通部品の列挙が G の新設に追いついていない",
+          "recommended_intervention": "resource-map.yaml:9 を「共通部品A〜G」にする。output-formatter.md:111 の列挙に「原理原則の基準 → 共通部品G」を足す（あるいは :115 から G への1行参照にする）",
+          "root_cause": "G を新設したとき、参照を R3/R4/goal-reviewer/coordinator/thinking-guide に通したが、目録と出力エージェントの列挙を見直さなかった"
+        }
+      ],
+      "score": 0.74
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "月報の版（旧詳細版／簡潔版）と依頼の有無の2軸で日付索引を見ると、(簡潔版, 依頼あり) のセルで記述が逆になる。output-formats.md:159/:1412 は「簡潔版では省略する」、:204 は「依頼された場合だけ補う」",
+        "差分記号で見ると、output-formats.md:774 と data-contract.md:565 は + か - を必須にするが、output-formats.md:852-853 と golden-sample-weekly.md:62/:80 は ±0件 と書く",
+        "golden-sample-weekly.md:166 と action-goals-best-practices.md:111 は、「平日に4件ずつ送る　期日毎日」を良い例にしている。トークン集合（output-formats.md:27）に平日が無いための便法で、本文と期日の範囲がずれる（良い例として承認されているので、観察にとどめる）",
+        "週報の「プロジェクト進捗」ブロック（output-formats.md:1102/:1104）は、F（:158 週報はプロジェクト別タスクを出力しない）と名前が近いが、役割は別（観察のみ）",
+        "提出用と管理用の軸は、A（:21-22）と提出用の粒度表（:1141-1147）で射影として一貫している"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:204"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "提出用・管理用の2軸の表（output-formats.md:1141-1147）は、項目・成果・所属・個人名・記述量の全セルが埋まっている"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "±0件 は気になる点（smell）として計上し、条件違反には数えない"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "F（:158-159）から A の日付索引（:29）への参照は実在する"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 204,
+            "section": "月報の項目保持と同期"
+          },
+          "description": "簡潔版で日別の詳細を依頼されたとき、:204 は「簡潔版でプロジェクト別・日別の詳細は依頼された場合だけ補う」と書く。一方、F（:159「簡潔版では省略」）とテンプレートの注記（:1412「`monthly_action_style: concise` では省略する」）は省略と定める。同じセルで記述が逆になる。旧詳細版で依頼が無い場合も、:159 の「月報の詳細を依頼された場合だけ」が、既定の旧詳細版を指すのかどうか読み取れない",
+          "recommended_intervention": "2軸の4セルを F の1行で決める（例: 旧詳細版＝作る／簡潔版＝依頼されたときだけ作る、または簡潔版＝作らない）。:204 と :1412 はその F の行への参照にする",
+          "root_cause": "簡潔版の追加と F の新設が別々の時期に入り、日別タスクの条件を1箇所に寄せなかった"
+        },
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 852,
+            "section": "差分の例"
+          },
+          "description": "差分セクションの規則（:774「必ず + または - を付ける」、data-contract.md:565）に対して、例（:852-853）とゴールデンサンプル（golden-sample-weekly.md:62/:80）は ±0件 を使う。検査器では通るが、規則の文言と手本がずれている",
+          "recommended_intervention": ":774 に「差分0は `±0` と書く」を足すか、例を +0 に統一する",
+          "root_cause": "差分0の表記を規則で決めないまま、例だけが ±0 で定着した"
+        }
+      ],
+      "score": 0.8
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "Step 1→Step 2 の受け渡しは、R1-step1-current-review.md:120 と R2 の受け取り（loop1 の 9-0・9-1 の修正箇所 R2:119、:51-52）で項目名が一致する",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md:97 は、外側ループを回数ではなくユーザーの承認で終える（9-2 解消）。phase3-coordinator.md:154 は、次問案の作り直しを2回までにしている",
+        "validation-gates.md:49 は、--yearly と --no-yearly の渡し忘れを rc=2 で止める。工程の分岐が仕組みで閉じている",
+        "日付索引の工程は同じ書式でつながっている。生成（output-formats.md:1412）→ ジャーナル側の読み取り（build-journal-context.py:693-736）→ 検査（validate-goal-output.py:593-645）（9-3 解消）",
+        "#37 の Step のずれ（Step 1 で収集、Step 5 でチェック）は decomposition に、月報への範囲のずれは induction に計上したので、ここでは重ねて数えない"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "Step 1〜5 の終了条件どうしで逆になる箇所はない（R5-step5-final-check.md:97、phase3-coordinator.md:154）"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "各 Step の出口には、受け渡す項目（R1:120）か終了条件（R5:97）が定義されている"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "日付索引の書式は、生成・読み取り・検査の3工程で一致している"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "validation-gates.md:49-52 の rc=2 の規定は、data-contract.md:322 と output-formats.md:586 から参照されていて、切れていない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.9
+    }
+  ],
+  "loop1_resolution": [
+    {
+      "paradigm_id": 1,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/plugin-composition.yaml:21 は「共通部品A 行動行」への参照になり、「誰に・何を・いつまで・何件」の旧基準は消えた"
+    },
+    {
+      "paradigm_id": 1,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-guide.md:406 は期日トークン `毎日`／`毎朝` と共通部品A への参照になり、トリガー・時刻の要求は消えた（:319 も A 参照）"
+    },
+    {
+      "paradigm_id": 1,
+      "issue_index": 2,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/references/agent-goal-reviewer-report-template.md:29 は「行動行の形」になって goal-reviewer.md:63 と一致し、人名の明記を合否の条件にしていない"
+    },
+    {
+      "paradigm_id": 2,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:65 （:208/:345 も）は共通部品B を参照し、成果目標の書き方が B と一致した"
+    },
+    {
+      "paradigm_id": 2,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/golden-sample-weekly.md:160 は「提案書：Aさんへ提出する」になり、資料作成を段として立てる例は消えた"
+    },
+    {
+      "paradigm_id": 2,
+      "issue_index": 2,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1149 は「具体日は期日欄だけに書く」と A の合格基準を参照し、粒度の節との食い違いは消えた"
+    },
+    {
+      "paradigm_id": 2,
+      "issue_index": 3,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:970 の実績欄の記号の規定は :950 と揃い、記号の扱いの食い違いは消えた"
+    },
+    {
+      "paradigm_id": 2,
+      "issue_index": 4,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:209 は #8/#9 を string[] とし、R2 の受け取り（:51-52）と型が一致した"
+    },
+    {
+      "paradigm_id": 3,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/validation-gates.md:49 から :52 だけが --yearly/--no-yearly の規則本文を持ち、output-formats.md:97、data-contract.md:322/:352、SKILL.md:97、goal-reviewer.md:247 は「IN3 の1年層の引数」への1行参照になった"
+    },
+    {
+      "paradigm_id": 3,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:777 は「確認中」と書き、共通部品D の表記に統一された"
+    },
+    {
+      "paradigm_id": 3,
+      "issue_index": 2,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:60 は、ファイルを分けない理由を書かず、共通部品F への参照だけになった"
+    },
+    {
+      "paradigm_id": 4,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:147 に、期日を入れ直すときの記録先が明記され、golden-sample-weekly.md:205 の確認項目と一致した"
+    },
+    {
+      "paradigm_id": 5,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md:52 の表は週間・月間・期報・1年の4列になり、:54/:57/:58 に1年の検査がある"
+    },
+    {
+      "paradigm_id": 6,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/agents/output-formatter.md:120 は、成果目標を共通部品B の2行で書く形になった"
+    },
+    {
+      "paradigm_id": 6,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/golden-sample-weekly.md:162 （:165 も）は、グループ見出しに `（0円）` だけを使い、B の3形（output-formats.md:65）と一致した"
+    },
+    {
+      "paradigm_id": 6,
+      "issue_index": 2,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:219 は「月報=concise指定時は任意・旧詳細版は必須」で、F（output-formats.md:158）と一致した"
+    },
+    {
+      "paradigm_id": 7,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/RUNBOOK.md:179 は `--type yearly|weekly|monthly|quarterly`、EVALS.json:23 は「1年目標/週報/月報/期報」になり、受入条件に1年が入った"
+    },
+    {
+      "paradigm_id": 7,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/plugin-composition.yaml:17 は yearly を含み、resource-map.yaml:9 も1年目標を含む4層になった"
+    },
+    {
+      "paradigm_id": 7,
+      "issue_index": 2,
+      "status": "partially",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:783 （:643・:784-785 も）は前{週/月/期} のままで前年が欠ける。data-contract.md:220/:226 と interview-quick-templates.md:17 は直った"
+    },
+    {
+      "paradigm_id": 9,
+      "issue_index": 0,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md:119 の受け渡しの項目名が R1:120 と一致した"
+    },
+    {
+      "paradigm_id": 9,
+      "issue_index": 1,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md:51 （:52 も）は、受け取る #8/#9 を string[] として扱い、data-contract と一致した"
+    },
+    {
+      "paradigm_id": 9,
+      "issue_index": 2,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md:97 は、名前付きの上限のどれにも当たらず、回数ではなくユーザーの承認で外側ループを終えると明記した"
+    },
+    {
+      "paradigm_id": 9,
+      "issue_index": 3,
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1412 は、日付索引の書式を共通部品A へ寄せ、項目名が実在する先を明記した"
+    }
+  ],
+  "residual_verdicts": [
+    {
+      "residual": "1. output-formats.md の一貫した例の「提案書：作る」行が採否基準と食い違う",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/golden-sample-weekly.md:160 は「提案書：Aさんへ提出する」で、作成を段として立てる行は残っていない"
+    },
+    {
+      "residual": "2. 月報提出用の「本文に具体日を埋め込まない」と粒度節の「開催日等が必要なら残す」が食い違う",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1149 は「具体日は期日欄だけに書く」と A（:25）に揃えた"
+    },
+    {
+      "residual": "3. 実績の注記「○/△/× は最小限」と実績セクション「記号は書かない」が食い違う",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:970 と :950 で記号の扱いが揃った"
+    },
+    {
+      "residual": "4. selection-focus-goal-frame.md の表に1年列が無い",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md:52 は4列で、1年の検査（:54/:57/:58/:78-80）がある"
+    },
+    {
+      "residual": "5. thinking-guide.md 4-B の「毎日やること（トリガー付き）」が共通部品A と食い違う",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-guide.md:406 は「期日トークン `毎日`／`毎朝`。書式は共通部品A 行動行」になり、トリガーの要求は消えた"
+    },
+    {
+      "residual": "6. RUNBOOK.md L179（C16）の種別が3つだけ",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/RUNBOOK.md:179 は `--type yearly|weekly|monthly|quarterly` で、EVALS.json:23 も4種別"
+    },
+    {
+      "residual": "7. スタブ thinking-methods-toolkit.md / thinking-process.md の削除保留",
+      "status": "deferred",
+      "evidence": "確定済みの保留（スタブ2本は削除しない）。完了計画書 component-inventory.json の build_target の扱いが決まるまで計上しない"
+    },
+    {
+      "residual": "8. references/version-history.md が CHANGELOG.md と役割重複",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/version-history.md:3 は「凍結。以後の版履歴は CHANGELOG.md」と宣言し、行を足さないと定めた"
+    },
+    {
+      "residual": "9. data-contract §3.1.3 の1年列で #24/#25 を必須にした",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:278 （:279 も）の1年列の「必須」は、validate-goal-output.py:1480 の1年の必須見出し（現在事業パートナー数・現在のグリッドパートナー数）と一致する"
+    },
+    {
+      "residual": "10. 見直し記録の行書式を検査器が見出しの有無だけで検査している",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:552 から :589 の check_revision_records が、5欄・項目名の実在・変更前後の差を検査し、output-formats.md:144 の記述と一致した"
+    },
+    {
+      "residual": "11. validate-goal-output.py / validate-cross-level.py の 0.4.0 が CHANGELOG 未記載",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/CHANGELOG.md:16 と :17 に、両スクリプトの 0.4.0 の変更内容が記載された"
+    }
+  ]
+}

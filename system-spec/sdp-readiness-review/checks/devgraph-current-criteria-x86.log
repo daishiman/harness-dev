@@ -1,0 +1,325 @@
+..F...FF.                                                                [100%]
+=================================== FAILURES ===================================
+_ test_independent_scenario_receipt_covers_exact_criteria[C04-run-dev-graph-requirements-skill_path3-criteria_ids3] _
+
+component_id = 'C04', skill_name = 'run-dev-graph-requirements'
+skill_path = PosixPath('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-requirements/SKILL.md')
+criteria_ids = {'IN1', 'OUT1', 'OUT2'}
+
+    @pytest.mark.parametrize(
+        ("component_id", "skill_name", "skill_path", "criteria_ids"),
+        _targets(),
+        ids=lambda value: value if isinstance(value, str) else None,
+    )
+    def test_independent_scenario_receipt_covers_exact_criteria(
+        component_id: str,
+        skill_name: str,
+        skill_path: Path,
+        criteria_ids: set[str],
+    ) -> None:
+        receipt_path = (
+            REPO / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
+        current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+        recorded_sha = receipt["target"].get("skill_md_sha256")
+        live_verdict_module = _load_live_trial_verdict()
+        drift = _behavior_drift_suffix(live_verdict_module, skill_path.parent, receipt)
+        assert recorded_sha == current_sha, (
+            f"{component_id}: criteria receipt は現在の SKILL.md を覆っていない "
+            f"(receipt={recorded_sha} current={current_sha})。"
+            " skill_md_sha256 を手で現在値へ書き換えるのは証拠の偽装になる。"
+            " 現在のバイト列に対する live-trial PASS と、その run を指す receipt の再評価が要る。"
+            f"{drift}"
+        )
+        assert receipt["target"] == {
+            "plugin": "dev-graph",
+            "skill": skill_name,
+            "component_id": component_id,
+            "skill_md_sha256": current_sha,
+        }
+        assert receipt["verdict"] == "PASS"
+        assert receipt["reviewer"].strip()
+        assert receipt["reviewer"] != "root"
+        assert receipt["loop_scope"] == "both"
+        assert receipt["iteration_limit"] == 3
+        results = receipt["criteria_results"]
+        assert set(results) == criteria_ids
+        criteria = _skill_criteria(skill_path)
+        assert set(criteria) == criteria_ids
+        live_schema = json.loads(LIVE_TRIAL_SCHEMA.read_text(encoding="utf-8"))
+        for criterion_id, result in results.items():
+            assert result["status"] == "PASS", f"{component_id}/{criterion_id}"
+            expected_verify_by = criteria[criterion_id]["verify_by"]
+            assert result["verify_by"] == expected_verify_by, (
+                f"{component_id}/{criterion_id}: receipt verify_by must equal SKILL frontmatter"
+            )
+            assert result["evidence_kind"] in {
+                "pytest", "independent-scenario-review", "hybrid", "live-trial"
+            }
+            assert result["test_refs"]
+            assert result["observed"]
+            if expected_verify_by != "live-trial":
+                continue
+    
+            assert result["evidence_kind"] == "live-trial"
+            verdict_ref = result["live_trial_verdict_ref"]
+            assert verdict_ref in result["test_refs"]
+            verdict_path = _contained_repo_ref(verdict_ref)
+            expected_live_root = (
+                REPO / "eval-log" / "dev-graph" / skill_name / "live-trial"
+            ).resolve()
+            verdict_path.relative_to(expected_live_root)
+            assert verdict_path.name == "verdict.json"
+            verdict = json.loads(verdict_path.read_text(encoding="utf-8"))
+            jsonschema.Draft202012Validator(live_schema).validate(verdict)
+            assert verdict["scenario_id"] == result["scenario_id"]
+            assert verdict["target_skill"] == f"dev-graph:{skill_name}"
+            assert verdict["tier"] == "live"
+            assert verdict["downgrade_reason"] is None
+            assert verdict["actual_model"]
+            assert verdict["transcript_sha256"] is not None
+            assert verdict["environment"]["transcript_layer"] == "jsonl"
+            assert verdict["goal_verdict"] == {"result": "PASS", "blockers": []}
+            assert verdict["overall"] == {
+                "launch": "PASS",
+                "completion": "PASS",
+                "goal_fit": "PASS",
+                "verdict": "PASS",
+            }
+            runtime = verdict.get("environment", {}).get("runtime", "claude")
+            digest = (live_verdict_module.skill_dir_tree_sha(skill_path.parent, runtime=runtime)
+                      if runtime == "codex" else live_verdict_module.skill_dir_tree_sha(skill_path.parent))
+>           assert verdict["skill_dir_tree_sha"] == digest, (
+                f"{component_id}/{criterion_id}: stale behavior closure digest "
+                f"(recorded={verdict['skill_dir_tree_sha']} current={digest})。"
+                " digest を手で現在値へ書き換えるのは証拠の偽装になる。"
+                " 現在の挙動閉包に対する live-trial PASS を取り、receipt の ref をその run へ更新する。"
+                f"{drift}"
+            )
+E           AssertionError: C04/OUT1: stale behavior closure digest (recorded=aa353ddf5ea7967193ccaf58b326b7e5ad62f74bda08e53fec392ace0d09e588 current=bf5b37505d8ebcb24aa3f8aee3d80e4361bba9bf1e964c6c42807dc259baa1c0)。 digest を手で現在値へ書き換えるのは証拠の偽装になる。 現在の挙動閉包に対する live-trial PASS を取り、receipt の ref をその run へ更新する。 挙動差分: plugins/system-dev-planner/hooks/guard-implementation-readiness.py, plugins/system-dev-planner/scripts/resolve-project-context.py
+E           assert 'aa353ddf5ea7...92ace0d09e588' == 'bf5b37505d8e...07dc259baa1c0'
+E             
+E             - bf5b37505d8ebcb24aa3f8aee3d80e4361bba9bf1e964c6c42807dc259baa1c0
+E             + aa353ddf5ea7967193ccaf58b326b7e5ad62f74bda08e53fec392ace0d09e588
+
+plugins/dev-graph/tests/test_skill_criteria_evidence.py:227: AssertionError
+_ test_independent_scenario_receipt_covers_exact_criteria[C02-run-dev-graph-node-skill_path1-criteria_ids1] _
+
+component_id = 'C02', skill_name = 'run-dev-graph-node'
+skill_path = PosixPath('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-node/SKILL.md')
+criteria_ids = {'IN1', 'OUT1', 'OUT2', 'OUT3'}
+
+    @pytest.mark.parametrize(
+        ("component_id", "skill_name", "skill_path", "criteria_ids"),
+        _targets(),
+        ids=lambda value: value if isinstance(value, str) else None,
+    )
+    def test_independent_scenario_receipt_covers_exact_criteria(
+        component_id: str,
+        skill_name: str,
+        skill_path: Path,
+        criteria_ids: set[str],
+    ) -> None:
+        receipt_path = (
+            REPO / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
+        current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+        recorded_sha = receipt["target"].get("skill_md_sha256")
+        live_verdict_module = _load_live_trial_verdict()
+        drift = _behavior_drift_suffix(live_verdict_module, skill_path.parent, receipt)
+        assert recorded_sha == current_sha, (
+            f"{component_id}: criteria receipt は現在の SKILL.md を覆っていない "
+            f"(receipt={recorded_sha} current={current_sha})。"
+            " skill_md_sha256 を手で現在値へ書き換えるのは証拠の偽装になる。"
+            " 現在のバイト列に対する live-trial PASS と、その run を指す receipt の再評価が要る。"
+            f"{drift}"
+        )
+        assert receipt["target"] == {
+            "plugin": "dev-graph",
+            "skill": skill_name,
+            "component_id": component_id,
+            "skill_md_sha256": current_sha,
+        }
+        assert receipt["verdict"] == "PASS"
+        assert receipt["reviewer"].strip()
+        assert receipt["reviewer"] != "root"
+        assert receipt["loop_scope"] == "both"
+        assert receipt["iteration_limit"] == 3
+        results = receipt["criteria_results"]
+        assert set(results) == criteria_ids
+        criteria = _skill_criteria(skill_path)
+        assert set(criteria) == criteria_ids
+        live_schema = json.loads(LIVE_TRIAL_SCHEMA.read_text(encoding="utf-8"))
+        for criterion_id, result in results.items():
+            assert result["status"] == "PASS", f"{component_id}/{criterion_id}"
+            expected_verify_by = criteria[criterion_id]["verify_by"]
+            assert result["verify_by"] == expected_verify_by, (
+                f"{component_id}/{criterion_id}: receipt verify_by must equal SKILL frontmatter"
+            )
+            assert result["evidence_kind"] in {
+                "pytest", "independent-scenario-review", "hybrid", "live-trial"
+            }
+            assert result["test_refs"]
+            assert result["observed"]
+            if expected_verify_by != "live-trial":
+                continue
+    
+            assert result["evidence_kind"] == "live-trial"
+            verdict_ref = result["live_trial_verdict_ref"]
+            assert verdict_ref in result["test_refs"]
+            verdict_path = _contained_repo_ref(verdict_ref)
+            expected_live_root = (
+                REPO / "eval-log" / "dev-graph" / skill_name / "live-trial"
+            ).resolve()
+            verdict_path.relative_to(expected_live_root)
+            assert verdict_path.name == "verdict.json"
+            verdict = json.loads(verdict_path.read_text(encoding="utf-8"))
+            jsonschema.Draft202012Validator(live_schema).validate(verdict)
+            assert verdict["scenario_id"] == result["scenario_id"]
+            assert verdict["target_skill"] == f"dev-graph:{skill_name}"
+            assert verdict["tier"] == "live"
+            assert verdict["downgrade_reason"] is None
+            assert verdict["actual_model"]
+            assert verdict["transcript_sha256"] is not None
+            assert verdict["environment"]["transcript_layer"] == "jsonl"
+            assert verdict["goal_verdict"] == {"result": "PASS", "blockers": []}
+            assert verdict["overall"] == {
+                "launch": "PASS",
+                "completion": "PASS",
+                "goal_fit": "PASS",
+                "verdict": "PASS",
+            }
+            runtime = verdict.get("environment", {}).get("runtime", "claude")
+            digest = (live_verdict_module.skill_dir_tree_sha(skill_path.parent, runtime=runtime)
+                      if runtime == "codex" else live_verdict_module.skill_dir_tree_sha(skill_path.parent))
+>           assert verdict["skill_dir_tree_sha"] == digest, (
+                f"{component_id}/{criterion_id}: stale behavior closure digest "
+                f"(recorded={verdict['skill_dir_tree_sha']} current={digest})。"
+                " digest を手で現在値へ書き換えるのは証拠の偽装になる。"
+                " 現在の挙動閉包に対する live-trial PASS を取り、receipt の ref をその run へ更新する。"
+                f"{drift}"
+            )
+E           AssertionError: C02/OUT1: stale behavior closure digest (recorded=3cd76c4ab7759e4a31ee541ad6bd34f2b6180dc2c982e4417e04eb2320aa4e17 current=44a9dec7743bf48a9980f261b451f2b8f7ae225e7f97185f59c8618cf1fc9fa7)。 digest を手で現在値へ書き換えるのは証拠の偽装になる。 現在の挙動閉包に対する live-trial PASS を取り、receipt の ref をその run へ更新する。 挙動差分: plugins/system-dev-planner/hooks/guard-implementation-readiness.py, plugins/system-dev-planner/scripts/resolve-project-context.py
+E           assert '3cd76c4ab775...4eb2320aa4e17' == '44a9dec7743b...8618cf1fc9fa7'
+E             
+E             - 44a9dec7743bf48a9980f261b451f2b8f7ae225e7f97185f59c8618cf1fc9fa7
+E             + 3cd76c4ab7759e4a31ee541ad6bd34f2b6180dc2c982e4417e04eb2320aa4e17
+
+plugins/dev-graph/tests/test_skill_criteria_evidence.py:227: AssertionError
+_ test_independent_scenario_receipt_covers_exact_criteria[C14-run-dev-graph-decompose-skill_path5-criteria_ids5] _
+
+component_id = 'C14', skill_name = 'run-dev-graph-decompose'
+skill_path = PosixPath('/Users/dm/dev/dev/個人開発/harness/plugins/dev-graph/skills/run-dev-graph-decompose/SKILL.md')
+criteria_ids = {'IN1', 'OUT1', 'OUT2', 'OUT3', 'OUT4', 'OUT5', ...}
+
+    @pytest.mark.parametrize(
+        ("component_id", "skill_name", "skill_path", "criteria_ids"),
+        _targets(),
+        ids=lambda value: value if isinstance(value, str) else None,
+    )
+    def test_independent_scenario_receipt_covers_exact_criteria(
+        component_id: str,
+        skill_name: str,
+        skill_path: Path,
+        criteria_ids: set[str],
+    ) -> None:
+        receipt_path = (
+            REPO / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+        )
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        receipt_schema = json.loads(CRITERIA_SCHEMA.read_text(encoding="utf-8"))
+        jsonschema.Draft202012Validator(receipt_schema).validate(receipt)
+        current_sha = hashlib.sha256(skill_path.read_bytes()).hexdigest()
+        recorded_sha = receipt["target"].get("skill_md_sha256")
+        live_verdict_module = _load_live_trial_verdict()
+        drift = _behavior_drift_suffix(live_verdict_module, skill_path.parent, receipt)
+        assert recorded_sha == current_sha, (
+            f"{component_id}: criteria receipt は現在の SKILL.md を覆っていない "
+            f"(receipt={recorded_sha} current={current_sha})。"
+            " skill_md_sha256 を手で現在値へ書き換えるのは証拠の偽装になる。"
+            " 現在のバイト列に対する live-trial PASS と、その run を指す receipt の再評価が要る。"
+            f"{drift}"
+        )
+        assert receipt["target"] == {
+            "plugin": "dev-graph",
+            "skill": skill_name,
+            "component_id": component_id,
+            "skill_md_sha256": current_sha,
+        }
+        assert receipt["verdict"] == "PASS"
+        assert receipt["reviewer"].strip()
+        assert receipt["reviewer"] != "root"
+        assert receipt["loop_scope"] == "both"
+        assert receipt["iteration_limit"] == 3
+        results = receipt["criteria_results"]
+        assert set(results) == criteria_ids
+        criteria = _skill_criteria(skill_path)
+        assert set(criteria) == criteria_ids
+        live_schema = json.loads(LIVE_TRIAL_SCHEMA.read_text(encoding="utf-8"))
+        for criterion_id, result in results.items():
+            assert result["status"] == "PASS", f"{component_id}/{criterion_id}"
+            expected_verify_by = criteria[criterion_id]["verify_by"]
+            assert result["verify_by"] == expected_verify_by, (
+                f"{component_id}/{criterion_id}: receipt verify_by must equal SKILL frontmatter"
+            )
+            assert result["evidence_kind"] in {
+                "pytest", "independent-scenario-review", "hybrid", "live-trial"
+            }
+            assert result["test_refs"]
+            assert result["observed"]
+            if expected_verify_by != "live-trial":
+                continue
+    
+            assert result["evidence_kind"] == "live-trial"
+            verdict_ref = result["live_trial_verdict_ref"]
+            assert verdict_ref in result["test_refs"]
+            verdict_path = _contained_repo_ref(verdict_ref)
+            expected_live_root = (
+                REPO / "eval-log" / "dev-graph" / skill_name / "live-trial"
+            ).resolve()
+            verdict_path.relative_to(expected_live_root)
+            assert verdict_path.name == "verdict.json"
+            verdict = json.loads(verdict_path.read_text(encoding="utf-8"))
+            jsonschema.Draft202012Validator(live_schema).validate(verdict)
+            assert verdict["scenario_id"] == result["scenario_id"]
+            assert verdict["target_skill"] == f"dev-graph:{skill_name}"
+            assert verdict["tier"] == "live"
+            assert verdict["downgrade_reason"] is None
+            assert verdict["actual_model"]
+            assert verdict["transcript_sha256"] is not None
+            assert verdict["environment"]["transcript_layer"] == "jsonl"
+            assert verdict["goal_verdict"] == {"result": "PASS", "blockers": []}
+            assert verdict["overall"] == {
+                "launch": "PASS",
+                "completion": "PASS",
+                "goal_fit": "PASS",
+                "verdict": "PASS",
+            }
+            runtime = verdict.get("environment", {}).get("runtime", "claude")
+            digest = (live_verdict_module.skill_dir_tree_sha(skill_path.parent, runtime=runtime)
+                      if runtime == "codex" else live_verdict_module.skill_dir_tree_sha(skill_path.parent))
+>           assert verdict["skill_dir_tree_sha"] == digest, (
+                f"{component_id}/{criterion_id}: stale behavior closure digest "
+                f"(recorded={verdict['skill_dir_tree_sha']} current={digest})。"
+                " digest を手で現在値へ書き換えるのは証拠の偽装になる。"
+                " 現在の挙動閉包に対する live-trial PASS を取り、receipt の ref をその run へ更新する。"
+                f"{drift}"
+            )
+E           AssertionError: C14/OUT1: stale behavior closure digest (recorded=341644f71f05d30aa095f9a90cc85a818d8488f869c6d78bfdfda871bee68323 current=2129af2e9a5e7eaffc4a8a5ebf0840454f7a05d8c1a5d2503430591783d8a627)。 digest を手で現在値へ書き換えるのは証拠の偽装になる。 現在の挙動閉包に対する live-trial PASS を取り、receipt の ref をその run へ更新する。 挙動差分: plugins/system-dev-planner/hooks/guard-implementation-readiness.py, plugins/system-dev-planner/scripts/resolve-project-context.py
+E           assert '341644f71f05...da871bee68323' == '2129af2e9a5e...0591783d8a627'
+E             
+E             - 2129af2e9a5e7eaffc4a8a5ebf0840454f7a05d8c1a5d2503430591783d8a627
+E             + 341644f71f05d30aa095f9a90cc85a818d8488f869c6d78bfdfda871bee68323
+
+plugins/dev-graph/tests/test_skill_criteria_evidence.py:227: AssertionError
+=========================== short test summary info ============================
+FAILED plugins/dev-graph/tests/test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria[C04-run-dev-graph-requirements-skill_path3-criteria_ids3]
+FAILED plugins/dev-graph/tests/test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria[C02-run-dev-graph-node-skill_path1-criteria_ids1]
+FAILED plugins/dev-graph/tests/test_skill_criteria_evidence.py::test_independent_scenario_receipt_covers_exact_criteria[C14-run-dev-graph-decompose-skill_path5-criteria_ids5]
+3 failed, 6 passed, 31 deselected in 2.53s

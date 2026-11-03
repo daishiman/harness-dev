@@ -1,0 +1,70 @@
+{
+  "purpose": "UTF-8のテキストファイルの行数を、Linux/macOSの利用者がPython標準ライブラリだけで安全に取得できるようにする。",
+  "background": "このfixtureは小さなPOSIX CLI一機能の実装計画引継ぎを検証する。既存generic packageの意味不足を引き継がない。",
+  "goal": "python3 src/utf8_line_count.py PATH がAC01..AC09を満たし、CLI利用説明と検証記録を伴うローカル配布ZIPとして引き渡せる状態。",
+  "checklist": [
+    {
+      "id": "C1",
+      "criterion": "空UTF-8ファイルはstdoutが0と改行、exit 0。",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C2",
+      "criterion": "a\\nb\\nは2行、a\\nbも末尾改行なしで2行。",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C3",
+      "criterion": "日本語の2行は文字数によらず2。UTF-8 strictで読む。",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C4",
+      "criterion": "LF・CRLF・単独CRをPython universal newlineの1境界として扱う。",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C5",
+      "criterion": "存在しないpath・directory・権限拒否はstdout空、stderrに説明、exit 2、traceback無し。",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C6",
+      "criterion": "不正UTF-8はstdout空、stderrに説明、exit 2、traceback無し。",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C7",
+      "criterion": "引数が0件または2件以上ならusageをstderrへ出しexit 2、stdout空。",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C8",
+      "criterion": "入力ファイルのbytesを変更せず、外部network・DB・認証・サービスを使わない。",
+      "done": false,
+      "verify_by": "test"
+    },
+    {
+      "id": "C9",
+      "criterion": "ファイルを行iteratorで読み、ファイル全体readで保持しない。カウンタ以外の追加メモリは1行分。",
+      "done": false,
+      "verify_by": "reasoning"
+    }
+  ],
+  "constraints": [
+    "stdin・複数ファイル・再帰探索",
+    "GUI・HTTP API・DB・認証",
+    "Windowsでの動作保証",
+    "pip公開・クラウドdeploy・実GitHub/Beads mutation",
+    "本factoryでは実装sourceとcurrent live evaluator結果を生成しない"
+  ],
+  "max_loops": 3,
+  "open_questions": []
+}

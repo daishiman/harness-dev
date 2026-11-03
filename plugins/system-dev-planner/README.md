@@ -8,6 +8,10 @@ system-dev-planner は dev-graph が確定した **1 feature** を P01..P13 の 
 
 初回は [setup.md](setup.md) の順に `init` し、confirmed な system spec と feature context を用意してから `plan` を実行してください。
 
+dev-graph だけを初期化した段階では `plan_roots` が無くても、リポジトリの識別と保存先が妥当で計画の実行ロックが無ければ通常の Bash/Task 操作を続けられます。計画実行中は `plan_roots` を含む完全な設定と readiness を要求します。不正な設定値はロックの有無にかかわらず拒否し、`local_state.locks` を変更しても正規のロックを見落としません。
+
+設定不足で操作が止まったときは、表示される `init-project-layout.py --repo-root …` を別ターミナルで実行してください。初期化は欠けたキーを補い、既存値を保持します。識別子の不一致や不正なパスは自動修復しません。詳細は [仕様と設計の反映記録](../../system-spec/sdp-readiness-review/README.md) を参照してください。
+
 ## Input and output
 
 `plan` は次を必須とします。
