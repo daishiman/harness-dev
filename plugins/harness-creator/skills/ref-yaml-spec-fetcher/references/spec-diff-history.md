@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-11-09T04:36:57Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -1186,6 +1186,8 @@
+ context: fork
+ , the value sets the forked subagent’s effort level instead. When you omit it, the level comes from the
+ effort resolution order
++. For a fork on another model, see
++Effort level of subagents and teammates
+ . Options:
+ low
+ ,
+@@ -1577,9 +1579,7 @@
+ ${CLAUDE_SKILL_DIR}
+ and
+ ${CLAUDE_PROJECT_DIR}
+-in two places: the skill’s markdown content, and Bash rules in the
+-allowed-tools
+-frontmatter. In
++in two places: the sk
+ 
+ ## Source (settings): https://docs.claude.com/en/docs/claude-code/settings
+ 
+@@ -2036,6 +2036,9 @@
+ : use
+ /effort
+ to change effort mid-session
++If you remove
++permissions.blockReadsOutsideWorkingDirectories
++mid-session, the file tools keep the block in the running session. To lift it, remove the key from every settings file that sets it, then restart each running session.
+ ​
+ Confirm what loaded
+ Run
+@@ -2078,15 +2081,13 @@
+ Configuration error
+ :
+ ~/.claude.json
+-can’t be parsed. Claude Code copies the broken file to
++can’t be parsed. A
++claude -p
++run exits, and your file is unchanged. See
++Configuration error in ~/.claude.json
++to restore an earlier copy. Claude Code copies the broken file to
+ ~/.claude/backups/.claude.json.corrupted.<timestamp>
+-and asks whether to exit and fix it by hand or reset to the default configuration; a
+--p
+-run prints the error and exits. To recover your previous state, copy back one of the five most recent
+-.claude.json.backup.<timestamp>
+-files in
+-~/.claude/backups/
+-, which Claude Code saves before it writes the file.
++, and in an interactive session asks whether to exit and fix it or reset to the default configuration. When the file is blank and there’s no backup to restore, Claude Code starts with default settings.
+ After you continue, run
+ /status
+ to see the affected files and
+@@ -2096,11 +2097,11 @@
+ -p
+ run shows no dialog. Unless
+ a managed settings document can’t be parsed
+-, Claude Code skips the broken file or values and continues with the rest, so after a
++, Claude Code skips a broken user, project, or local file or its broken values and continues with the rest. After a
+ -p
+ run that ignores a setting, run
+ claude doctor
+-to see what it dropped.
++from your terminal to see what it dropped.
+ ​
+ Settings precedence
+ When the same key appears in more than one place, Claude Code uses the value from the highest level that sets it. The stack below shows the levels, highest on top; a key at a higher level overrides the same key anywhere below it.
+@@ -2412,6 +2413,12 @@
+ Honored even when a managed source sets
+ false
+ . Requires Claude Code v2.1.257 or later
++permissions.blockWritesOutsideWorkingDirectories
++true
++from any scope
++Honored even when a managed source sets
++false
++. Requires Claude Code v2.1.314 or later
+ autoMode.classifyAllShell
+ true
+... (1322 more lines)
+```
+
 ## 2026-11-02T04:20:49Z
 
 実仕様ページに変更を検知。
