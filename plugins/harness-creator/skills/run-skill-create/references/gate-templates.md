@@ -35,29 +35,11 @@ P0 lint が pass しても以下3項目は**手動確認**が必要 (自動化�
 3項目以上 NG、または 05 Layering Review に NG があるなら Gate 2 を拒否し Step 2 (run-build-skill --mode update) へ戻す。
 
 ```
-question: "生成されたスキルのdiffを確認しました。上記5検証 (検証1-5) は全てOKですか? 評価フェーズに進みますか？"
+question: "生成されたスキルのdiffを確認しました。上記5検証 (検証1-5) は全てOKですか? 完了レポートへ進みますか？"
 options:
-  - "承認 (Step4bへ)": evaluator起動
+  - "承認 (Step4a.5→7へ)": 条件該当時の PKG check を経て完了レポートを作成 (C1-C4 は run-build-skill の初稿診断 receipt を転記し、評価し直さない)
   - "修正が必要": run-build-skill --mode update で再生成
   - "中断": フロー終了
 ```
 
-## Gate 3: 評価結果確認
-
-```
-question: "評価結果を確認しました。governance承認フェーズに進みますか？"
-options:
-  - "承認 (Step6へ)": governance起動
-  - "FAIL項目を修正": Step2へ戻る
-  - "TODO(human)で残す": FAILを許容して進む
-  - "中断": フロー終了
-```
-
-## Gate 4: 最終承認
-
-```
-question: "Skill構築完了。最終承認しますか？"
-options:
-  - "完了": eval-log/に記録
-  - "rollback": git revert で差分破棄
-```
+> Gate 3 (評価結果確認) と Gate 4 (governance 最終承認) は既定の流れから外した。C1-C4 は run-build-skill の初稿診断が正本で、rubric governance は rubric を変更するときだけ利用者が `run-skill-rubric-governance` を明示的に呼ぶ。

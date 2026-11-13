@@ -30,7 +30,7 @@ plan shape の PASS と runtime contract の PASS は別物である。特に ta
 
 ## ドメイン知識
 
-- test layer: root reflector / C02 / C01 / C03 / C05 / C04 / integration。
+- test layer: root reflector / C02 / C01 / C03 / C04 / integration。
 - failure は first failing layer へ帰属させ、下流を偽陰性として数えない。
 - runtime install/trust test は P11 user gate まで pending 可だが PASS 扱いしない。
 

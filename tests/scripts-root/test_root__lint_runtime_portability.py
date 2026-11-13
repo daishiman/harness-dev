@@ -135,4 +135,4 @@ def test_hook_scripts_discovered():
     assert scripts, "hook script を1件も発見できていない (hook discovery の回帰)"
     # harness-creator は manifest.hooks を重複指定せず標準 hooks/hooks.json から自動load。
     names = {p.name for p in scripts}
-    assert "auto-sync-on-session-start.py" in names
+    assert "external-intelligence-observe.py" in names

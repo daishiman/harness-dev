@@ -86,7 +86,6 @@ script_refs:
   - scripts/auto-record-lesson.py
   - scripts/render-combinators.py
   - scripts/render-frontmatter.py
-  - scripts/validate-naming.py
   - scripts/build-subagent.py
   - scripts/validate-build-trace.py
   - scripts/lint-goal-seek.py
@@ -184,8 +183,6 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ### usable-first stage
 `draft` と `release` の2段階だけを使う。別の MVP mode は追加しない。無指定では draft の生成と class別最小guard (parse/open・secret・不可逆操作・破損) だけを解き、修復は1周までとする。7 Capabilityのいずれも `artifact_created → minimal_guard_passed → artifact_presented → user_choice_recorded → semantic_evaluator_started` の順を守る。現物と試し方の提示後に診断深度を聞き、`accept-as-is` はevaluator 0 / improver 0。選択された場合だけsemantic evaluator / 30思考法 / multi-agent / 有界改善を起動する。`release` / `exhaustive` は明示選択なしに自動昇格しない。
-
-`build-review-launch.py` はgateのdurable claimを同一lock下でatomic consumeし、artifact+contract fingerprintあたりruntime-neutral requestを1件だけ作る。再生時は `authorized=false` でfail-closedにする。Claude Codeはそのpayloadで `elegant-initial-draft-evaluator` Task、Codexは同じpayloadとR5による単一subagentを起動する。両者ともRead/Glob/Grep限定のfresh contextで、他runtimeはfail-closed。親contextで同じ30思考法を繰り返さない。
 
 ## Key Rules
 ### 契約系 (contract)
@@ -323,12 +320,12 @@ run 系は `templates/` / `scripts/` / `examples/`、ref 系は `references/arti
 
 ### Step 4: 命名・構造 Lint (phase: scripts)
 
-> lint 集合の正本は `$PLUGIN_ROOT/references/lint-matrix.json` (context: build-preflight / p0-gate / ci)。下記 bash ブロックはその **build-preflight 射影**であり、集合の乖離は `plugins/skill-governance-lint/scripts/lint-matrix-sync.py` が CI で fail させる (lint の増減は matrix を先に更新)。`workflow-manifest.json` は宣言的リソース (schema/prompt/reference) の正本で、lint を manifest に resource 登録はしない (責務分離)。
+> lint 集合の正本は `$PLUGIN_ROOT/references/lint-matrix.json` (context: build-preflight / p0-gate / ci)。下記 bash ブロックはその **build-preflight 射影**であり、`run-skill-create` の p0-gate はここで実行済みの lint を build-trace の `reproducibility_gates.lint` receipt で再利用して重ねて走らせない。集合の乖離は `plugins/skill-governance-lint/scripts/lint-matrix-sync.py` が CI で fail させる (lint の増減は matrix を先に更新)。`workflow-manifest.json` は宣言的リソース (schema/prompt/reference) の正本で、lint を manifest に resource 登録はしない (責務分離)。
 
 ```bash
 GOV_LINT_DIR="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" skill-governance-lint)" || exit $?
 python3 "$GOV_LINT_DIR/scripts/lint-skill-name.py" "$OUT_BASE/$SKILL_NAME/SKILL.md"
-python3 "$GOV_LINT_DIR/scripts/lint-skill-description.py" "$OUT_BASE/$SKILL_NAME/SKILL.md"
+python3 "$GOV_LINT_DIR/scripts/lint-skill-description.py" --skills-dir "$OUT_BASE"
 python3 "$GOV_LINT_DIR/scripts/lint-skill-tree.py" "$OUT_BASE/$SKILL_NAME"
 python3 "$GOV_LINT_DIR/scripts/validate-frontmatter.py" "$OUT_BASE/$SKILL_NAME/SKILL.md"
 python3 "$GOV_LINT_DIR/scripts/lint-script-frontmatter.py" "$OUT_BASE/$SKILL_NAME"
@@ -399,7 +396,7 @@ build 完了後、量産プラグインを Notion の SSOT (スキル一覧 DB) 
 
 量産プラグインに改善要望ループを **default-ON で機械的に保証** する。詳細は `references/feedback-loop-deployment.md`。要点:
 
-- **配備**: phase `feedback-deploy` (workflow-manifest, `default_on: true`) が `<target-plugin>/skills/run-skill-feedback` を実体コピーで冪等配備。plugin 境界を越える symlink は marketplace install で dangling するため禁止。
+- **配備**: phase `feedback-deploy` (workflow-manifest, `default_on: true`) が `<target-plugin>/skills/run-skill-feedback` を実体コピーで冪等配備。plugin 境界を越える symlink は marketplace install で dangling するため禁止。trace-write から分かれる独立 branch で、Step 12 (content-review) はこの配備を待たない (`content-review.dependsOn` は `trace-write` だけ。配備の検証は下記 lint)。
 - **SSOT**: 発火条件 / 対話項目は `doc/notion-schema/skill-list.schema.json#feedback_protocol`。プラグイン側で再定義しない。
 - **周知**: 量産先の plugin.json / README / commands / agents いずれかに `run-skill-feedback` への発火経路を必ず記載。
 - **lint**: `scripts/lint-feedback-protocol.py --strict` が R1-R7 (schema/SKILL.md/upsert 三者整合 + R6 周知 + R7 配備存在) を CI で検査。違反時 merge ブロック。
@@ -407,7 +404,7 @@ build 完了後、量産プラグインを Notion の SSOT (スキル一覧 DB) 
 
 ### Step 12: 証拠DAG解決 (verification obligations, profile 制御)
 
-機械 lint・意味adequacy・実走acceptanceを別々の全件workflowとして起動しない。`derive-verification-contract.py` でgraph全体のclaimを `deterministic/semantic/observational/audit` obligationへcompileし、`plan-verification-obligations.py --stage <build-plan.flags.build_stage>` がcurrent receiptと依存fingerprintから次の最小work setを決める。draft は `generate/check` だけを解決し、`stage_gate.status=usable-draft` をStep 12.4の共通proofに渡す。release でのみ、machine proof後に残った `llm_batches[]` を独立 evaluatorへ、`observational_queue[]` をGate Dへ渡す。既存 `{elegance,rubric}-verdict.json` はCI互換projectionとして維持し、`record-verification-evidence.py` でsemantic fingerprintへ束縛する。3独立analystの30思考法完全監査は `exhaustive` 明示時のaudit obligationに限定する。**正本は `references/verification-obligation-protocol.md`、legacy verdict/hook projectionは `references/content-review-protocol.md`**。
+機械 lint・意味adequacy・実走acceptanceを別々の全件workflowとして起動しない。`derive-verification-contract.py` でgraph全体のclaimを `deterministic/semantic/observational/audit` obligationへcompileし、`plan-verification-obligations.py --stage <build-plan.flags.build_stage>` がcurrent receiptと依存fingerprintから次の最小work setを決める。draft は `generate/check` だけを解決し、`stage_gate.status=usable-draft` をStep 12.4の共通proofに渡す。release でのみ、machine proof後に残った `llm_batches[]` を独立 evaluatorへ、`observational_queue[]` をGate Dへ渡す。既存 `{elegance,rubric}-verdict.json` はCI互換projectionとして維持し、`record-verification-evidence.py` でsemantic fingerprintへ束縛する。3独立analystの30思考法完全監査は `exhaustive` 明示時のaudit obligationに限定する。**正本は `references/verification-obligation-protocol.md`、CI互換verdictとsha結び直しは `references/content-review-protocol.md`**。
 
 ### Step 12.4: 全7 Capability共通 usable-draft proof
 
@@ -423,20 +420,14 @@ build 完了後、量産プラグインを Notion の SSOT (スキル一覧 DB) 
 
 ### Step 12.6: 選択時のsemantic診断
 
-skill subtypeに限定せず、agent/hook/command/plugin-composition/prompt/workflowを含む全7 Capabilityを共通gateへ渡す。複数component harnessでは対象全体を1つのtarget manifestへ束ねる。claimを取るgate呼び出しには `--user-request-file <state_dir>/user-request.txt` を付ける (briefの `user_request_verbatim`、無ければ利用者の初回依頼原文をPIIだけ伏字にして書く。省略してもclaimは通るがgateがWARNを出し、evaluatorは目的適合を判定できない)。gateは原文を `intent_anchor` としてclaim結果に載せ、launcherがlaunch requestの `request_id` へ束縛する。evaluatorは当初目的を成果物から推測せずこの原文で判定する。`build-improvement-gate.py` がdurable claim付き `status=initial-review-required` を返した場合だけ `build-review-launch.py --gate-plan <gate-plan.json> --runtime <claude-code|codex>` を実行する。launcherは `state_ref` と同じlockで `<state_ref>.launch.json` の単一active delivery leaseをatomicに取得し、`authorized=true / launch_count=1`のschema準拠requestを返す。active lease中の重複配送は `authorized=false / launch_count=0` で拒否し、leaseがstaleになった場合は同一 `request_id / idempotency_key` で再配送する。同artifact+contractの完了receiptは別runでも再利用する。この配送leaseはexactly-once resultを保証せず、古いruntime実行が生存したまま再配送される可能性を受け入れる。unsupported runtime、durable state/identity不一致はfail-closedにする。
-
-評価Agentはread-onlyで思考リセットを先に行い、target manifestをfresh readする。30 method observationは固有rationaleと実在evidenceを持ち、`launch_request_id` / durable claim / runtimeに束縛して返す。launcherは `artifact_created_at < artifact_presented_at < semantic_evaluator_started_at` を検査し、choice前の起動を拒否する。
-
-**承認receiptの正本**: host/runtimeが現物提示後の質問に対して実際に受け取ったuser responseだけを直列化する。評価Agent・改善Agentによる捏造、代理選択、自己発行を禁止する。`exhaustive` 確認は同じ回答から推定せず別turn eventを必須とし、本診断はrelease/audit proofに流用しない。
+skill subtypeに限定せず、agent/hook/command/plugin-composition/prompt/workflowを含む全7 Capabilityを共通gateへ渡す。複数component harnessでは対象全体を1つのtarget manifestへ束ねる。claimを取るgate呼び出しには `--user-request-file <state_dir>/user-request.txt` を付ける (briefの `user_request_verbatim`、無ければ利用者の初回依頼原文をPIIだけ伏字にして書く。省略してもclaimは通るがgateがWARNを出し、evaluatorは目的適合を判定できない)。gateは原文を `intent_anchor` としてclaim結果に載せ、launcherがlaunch requestの `request_id` へ束縛する。evaluatorは当初目的を成果物から推測せずこの原文で判定する。`build-improvement-gate.py` がdurable claim付き `status=initial-review-required` を返した場合だけ `build-review-launch.py --gate-plan <gate-plan.json> --runtime <claude-code|codex>` を実行し、artifact+contract fingerprintあたりruntime-neutral requestを1件だけ受け取る。Claude Codeはそのpayloadで `elegant-initial-draft-evaluator` Task、Codexは同じpayloadとR5による単一subagentを起動する。両者ともRead/Glob/Grep限定のfresh contextで、他runtimeはfail-closed。親contextで同じ30思考法を繰り返さない。配送leaseと再配送、起動順序の検査は `references/verification-obligation-protocol.md` の「初回診断の起動契約」に従う。**承認receiptの正本**は、host/runtimeが現物提示後の質問に対して実際に受け取ったuser responseだけを直列化したものとする。評価Agent・改善Agentによる捏造、代理選択、自己発行を禁止する。`exhaustive` 確認は同じ回答から推定せず別turn eventを必須とし、本診断はrelease/audit proofに流用しない。
 
 ### Step 12.7: ユーザー選択範囲だけの有界改善
-validated `improvement-decision.json` の `improvement_authorized=true` かつ `selected_finding_ids` 非空の場合だけ `elegant-bounded-improvement-executor` を1 worker起動する。`R6-bounded-improve.md` に従い、selected ID、manifest内path、`max_rounds`だけを変更範囲とする。`accept-draft`または選択対象0件はexecutor 0 contextで停止する。新しいfindingを発見しても範囲を拡大せずresidualへ残す。
+validated `improvement-decision.json` の `improvement_authorized=true` かつ `selected_finding_ids` 非空の場合だけ `elegant-improvement-executor` を1 worker起動し、引数 `selected_finding_ids` と `max_rounds` に decision の値をそのまま渡し、`output_contract=improvement-result` を指定する。`R6-bounded-improve.md` に従い、selected ID、manifest内path、`max_rounds`だけを変更範囲とする。`accept-draft`または選択対象0件はexecutor 0 contextで停止する。新しいfindingを発見しても範囲を拡大せずresidualへ残す。
 
 ### Step 12.8: post-improvement verification
 
-親は `validate-improvement-result.py --gate-state <state_ref> --target-root <target_root> ...` とし、authoritative gate stateと実際の対象rootを必ず束縛してreview/decision/before-after manifest/resultを検査する。selected setの閉集合、許可pathだけのdiff、round上限、source trace、C1-C4を満たさない結果は`incomplete|blocked`で停止し、追加Agentを起動しない。release/exhaustiveへの次stage/profileは明示user decisionからだけ投影し、validatorの完了判定やfinding数から自動昇格しない。
-
-完了時、今回だけで閉じる事実は保存しない。別案件でも判断を変えうる新規構造が証拠付きで得られた場合だけ `build-external-intelligence.py capture` を最大1件実行し、`--evidence-source` に issue/テスト系/調査元など意味的な出典を指定する。同じ失敗の自動観測は `auto-record-lesson.py` が PostToolUse から捕捉するため重ねて登録しない。対話操作の `possible_duplicate` (exit 3) は、`--merge-with` または根拠付き `--force-new --distinct-reason` で解決する。`promote` は verified 前に実行せず、`--approved-by` と `--approval-evidence-ref` を必須とする。
+親は `validate-improvement-result.py --gate-state <state_ref> --target-root <target_root> ...` とし、authoritative gate stateと実際の対象rootを必ず束縛してreview/decision/before-after manifest/resultを検査する。selected setの閉集合、許可pathだけのdiff、round上限、source trace、C1-C4を満たさない結果は`incomplete|blocked`で停止し、追加Agentを起動しない。release/exhaustiveへの次stage/profileは明示user decisionからだけ投影し、validatorの完了判定やfinding数から自動昇格しない。完了時の外部知見の記録 (`build-external-intelligence.py capture` は最大1件) は同 reference の「学習ラチェット」に従う。
 
 ## 配置先
 
@@ -453,7 +444,7 @@ validated `improvement-decision.json` の `improvement_authorized=true` かつ `
 
 ## Additional Resources
 
-- frontmatter (`manifest` / `responsibility_refs` / `template_refs` / `schema_refs` / `script_refs` / `reference_refs`) は**起動契約上の主要資産のみ**を列挙する (全資産の網羅索引ではない)。全資産の索引正本はディレクトリ実体 (`scripts/` / `schemas/` / `templates/` / `prompts/` / `references/`) そのもの。`references/resource-map.yaml` は task category → 設計書章選択の progressive disclosure 索引 (+`local_artifacts` に manifest/schemas/prompts の一部) であり、これも全資産列挙ではない。`examples/` = 完成例 (minimal-ref / workflow-with-evaluator)。
+- frontmatter (`manifest` / `responsibility_refs` / `template_refs` / `schema_refs` / `script_refs` / `reference_refs`) は**起動契約上の主要資産のみ**を列挙する (全資産の網羅索引ではない)。全資産の索引正本はディレクトリ実体 (`scripts/` / `schemas/` / `templates/` / `prompts/` / `references/`) そのもの。`references/resource-map.yaml` は task category → 設計書章選択の progressive disclosure 索引 (+`local_artifacts` に manifest/schemas/prompts の一部) であり、これも全資産列挙ではない。`examples/` = 完成例 (task-graph-engine-skill)。
 - references/ 主要補助: `design-docs-index.md` (設計書索引) / `build-steps.md` (詳細手順) / `capability-manifest.schema.json` (Capability 7 kind 統一 Manifest 正本)。他の references/ は本文各 Step から個別参照。
 
 ### 生成する正規形の言語

@@ -7,6 +7,14 @@
 - live-trial verdict の陳腐化 (stale-sha) を既定で「要再実走」の WARN にした。CI では実走できず、hooks や依存 manifest の変更で verdict が一斉に古くなり、手元の再実走ループが十数時間に及んでいたため。schema 不適合・FAIL・降格は従来どおり FAIL。release 前や定期の再取得では `--enforce` か `LIVE_TRIAL_ENFORCE_FRESHNESS=1` で FAIL に戻せる。判断の正本は `live-trial-verdict.py` の `freshness_enforced`。
 - run-skill-live-trial の poll の待ち方を、poll を呼ぶ orchestrator の実行環境ごとに決めた (trial の `--runtime` とは別。poll は Claude trial 専用)。Claude Code は背景実行で1回起動して終了通知を待ち、Codex は `write_stdin` の空 poll を長い yield で待つ。短い yield の連打や自作の監視ループで orchestrator が何度も起き、文脈を読み直すのをやめさせる。
 - 初稿診断の evaluator に、利用者の初回依頼原文を `intent_anchor` として渡すようにした。brief に `user_request_verbatim` を足し、`build-improvement-gate.py --user-request-file` → launch request → R5 prompt の順に原文を運ぶ。evaluator は当初目的を成果物の自己申告から推測せず、原文の依頼を満たすかを先に判定する。原文なしで claim すると gate が WARN を出す (互換のため止めない)。`user_request_verbatim` は要件の出典なので、RTM (`validate-build-trace.py`) の被覆宣言の対象から外した。
+- 構成を簡素化し、既定の流れで使われていない資産 (記録用 md・未使用 schema/script・旧名 eval-log 等 14 件) を削除した。
+- 常時発火 hook を 5 本に減らした。出力が表示されない review queue / Stop 通知 (content-review-queue・elegant-review-trigger・check-review-trigger.py)、毎ターン keyword で参照を差し込む ref-task-context-map preload、CI の版数 parity と重複する run-skill-update-notifier (skill ごと)、noop しか記録していない SessionStart auto-sync を削除した。content-review の強制は従来どおり CI / pre-push の lint-content-review。
+- run-skill-create の評価を build の初稿診断に一本化した。4b/5/6 を既定から外し、C1-C4 は receipt を転記、P0 lint は build の lint receipt を再利用、`--fast` を削除、governance は rubric 変更時だけ明示起動。
+- improvement executor を 1 体に統合した (`selected_finding_ids`/`max_rounds`/`output_contract`)。`/skill-improve` は dry-run→選択→1 worker の 7 手順。
+- feedback-deploy (Step 11.5) を content-review の前提から外した。
+- content-review の指摘を当てた直後に限り、2 本の verdict の SKILL.md sha を結び直す `sync-content-review-sha.py` を追加した。指摘を当てるたびに全文を再レビューしていたループを断つため。両 verdict が PASS で、記録 sha が編集前の sha と一致し、指定した指摘 id が実在して未使用のときだけ結び直し、`sha_rebinds[]` に記録を残す。それ以外の編集は従来どおり再レビューが要る。`lint-content-review.py` は変えていない。
+- run-skill-create 独自の build-trace / findings schema を削除し、build の `skill-build-trace.schema.json` に一本化した (build の lint receipt 再利用は `skill_name` の一致を必須にした)。handoff schema は Gate (1 / 2.5 / 2) の approver を `user` に限り、`solo_operator_auto` を廃止した。`system_auto` は Gate の無い step 通過だけに使える。
+- run-elegant-review の findings schema に issue の `id` を足し、`/skill-improve` の選択と executor の `selected_finding_ids` を同じ値で結ぶようにした。
 
 ## 1.4.64 — 2026-11-09
 

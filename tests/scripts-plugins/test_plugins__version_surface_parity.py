@@ -15,7 +15,7 @@ bump のたびに 1 版遅れるという同じ形の非対称だった。
 赤くなったのは 1 件だけだった。残り 5 件は検査が当たっていないので静かにズレ続けていた。
 対象を plugin 側から導出すれば、新しい CHANGELOG が増えた時点で自動的に検査対象になる。
 
-版数を取る口は repo 内に 1 つだけ置く (notifier-check.py の `_extract_latest_version`)。
+版数を取る口は repo 内に 1 つだけ置く (build-plugin-release.py の `latest_changelog_version`)。
 ここで独自の正規表現を立てると、その書式で書いた plugin だけが検査に当たり、当たらない
 書式へ逃げる圧力になる。
 """
@@ -29,11 +29,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 PLUGINS = ROOT / "plugins"
 
-_NOTIFIER = (ROOT / "plugins" / "harness-creator" / "skills"
-             / "run-skill-update-notifier" / "scripts" / "notifier-check.py")
-_SPEC = importlib.util.spec_from_file_location("notifier_check_changelog_parity", _NOTIFIER)
-NOTIFIER = importlib.util.module_from_spec(_SPEC)
-_SPEC.loader.exec_module(NOTIFIER)
+_RELEASE_SCRIPT = ROOT / "scripts" / "build-plugin-release.py"
+_SPEC = importlib.util.spec_from_file_location("build_plugin_release_changelog_parity", _RELEASE_SCRIPT)
+RELEASE = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(RELEASE)
 
 # 実測した下限 (2026-10-10 22:30 時点で 6 件)。対象を plugin 側から導出する検査は、
 # 導出が 0 件へ落ちると「全件 OK」の顔で緑になる。分母の下限を置いて空振りを潰す。
@@ -61,7 +60,7 @@ def test_changelog_head_version_matches_the_distributed_version():
         manifest = json.loads(
             (plugin / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
         )
-        changelog_version = NOTIFIER._extract_latest_version(plugin / "CHANGELOG.md")
+        changelog_version = RELEASE.latest_changelog_version(plugin / "CHANGELOG.md")
         if changelog_version != manifest["version"]:
             mismatched.append(
                 f"{plugin.name}: plugin.json={manifest['version']} "
@@ -91,13 +90,11 @@ def test_release_script_writes_the_changelog_it_also_reads():
     )
 
     # 読む側と書く側で版見出しの形が違うと、書いた節が読まれないという最も静かな
-    # 壊れ方をする。両者の正規表現が同一であることを突き合わせる。
-    notifier_src = _NOTIFIER.read_text(encoding="utf-8")
-    pattern = r"\^##\\s\*\\\[\?v\?\(\\d\+\\\.\\d\+\\\.\\d\+\[\^\\\]\\s\]\*\)"
-    assert re.search(pattern, notifier_src), "notifier 側の版見出し正規表現が変わった"
-    assert re.search(pattern, script), (
-        "build-plugin-release 側の版見出し正規表現が notifier 側と揃っていない"
-    )
+    # 壊れ方をする。両者が同じ正規表現を使っていることを突き合わせる。
+    reader_body = script.split("def latest_changelog_version(", 1)[1].split("\ndef ", 1)[0]
+    writer_body = script.split("def _changelog_section_format(", 1)[1].split("\ndef ", 1)[0]
+    assert "_CHANGELOG_VERSION_HEADING_RE" in reader_body, "読む側が版見出しの共有正規表現を使っていない"
+    assert "_CHANGELOG_VERSION_HEADING_RE" in writer_body, "書く側が版見出しの共有正規表現を使っていない"
 
 
 # ── 版数を埋めた派生成果物 ─────────────────────────────────────────

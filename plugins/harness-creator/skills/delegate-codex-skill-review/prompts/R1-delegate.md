@@ -139,7 +139,7 @@
 
 ### 6.1 上位 skill との接続
 
-- 呼び出し元: `run-skill-create` Step 5.5/6 任意拡張、ユーザー manual invocation
+- 呼び出し元: ユーザー manual invocation (`run-skill-create` の完了レポート後に外部 LLM の目を足したいときを含む)
 - 後続: R2-codex-review（codex 応答受領後の response 整形）
 - 兄弟: `run-elegant-review` v2（fork レビューで類似目的、本 prompt は外部 LLM 経路）
 

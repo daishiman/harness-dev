@@ -107,7 +107,7 @@ plugin ディレクトリのみを repo 外 temp へコピーし (vendored 実�
 ```
 cp -R plugins/harness-creator /tmp/standalone/harness-creator
 cd /tmp/standalone   # git 外・CLAUDE_PLUGIN_ROOT 未設定
-echo '{}' | python3 /tmp/standalone/harness-creator/skills/run-elegant-review/scripts/check-review-trigger.py
+echo '{}' | python3 /tmp/standalone/harness-creator/hooks/external-intelligence-observe.py
 echo exit=$?   # => exit=0
 ```
 

@@ -6,6 +6,12 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["step", "timestamp", "gate_id", "approver", "artifacts", "next_phase"],
+  "allOf": [
+    {
+      "if": {"properties": {"gate_id": {"type": "number"}}, "required": ["gate_id"]},
+      "then": {"properties": {"approver": {"const": "user"}}}
+    }
+  ],
   "properties": {
     "step": {
       "type": "string",
@@ -14,12 +20,12 @@
     "timestamp": {"type": "string", "format": "date-time"},
     "gate_id": {
       "type": ["integer", "number", "null"],
-      "description": "通過した Gate 番号 (1, 2, 2.5, 3, 4)。Step 通過のみで Gate 無しなら null。"
+      "description": "通過した Gate 番号 (1, 2.5, 2)。Step 通過のみで Gate 無しなら null。"
     },
     "approver": {
       "type": "string",
-      "enum": ["user", "solo_operator_auto", "system_auto"],
-      "description": "誰が承認したか。"
+      "enum": ["user", "system_auto"],
+      "description": "誰が承認したか。Gate (gate_id が数値) は利用者の応答だけで通るので user に限る。system_auto は Gate の無い step 通過 (gate_id=null) だけに使う。"
     },
     "artifacts": {
       "type": "array",
@@ -30,7 +36,7 @@
         "required": ["path", "kind"],
         "properties": {
           "path": {"type": "string"},
-          "kind": {"type": "string", "enum": ["brief", "skill", "build-trace", "lint-log", "evaluator-result", "elegant-findings", "governance-decision", "report", "other"]},
+          "kind": {"type": "string", "enum": ["brief", "skill", "build-trace", "lint-log", "evaluator-result", "report", "other"]},
           "checksum": {"type": "string"}
         }
       }

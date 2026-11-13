@@ -508,7 +508,7 @@ SKILL.md Step 10 (`--with-knowledge` or `brief.knowledge_loop`) の実行手順�
 | skill | `templates/{run,ref,assign-generator,assign-evaluator,wrap,delegate}.md` | `plugins/<plugin>/skills/<name>/SKILL.md` | `lint-skill-name.py` / `lint-skill-description.py` / `lint-skill-tree.py` / `validate-frontmatter.py` |
 | agent | `templates/agent-skeleton.md` | `plugins/<plugin>/agents/<name>.md` | `lint-agent-prompt-section.py` / `validate-frontmatter.py` |
 | hook | `templates/hook-skeleton.md` | `plugins/<plugin>/hooks/<name>.{py,md}` | `lint-script-frontmatter.py` / `validate-frontmatter.py` |
-| hook (skill-local) | 同上 | `plugins/<plugin>/skills/<skill>/hooks/<name>.{py,md}` も正式許容 (例: run-skill-update-notifier)。ただし plugin.json からの配線パスと一致させること | 同上 |
+| hook (skill-local) | 同上 | `plugins/<plugin>/skills/<skill>/hooks/<name>.{py,md}` も正式許容。ただし plugin.json からの配線パスと一致させること | 同上 |
 | command | `templates/command-skeleton.md` | `plugins/<plugin>/commands/<name>.md` | `lint-command-md.py` (未実装・実体なしのため起動しない) / `validate-frontmatter.py` |
 | plugin-composition | `templates/plugin-composition-skeleton.yaml` | `plugins/<plugin>/plugin-composition.yaml` | `lint-plugin-composition.py` + `validate-build-trace.py --bundle <plugin-composition.yaml>` (SemVer / 実在ref / endpoint / exact重複 / DAGをfail-closed) |
 | prompt | `templates/prompt-skeleton.md` のmanifest殻 + prompt-creatorの7層本文 | `plugins/<plugin>/prompts/<name>.md` | 下記のkind=prompt合成検証（本文とmanifestの検査を分離） |

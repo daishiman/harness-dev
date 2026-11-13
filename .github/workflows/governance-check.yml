@@ -109,12 +109,8 @@ jobs:
             .hooks == "./hooks/hooks.json" and (has("x_harness") | not)
           ' plugins/harness-creator/.codex-plugin/plugin.json
           jq -e '
-            (.hooks.SessionStart) as $s |
             (.hooks.PostToolUse) as $p |
-            ($s | type == "array" and length == 1) and
-            ($s[0].hooks | type == "array" and length == 1) and
-            ($s[0].hooks[0].type == "command") and
-            ($s[0].hooks[0].command | contains("auto-sync-on-session-start.py")) and
+            (.hooks | has("SessionStart") | not) and
             ($p | type == "array" and length >= 1) and
             ([$p[] | select(.matcher | contains("Bash") and contains("apply_patch"))]) as $obs |
             ($obs | length == 1) and

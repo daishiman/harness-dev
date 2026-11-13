@@ -1,4 +1,4 @@
-"""C05 + repo integration の native plugin wiring 契約テスト。"""
+"""repo integration の native plugin wiring 契約テスト。"""
 from __future__ import annotations
 
 import json
@@ -17,11 +17,6 @@ CAPABILITY_BUILD_RUNTIME = PLUGIN / "references" / "capability-build-runtime-con
 
 def _json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
-
-
-def _session_start_handler(doc: dict) -> tuple[dict, dict]:
-    group = doc["hooks"]["SessionStart"][0]
-    return group, group["hooks"][0]
 
 
 def _hook_commands(settings: dict) -> list[str]:
@@ -72,7 +67,7 @@ def test_codex_manifest_uses_plugin_root_hooks_contract():
     assert manifest["interface"]["category"] == "Internal-Tooling"
 
 
-def test_dual_manifest_identity_version_and_session_start_match():
+def test_dual_manifest_identity_version_and_shared_hooks_match():
     claude = _json(PLUGIN / ".claude-plugin" / "plugin.json")
     codex = _json(PLUGIN / ".codex-plugin" / "plugin.json")
     assert (claude["name"], claude["version"]) == (codex["name"], codex["version"])
@@ -84,23 +79,20 @@ def test_dual_manifest_identity_version_and_session_start_match():
     # 衝突していた。ここで守るべきは「両 manifest が同一の semver core を名乗る」こと。
     assert re.fullmatch(r"\d+\.\d+\.\d+(?:[-+].+)?", codex["version"]), codex["version"]
 
-    shared_hooks = _json(PLUGIN / "hooks" / "hooks.json")
-    codex_group, codex_hook = _session_start_handler(shared_hooks)
+    # 両 product は同じ hooks/hooks.json を読む (Claude は標準 path、Codex は manifest 参照)。
     assert "hooks" not in claude
     assert codex["hooks"] == "./hooks/hooks.json"
-    claude_group, claude_hook = _session_start_handler(shared_hooks)
-    assert codex_group["matcher"] == claude_group["matcher"] == "startup|resume|clear"
-    assert codex_hook["type"] == claude_hook["type"] == "command"
-    assert (
-        "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/auto-sync-on-session-start.py"
-        in codex_hook["command"]
-    )
-    assert (
-        "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/auto-sync-on-session-start.py"
-        in claude_hook["command"]
-    )
-    for handler in (codex_hook, claude_hook):
-        assert handler["timeout"] > 45
+    shared_hooks = _json(PLUGIN / "hooks" / "hooks.json")
+    handlers = [
+        hook
+        for groups in shared_hooks["hooks"].values()
+        for group in groups
+        for hook in group["hooks"]
+    ]
+    assert handlers
+    for handler in handlers:
+        assert handler["type"] == "command"
+        assert "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/" in handler["command"]
         assert "dangerously-bypass-hook-trust" not in handler["command"]
 
 
@@ -172,11 +164,8 @@ def test_create_workflow_and_update_skill_both_route_to_codex_generator():
     assert "--intent update" not in improve
 
 
-def test_composition_declares_c05_and_native_surface_scripts_once():
+def test_composition_declares_native_surface_scripts_once():
     text = (PLUGIN / "plugin-composition.yaml").read_text(encoding="utf-8")
-    assert text.count(
-        'kind: hook, ref: "hook:SessionStart-startupresumeclear/auto-sync-on-session-start"'
-    ) == 1
     for ref in (
         "scripts/check-native-surface-parity.py",
         "scripts/install-codex-plugin.py",
@@ -285,14 +274,13 @@ def test_operations_runbook_covers_dry_run_rollback_and_lifecycle_gates():
         "install / enable / hook trust / re-trust / uninstall",
         "pending_user_gate",
         "unsupported/deferred",
-        "C01/C05 は global state を",
+        "C01 は global state を",
         "一切変更しない",
         "### 5. State transition と current output 例",
         "### 7A. Projection rollback / managed-only restore",
         "### 7B. Release rollback / source + activation",
         "#### Release file inventory (source / gate / docs / tests)",
         "### 8. Unsupported/deferred の再評価 trigger",
-        "skipped_wrong_repository",
         "hook trust pending (`pending_user_gate`)",
     ):
         assert required in text
@@ -319,13 +307,11 @@ def test_operations_release_inventory_is_complete_for_native_surface_wave():
         "plugins/harness-creator/.claude-plugin/plugin.json",
         "plugins/harness-creator/.codex-plugin/plugin.json",
         "plugins/harness-creator/hooks/hooks.json",
-        "plugins/harness-creator/hooks/auto-sync-on-session-start.py",
         "plugins/harness-creator/scripts/sync-native-surfaces.py",
         "plugins/harness-creator/scripts/check-native-surface-parity.py",
         "plugins/harness-creator/scripts/record-task-graph-knowledge.py",
         "plugins/harness-creator/references/native-surface-contract.md",
         "plugins/harness-creator/references/native-surface-operations.md",
-        "plugins/harness-creator/tests/test_auto_sync_on_session_start.py",
         "plugins/harness-creator/tests/test_native_surface_repo_integration.py",
     )
     for path in required_paths:

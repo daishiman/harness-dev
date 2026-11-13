@@ -8,7 +8,7 @@
 
 ### 意図的 deferred (2026-07-02 elegant-review `20260702-declarative-skillcreator`)
 
-宣言型化レビューで理由付き残置とした項目 (正本: `eval-log/harness-creator/_plugin/elegant-review/20260702-declarative-skillcreator/verdict.json` の `deferred[]`)。(1) verdict 鮮度の tree-hash 化 (references のみ変更の PR merge が re-audit trigger)、(2) canonical-registry.json (正本誤読の観測時に採用)、(3) exemptions.json 完全版 (escape 追加時に段階導入)、(4) compute-dogfooding-metrics.py の SessionEnd 配線 (書込先を state 領域へ変更してから)、(5) knowledge/usage-log.jsonl 生成 (consult 実運用の定着後)、(6) handoff-`<step>`.json 存在検証 lint (次回 gate 変更時に同時配線)、(7) script-frontmatter の CI 配線 (既存違反の棚卸し後、`lint-matrix.json` の `ci_exclusion_reason` に記録)。
+宣言型化レビューで理由付き残置とした項目 (正本: `eval-log/harness-creator/_plugin/elegant-review/20260702-declarative-skillcreator/verdict.json` の `deferred[]`)。(1) verdict 鮮度の tree-hash 化 (references のみ変更の PR merge が re-audit trigger)、(2) canonical-registry.json (正本誤読の観測時に採用)、(3) exemptions.json 完全版 (escape 追加時に段階導入)、(4) dogfooding 指標の SessionEnd 配線 (集計 script は未使用のため削除済み。必要になったら作り直す)、(5) knowledge/usage-log.jsonl 生成 (consult 実運用の定着後)、(6) handoff-`<step>`.json 存在検証 lint (次回 gate 変更時に同時配線)、(7) script-frontmatter の CI 配線 (既存違反の棚卸し後、`lint-matrix.json` の `ci_exclusion_reason` に記録)。
 
 ### 意図的 deferred (2026-07-02 まんべんなく生成レビュー)
 

@@ -67,9 +67,7 @@ capabilities:
   - { kind: skill, ref: skills/run-skill-live-trial, tier: core }
   - { kind: skill, ref: skills/run-skill-rename, tier: core }
   - { kind: skill, ref: skills/run-skill-rubric-governance, tier: core }
-  - { kind: skill, ref: skills/run-skill-update-notifier, tier: core }
   - { kind: skill, ref: skills/wrap-git-commit-safe, tier: core }
-  - { kind: agent, ref: agents/elegant-bounded-improvement-executor, tier: core }
   - { kind: agent, ref: agents/elegant-improvement-executor, tier: core }
   - { kind: agent, ref: agents/elegant-initial-draft-evaluator, tier: core }
   - { kind: agent, ref: agents/elegant-logical-structural-analyst, tier: core }
@@ -83,18 +81,11 @@ capabilities:
   - { kind: command, ref: commands/marketplace-register, tier: core }
   - { kind: command, ref: commands/plugin-compose, tier: core }
   - { kind: command, ref: commands/skill-improve, tier: core }
-  - { kind: hook, ref: "hook:SessionStart-startupresumeclear/auto-sync-on-session-start", tier: core }
-  - { kind: hook, ref: "hook:UserPromptSubmit/cache-refresh",         tier: extension }
-  - { kind: hook, ref: "hook:PostToolUse-Skill/notify-skill-end",     tier: extension }
   - { kind: hook, ref: "hook:PostToolUse/external-intelligence-observe", tier: core }
   - { kind: hook, ref: "hook:PostToolUseFailure/external-intelligence-observe", tier: core }
-  - { kind: hook, ref: "hook:PostToolUse-Skill/content-review-queue", tier: core }
   - { kind: hook, ref: "hook:PostToolUse-EditWrite/lint-capability-manifest", tier: core }
-  - { kind: hook, ref: "hook:PostToolUse-EditWrite/content-review-queue", tier: core }
   - { kind: hook, ref: "hook:PostToolUse-Edit-rubric/diff-rubric-impact", tier: core }
   - { kind: hook, ref: "hook:PreToolUse-Bash/wrap-git-commit-safe",   tier: extension }
-  - { kind: hook, ref: "hook:Stop/elegant-review-trigger",            tier: extension }
-  - { kind: hook, ref: "hook:UserPromptSubmit/ref-task-context-map-preload", tier: extension }
   - { kind: hook, ref: "hook:SessionEnd/aggregate-evals",             tier: core }
 
   # === Skills (kind=skill) ===
@@ -134,10 +125,9 @@ dependencies:
   - { from: skills/run-goal-seek,           to: skills/run-goal-elicit,             type: calls }
   - { from: skills/run-skill-create,        to: skills/run-build-skill,             type: calls }
   - { from: skills/run-skill-create,        to: skills/run-codex-plugin-package,    type: calls }
-  - { from: skills/run-skill-create,        to: skills/run-elegant-review,          type: calls }
   - { from: skills/run-build-skill,         to: agents/run-build-skill-subagent,    type: calls }
   - { from: skills/run-build-skill,         to: agents/elegant-initial-draft-evaluator, type: calls }
-  - { from: skills/run-build-skill,         to: agents/elegant-bounded-improvement-executor, type: calls }
+  - { from: skills/run-build-skill,         to: agents/elegant-improvement-executor, type: calls }
   - { from: skills/run-build-skill,         to: skills/ref-skill-design-rubric,     type: reads }
   - { from: skills/run-build-skill,         to: skills/ref-claude-code-skill-spec,  type: reads }
   - { from: skills/run-build-skill,         to: skills/ref-skill-naming-convention, type: reads }
@@ -154,8 +144,6 @@ dependencies:
   - { from: skills/run-build-skill,         to: skills/run-skill-feedback,          type: emits }
   - { from: skills/run-build-skill,         to: skills/assign-skill-design-evaluator, type: calls }
   - { from: skills/run-build-skill,         to: skills/run-elegant-review,          type: calls }
-  - { from: skills/run-skill-create,        to: skills/assign-skill-design-evaluator, type: calls }
-  - { from: skills/run-skill-create,        to: skills/run-skill-rubric-governance, type: calls }
   - { from: skills/run-elegant-review,      to: skills/delegate-codex-skill-review, type: delegates }
   - { from: skills/run-skill-elicit,        to: skills/ref-knowledge-loop,          type: reads }
   - { from: skills/run-elegant-review,      to: agents/elegant-reset-observer,      type: calls }
@@ -172,17 +160,16 @@ dependencies:
   - { from: commands/capability-build,      to: scripts/sync-native-surfaces.py,    type: calls }
   - { from: commands/capability-review,     to: skills/run-elegant-review,          type: calls }
   - { from: commands/skill-improve,         to: skills/run-elegant-review,          type: calls }
+  - { from: commands/skill-improve,         to: agents/elegant-improvement-executor, type: calls }
   - { from: commands/plugin-compose,        to: skills/run-build-skill,             type: calls }
   - { from: skills/run-build-skill,         to: skills/run-skill-live-trial,        type: calls }
   - { from: skills/run-skill-live-trial,    to: skills/run-elegant-review,          type: reads }
   - { from: skills/run-skill-live-trial,    to: skills/run-skill-iter-improve,      type: emits }
   - { from: skills/run-skill-iter-improve,  to: skills/run-elegant-review,          type: reads }
   - { from: "hook:PostToolUse-EditWrite/lint-capability-manifest", to: skills/run-build-skill, type: calls }
-  - { from: "hook:PostToolUse-EditWrite/content-review-queue",     to: skills/run-elegant-review, type: calls }
   - { from: "hook:PostToolUse/external-intelligence-observe", to: skills/run-build-skill/scripts/auto-record-lesson.py, type: calls }
   - { from: "hook:PostToolUseFailure/external-intelligence-observe", to: skills/run-build-skill/scripts/auto-record-lesson.py, type: calls }
   - { from: skills/run-build-skill/scripts/auto-record-lesson.py, to: skills/run-build-skill/scripts/build-external-intelligence.py, type: calls }
-  - { from: "hook:SessionStart-startupresumeclear/auto-sync-on-session-start", to: scripts/sync-native-surfaces.py, type: calls }
   - { from: scripts/sync-native-surfaces.py, to: scripts/sync-codex-project-settings.py, type: calls }
   - { from: skills/run-codex-plugin-package, to: scripts/sync-plugin-platforms.py, type: calls }
   - { from: skills/run-codex-plugin-install, to: scripts/install-codex-plugin.py, type: calls }
@@ -221,15 +208,11 @@ governance:
 
 observability:
   hooks:
-    - SessionStart/auto-sync-on-session-start
     - PostToolUse/external-intelligence-observe
     - PostToolUseFailure/external-intelligence-observe
-    - PostToolUse-Skill/content-review-queue
     - PostToolUse-EditWrite/lint-capability-manifest
-    - PostToolUse-EditWrite/content-review-queue
     - PostToolUse-Edit-rubric/diff-rubric-impact
     - SessionEnd/aggregate-evals
-    - Stop/elegant-review-trigger
   metrics:
     - lessons_per_pr # curated lessons only
     - duplicate_observation_rate

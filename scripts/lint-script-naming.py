@@ -222,7 +222,6 @@ PENDING_RENAME_PATHS = {
     "plugins/skill-intake/scripts/validate_intake_schema.py",
     # prompt-creator scaffold (PR #4): non-standard verb until renamed
     "plugins/harness-creator/skills/run-build-skill/scripts/resolve-skill-dirs.py",
-    "plugins/harness-creator/skills/run-skill-create/scripts/evaluate-create-gates.py",
     "plugins/harness-creator/skills/delegate-codex-skill-review/scripts/check-codex-installed.py",
     # PR #12: skill-intake / prompt-creator / harness-creator 拡張に伴う暫定 PENDING (Change Governance で rename 予定)
     "plugins/prompt-creator/skills/run-prompt-create/scripts/evaluate-create-gates.py",
@@ -232,14 +231,9 @@ PENDING_RENAME_PATHS = {
     "plugins/skill-intake/skills/run-intake-next-action/scripts/decide-mode.py",
     "plugins/skill-intake/skills/run-intake-interview/scripts/check-five-axes-coverage.py",
     "plugins/skill-intake/skills/run-intake-visualize/scripts/verify-visuals.py",
-    "plugins/harness-creator/scripts/compute-dogfooding-metrics.py",
     "plugins/harness-creator/skills/run-build-skill/scripts/auto-record-lesson.py",
-    "plugins/harness-creator/skills/run-elegant-review/scripts/check-review-trigger.py",
     "plugins/harness-creator/skills/wrap-git-commit-safe/scripts/preflight-git-commit.py",
     "plugins/harness-creator/skills/run-skill-rubric-governance/scripts/aggregate-evals.py",
-    "plugins/harness-creator/skills/ref-task-context-map/scripts/preload-context-map.py",
-    # run-skill-update-notifier (PR #8): notifier verb pending allowed-list extension
-    "plugins/harness-creator/skills/run-skill-update-notifier/scripts/notifier-check.py",
     # PR #13: elegant-review v2 / plugin-package-check の新規 verb (emit/aggregate) pending rename
     "plugins/harness-creator/skills/run-elegant-review/scripts/emit-observable.py",
     "plugins/harness-creator/skills/run-plugin-package-check/scripts/aggregate-pkg-findings.py",

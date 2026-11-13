@@ -687,12 +687,13 @@ def evaluate(repo_root: Path, slug: str, contract_path: Path, plan_dir: Path) ->
     report["manifest_parity"] = mp
 
     # (4b) plugin hook bundle parity。plan の native SSOT は plugin root/hooks/hooks.json。
+    # 特定 event の配線は必須にしない。宣言された全 event の command hook が同じ schema
+    # (command 型・plugin root 内 path・正の timeout) を満たすことだけを検査する。
     hook_path = repo_root / "plugins" / slug / "hooks" / "hooks.json"
     hp: dict = {
         "path": f"plugins/{slug}/hooks/hooks.json",
         "exists": hook_path.is_file(),
-        "session_start": False,
-        "entrypoint": "auto-sync-on-session-start.py",
+        "events": [],
         "status": "",
     }
     if not hook_path.is_file():
@@ -706,60 +707,48 @@ def evaluate(repo_root: Path, slug: str, contract_path: Path, plan_dir: Path) ->
             violations.append(_v(SEV_INVALID, "plugin_hooks_invalid_json", "hooks/hooks.json が invalid JSON"))
         else:
             hooks = hook_data.get("hooks") if isinstance(hook_data, dict) else None
-            session_entries = hooks.get("SessionStart") if isinstance(hooks, dict) else None
-            hp["session_start"] = isinstance(session_entries, list) and bool(session_entries)
             hook_schema_errors: list[str] = []
-            commands: list[str] = []
-            entrypoint_found = False
             paths_confined = True
-            expected_entrypoint = (plugin_root / "hooks" / "auto-sync-on-session-start.py").resolve()
             if not isinstance(hook_data, dict) or not isinstance(hooks, dict):
                 hook_schema_errors.append("root hooks object が必須")
-            if not hp["session_start"]:
-                hook_schema_errors.append("SessionStart の非空配列が必須")
-            else:
-                for i, group in enumerate(session_entries):
+                hooks = {}
+            hp["events"] = sorted(hooks)
+            for event, groups in hooks.items():
+                if not isinstance(groups, list):
+                    hook_schema_errors.append(f"{event} が配列でない")
+                    continue
+                for i, group in enumerate(groups):
                     if not isinstance(group, dict):
-                        hook_schema_errors.append(f"SessionStart[{i}] が object でない")
+                        hook_schema_errors.append(f"{event}[{i}] が object でない")
                         continue
                     matcher = group.get("matcher")
                     if matcher is not None and not isinstance(matcher, str):
-                        hook_schema_errors.append(f"SessionStart[{i}].matcher が string でない")
+                        hook_schema_errors.append(f"{event}[{i}].matcher が string でない")
                     nested = group.get("hooks")
                     if not isinstance(nested, list) or not nested:
-                        hook_schema_errors.append(f"SessionStart[{i}].hooks が非空配列でない")
+                        hook_schema_errors.append(f"{event}[{i}].hooks が非空配列でない")
                         continue
                     for j, hook in enumerate(nested):
                         if not isinstance(hook, dict):
-                            hook_schema_errors.append(f"SessionStart[{i}].hooks[{j}] が object でない")
+                            hook_schema_errors.append(f"{event}[{i}].hooks[{j}] が object でない")
                             continue
                         if hook.get("type") != "command":
-                            hook_schema_errors.append(
-                                f"SessionStart[{i}].hooks[{j}].type は command 必須"
-                            )
+                            hook_schema_errors.append(f"{event}[{i}].hooks[{j}].type は command 必須")
                         command = hook.get("command")
                         if not isinstance(command, str) or not command.strip():
-                            hook_schema_errors.append(
-                                f"SessionStart[{i}].hooks[{j}].command が非空文字列でない"
-                            )
+                            hook_schema_errors.append(f"{event}[{i}].hooks[{j}].command が非空文字列でない")
                             continue
-                        commands.append(command)
                         command_paths, confined = _plugin_root_command_paths(command, plugin_root)
                         if not confined or not command_paths:
                             paths_confined = False
                             hook_schema_errors.append(
-                                f"SessionStart[{i}].hooks[{j}].command が plugin root 内 path でない"
+                                f"{event}[{i}].hooks[{j}].command が plugin root 内 path でない"
                             )
-                        if expected_entrypoint in command_paths:
-                            entrypoint_found = True
                         timeout = hook.get("timeout")
                         if timeout is not None and (
                             isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or timeout <= 0
                         ):
-                            hook_schema_errors.append(
-                                f"SessionStart[{i}].hooks[{j}].timeout は正数必須"
-                            )
-            hp["entrypoint_found"] = entrypoint_found
+                            hook_schema_errors.append(f"{event}[{i}].hooks[{j}].timeout は正数必須")
             hp["command_paths_confined"] = paths_confined
             hp["schema_errors"] = hook_schema_errors
             if hook_schema_errors:
@@ -769,15 +758,6 @@ def evaluate(repo_root: Path, slug: str, contract_path: Path, plan_dir: Path) ->
                         SEV_INVALID,
                         "plugin_hooks_schema_invalid",
                         "hooks/hooks.json schema/path 不正: " + "; ".join(hook_schema_errors),
-                    )
-                )
-            elif not entrypoint_found:
-                hp["status"] = "drift"
-                violations.append(
-                    _v(
-                        SEV_DRIFT,
-                        "plugin_hooks_wiring_drift",
-                        "hooks/hooks.json に SessionStart auto-sync-on-session-start.py 配線がない",
                     )
                 )
             else:

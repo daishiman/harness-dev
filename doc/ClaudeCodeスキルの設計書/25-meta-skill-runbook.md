@@ -17,7 +17,7 @@
 
 Phase 2 以降の標準運用では、配布単位は harness-creator-kit ではなく `plugins/<plugin-name>/` の plugin package になる。ユーザーは `/plugin install <plugin>` だけで必要な Skill / Agent / Hook / script / settings を利用できる状態を完了条件とする。どの component を同梱するか、どの検査を package completeness check とするかは [36-plugin-package-harness-contract.md](./36-plugin-package-harness-contract.md) を正本とする。`skill-only` は legacy / dev-only / migration exception 扱いであり（36章 §`skill-only`）、新規量産では選択しない。
 
-標準のE2E入口は `run-skill-create` である。`run-skill-create` は要望から完成までを、`run-skill-elicit` → `run-build-skill` → creator-kit登録判定 → P0 lint → `assign-skill-design-evaluator` → `run-elegant-review` → governance の順でゲート付きに連鎖させる。新規作成と更新のどちらもこの入口から開始し、途中でユーザー判断が必要な箇所だけ gate template に従って確認する。
+標準のE2E入口は `run-skill-create` である。`run-skill-create` は要望から完成までを、`run-skill-elicit` → `run-build-skill` (生成と、利用者が選んだときだけの初稿診断) → creator-kit登録判定 → create 固有の P0 lint (build と重複する lint は build の lint receipt を再利用) → Gate 2 → package 検査 → 完了レポートの順でゲート付きに連鎖させる。評価は build の初稿診断 1 回に一本化し、`assign-skill-design-evaluator` / `run-elegant-review` / governance は利用者が明示的に呼んだときだけ走らせる。新規作成と更新のどちらもこの入口から開始し、途中でユーザー判断が必要な箇所だけ gate template に従って確認する。
 
 既存プロジェクトを kit 化する場合は、まず `bash installers/migrate-from-project.sh --dry-run` で移動対象を確認し、問題なければ本実行する。ただしこの script は旧 `creator-kit/` の配置（kit 直下の `skills/`・`scripts/`・`config/`）へ移す作りのままで、今の `plugins/` の配置には移さない。`--dry-run` でも `installers/` の下に空の dir を作る。kit 由来 symlink だけを uninstall 対象とし、プロジェクト固有 Skill や業務設計書は移動しない。`xl-skills` 本体の symlink 配置は完了しており、`.claude/skills/` の大半は `plugins/*/skills/*` への symlink である（32章冒頭の注記）。ただし `migrate-from-project.sh` の正式実行ログは未取得であり、C4は暫定PASSとして扱う (32章参照)。
 

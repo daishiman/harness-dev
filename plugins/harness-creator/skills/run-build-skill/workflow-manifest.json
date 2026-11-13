@@ -155,7 +155,7 @@
       "resourceIds": [],
       "output_artifact": "scripts/notion-upsert-plugin.py --plugin <plugin> [--hearing-sheet-id <id>]",
       "note": "実体は top-level scripts/notion-upsert-plugin.py。冪等。token は .notion-config.json の keychain_service/keychain_account から取得し、CI では INTAKE_ALLOW_ENV_TOKEN=1 明示時のみ $NOTION_TOKEN を許可。",
-      "transition": {"gate": "notion-register=falseまたはupsert receiptが検証済み", "on_pass": "feedback-deploy", "on_fail": "abort"}
+      "transition": {"gate": "notion-register=falseまたはupsert receiptが検証済み", "on_pass": "content-review", "on_fail": "abort"}
     },
     {
       "id": "feedback-deploy",
@@ -168,14 +168,14 @@
       "resourceIds": [],
       "output_artifact": "<target-plugin>/skills/run-skill-feedback (self-contained copy)",
       "verifier": "scripts/lint-feedback-protocol.py --strict (R7)",
-      "note": "build 完了時に必ず実行。harness-creator 自身は対象外。冪等 (既存実体は再コピーしない、既存 symlink は実体へ置換)。これは SKILL.md patch combinator ではなく、scripts/render-combinators.py apply_feedback_loop() の副作用付き deployment action。",
-      "transition": {"gate": "opt-out明示またはfeedback protocol strict検証済み", "on_pass": "content-review", "on_fail": "abort"}
+      "note": "build 完了時に必ず実行。harness-creator 自身は対象外。冪等 (既存実体は再コピーしない、既存 symlink は実体へ置換)。これは SKILL.md patch combinator ではなく、scripts/render-combinators.py apply_feedback_loop() の副作用付き deployment action。trace-write から分かれる独立した branch で、content-review (Step 12) はこの phase を待たない。",
+      "transition": {"gate": "opt-out明示またはfeedback protocol strict検証済み", "on_pass": "complete", "on_fail": "abort"}
     },
     {
       "id": "content-review",
       "step": 12,
       "title": "Verification obligation DAG 解決 (machine-first; semantic slicing)",
-      "dependsOn": ["trace-write", "feedback-deploy"],
+      "dependsOn": ["trace-write"],
       "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
       "default_on": true,
       "opt_out_flag": "--skip-content-review",
@@ -271,12 +271,13 @@
       "dependsOn": ["initial-draft-review"],
       "capability_kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
       "stage_filter": ["draft"],
-      "execution": "single-bounded-improvement-executor",
-      "executor": "elegant-bounded-improvement-executor",
+      "execution": "single-elegant-improvement-executor",
+      "executor": "elegant-improvement-executor",
+      "executor_args": {"selected_finding_ids": "improvement-decision.selected_finding_ids", "max_rounds": "improvement-decision.max_rounds", "output_contract": "improvement-result"},
       "trigger": "improvement-decision.improvement_authorized=true AND selected_finding_ids is non-empty",
       "accept_draft_executor_contexts": 0,
       "max_executor_contexts": 1,
-      "resourceIds": ["prompt-bounded-improve", "schema-improvement-result", "agent-bounded-improvement-executor"],
+      "resourceIds": ["prompt-bounded-improve", "schema-improvement-result", "agent-improvement-executor"],
       "output_artifact": "eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/{post-target-manifest.json,improvement-result.json}",
       "note": "accept-draftはexecutorを起動せずusable draftで停止。他levelもdecisionのselected_finding_ids/max_roundsだけを1 workerが処理する。release/exhaustiveはuser eventへ束縛された明示decisionにnext_stage/next_profileがある場合だけ後続候補になる。"
     },
@@ -344,7 +345,7 @@
     {"id": "script-build-review-launch", "kind": "script", "path": "./scripts/build-review-launch.py", "phaseIds": ["initial-draft-review"]},
     {"id": "script-validate-improvement-result", "kind": "script", "path": "./scripts/validate-improvement-result.py", "phaseIds": ["post-improvement-verification"]},
     {"id": "agent-initial-draft-evaluator", "kind": "agent", "path": "../../agents/elegant-initial-draft-evaluator.md", "phaseIds": ["initial-draft-review"]},
-    {"id": "agent-bounded-improvement-executor", "kind": "agent", "path": "../../agents/elegant-bounded-improvement-executor.md", "phaseIds": ["bounded-improvement"]},
+    {"id": "agent-improvement-executor", "kind": "agent", "path": "../../agents/elegant-improvement-executor.md", "phaseIds": ["bounded-improvement"]},
     {"id": "prompt-scaffold", "kind": "prompt", "path": "./prompts/R1-scaffold.md", "phaseIds": ["scaffold"]},
     {"id": "prompt-template-select", "kind": "prompt", "path": "./prompts/R3-template-select.md", "phaseIds": ["scaffold"]},
     {"id": "prompt-responsibility-emit", "kind": "prompt", "path": "./prompts/R2-responsibility-emit.md", "phaseIds": ["prompts-emit"]},

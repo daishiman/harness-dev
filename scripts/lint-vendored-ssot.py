@@ -94,7 +94,7 @@ VENDORED_PAIRS = [
         ROOT / "plugins" / "skill-intake" / "scripts" / "notion_config.py",
     ),
     # harness-creator 単独 install 用に同梱した feedback_contract 境界 SSOT。
-    # runtime hook (check-review-trigger.py) / build-time validator が import-time に
+    # build-time validator (render-combinators.py ほか) が import-time に
     # 解決するため、plugin 外 repo-root への依存を断ち plugin 内へ vendoring する。
     (
         ROOT / "scripts" / "feedback_contract_ssot.py",

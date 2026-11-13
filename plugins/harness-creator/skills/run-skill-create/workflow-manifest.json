@@ -25,8 +25,12 @@
   "skill": "run-skill-create",
   "description": "run-skill-create の Step/Gate を機械可読化したフロー定義。SKILL.md は本 manifest と prompts/*.md を参照する。",
   "max_iterations": 3,
-  "gate_order": ["G1", "G2.5", "G2", "G3", "G4"],
-  "gate_order_comment": "Gate 通過順序の正本 (phases[].gate の非 null 値を実工程順 = step 1→3→4a→5→6 に並べたもの)。SKILL.md は本配列を参照し Gate 番号順を直書きしない。",
+  "gate_order": ["G1", "G2.5", "G2"],
+  "gate_order_comment": "Gate 通過順序の正本 (phases[].gate の非 null 値を実工程順 = step 1→3→4a に並べたもの)。SKILL.md は本配列を参照し Gate 番号順を直書きしない。",
+  "evaluation_source": {
+    "c1_c4": "run-build-skill の初稿診断 receipt (initial-draft-review の review.json と、改善した場合の improvement-validation.json) を正本とし、本 workflow は receipt を読んで完了レポートへ転記するだけで評価し直さない。receipt が無い (accept-as-is) 場合は未診断として報告する。",
+    "governance": "rubric を変更するときだけ利用者が run-skill-rubric-governance を明示的に呼ぶ。本 workflow の既定の流れには含めない。"
+  },
   "phases": [
     {
       "id": "elicit",
@@ -57,7 +61,7 @@
       "exitHook": "emit-build-trace",
       "resourceIds": [
         "schemas/skill-brief.schema.json",
-        "schemas/build-trace.schema.json"
+        "../run-build-skill/schemas/skill-build-trace.schema.json"
       ],
       "delegateSkill": "run-build-skill",
       "fatal_exit_codes": [1, 2],
@@ -166,30 +170,31 @@
       "id": "p0-lint",
       "step": "4a",
       "gate": 2,
-      "title": "P0 lint (自動)",
+      "title": "P0 lint (create 固有分のみ。build Step 4 と重複する lint は build の結果を再利用)",
       "dependsOn": ["plugin-release-record"],
       "entryHook": null,
       "exitHook": null,
-      "resourceIds": [
-        "schemas/findings.schema.json"
-      ],
+      "resourceIds": [],
       "delegateSkill": null,
+      "build_lint_reuse": {
+        "receipt": "eval-log/skill-build-trace.json#/reproducibility_gates/lint",
+        "required_status": "PASS",
+        "required_match": {"skill_name": "brief.skill_name"},
+        "covered_scripts": ["lint-skill-name.py", "lint-skill-description.py", "lint-skill-tree.py", "validate-frontmatter.py", "validate-build-plan.py"],
+        "on_missing_or_fail": "build",
+        "comment": "covered_scripts は run-build-skill Step 4 (lint-matrix の build-preflight) が同じ生成物に対して実行済みなので、ここでは再実行しない。receipt が無い、receipt の skill_name が今回の brief.skill_name と違う (別 skill の trace が残っている)、または lint が PASS でなければ commands を走らせずに build へ戻す。skills ディレクトリ全体への横断検査は CI (lint-matrix の ci) が受け持つ。"
+      },
       "commands": [
-        "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-skill-name.py\" --skills-dir \"${SKILLS_DIR}\"",
-        "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-skill-description.py\" --skills-dir \"${SKILLS_DIR}\"",
-        "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-skill-tree.py\" --skills-dir \"${SKILLS_DIR}\"",
-        "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/validate-frontmatter.py\" --skills-dir \"${SKILLS_DIR}\"",
         "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-dependency-direction.py\" --skills-dir \"${SKILLS_DIR}\"",
         "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-skill-dep-step7.py\" --skills-dir \"${SKILLS_DIR}\"",
         "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-forbidden-deps.py\" --skills-dir \"${SKILLS_DIR}\"",
         "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-manifest-contents.py\"",
-        "python3 ${PLUGIN_ROOT}/scripts/audit-capability-parity.py --repo-root . --plugin plugins/<plugin> --json",
-        "python3 ${PLUGIN_ROOT}/skills/run-build-skill/scripts/validate-build-plan.py --brief eval-log/skill-brief.json --check --skill-dir ${SKILLS_DIR}/${SKILL_NAME}"
+        "python3 ${PLUGIN_ROOT}/scripts/audit-capability-parity.py --repo-root . --plugin plugins/<plugin> --json"
       ],
       "max_retry": 3,
       "fatal_exit_codes": [1, 2],
       "handoff": "eval-log/handoff-after_lint.json",
-      "transition": {"gate": "全P0 lintがexit 0かつGate 2の明示decisionがPASS", "on_pass": "pkg-check", "on_fail": "build"}
+      "transition": {"gate": "build lint receiptがPASSかつcreate固有のP0 lintがexit 0かつGate 2の明示decisionがPASS", "on_pass": "pkg-check", "on_fail": "build"}
     },
     {
       "id": "pkg-check",
@@ -204,91 +209,28 @@
       "delegateSkill": "run-plugin-package-check",
       "fatal_exit_codes": [1],
       "handoff": "eval-log/handoff-after_pkg_check.json",
-      "transition": {"gate": "条件非該当またはPKG completenessがPASS", "on_pass": "design-evaluate", "on_fail": "abort"}
-    },
-    {
-      "id": "design-evaluate",
-      "step": "4b",
-      "gate": null,
-      "title": "設計評価 (rubric)",
-      "dependsOn": ["pkg-check"],
-      "entryHook": null,
-      "exitHook": null,
-      "resourceIds": [
-        "schemas/findings.schema.json",
-        "schemas/rubric-merge.schema.json"
-      ],
-      "delegateSkill": "assign-skill-design-evaluator",
-      "context": "fork",
-      "fatal_exit_codes": [],
-      "handoff": "eval-log/handoff-after_evaluator.json",
-      "transition": {"gate": "fork reviewerのrubric verdictがPASSまたは許可されたN/A", "on_pass": "elegant-review", "on_fail": "build"}
-    },
-    {
-      "id": "elegant-review",
-      "step": 5,
-      "gate": 3,
-      "title": "パラダイム評価 (C1-C4)",
-      "dependsOn": ["design-evaluate"],
-      "entryHook": "evaluate-create-gates",
-      "exitHook": null,
-      "condition": "new_skill OR diff_lines > 30",
-      "resourceIds": [
-        "../run-elegant-review/schemas/findings.schema.json",
-        "prompts/R2-gate-review.md"
-      ],
-      "delegateSkill": "run-elegant-review",
-      "context": "fork",
-      "decision_command": "python3 ${PLUGIN_ROOT}/skills/run-skill-create/scripts/evaluate-create-gates.py --skill-name ${SKILL_NAME} --kind ${KIND} --brief eval-log/skill-brief.json",
-      "fatal_exit_codes": [1],
-      "handoff": "eval-log/handoff-after_elegant.json",
-      "transition": {"gate": "条件非該当またはfork review C1-C4 PASSかつGate 3の明示decisionがPASS", "on_pass": "governance", "on_fail": "build"}
-    },
-    {
-      "id": "governance",
-      "step": 6,
-      "gate": 4,
-      "title": "governance 承認",
-      "dependsOn": ["elegant-review"],
-      "entryHook": null,
-      "exitHook": null,
-      "resourceIds": [
-        "prompts/R3-governance-decide.md",
-        "prompts/R2-gate-review.md",
-        "schemas/handoff.schema.json"
-      ],
-      "delegateSkill": "run-skill-rubric-governance",
-      "context": "fork",
-      "auto_approve_conditions": [
-        "solo_operator_mode == true",
-        "stable_frozen == true",
-        "newly_failing == 0",
-        "llm_reviewer == PASS"
-      ],
-      "fatal_exit_codes": [],
-      "handoff": "eval-log/handoff-after_governance.json",
-      "transition": {"gate": "fork governanceが人間承認または全auto_approve_conditionsを満たす明示PASS decisionを記録", "on_pass": "report", "on_fail": "abort"}
+      "transition": {"gate": "条件非該当またはPKG completenessがPASS", "on_pass": "report", "on_fail": "abort"}
     },
     {
       "id": "report",
       "step": 7,
       "gate": null,
       "title": "完了レポート",
-      "dependsOn": ["governance"],
+      "dependsOn": ["pkg-check"],
       "entryHook": null,
       "exitHook": null,
       "resourceIds": [
         "schemas/handoff.schema.json"
       ],
       "delegateSkill": null,
+      "evaluation_receipts": [
+        "eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/review.json",
+        "eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/improvement-validation.json"
+      ],
+      "evaluation_receipts_comment": "evaluation_source.c1_c4 の receipt をそのまま転記する。無ければ未診断と書き、ここで評価 Agent を起動しない。",
       "fatal_exit_codes": [],
       "handoff": "eval-log/handoff-done.json",
       "transition": {"gate": "完了reportと全handoffがschema検証済み", "on_pass": "complete", "on_fail": "abort"}
     }
-  ],
-  "fast_mode": {
-    "description": "低リスク変更 (1ファイル, <=30行, kind ∈ {ref,wrap}, evaluator pair 不要) のみ。Step 4b/5 を skip。",
-    "skip_phases": ["design-evaluate", "elegant-review"],
-    "decision_command": "python3 ${PLUGIN_ROOT}/skills/run-skill-create/scripts/evaluate-create-gates.py --skill-name ${SKILL_NAME} --kind ${KIND} --brief eval-log/skill-brief.json --fast"
-  }
+  ]
 }

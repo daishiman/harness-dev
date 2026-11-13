@@ -218,7 +218,6 @@ def _inferred_project_state_roots() -> list[Path]:
 def _state_fallback_root() -> Path:
     """project の state に書けないとき (CLAUDE_PROJECT_DIR 未設定・read-only) の退避先。
 
-    手本: notifier-check.py の `Path.home()/.cache/harness` (user 領域退避)。
     優先順: $XDG_STATE_HOME → ~/.claude/state。
     """
     xdg = os.environ.get("XDG_STATE_HOME")

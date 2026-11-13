@@ -41,7 +41,7 @@ VERDICT_SHA = "c" * 64
 PRE_IMAGE_SHA = "d" * 64
 # allowlist (apply-gate-policy §1) に一致するパス。
 TARGET_REL = "plugins/harness-creator/skills/assign-skill-design-evaluator/references/rubric.json"
-TARGET_REL2 = "plugins/harness-creator/skills/run-skill-create/schemas/build-trace.schema.json"
+TARGET_REL2 = "plugins/harness-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json"
 APPLIED_CONTENT = b'{"rubric": "synced"}\n'
 APPLIED_CONTENT2 = b'{"$schema": "x", "type": "object"}\n'
 

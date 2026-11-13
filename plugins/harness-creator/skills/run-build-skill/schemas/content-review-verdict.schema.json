@@ -96,6 +96,28 @@
         "eval_log_path": {"type": "string", "description": "旧 eval-log パス (例: eval-log/<old-plugin>/<skill>/content-review/)"},
         "retargeted_at": {"type": "string", "format": "date", "description": "retarget 実施日"}
       }
+    },
+    "sha_rebinds": {
+      "type": "array",
+      "description": "レビュー由来の修正を当てた後に target.skill_md_sha256 を結び直した監査記録 (content-review-protocol §レビュー由来の修正後の sha 結び直し)。run-elegant-review/scripts/sync-content-review-sha.py だけが追記する。手書きは偽装。",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from_sha", "to_sha", "finding_ids", "rebound_at", "tool"],
+        "properties": {
+          "from_sha": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "修正を当てる前の SKILL.md sha256 (このときの verdict の判定対象)"},
+          "to_sha": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "修正を当てた後の SKILL.md sha256"},
+          "finding_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {"type": "string", "pattern": "^(elegance|rubric):[1-9][0-9]*$"},
+            "description": "当てた指摘。<review_kind>:<n> = その verdict の feedback_loop.negative_feedback の n 番目 (1 始まり)"
+          },
+          "rebound_at": {"type": "string", "format": "date-time"},
+          "tool": {"const": "sync-content-review-sha"}
+        }
+      }
     }
   }
 }

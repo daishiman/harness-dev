@@ -269,9 +269,28 @@ def write_version(plugin_dir: pathlib.Path, version: str) -> None:
 # ── CHANGELOG 追従 ─────────────────────────────────────────────────
 
 # plugin 直下 CHANGELOG の見出しのうち「版の節」と読めるもの。
-# `notifier-check.py` の `_VERSION_RE` と同じ形を採る。読む側と書く側で形が違うと、
-# 書いた節が読まれないという最も静かな壊れ方をする。
+# 読む側 (latest_changelog_version) と書く側 (sync_changelog_section) が同じ式を使う。
+# 形が違うと、書いた節が読まれないという最も静かな壊れ方をする。
 _CHANGELOG_VERSION_HEADING_RE = re.compile(r"^##\s*\[?v?(\d+\.\d+\.\d+[^\]\s]*)")
+
+
+def latest_changelog_version(changelog_path: pathlib.Path) -> str | None:
+    """CHANGELOG 先頭の版数を返す。repo 内で CHANGELOG の版数を読む口はここ 1 つ。
+
+    見出しの書式 (`## [1.2.3] - date` / `## v1.2.3` / `## 1.2.3 — date` など) に
+    依存しない。版の形をしていない見出し (`## [Unreleased]` など) は飛ばす。
+    別の正規表現を立てると、その書式で書いた plugin だけが検査に当たり、当たらない
+    書式へ逃げる圧力になる。
+    """
+    try:
+        lines = changelog_path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return None
+    for line in lines:
+        match = _CHANGELOG_VERSION_HEADING_RE.match(line)
+        if match:
+            return match.group(1)
+    return None
 
 
 def _changelog_section_format(lines: list[str]) -> tuple[bool, str]:
@@ -303,7 +322,7 @@ def _changelog_insertion_index(lines: list[str]) -> int:
     """新しい節を挿し込む行番号を決める。
 
     `## [Unreleased]` が先頭の h2 なら **その節の下**へ入れる。Keep a Changelog の
-    通例であると同時に、読む側 (`notifier-check.py` の `_extract_latest_version`) が
+    通例であると同時に、読む側 (`latest_changelog_version`) が
     版の形をしていない見出しを飛ばして次へ進むことを実測で確かめてあるため
     (2026-10-10 22:26: `## [Unreleased]` の下に `## [1.0.0]` を置いた probe が
     "1.0.0" を返した)。Unreleased の上へ入れると Unreleased が未リリース分でなく

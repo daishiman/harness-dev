@@ -591,7 +591,8 @@ def test_manifest_routes_every_kind_build_through_common_usable_draft_proof():
     bounded = phases["bounded-improvement"]
     assert bounded["dependsOn"] == ["initial-draft-review"]
     assert set(bounded["capability_kind_filter"]) == CAPABILITY_KINDS
-    assert bounded["executor"] == "elegant-bounded-improvement-executor"
+    assert bounded["executor"] == "elegant-improvement-executor"
+    assert set(bounded["executor_args"]) >= {"selected_finding_ids", "max_rounds"}
     assert bounded["accept_draft_executor_contexts"] == 0
 
     post = phases["post-improvement-verification"]

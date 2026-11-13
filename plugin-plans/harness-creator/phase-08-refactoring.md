@@ -19,7 +19,7 @@ applicability:
 新規スクリプト群 (dispatch-ready-set.py/sync-task-state.py/inject-task-inputs.py/emit-discovered-task.py/summarize-task-progress.py/manage-build-lease.py/record-task-graph-knowledge.py) が既存 `plugins/harness-creator/scripts/` 配下のスクリプトと重複ロジックを持たないことを `lint-ssot-duplication.py` で確認する設計を確定する。
 
 ## 背景
-既存 `scripts/` 配下には `build-script-route.py` (route の build 実行)・`emit-improvement-handoff.py` (E3・build 完了後の改善還流 emit)・`check-route-component-parity.py`・`compute-dogfooding-metrics.py`・`validate-plan-coverage.py` が既に存在し、本サイクルの新規スクリプトがこれらと観点/データ型で重複しないことを明示する必要がある。
+既存 `scripts/` 配下には `build-script-route.py` (route の build 実行)・`emit-improvement-handoff.py` (E3・build 完了後の改善還流 emit)・`check-route-component-parity.py`・`validate-plan-coverage.py` が既に存在し、本サイクルの新規スクリプトがこれらと観点/データ型で重複しないことを明示する必要がある。
 
 ## 前提条件
 - P07 の受入観点が確定している。
