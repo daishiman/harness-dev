@@ -2,6 +2,12 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`harness-creator` plugin (旧名 `skill-creator`) の変更履歴を記録する。設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## 1.4.65 — 2026-11-14
+
+- live-trial verdict の陳腐化 (stale-sha) を既定で「要再実走」の WARN にした。CI では実走できず、hooks や依存 manifest の変更で verdict が一斉に古くなり、手元の再実走ループが十数時間に及んでいたため。schema 不適合・FAIL・降格は従来どおり FAIL。release 前や定期の再取得では `--enforce` か `LIVE_TRIAL_ENFORCE_FRESHNESS=1` で FAIL に戻せる。判断の正本は `live-trial-verdict.py` の `freshness_enforced`。
+- run-skill-live-trial の poll の待ち方を、poll を呼ぶ orchestrator の実行環境ごとに決めた (trial の `--runtime` とは別。poll は Claude trial 専用)。Claude Code は背景実行で1回起動して終了通知を待ち、Codex は `write_stdin` の空 poll を長い yield で待つ。短い yield の連打や自作の監視ループで orchestrator が何度も起き、文脈を読み直すのをやめさせる。
+- 初稿診断の evaluator に、利用者の初回依頼原文を `intent_anchor` として渡すようにした。brief に `user_request_verbatim` を足し、`build-improvement-gate.py --user-request-file` → launch request → R5 prompt の順に原文を運ぶ。evaluator は当初目的を成果物の自己申告から推測せず、原文の依頼を満たすかを先に判定する。原文なしで claim すると gate が WARN を出す (互換のため止めない)。`user_request_verbatim` は要件の出典なので、RTM (`validate-build-trace.py`) の被覆宣言の対象から外した。
+
 ## 1.4.64 — 2026-11-09
 
 - build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。

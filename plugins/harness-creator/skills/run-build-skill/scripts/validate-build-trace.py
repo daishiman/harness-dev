@@ -132,6 +132,10 @@ NON_REQUIREMENT_BRIEF_FIELDS = {
     "source_url_or_path", "source_tier", "last_audited_date", "audit_trigger",
     "mass_production_profile", "paradigm_profile",
     "consult_build_knowledge", "with_subagent_hint", "with_hooks",
+    # 初回依頼の原文は要件の出典であって要件そのものではない。要件は goal /
+    # purpose_background / key_constraints 等へ構造化済みで、原文との突合は初稿診断の evaluator が
+    # intent_anchor として担う (Step 12.6)。成果物要素への写像を求めると空宣言になる。
+    "user_request_verbatim",
 }
 REQUIREMENT_DISPOSITIONS = {"mapped", "not_applicable"}
 # brief フィールドパス: 例 key_constraints[2] / boundary / knowledge_loop.pattern

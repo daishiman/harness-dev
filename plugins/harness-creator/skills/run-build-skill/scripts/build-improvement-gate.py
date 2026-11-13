@@ -130,6 +130,27 @@ def _require_exact_keys(value: Any, *, required: set[str], optional: set[str] | 
     return value
 
 
+INTENT_ANCHOR_MAX_CHARS = 8000
+
+
+def read_intent_anchor(path: Path) -> dict:
+    """利用者の初回依頼原文を evaluator へ渡す錨にする。
+
+    fresh context の evaluator は親の会話履歴を持たないので、原文が無いと当初目的を
+    成果物の自己申告から推測するしかない。原文は解釈せず前後空白だけ落として渡し、
+    sha256 で launch request に束縛する。durable state には入れない (state の key 集合は固定)。
+    """
+    try:
+        text = path.read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeDecodeError) as exc:
+        raise GateError(f"cannot read user request file {path}: {exc}") from exc
+    if not text:
+        raise GateError("user request file must contain the initial request text")
+    if len(text) > INTENT_ANCHOR_MAX_CHARS:
+        raise GateError(f"user request text exceeds {INTENT_ANCHOR_MAX_CHARS} characters; pass the initial request, not the transcript")
+    return {"text": text, "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest()}
+
+
 def load_method_ids(path: Path = DEFAULT_METHODS_PATH) -> list[str]:
     """Load the 30 method IDs from the existing elegant-review SSOT."""
     try:
@@ -1095,7 +1116,7 @@ def _base_result(plan: dict, baseline: str, binding: dict, state_path: Path, tar
     return {"schema_version": 1, "subject": plan["subject"], "run_id": plan["run_id"], "baseline_fingerprint_sha256": baseline, "artifact_fingerprint_sha256": baseline, "contract_binding": binding, "target_root": target_scope["target_root"], "target_roots": target_scope["target_roots"], "target_exclusions": target_scope["target_exclusions"], "state_ref": str(state_path), "launch_receipt_ref": str(_launch_receipt_path(state_path)), "auto_promote_release": False, "auto_promote_exhaustive": False, "initial_review": {"authorized": False}, "improvement": {"authorized": False}}
 
 
-def build_gate(plan: dict, *, target_manifest: list[dict[str, Any]], target_scope: dict, usable_draft_proof: dict, state_dir: Path, artifact_presentation_receipt: dict | None = None, pre_diagnostic_choice_event: dict | None = None, review: dict | None = None, review_source_sha256: str | None = None, claim_id: str | None = None, selected_level: str | None = None, choice_event: dict | None = None, exhaustive_confirmation_event: dict | None = None, risk_acknowledgement_event: dict | None = None, user_choice_ref: str | None = None, confirm_exhaustive: bool = False, methods_path: Path = DEFAULT_METHODS_PATH, levels_path: Path = DEFAULT_LEVELS_PATH, prompt_path: Path = DEFAULT_PROMPT_PATH, review_schema_path: Path = DEFAULT_REVIEW_SCHEMA_PATH) -> dict:
+def build_gate(plan: dict, *, target_manifest: list[dict[str, Any]], target_scope: dict, usable_draft_proof: dict, state_dir: Path, artifact_presentation_receipt: dict | None = None, pre_diagnostic_choice_event: dict | None = None, review: dict | None = None, review_source_sha256: str | None = None, claim_id: str | None = None, selected_level: str | None = None, choice_event: dict | None = None, exhaustive_confirmation_event: dict | None = None, risk_acknowledgement_event: dict | None = None, user_choice_ref: str | None = None, confirm_exhaustive: bool = False, intent_anchor: dict | None = None, methods_path: Path = DEFAULT_METHODS_PATH, levels_path: Path = DEFAULT_LEVELS_PATH, prompt_path: Path = DEFAULT_PROMPT_PATH, review_schema_path: Path = DEFAULT_REVIEW_SCHEMA_PATH) -> dict:
     """Return and durably record the only currently authorized action."""
     _validate_verification_plan(plan)
     _validate_manifest(target_manifest, target_manifest)
@@ -1182,6 +1203,8 @@ def build_gate(plan: dict, *, target_manifest: list[dict[str, Any]], target_scop
             _atomic_write_json(state_path, state)
             result["status"] = "initial-review-required"
             result["initial_review"] = {"authorized": True, "action": "run-once", "claim_id": durable_claim_id, "claimed_run_id": plan["run_id"], "evaluator_id": "elegant-initial-draft-evaluator", "evaluator_context_limit": 1, "review_mode": "diagnostic-only", "target_edits_allowed": False, "thought_reset_required": True, "required_method_count": 30, "required_method_ids": method_ids, "target_manifest": target_manifest, "contract_binding": binding, "artifact_presentation_receipt_sha256": pre_diagnostic["presentation_receipt_sha256"], "pre_diagnostic_choice_event_sha256": pre_diagnostic["choice_event_sha256"], "pre_diagnostic_level": pre_diagnostic["selected_level"], "schema_ref": "schemas/initial-draft-review.schema.json", "prompt_ref": "prompts/R5-initial-draft-evaluate.md"}
+            if intent_anchor is not None:
+                result["initial_review"]["intent_anchor"] = intent_anchor
             result["instruction"] = "fresh contextの単一elegant-initial-draft-evaluatorへ、同一identityの有効配送leaseを1件だけ認可し、claim/target/contractをreceiptへ束縛する。"
             return result
 
@@ -1328,6 +1351,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--risk-acknowledgement-event")
     parser.add_argument("--user-choice-ref")
     parser.add_argument("--confirm-exhaustive", action="store_true")
+    parser.add_argument("--user-request-file", help="利用者の初回依頼原文 (PII 伏字) の UTF-8 テキスト。claim 時に evaluator の当初目的の正本として launch request へ渡す")
     parser.add_argument("--methods", default=str(DEFAULT_METHODS_PATH))
     parser.add_argument("--levels", default=str(DEFAULT_LEVELS_PATH))
     parser.add_argument("--prompt", default=str(DEFAULT_PROMPT_PATH))
@@ -1348,6 +1372,7 @@ def main(argv: list[str] | None = None) -> int:
                 args.user_choice_event,
                 args.exhaustive_confirmation_event,
                 args.risk_acknowledgement_event,
+                args.user_request_file,
                 args.decision_out,
                 args.out,
             )
@@ -1369,13 +1394,18 @@ def main(argv: list[str] | None = None) -> int:
         choice_event = _read_json(Path(args.user_choice_event), "user choice event") if args.user_choice_event else None
         exhaustive_event = _read_json(Path(args.exhaustive_confirmation_event), "exhaustive confirmation event") if args.exhaustive_confirmation_event else None
         risk_event = _read_json(Path(args.risk_acknowledgement_event), "risk acknowledgement event") if args.risk_acknowledgement_event else None
-        result = build_gate(plan, target_manifest=target_manifest, target_scope=target_scope, usable_draft_proof=usable_draft_proof, state_dir=state_dir, artifact_presentation_receipt=artifact_presentation_receipt, pre_diagnostic_choice_event=pre_diagnostic_choice_event, review=review, review_source_sha256=review_source_sha256, claim_id=args.claim_id, selected_level=args.selected_level, choice_event=choice_event, exhaustive_confirmation_event=exhaustive_event, risk_acknowledgement_event=risk_event, user_choice_ref=args.user_choice_ref, confirm_exhaustive=args.confirm_exhaustive, methods_path=Path(args.methods), levels_path=Path(args.levels), prompt_path=Path(args.prompt), review_schema_path=Path(args.review_schema))
+        intent_anchor = read_intent_anchor(Path(args.user_request_file)) if args.user_request_file else None
+        result = build_gate(plan, target_manifest=target_manifest, target_scope=target_scope, usable_draft_proof=usable_draft_proof, state_dir=state_dir, artifact_presentation_receipt=artifact_presentation_receipt, pre_diagnostic_choice_event=pre_diagnostic_choice_event, review=review, review_source_sha256=review_source_sha256, claim_id=args.claim_id, selected_level=args.selected_level, choice_event=choice_event, exhaustive_confirmation_event=exhaustive_event, risk_acknowledgement_event=risk_event, user_choice_ref=args.user_choice_ref, confirm_exhaustive=args.confirm_exhaustive, intent_anchor=intent_anchor, methods_path=Path(args.methods), levels_path=Path(args.levels), prompt_path=Path(args.prompt), review_schema_path=Path(args.review_schema))
         if args.decision_out:
             if "decision" not in result:
                 raise GateError("--decision-out requires a validated user decision")
             _atomic_write_json(Path(args.decision_out), result["decision"])
         if args.out:
             _atomic_write_json(Path(args.out), result)
+        if result.get("status") == "initial-review-required" and intent_anchor is None:
+            # 止めはしないが黙らせない。錨が無いと evaluator は目的適合を affects_goal=false
+            # に倒すので、目的に効く所見が standard 以下の選択から外れる。
+            print("WARN: --user-request-file 無しで claim した。evaluator は当初目的を判定できず、目的適合の所見は選択対象に上がりにくい (SKILL.md Step 12.6)", file=sys.stderr)
     except GateError as exc:
         print(f"[ERROR] {exc}", file=sys.stderr)
         return 2

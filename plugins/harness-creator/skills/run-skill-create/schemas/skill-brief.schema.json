@@ -32,6 +32,7 @@
     "key_constraints": {"type": "array", "items": {"type": "string"}},
     "goal": {"type": "string", "description": "ゴールシーク用。達成すべき最終状態を観測可能な完了形1文で。prefix ∈ {run,wrap,assign,delegate} では allOf により必須 (ref のみ任意)。output_contract の完了条件と同源に保つ。"},
     "purpose_background": {"type": "string", "description": "ゴールシーク用。なぜこのゴールか (目的・背景)。手順生成時の優先順位の根拠。prefix ∈ {run,wrap,assign,delegate} では allOf により必須 (ref のみ任意)。"},
+    "user_request_verbatim": {"type": "string", "minLength": 1, "maxLength": 8000, "description": "利用者の初回依頼の原文 (要約・言い換えをしない。個人特定情報だけ [伏字] に置換)。goal / purpose_background は解釈を含むため、初稿診断 (run-build-skill の build-improvement-gate.py --user-request-file) が当初目的の正本として evaluator へ渡すのはこちら。任意。"},
     "checklist": {"type": "array", "items": {"type": "string"}, "description": "ゴールシーク用。ゴール達成の受入基準 (二値判定可能)。prefix ∈ {run,wrap,assign,delegate} では allOf により必須 (minItems 1、ref のみ任意)。output_contract / key_constraints と同源に保つ。"},
     "boundary": {"type": "string", "minLength": 1, "maxLength": 200},
     "deterministic_checks": {"type": "array", "items": {"type": "string"}},

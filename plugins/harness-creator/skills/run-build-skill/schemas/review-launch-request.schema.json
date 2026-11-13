@@ -54,6 +54,16 @@
         "idempotency_key": {"type": "string", "pattern": "^IRL-[0-9a-f]{64}$"},
         "run_id": {"type": "string", "minLength": 1},
         "subject": {"type": "string", "minLength": 1},
+        "intent_anchor": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["text", "sha256"],
+          "description": "利用者の初回依頼原文 (PII 伏字)。evaluator が当初目的を成果物から推測せず、この原文を正本として判定するための錨。gate の --user-request-file 由来で、request_id の計算に含まれる。",
+          "properties": {
+            "text": {"type": "string", "minLength": 1, "maxLength": 8000},
+            "sha256": {"$ref": "#/definitions/sha256"}
+          }
+        },
         "artifact_fingerprint_sha256": {"$ref": "#/definitions/sha256"},
         "review_claim_id": {"type": "string", "pattern": "^IRC-[0-9a-f]{32}$"},
         "evaluator_id": {"type": "string", "const": "elegant-initial-draft-evaluator"},

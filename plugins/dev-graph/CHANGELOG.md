@@ -1,5 +1,9 @@
 # 変更履歴
 
+## 0.1.33 — 2026-11-14
+
+- skill 受入証拠テストで、live-trial の受領と verdict が現行閉包より古い場合を既定で警告にした。鮮度の判断は harness-creator の `freshness_enforced` に揃え、`LIVE_TRIAL_ENFORCE_FRESHNESS=1` のときだけ FAIL にする。古いうえに FAIL の受領は警告に隠さず FAIL にする。
+
 ## 0.1.32 — 2026-11-03
 
 - node、requirements、sync、system-spec の live-trial 受領を、現行閉包の Claude PASS へ結び直した。

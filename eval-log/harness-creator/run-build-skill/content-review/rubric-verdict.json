@@ -2,20 +2,20 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-build-skill",
-    "skill_md_sha256": "62bf44a72bb64e227d38c961c2eb672423cbf789fa1aae5620107ba2527dd1fb"
+    "skill_md_sha256": "c349e1de309464271cc70bad5f1fb757fa93b5c73f09e95d126d7a02403d6be0"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent-content-reviewer (Claude subagent, incremental profile)",
-  "reviewed_at": "2026-10-11T23:25:10Z",
-  "iterations": 3,
+  "reviewer": "independent-content-reviewer-20261114 (Claude subagent, incremental profile, re-review iteration 2 of SKILL.md c349e1de)",
+  "reviewed_at": "2026-11-14T00:49:36+09:00",
+  "iterations": 2,
   "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 4,
+    "inconsistency": 2,
     "dependency_break": 0,
-    "smell": 5
+    "smell": 6
   },
   "feedback_loop": {
     "loop_scope": "both",
@@ -27,28 +27,29 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "rubric 1.6.0（L0）に assign-skill-design-evaluator の L2 を重ねた機械採点（render-findings-score.py --kind skill --emit-hash）は score 100（threshold 80）、passed=true、findings 0。coverage は applicable 24・scored 23・pending_human 1。composition_hash は sha256:cebbd0864fda5cf07c2104c31ab4bdad5e160b8d7d1ad8a2ee8bd1f4b597299c。L0 単独でも score 100、findings 0、applicable 20・scored 19・pending_human 1・not_applicable 21、composition_hash は sha256:2713eeaf2ead46a2760bc5f1e4195f429883a8cd14cecdf0e7f7a8323655ec98。rubric_hash は両方とも sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9。",
-      "pending_human の BD-004 は評価者が判定して充足とした。description の1つ目の trigger（Capability 7 kind の新規作成・更新）は Step 0 の L265〜271、Step 1〜4、argument-hint の --mode create|update に対応する。2つ目の trigger（CapabilityManifest と plugin-composition.yaml の整備）は Step 0.3 の L270、Step 0.4 の L271（lint-plugin-composition.py）、Key Rule 18 の L211、Step 12.4 の L414（--bundle）に対応する。",
-      "前回の medium（L216 の ratchet の範囲が狭い）は解消した。L216 は「repo 外の生成物では warning のままだが、repo 内に入った配線の無い loop 系スキルは plugin を問わず `lint-goal-seek.py` の ratchet が exit 1 で落とす」とし、harness-creator のスキル（GRANDFATHERED_WARNINGS へ根拠付きで登録するか配線を戻す）とほかの plugin のスキル（baseline が追記禁止なので配線を戻す）を書き分け、文末も「(repo 内では、未登録のものを上の ratchet が exit 1 にする)」に直った。実装（lint-goal-seek.py の repo_relative L689、check_warning_ratchet L733、GRANDFATHERED_WARNINGS L630、main L901 の exit 0/1/2）と実際に試した結果が一致する。plugins/skill-intake/skills/run-intake-status/SKILL.md を単体で lint すると exit 1（grace 未登録の3 kind）、cmp で同じ中身と確かめた repo 外の写しは exit 0（warning 3件）、同じ path に --baseline を付けると exit 0（猶予3件、baseline に載っている）。関数で試すと、新規の harness-creator の path も新規のほかの plugin の path も violation 3件、repo 外は violation なしだった。",
-      "前回の medium の関連ファイルも揃った。正本の references/goal-seek-paradigm.md L81、schemas/build-flags.schema.json の with_goal_seek.description、doc/harness-creator-完全解剖.md L422、plugin-dev-planner の harness-creator-spec-reflection.md L57（D5「repo 内の SKILL.md なら plugin を問わず exit 1」）が L216 と同じ3つの場合を述べ、互いに矛盾しない。完全解剖 L422 は exit 1 を明記しないが「落とす」とあり、食い違いではない。",
-      "前回の low（L414 の「毎回の判定の最初に」）は解消した。L414 は「毎回の判定で (提示receipt・診断選択の検査より前に)」となり、build-improvement-gate.py の build_gate（L1098）の順序、つまり _validate_verification_plan（L1100）、_validate_manifest（L1101）、_validate_target_scope（L1102）、_validate_usable_draft_proof（L1103）、_validate_artifact_presentation_receipt（L1125）、_validate_pre_diagnostic_choice_event（L1142）と合う。proof の検査は artifact の sha256（L485〜486）、authoritative target manifest 上の同じ sha256（L493〜494）、validator の sha256（L506〜507）、validator の再実行と stdout digest（L519〜520）で、--usable-draft-proof は必須引数（L1319）、GateError は exit 2（L1379〜1381）。本文の fail-closed の主張どおり。",
-      "Step の番号は本文・workflow-manifest.json・周辺の文書で前回どおり揃っている。L274 の合流先（Step 12.4 → `artifact-present-handoff` Step 12.45 → `diagnostic-choice` Step 12.5）、Step 12.6（選択時のsemantic診断）と Step 12.7（L432、ユーザー選択範囲だけの有界改善）が manifest の phase と1対1に対応する。本文は 461 行・本文 299/300 行で、今回の修正で行を増やしていない。"
+      "rubric 1.6.0（L0）に assign-skill-design-evaluator の L2 を重ねた機械採点を、修正後の SKILL.md でやり直した。score 100（threshold 80）、passed=true、findings 0、pending_human は BD-004 だけ。rubric_hash は sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9、composition_hash は sha256:eafcb479f6ea28fd30690d5fa61c82c05e1cdb9bd38f7c01a0394b9f7666c6fb で、前回と同じ。",
+      "BD-004 は評価者の判定で充足のまま。今回の修正は description と trigger の対応先（Step 0 の L265〜272、Key Rule 18 の L214、Step 12.4 の --bundle の L414）に触れていない。",
+      "今回の修正は rubric の high に当たるものを持ち込んでいない。本文は 299/300 行のまま（SS-203 は warn だけ）で、L239 と L426 の書き換えはどちらも行の中で収まっている。",
+      "実装との一致はテストで確かめた。tests/scripts-plugins/test_harness_creator__build_review_launch.py、test_harness_creator__plan_improvement_gate.py、tests/test_validate_build_trace.py の3本で 204 passed（WARN のテストと RTM の回帰テストを含む）。tests/ を -k \"run_build_skill or validate_build_trace or validate_build_plan or skill_brief or skill_elicit or skill_create or usable_draft or improvement_result\" で絞った試験は 415 passed。",
+      "解消を確認（前回 medium/dependency_break）: validate-build-trace.py の `NON_REQUIREMENT_BRIEF_FIELDS`（L135〜138）に `user_request_verbatim` が入った。理由（要件の出典であって要件ではなく、原文との突合は intent_anchor の evaluator が担う）もコメントに書かれている。SKILL.md L318 の「brief の非空要求フィールド」という限り方と合うので、新しい矛盾は無い。回帰テスト tests/test_validate_build_trace.py::test_requirement_coverage_does_not_demand_mapping_for_verbatim_request が、原文を持つ brief で被覆の errors が空になることを確かめている。",
+      "解消を確認（前回 low/必須か任意か）: gate は任意引数のままにし、claim（status=initial-review-required）で原文が無いときだけ stderr に WARN を出す（build-improvement-gate.py main L1405〜1408）。initial-review-required を返す分岐は L1204 の1か所だけで、冪等な再呼び出しは L1223 の initial-review-in-progress になるので WARN は claim の1回だけ出る。SKILL.md L426 の「省略してもclaimは通るがgateがWARNを出し、evaluatorは目的適合を判定できない」は、この実装と R5 L35（anchor が無ければ当初目的は「不明」、affects_goal=false）の両方と一致する。test_cli_claim_without_user_request_warns_but_still_claims が、claim は通ること・WARN が出ること・再 claim では出ないことを確かめている。",
+      "解消を確認（前回 low/束縛の主体）: SKILL.md L426 は「gateは原文を `intent_anchor` としてclaim結果に載せ、launcherがlaunch requestの `request_id` へ束縛する」になり、gate L1206〜1207 と build-review-launch.py L347〜349・L363 の分担どおりになった。capability-build-runtime-contract.md L64 は「claim時のgateへ `--user-request-file` で渡す」とだけ書いており、新しい本文と矛盾しない。",
+      "解消を確認（前回 low/打ち間違い）: SKILL.md L239 の CL-5 は「独立evaluator」になった。"
     ],
     "negative_feedback": [
-      "[low/inconsistency・今回・新規] plugins/harness-creator/CHANGELOG.md（未コミット）に、直す前の狭い書き方が残っている。L184 は「CI scope に入った配線の無い loop 系スキルはこの ratchet で落ちる（通すには `GRANDFATHERED_WARNINGS` に根拠付きで登録するか、配線を戻す）」とし、続けて「SKILL.md・`goal-seek-paradigm.md`・`build-flags.schema.json` と `doc/harness-creator-完全解剖.md` に同じ文言で書いた」としているが、今の4つは repo 内・plugin を問わずに直っており、文言も同じではない。L261 は「毎回の判定の最初に（提示の receipt と診断の選択を検査する前に）」で、L414 の新しい書き方と違う。L263 は「「CI scope では ratchet が exit 1 にする」を補った」で、今の文末は「repo 内では…」。commit 前に CHANGELOG を今の本文に合わせることを勧める。",
-      "[low/inconsistency・今回・新規] L216・正本の goal-seek-paradigm.md L81・schema・完全解剖 L422 は、harness-creator のスキルに対して GRANDFATHERED_WARNINGS への根拠付きの登録を、配線を戻すことと並ぶ一般の選択肢として示す。一方、lint-goal-seek.py のメッセージ（L759〜762「新規スキルは with-goal-seek 配線を省略できない。既存負債なら GRANDFATHERED_WARNINGS へ根拠付きで登録」）と docstring（L36〜39「配線系の 3 warning は既存スキルの grace」）は、登録を既存負債に限る。--no-goal-seek で新しく作った harness-creator のスキルを登録してよいかが、文書と lint で違って読める。本文は正本と一致しているので本文の誤りではないが、下の L759〜762 の low と一緒に方針を決め、どちらかに揃えることを勧める。",
-      "[low/inconsistency・前回から残る] lint-goal-seek.py の grace 未登録のメッセージ（L759〜762）は、ほかの plugin の path にも「既存負債なら GRANDFATHERED_WARNINGS へ根拠付きで登録」と勧める。関数で試すと、ほかの plugin の path を GRANDFATHERED_WARNINGS に足せば ratchet を通る。正本の「ほかの plugin は配線を戻す」は、今も review でしか守られていない。",
-      "[low/inconsistency・前回から残る] lint-goal-seek.py の docstring（L20）は根拠を「run-build-skill SKILL.md Key Rule 18」としているが、ゴールシークの規則は Key Rule 19 で、18 は Capability 7 kind の規則。",
-      "[low/smell・前回から残る] L432 の「### Step 12.7: ユーザー選択範囲だけの有界改善」の直後に空行が無い。本文の `### Step` 見出し23個のうち、この1つだけ。CommonMark では有効。",
-      "[low/smell・前回から残る] 本文は 299/300 行（lint-skill-tree の SS-203 は warn）。上限に1行しか余裕がない。",
-      "[low/smell・前回から残る] run-build-skill 自身の lint-goal-seek の warning 3件（配線の見出しとアンカー用のトークンが無い）は GRANDFATHERED_WARNINGS に登録されて通っている。goal_seek.engine=inline なので違反ではないが、Key Rule 19 と食い違って見える。",
-      "[low/smell・前回から残る] lint-feedback-contract --all が run-build-skill に warn を1件出す。allowed-tools から acceptance_tier=live が導かれるのに、loop_scope=outer かつ verify_by=live-trial の criterion が無い（baseline 免除中、exit 0）。",
-      "[low/smell・前回から残る] scripts の header の dependencies に兄弟ファイルを並べている（build-external-intelligence.py L10、lint-knowledge-loop.py L14、record-verification-evidence.py L12 など）。設計書28章 §7.2 の「必ず []」と repo の慣行がずれている。"
+      "[low/inconsistency・隣のファイル・未修正] run-skill-elicit/prompts/R1-elicit.md の L47（INTENT_CONST: PII を `[伏字]` に置き換えて原文を保存する）と、同じファイルの L61（入力検証で「明らかな PII」は拒否）・L94（PII を見つけたら partial=true で保存し人へ上げる）とで、初回依頼に PII があったときにどちらに従うかがはっきりしない。伏字にして保存したうえで人へ上げる、のように1文で順序を決めることを勧める。",
+      "[low/inconsistency・未修正] lint-goal-seek.py の docstring（L20）は根拠を「Key Rule 18」としているが、ゴールシークの規則は Key Rule 19（SKILL.md L215）。18 は Capability 7 kind の規則。",
+      "[low/smell・再評価で新しく見つけた] validate-build-trace.py L135〜138 の追加コメントは「要件は purpose / key_constraints 等へ構造化済み」と書くが、skill-brief.schema.json に `purpose` という欄は無く、実在するのは `purpose_background`。動作には影響しない。",
+      "[low/smell・再評価で新しく見つけた] CHANGELOG の該当項目（intent_anchor の追加）は、今回の修正（claim 時に原文が無いと gate が WARN を出すこと、`user_request_verbatim` を RTM の非要求欄にしたこと）をまだ書いていない。",
+      "[low/smell・未修正] SKILL.md L432 の「### Step 12.7」見出しのすぐ後に空行が無い。本文の `### Step` 見出しで、これだけが空行を欠く。",
+      "[low/smell・未修正] 本文は 299/300 行（lint-skill-tree の SS-203 warn）。今回の修正も行を増やさず L426 を長くした。上限まで1行しか余裕が無い。",
+      "[low/smell・未修正] run-build-skill 自身は `### ゴールシーク配線` とアンカー用のトークンを持たず、lint-goal-seek の warning 3件を GRANDFATHERED_WARNINGS で通している。goal_seek.engine=inline なので違反ではない。",
+      "[low/smell・未修正] lint-feedback-contract が run-build-skill に、loop_scope=outer かつ verify_by=live-trial の criterion が無いという warn を出す（baseline で免除、exit 0）。"
     ],
-    "iteration": 3,
+    "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual:20261012-content-review-iter3-goal-seek-ratchet-scope",
+    "hook_trigger": "manual:20261114-content-review-step12.6-intent-anchor",
     "next_action": "none"
   },
-  "notes": "SKILL.md の sha256 は 62bf44a7…2527dd1fb（461行）で、依頼の値と一致した。前回の対象（ccf17e2e…fda5d）からの差分は L216 と L414 の書き換えで、関連ファイルとして goal-seek-paradigm.md、build-flags.schema.json、doc/harness-creator-完全解剖.md L422 も直っていた。機械採点は render-findings-score.py --kind skill --emit-hash で行い、L0+L2 は score 100・passed・findings 0、L0 単独も score 100・findings 0、rubric_hash は sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9（rubric 1.6.0）。pending_human の BD-004 は評価者が充足と判定した（根拠の行は positive_feedback）。content-review-protocol.md の incremental に従い (a)〜(e) を一度に判定して2本の verdict に分けた。4条件はすべて満たし、high 0・medium 0・low 9（うち今回の新規2件、前回から残る7件）なので PASS とした。回した lint はすべて exit 0：lint-skill-tree ok（32 skills、SS-203 warn は run-build-skill の 299/300 行、LS-203 warn は範囲外の run-skill-rubric-governance）、lint-skill-name ok、lint-skill-description OK=189、validate-frontmatter --skills-dir ok（範囲外の warn 2件）と --self-test ok、lint-skill-completeness ok（32）、lint-ssot-duplication --strict OK（schemas=93、md=224）、lint-criteria-provenance OK（32）と --self-test ok（6 cases）、lint-script-frontmatter（run-build-skill/scripts）OK（checked=30、pending=0）、lint-knowledge-loop --self-test PASS（本体は knowledge/ が無いので skip）、lint-capability-graph-knowledge not-applicable、lint-feedback-contract --all OK（80 skills、run-build-skill に live-trial の warn 1件）、lint-matrix-sync OK と --self-test ok（4 cases）、lint-feedback-protocol --strict OK、lint-goal-seek は --self-test OK、本体単体 OK（warning 3件）、--skills-dir plugins/harness-creator/skills OK（32 files、warning 37件）、--skills-dir plugins --baseline scripts/goal-seek-lint-baseline.json OK（127 files、warning 147件、猶予 140件）。pytest は tests/ と plugins/harness-creator/tests を別々に、-p no:cacheprovider と PYTHONDONTWRITEBYTECODE=1 で回した。tests/ -k \"run_build_skill or build_subagent or lint_goal_seek or build_review_launch or render_combinators\" は 411 passed、tests/ -k \"external_intelligence or plugin_resources or capability_manifest or feedback_loop_deployment or lint_matrix or build_improvement_gate or usable_draft or goal_seek\" は 306 passed、plugins/harness-creator/tests の12ファイル（capability_build_runtime_contract、audit_capability_parity、hook_event_vocabulary_parity、lint_skill_runtime_profiles、validate_goal_seek_anchor、validate_route_build_reports、build_script_route、task_graph_engine_reproducibility、task_graph_engine_templates、verification_obligation_planner、verification_evidence_input_guards、lint_matrix_script_locations）は 314 passed。test の全件は回していない。範囲外の manage-build-lease.py・sync-native-surfaces.py・upstream-pins.json は評価の材料にしておらず、それらの test も回していない。lint-goal-seek の試験は worktree 外の scratchpad/iter3-rbs-copies に写しを置いて行った。作業中に git status が 398 行から 399 行に増えたが、ほかの担当による範囲外の plugins/harness-creator/tests/test_sync_native_surfaces.py の変更で、この評価による変更ではない。実際の full build、live trial、人による承認の trial はしておらず、したとも主張しない。30種の思考法は使っておらず、使ったとも申告しない。force_pass は使っていない。"
+  "notes": "再評価（iteration 2）。content-review-protocol.md の「該当箇所だけ修正して1回再評価」として、前回（iteration 1、SKILL.md sha256 0670282c…3cce）の所見に対する作業ツリーの修正を見た。見た差分は git diff HEAD の SKILL.md（L239、L426）、validate-build-trace.py（L135〜138）、build-improvement-gate.py の main（WARN）、tests/test_validate_build_trace.py と tests/scripts-plugins/test_harness_creator__plan_improvement_gate.py の追加テスト。capability-build-runtime-contract.md L64・R5 L34〜35 と L63・skill-brief.schema.json との突き合わせもやり直した。前回の medium 1件と low 3件（必須か任意か、束縛の主体、打ち間違い）は解消したので negative_feedback から外し、positive_feedback に解消の根拠を書いた。修正で新しい矛盾は入っていない。再評価で新しく見つけたのは low/smell 2件（validate-build-trace.py のコメントにある存在しない欄名 `purpose`、CHANGELOG への未反映）だけ。high 0・medium 0・low 8 なので PASS とした。1つの context で (a) 矛盾なし (b) 漏れなし (c) 規約整合 (d) 依存関係整合 (e) rubric の high が0件、を一度に判定し、同じ結果を2本の verdict に分けた。repository の中のファイルは、この2本の verdict のほかは書き換えていない。test の全件は回していない。実際の full build、live trial、人による承認の trial はしておらず、したとも主張しない。30種の思考法は使っておらず、使ったとも申告しない。force_pass は使っていない。"
 }

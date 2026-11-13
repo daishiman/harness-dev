@@ -44,6 +44,7 @@
 - CONST_002: 既存 brief があれば上書きせず diff を提示。
 - CONST_003: `trigger_conditions` は 2〜3 件。
 - OUTPUT_CONST: `eval-log/skill-brief.json` を正本スキーマ準拠で書く。
+- INTENT_CONST: 利用者の初回依頼は要約・言い換えせず、PII だけ `[伏字]` に置換して `user_request_verbatim` に保存する。`goal` / `purpose_background` は解釈なので当初目的の正本にしない (初稿診断の evaluator はこの原文で目的適合を判定する)。
 
 ## Layer 3: インフラ層
 

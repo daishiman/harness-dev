@@ -2,18 +2,18 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-live-trial",
-    "skill_md_sha256": "91b027cf66f28277a856044c8b1adb2600d80766571088fdb82fd90bc03ba1eb"
+    "skill_md_sha256": "3b784f4edef122dd6bd57d5778eea1ce216cfb60a45e3c2fef3db0fbb62239ac"
   },
   "verdict": "PASS",
-  "reviewer": "grok-fresh-content-review-live-trial-ci13",
-  "reviewed_at": "2026-11-03T08:23:16+09:00",
+  "reviewer": "claude-opus-fresh-incremental-review-live-trial-20261114",
+  "reviewed_at": "2026-11-14T00:40:08+09:00",
   "iterations": 2,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
   "human_review_required": false,
   "feedback_loop": {
@@ -26,15 +26,19 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "正規の STALL は分岐表の不合格として FAIL に残し、BLOCKED へ昇格させない。derive_overall の BLOCKED は blocked=True のままである。",
-      "poll exit 3 の STATE_CORRUPT と TOKEN_UNMEASURED はチェックリストと poll 表にあり、--poll-exit にその名前を渡したとき blocked_cause_for が tmux 不在の既定文と分ける。"
+      "exit 5 (TICK_BUDGET) を終端扱いせず同一 --state-file で再呼びする規則が、完了チェックリスト (SKILL.md:165)・新しい待ち方節 (SKILL.md:267)・poll exit 表 (SKILL.md:275) の3か所で一致し、live-trial-poll.py の EXIT_TICK_BUDGET=5 と --max-ticks 実装にも合う。旧文の『Bash の timeout で切れた場合だけ』より再呼び条件が広く正確になった。",
+      "背景実行を主経路にして前景 chunk を fallback に下げたのは、poll が state-file に elapsed/stall を永続化し scenario 予算を poll 側で強制する設計 (SKILL.md:258) と整合する。orchestrator の待機回数を減らしても HARD_CAP / TOKEN_CAP の fail-closed は弱まらない。",
+      "鮮度方針 (freshness_enforced) は lint と受入証拠テストの WARN/FAIL 判定だけに使われ、plan-live-trials.py の再利用判定は stale 閉包を従来どおり behavior-changed として再利用しない。SKILL.md:192 の『sha は手で書き換えない』とも矛盾しない。",
+      "再評価で修正を確認した。待ち方表の列名を『orchestrator の実行環境』へ変え、trial の `--runtime` とは別で poll は Claude trial 専用 (SKILL.md:117) と明記した。これで Codex 行を Codex trial と誤読する余地が無くなった。途中出力を HARD_CAP 80% の WARN 1 行に限る記述は、live-trial-poll.py の stdout 出力箇所 (途中出力は 291 行の WARN のみ。[DBG] は env 指定時の stderr) と一致する。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low][smell] SKILL.md:264 の算出根拠『36 tick × 15s = 540s』の 15s が env `INTERVAL` の既定値である旨が書かれていない。INTERVAL を env で変えると前景 600s 上限を超えうる。Codex の yield 上限 (SKILL.md:265) も tool 定義が出典で、repo 内では検証・drift 検知されない。どちらも非ブロッキング。"
+    ],
     "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual: 前回FAILのSTALLとexit 3を現行SKILL.mdとscriptで再照合",
+    "hook_trigger": "manual: iteration 1 の所見 (medium 1 / low 4) を受けた SKILL.md 待ち方節と poll docstring の修正後、incremental 再評価 1 回",
     "next_action": "none"
   },
   "review_kind": "rubric",
-  "notes": "再計算した skill_md_sha256 は SKILL.md 全バイトの sha256。前回2件を現行バイトで再照合した。STALL 分岐表 #5/#6 と判定ロジックは不合格の FAIL で、--blocked も --poll-exit STALL も付けない。derive_overall は blocked=True のときだけ BLOCKED を返し、poll_exit=STALL だけでは completion=FAIL の FAIL になり downgrade_reason は STALL に分かれない。poll 表とチェックリストは exit 3 BLOCKED を終端に含み、STATE_CORRUPT と TOKEN_UNMEASURED は --blocked とその名前の --poll-exit を渡す。blocked_cause_for はその2名を tmux 不在の既定文と別の原因文にする。空の --poll-exit 付き --blocked だけが既定文へ落ちる。boot 先頭コメントの exit 3 は tmux 不在で、poll 前の --blocked かつ poll_exit なしと一致する。この静的照合は live 実走の goal 達成を証明しない。構造規則を FAIL の根拠にしていない。根拠は手順と script の一致。"
+  "notes": "再評価 (iteration 2)。skill_md_sha256 は修正後の SKILL.md 全バイトを shasum -a 256 で計算した値。iteration 1 の所見5件を現行バイトで照合した。解消済みは次の4件で、negative_feedback から外した。medium の runtime 語衝突 (SKILL.md:260-263)、low の途中出力記述 (SKILL.md:260 と live-trial-poll.py:291 が一致)、low の poll docstring (live-trial-poll.py:42-44 が背景実行1回を既定、前景 chunk を代替と記述)、low の Codex yield 値の出典 (tool 定義上の上限と明記)。--max-ticks の根拠は追記されたが、INTERVAL 依存が残るため low 1件として残した。新たな矛盾は無い。exit 5 の再呼び規則 (SKILL.md:165/267/275) と L117 の Claude 専用の範囲は従来どおり整合する。high severity: 0。feedback_contract の IN1/IN2/OUT1/OUT2/OUT3 は今回の差分で変わっていない。この静的照合は live 実走の goal 達成を証明しない。 rubric 機械採点 (render-findings-score.py、--kind run) は iteration 1 と同じく score 100 / findings 0。意味所見は rubric 減点に混ぜていない。"
 }

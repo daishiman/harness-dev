@@ -195,6 +195,17 @@ def test_requirement_coverage_missing_field_fails(tmp_path):
     assert errs and any("missing=['boundary']" in e for e in errs)
 
 
+def test_requirement_coverage_does_not_demand_mapping_for_verbatim_request(tmp_path):
+    # 初回依頼原文は要件の出典。被覆宣言を要求すると、原文を残した brief だけ
+    # 初回 build の RTM 検査で止まり修復 1 周を浪費する。
+    trace, tp = _rtm_trace(tmp_path, _full_coverage())
+    brief_p = tmp_path / "skill-brief.json"
+    brief = json.loads(brief_p.read_text(encoding="utf-8"))
+    brief["user_request_verbatim"] = "契約書を台帳から量産したい。誤値より空欄にしてほしい"
+    brief_p.write_text(json.dumps(brief, ensure_ascii=False), encoding="utf-8")
+    assert MOD._validate_requirement_coverage(trace, tp) == []
+
+
 def test_requirement_coverage_absent_old_trace_skips(tmp_path, capsys):
     # brief 参照も coverage も無い旧 trace: 検査せず WARN も出さない。
     errs = MOD._validate_requirement_coverage({}, tmp_path / "t.json")

@@ -39,8 +39,9 @@ STALL になるので、STALL 時の tmux 生存確認 (STALL 分岐表 #1) は�
 --state-file (JSON) は elapsed/stall/settle/prev (+gate_ticks/warned80) を
 呼び越し永続化する。orchestrator の Bash ツールは 600s 上限で poll を kill
 しうる — state-file なしの再呼びは counter が 0 に戻り STALL_LIMIT (>600s) /
-HARD_CAP が構造的に実効しない。長時間 trial は「同じ --state-file で前景
-chunk 呼びを終端 exit まで繰り返す」(SKILL.md poll 局面) が必須。
+HARD_CAP が構造的に実効しない。背景実行で 1 回起動して終了を待つのが既定で、
+前景で区切るときは「同じ --state-file で chunk 呼びを終端 exit まで繰り返す」
+(SKILL.md poll 局面の待ち方表)。
 
 既定値の出典: run-elegant-review/references/convergence-policy.json
 loop_bounds.trial_acceptance (stall_limit_s=600 / hard_cap_s=7200)。本 script は
