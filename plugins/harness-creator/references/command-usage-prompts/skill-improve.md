@@ -19,7 +19,7 @@
 /skill-improve plugins/harness-creator/agents/elegant-reset-observer.md
 ```
 
-実態: `command → run-elegant-review (Phase1-3) → elegant-improvement-executor` を自動チェイン。レビューと**その場改善(in-place)**を1コマンドで完結させる近道。
+実態: `command → run-elegant-review (--dry-run・Phase1-2) → findings 提示 → 利用者が選択 → elegant-improvement-executor (selected_finding_ids / max_rounds)`。選んだ finding だけを**その場改善(in-place)**する近道で、選ばなかった finding には手を付けない。
 
 ---
 
@@ -29,7 +29,7 @@
 
 | オプション | 何を入れるか | 用途 |
 |---|---|---|
-| `capability-path`（必須） | 改善対象の skill/agent/hook/command パス | レビュー→改善→再レビューを最大 3 周自動実行 |
+| `capability-path`（必須） | 改善対象の skill/agent/hook/command パス | レビュー→findings 提示→選んだものだけ改善 (最大 3 round) |
 
 > オプションは 1 つのみ。**破壊的変更**を行うため事前に git commit clean 推奨。plan 正本を保ちたい改善は in-place でなく `/plugin-dev-plan --mode update --improvement-handoff <handoff>` 経由（②Layer1 の注記参照）。
 
@@ -38,7 +38,7 @@
 ### Layer 1: 基本定義層（不変原則）
 
 - 対象: `<capability-path>` で指定された既存 skill / agent / hook / command 1件（以下「対象capability」）。
-- 目的: 対象capabilityを思考リセット後に30思考法で多角的検証し、4条件PASSまで**その場で改善実行**する。
+- 目的: 対象capabilityを思考リセット後に30思考法で多角的検証し、findings を提示して利用者が選んだものだけを4条件PASSまで**その場で改善実行**する。
 - 位置づけ: `/capability-review` はレビューのみ（改善しない・dry-run）。`/skill-improve` はレビュー→改善実行まで進める点で異なる。
 - CONST_001: リセット＝直前contextの**クリア**であり対象ファイルの削除ではない。Phase1は観察専用・write禁止。
 - CONST_002: 30種全使用省略禁止。`used` は正本30名称と一意一致し、`skipped_with_reason=[]`。使用不能でも skip せず incomplete として停止する。
@@ -132,7 +132,7 @@
 | KJ法 | 3並列Agentから集まったfindingsをグルーピングし重複・関連を整理して優先順位付けする |
 
 #### Agent5（改善実行）
-severity（critical>high>medium>low）順に、依存DAGで独立分は並列・依存分は直列で最小パッチを適用。`auto_fixable=true` は自動適用、`false` は提案のみ。適用後に4条件を再検証し、全PASSまたは`iteration_count>=3`到達まで反復。proposer≠approver（自己承認禁止・別SubAgentまたは人間が承認）。
+利用者が選んだ `selected_finding_ids` だけを、severity（critical>high>medium>low）順・依存順に1 workerで最小パッチ適用（他Agentを起動しない）。`auto_fixable=true` は自動適用、`false` は提案のみ。適用後に4条件を再検証し、全PASSまたは`max_rounds`（既定3）到達まで反復。選択外の新しい問題は編集せず residual_risks に載せる。proposer≠approver（自己承認禁止・別SubAgentまたは人間が承認）。
 
 ### Layer 6: オーケストレーション層
 
@@ -141,12 +141,13 @@ Phase1 リセット俯瞰(必須ゲート・スキップ不可)
    → Agent1 が shared_state.md を出力
 Phase2 3並列分析ゲート
    → Agent2/3/4 が並列独立実行、完了判定 = 3 Agent完了 かつ used=正本30件一意 / skipped_with_reason=[]
-Phase3 改善実行
+findings 提示 → AskUserQuestion で改善対象を選択 (選択0件なら改善せず停止)
+Phase3 改善実行 (選んだ finding だけ)
    → severity順パッチ → 4条件再検証
-   → 全PASSなら完了 / 未PASSならPhase2へ再ループ(最大3周) / 3周超過でhuman_escalate
+   → 全PASSなら完了 / 未PASSなら max_rounds(既定3) まで反復 / 超過でhuman_escalate
 ```
 
 ### Layer 7: UI / 提示層
 
-**ユーザー提示**: まず①を実行し、対象に 思考リセット→30思考法並列分析→4条件検証→改善実行→4条件再検証 を回す。plan正本維持が要る改善は `/plugin-dev-plan --mode update` 経由。
+**ユーザー提示**: まず①を実行し、対象に 思考リセット→30思考法並列分析→4条件検証→findings提示と選択→選んだものだけ改善実行→4条件再検証 を回す。plan正本維持が要る改善は `/plugin-dev-plan --mode update` 経由。
 次の内容を元に実行してください。@

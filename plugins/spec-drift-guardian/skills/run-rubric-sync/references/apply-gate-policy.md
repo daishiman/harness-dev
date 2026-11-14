@@ -10,7 +10,7 @@ apply mode が Edit してよいのは、`target_path` が次の glob の**い�
 |---|---|---|
 | rubric | `plugins/harness-creator/**/rubric.json` | `plugins/harness-creator/skills/assign-skill-design-evaluator/references/rubric.json` |
 | template | `plugins/harness-creator/**/templates/**` | `plugins/harness-creator/skills/run-build-skill/templates/...` |
-| schema | `plugins/harness-creator/**/*.schema.json` | `plugins/harness-creator/skills/run-skill-create/schemas/build-trace.schema.json` |
+| schema | `plugins/harness-creator/**/*.schema.json` | `plugins/harness-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json` |
 
 - 判定は Python `fnmatch`/`pathlib.PurePath.match` 等の**決定論照合**で行い、LLM の目視で許可しない。
 - `target_path` は repo-root 相対で正規化する (先頭 `./`・`..` を排除、symlink 追跡なし)。

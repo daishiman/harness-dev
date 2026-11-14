@@ -89,14 +89,11 @@ run-build-skill/
 │   ├── agent-team.md / orchestrator.md / hook-integrated.md
 │   └── combinators/    # with-run.patch / with-subagent.patch / with-hooks.patch ほか
 ├── examples/
-│   ├── minimal-ref.md
-│   ├── workflow-with-evaluator.md
 │   └── task-graph-engine-skill.md
 ├── prompts/            # R1-scaffold.md ほか（責務別プロンプト）
 ├── schemas/
 ├── scripts/
-│   ├── render-frontmatter.py   # Python 3 標準ライブラリのみ
-│   └── validate-naming.py
+│   └── render-frontmatter.py   # Python 3 標準ライブラリのみ
 └── references/
     └── design-docs-index.md    # 設計書への索引（Progressive Disclosure）
 ```

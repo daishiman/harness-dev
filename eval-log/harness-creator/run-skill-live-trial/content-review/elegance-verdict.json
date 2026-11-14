@@ -2,20 +2,21 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-live-trial",
-    "skill_md_sha256": "91b027cf66f28277a856044c8b1adb2600d80766571088fdb82fd90bc03ba1eb"
+    "skill_md_sha256": "df467642bde2a07abc9103c266b3938571bf8fa61232b89aa0b01cc127dbed93"
   },
+  "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "grok-fresh-content-review-live-trial-ci13",
-  "reviewed_at": "2026-11-03T08:23:16+09:00",
-  "iterations": 2,
+  "reviewer": "independent-incremental-combined-reviewer-live-trial-20261114",
+  "reviewed_at": "2026-11-14T09:25:00+09:00",
+  "iterations": 1,
+  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
+    "omission": 1,
     "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 0
+    "dependency_break": 1,
+    "smell": 2
   },
-  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -26,15 +27,23 @@
       "OUT3"
     ],
     "positive_feedback": [
-      "正規の STALL は分岐表の不合格として FAIL に残し、BLOCKED へ昇格させない。derive_overall の BLOCKED は blocked=True のままである。",
-      "poll exit 3 の STATE_CORRUPT と TOKEN_UNMEASURED はチェックリストと poll 表にあり、--poll-exit にその名前を渡したとき blocked_cause_for が tmux 不在の既定文と分ける。"
+      "前回 low 指摘の後半 (Codex の yield 上限を断定していた点) は解消した。SKILL.md:265 は上限値を断定せず『tool 定義が許す範囲で大きく』とし、30000 / 300000 を例として版依存の注記付きで示すだけになり、SKILL.md:260 の『短い yield の連打は使わない』とも整合する。",
+      "exit 5 を終端扱いせず同一 --state-file で再呼びする規則は SKILL.md:165・264・267・275 で一致し、live-trial-poll.py:77 (EXIT_TICK_BUDGET=5) と live-trial-poll.py:300-305 (--max-ticks 到達時に state を保存して exit 5) の実装に合う。",
+      "途中出力は HARD_CAP 80% の WARN 1 行だけという SKILL.md:260 の記述は、live-trial-poll.py:290-293 (warned80 で 1 回限り) と live-trial-poll.py:259-262 ([DBG] は DBG env 指定時の stderr のみ) に一致する。",
+      "lint の鮮度判定を実際に確かめた。stale-sha だけを advisory とし (scripts/lint-live-trial-verdict.py:223-233)、freshness_enforced(enforce) が偽のときだけ WARN へ回す (同:239, 265)。古いうえに FAIL の verdict は verdict= 違反として FAIL に残る (tests/test_lint_live_trial_verdict.py:281-290)。tests/test_lint_live_trial_verdict.py の 28 件は通過し、--plugin harness-creator の実行は exit 0 だった。",
+      "planner の再利用判定は freshness_enforced を使わず、閉包 sha の不一致を behavior-changed として再利用しない (plan-live-trials.py:204-205)。したがって lint の WARN 化は SKILL.md:138・192 の再利用規則を崩さない。SKILL.md:192 の『sha は手で書き換えない』は lint docstring (scripts/lint-live-trial-verdict.py:23) と同旨である。",
+      "rubric 規範を満たす。本文は frontmatter を除いて 266 行で BD-003 の 300 行以内に収まり、render-findings-score.py --kind skill は score 100 / findings 0 だった。LLM judge の BD-004 では description の 2 trigger が SKILL.md:115-121・226-314 と SKILL.md:119・272・294-296・316-340 に対応し、high severity は 0 件。"
     ],
-    "negative_feedback": [],
-    "iteration": 2,
-    "iteration_limit": 3,
-    "hook_trigger": "manual: 前回FAILのSTALLとexit 3を現行SKILL.mdとscriptで再照合",
+    "negative_feedback": [
+      "[low][smell] SKILL.md:264 の『36 tick × 15s = 540s』は 15s が live-trial-poll.py:168 の env `INTERVAL` 既定値であることを書いておらず、INTERVAL を変えると前景 600s 上限を超えうるという前回指摘の前半が未解消のまま残っている (実際の sleep は live-trial-poll.py:300-307 のとおり 35 回で、式自体は保守側)。",
+      "[low][omission] 古い挙動閉包の PASS は既定 WARN で `--enforce` か `LIVE_TRIAL_ENFORCE_FRESHNESS=1` のときだけ FAIL になる lint の鮮度方針 (scripts/lint-live-trial-verdict.py:233, 265, 283、live-trial-verdict.py:1133-1138) へ SKILL.md:342-350 の検証節からも SKILL.md:137-138 のスコープ節からも辿れず、release 前に誰がいつ強制するかが本 skill の読者に見えない (Makefile:223-225 と .github/workflows/governance-check.yml:43 も既定実行だけで、release 前の強制は SKILL.md の範囲外でも未配線)。",
+      "[low][smell] SKILL.md:267 の『途中で切れた場合 (tool の上限、exit 5) は再呼び』は poll プロセスの終了を条件として明示しておらず、Codex で yield が返っただけのとき (SKILL.md:265 では write_stdin で待つ) を再呼びの合図と読むと、lock も原子的置換も無い live-trial-poll.py:135-141 の state-file を 2 本の poll が上書きしあう。",
+      "[low][dependency_break] SKILL.md:286 の参照 `loop_bounds.trial_acceptance.nudge_max` は実際の鍵 `loop_bounds.trial_acceptance.params.nudge_max` (convergence-policy.json:91-93) と一致しない (今回の差分外の既存表記で、SKILL.md:173 も同じ省略形)。"
+    ],
+    "iteration": 1,
+    "iteration_limit": 1,
+    "hook_trigger": "manual-incremental-content-review",
     "next_action": "none"
   },
-  "review_kind": "elegance",
-  "notes": "再計算した skill_md_sha256 は SKILL.md 全バイトの sha256。前回2件を現行バイトで再照合した。STALL 分岐表 #5/#6 と判定ロジックは不合格の FAIL で、--blocked も --poll-exit STALL も付けない。derive_overall は blocked=True のときだけ BLOCKED を返し、poll_exit=STALL だけでは completion=FAIL の FAIL になり downgrade_reason は STALL に分かれない。poll 表とチェックリストは exit 3 BLOCKED を終端に含み、STATE_CORRUPT と TOKEN_UNMEASURED は --blocked とその名前の --poll-exit を渡す。blocked_cause_for はその2名を tmux 不在の既定文と別の原因文にする。空の --poll-exit 付き --blocked だけが既定文へ落ちる。boot 先頭コメントの exit 3 は tmux 不在で、poll 前の --blocked かつ poll_exit なしと一致する。この静的照合は live 実走の goal 達成を証明しない。"
+  "notes": "incremental profile の focused combined review を 1 context で 1 回行った (iteration 1)。builder とは別の reviewer として、(a) 矛盾なし (b) 漏れなし (c) 規約整合 (d) 依存関係整合 (e) rubric high severity 0 を同時に判定した。skill_md_sha256 は現在の SKILL.md 全バイトを shasum -a 256 で計算した値 (df467642bde2a07abc9103c266b3938571bf8fa61232b89aa0b01cc127dbed93)。前回 verdict (sha 3b784f4e…、HEAD 版の SKILL.md と一致) からの差分は SKILL.md:265 の Codex 行だけである。前回の negative_feedback 1 件のうち、Codex yield 上限の断定は解消した。INTERVAL 依存は未解消なので low として残した。今回の主変更である鮮度の警告化について、SKILL.md には lint の WARN/FAIL 挙動に関する記述が無く、矛盾は出ていない。ただし案内が無いことを low の omission とした。frontmatter で宣言した script_refs / reference_refs / schema_refs と、本文が名指す関数 (derive_acceptance_tier, _merge_dependency_slugs, behavior_closure_files, extract_skill_invocations, scenario_contract_blockers, derive_overall, blocked_cause_for, DENY_TARGET_SKILLS, GATE_TOOLS) の実在を確認した。high 0 / medium 0 / low 4。feedback_contract の IN1/IN2/OUT1/OUT2/OUT3 は今回の差分で変わっていない。この静的照合は live 実走での goal 達成を証明しない。"
 }

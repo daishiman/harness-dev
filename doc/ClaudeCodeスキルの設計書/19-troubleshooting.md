@@ -98,7 +98,7 @@ Skill factory / generator / evaluator などの量産フローを回す際に起
 | `{{fast_mode_resolver}}` | fast mode 判定 script | `scripts/resolve-fast-mode.py` |
 | `{{frontmatter_validator}}` | frontmatter 検証 script | `validate-frontmatter.py` |
 | `{{dependency_linter}}` | 依存方向 lint script | `lint-dependency-direction.py` |
-| `{{category_resolver}}` | brief から category への写像 script | `scripts/resolve-brief-to-category.py` |
+| `{{category_resolver}}` | brief から category への写像 | `run-build-skill/references/resource-map.yaml` の category 選択 |
 | `{{trace_validator}}` | trace 検証 script | `validate-build-trace.py` |
 | `{{runtime_skills_dir}}` | runtime 側 Skill directory | `.claude/skills/` |
 | `{{source_skills_dir}}` | source / canonical 側 Skill directory | `plugins/harness-creator/skills/` |

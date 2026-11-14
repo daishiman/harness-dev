@@ -1,7 +1,7 @@
 # 内容 adequacy 検査プロトコル (Step 12 content-review)
 
 機械 lint だけでは「ひな形通り」だけ確認で内容空虚を素通りさせる欠陥がある。
-本プロトコルは **verification obligation resolver → 必要時だけLLM評価 → verdict互換投影 → 機械検査** で「内容の良さ」を build harness に組み込む。正準の選定・再利用契約は `verification-obligation-protocol.md` であり、本書はcontent-review verdictとhookの互換投影を定める。
+本プロトコルは **verification obligation resolver → 必要時だけLLM評価 → verdict互換投影 → 機械検査** で「内容の良さ」を build harness に組み込む。正準の選定・再利用契約は `verification-obligation-protocol.md` であり、本書はcontent-review verdictの互換投影と、それを強制するCI / pre-pushの機械検査を定める。
 
 **位置づけ (証拠の主張型直交)**: 静的レビュー (content-review / elegant-review / rubric) は **design claim (設計 adequacy) の正本**であり、静的設計ゲートの核 (実行 acceptance は Gate D)。behavioral claim (実行挙動: 自走完遂 / 入れ子 Skill / 対話 gate 越え / goal 達成) の受け入れ収束は **Gate D (`run-skill-live-trial`) の実走証拠のみ**を根拠とし、静的 verdict を流用しない (評価縮退の禁止)。ゲート帰属の正本は `$PLUGIN_ROOT/references/orchestrate-gate-pattern.md`。
 
@@ -27,7 +27,7 @@ profile は `incremental|exhaustive|build-only` の閉列挙で、無指定は `
 | ループ | 目的 | 評価基準 | 上限 | 発火 |
 |----|----|----|----|----|
 | Inner loop | 小さな機能・責務単位で現在ゴールを満たす | `feedback_contract.criteria[loop_scope=inner]` + goal-seek checklist | 再評価=`inner_loop.max_iterations` (既定3) / goal-seek 手順反復=`loop_bounds.goal_seek_inner` (5) ※別ループ | build 中 / evaluator findings |
-| Outer loop | ハーネス全体がユーザー目的に近づいているかを改善する | 未解決semantic obligation + 4条件 | incremental=同じobligationの修正→再評価1回、exhaustiveのみ最大3 | obligation resolver / Stop queue / pre-push |
+| Outer loop | ハーネス全体がユーザー目的に近づいているかを改善する | 未解決semantic obligation + 4条件 | incremental=同じobligationの修正→再評価1回、exhaustiveのみ最大3 | obligation resolver / CI・pre-push の `lint-content-review.py` |
 
 > **"inner" 命名の自己説明** (JSON キー名は数値 SSOT に直結するため変更しない): 同じ "inner" 語が 2 つの別ループを指す。`inner`(=goal-seek の**手順反復**。AI が手順を都度導出する内ループ, 上限5) と `inner_loop`(=content-review の**再評価**反復, 上限3) は別物。前者は「手順」を、後者は「評価」を反復する。
 
@@ -106,10 +106,9 @@ Agent({
 
 ## 機械検査 (CI / pre-push)
 
-`scripts/lint-content-review.py --changed-only --base origin/main`:
+`scripts/lint-content-review.py --all` (下記「強制の経路」の CI 段):
 
-- `git diff origin/main...HEAD` から `plugins/*/skills/*/SKILL.md` 変更を抽出
-- 各変更 skill について `eval-log/<plugin>/<skill>/content-review/{elegance,rubric}-verdict.json` の存在 + `verdict=="PASS"` + `target.skill_md_sha256` が現在の SKILL.md と一致することを検査
+- 全 skill (symlink と Codex 配布用コピーを除く) について `eval-log/<plugin>/<skill>/content-review/{elegance,rubric}-verdict.json` の存在 + `verdict=="PASS"` + `target.skill_md_sha256` が現在の SKILL.md と一致することを検査
 - `feedback_loop` は必須。`criteria_evaluated` は**量産先 SKILL.md frontmatter** の `feedback_contract.criteria[].id` 全件と突合し、未評価 ID があれば PASS 不可（frontmatter が正本＝携帯する評価基準。trace は frontmatter 不在時の後方互換 fallback）
 - `kind: ref` / symlink skill は対象外。`harness-creator` 自身は dogfooding 対象なので CI/pre-push では除外しない
 - 違反時 exit 1 → merge ブロック
@@ -119,19 +118,45 @@ Agent({
 plugin / skill の改名で verdict の置き場・`target.plugin` が変わる場合の正規手順を定義する (2026-07-02 plugin 改名で確立):
 
 - **SKILL.md の内容 sha256 が不変**のまま path だけ変わった場合に限り、既存 verdict を新パスへコピーし `target.plugin` / `target.skill` を更新+`retargeted_from` 監査キー (旧 eval-log パス+改名日) を追記してよい。sha 不変 = 同一 artifact の証明であり再評価は不要。
-- **SKILL.md の内容が 1 byte でも変わった**場合は独立 SubAgent による genuine 再生成が必須。`target.skill_md_sha256` / 評価値 / `criteria_evaluated` の手書換は**偽装**であり禁止 (既存判例どおり)。
+- **SKILL.md の内容が 1 byte でも変わった**場合は独立 SubAgent による genuine 再生成が必須。`target.skill_md_sha256` / 評価値 / `criteria_evaluated` の手書換は**偽装**であり禁止 (既存判例どおり)。唯一の例外は次節「レビュー由来の修正後の sha 結び直し」で、これも手で書き換えず script が条件を確かめてから結び直す。
 - 旧パス側の verdict は凍結アーカイブとして残す (遡及書換しない)。
 
-## hook 発火と queue
+### レビュー由来の修正後の sha 結び直し
 
-Claude Code hook はレスポンス時間と副作用境界を守るため、**重い LLM 評価を直接実行しない**。hook は評価要求を `eval-log/review-queue.jsonl` へ queue 化するが、queue は追跡用で自動 consumer を持たない。未評価/stale はStop時にnoticeするだけで `decision:block` を返さない。semantic evaluatorはartifact提示後の利用者choiceがある場合のみ起動する。明示releaseのpre-push / CIでは `lint-content-review.py` が verdictの存在・PASS・SHA一致を別trust boundaryとして検査する。不可逆操作や秘密の防止はそれぞれの安全hookに残す。
+SKILL.md を 1 byte でも変えると `target.skill_md_sha256` がずれ、`lint-content-review.py` は stale-sha で FAIL する。レビューが勧めた修正を当てただけでも stale になるため、「再レビュー → 新しい指摘 → 編集 → また stale」が周回する。レビュー由来の修正と、審査を経ない書き換えを lint は区別できない。**lint は変えていない** (stale-sha 判定はそのまま)。区別は、修正を当てた直後にだけ呼ぶ決定論 script `run-elegant-review/scripts/sync-content-review-sha.py` が受け持つ。
 
-| Hook | 役割 |
-|----|----|
-| `PostToolUse:Skill` | `run-build-skill` / `delegate-codex-skill-review` 等の完了後、`check-review-trigger.py` を queue-only で起動し、対象 artifact と hook_trigger を評価要求として記録 |
-| `PostToolUse:Edit|Write` | SKILL.md / rubric / workflow-manifest 変更時に `check-review-trigger.py` を queue-only で起動し、stale verdict 再評価要求を記録 |
-| `Stop` | `check-review-trigger.py`。未評価/stale skill を queue 化してnoticeするがStopは通す。artifact提示後に利用者が診断を選んだ場合のみfocused reviewを起動し、`run-elegant-review` + rubric evaluator は exhaustive 明示時だけ。明示releaseのCI/pre-pushは同じ2 verdict契約を強制 |
-| `pre-push` / CI | `lint-content-review.py` で verdict の存在・PASS・SHA一致を強制 (最終強制層) |
+```bash
+python3 plugins/harness-creator/skills/run-elegant-review/scripts/sync-content-review-sha.py \
+  --plugin <plugin> --skill <skill> --from-sha <修正前に実ファイルから測った sha256> \
+  --finding-ids elegance:1,rubric:2 [--dry-run]
+```
+
+script は次の 3 条件を**全部**満たすときだけ、両 verdict の `target.skill_md_sha256` を現在の sha へ結び直す。
+
+- a. `elegance-verdict.json` と `rubric-verdict.json` が両方あり、どちらも `verdict=PASS`。`target.plugin` / `target.skill` が対象と一致する。
+- b. 両 verdict の `target.skill_md_sha256` が `--from-sha` と一致する。つまり verdict を取った後、今回の修正より前に別の編集が入っていない。
+- c. `--finding-ids` が空でなく、各 id が実在の指摘を指し、過去の結び直しで使われていない。id は `<review_kind>:<n>` で、n はその verdict の `feedback_loop.negative_feedback` の 1 始まりの位置。実在 verdict は指摘に安定 id を持たないので、位置で引く。
+
+結び直しでは `sha_rebinds[]` に `{from_sha, to_sha, finding_ids, rebound_at, tool}` を追記する。`verdict` / `reviewer` / `reviewed_at` / `iterations` / `feedback_loop` は変えない。両ファイルは一時ファイルと `os.replace` で置換し、片方だけ書き換わった状態を残さない。現在の sha が `--from-sha` と同じなら noop、両 verdict がすでに現在の sha なら already-bound を返す。どちらも書き込みはなく exit 0。拒否は exit 1、引数や入出力の誤りは exit 2。
+
+**再レビューが要る場合** (script は exit 1 で拒否し、結び直さない):
+
+- verdict が FAIL / INCOMPLETE か、片方の verdict が無い。
+- `--from-sha` が verdict の sha と一致しない。審査を経ない編集が先に入っている。
+- 指摘の無い verdict (`negative_feedback` が空) しかない。引ける id が無いので、どんな編集も再レビューになる。
+- id が存在しないか、すでに使われている (1 指摘で結び直せるのは 1 回)。使用済みかは指摘本文でも見るので、2 verdict に同じ本文で並ぶ指摘を、片方の id で使ったあともう片方の id で再び使うことはできない。
+
+拒否されたら verdict JSON を手で書き換えず、「要再レビュー」として報告し、独立 evaluator に再生成させる。script は差分が指摘どおりかまでは確かめないので、`sha_rebinds[]` の from / to / ids を監査の手がかりにし、疑わしければ再レビューする。`sha_rebinds[]` を手で書くのは偽装である。
+
+## 強制の経路 (CI / pre-push)
+
+content-review は Claude Code hook から発火させず、queue も持たない。重い LLM 評価は hook から起動しない。semantic evaluator が動くのは、incremental の `llm_batches[]` で artifact 提示後に利用者が診断を選んだときと、exhaustive を明示したときだけである。verdict の存在・PASS・SHA 一致は、次の機械層だけが強制する。不可逆操作や秘密の防止は、それぞれの安全 hook に残す。
+
+| 層 | 実行 | 強制する内容 |
+|----|----|----|
+| CI (`.github/workflows/governance-check.yml`) | `python3 scripts/lint-content-review.py --all` | 全 skill の 2 verdict の存在・PASS・SHA 一致・`feedback_loop`・criteria 突合。違反は exit 1 で merge をブロックする (最終強制層) |
+| pre-push (`.githooks/pre-push` → `scripts/run-ci-checks.sh`) | CI workflow の段をそのまま再生 | push 前に CI と同じ検査を先に行う。`PUSH_SKIP_CI=1` で飛ばしても CI で再検査される |
+| 手元 (`make content-review`) | `lint-content-review.py --all` | 同じ検査を任意に回す。差分だけ見たいときは `--changed-only` |
 
 Codex 委譲の完了も新しい自動実行層を増やさない。`delegate-codex-skill-review` はレスポンス JSON / patch / handoff を artifact として保存し、その artifact を既存の content-review verdict 契約に正規化して評価する。
 

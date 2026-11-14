@@ -32,6 +32,7 @@
     "key_constraints": {"type": "array", "items": {"type": "string"}},
     "goal": {"type": "string", "description": "ゴールシーク用。達成すべき最終状態を観測可能な完了形1文で。prefix ∈ {run,wrap,assign,delegate} では allOf により必須 (ref のみ任意)。output_contract の完了条件と同源に保つ。"},
     "purpose_background": {"type": "string", "description": "ゴールシーク用。なぜこのゴールか (目的・背景)。手順生成時の優先順位の根拠。prefix ∈ {run,wrap,assign,delegate} では allOf により必須 (ref のみ任意)。"},
+    "user_request_verbatim": {"type": "string", "minLength": 1, "maxLength": 8000, "description": "利用者の初回依頼の原文 (要約・言い換えをしない。個人特定情報だけ [伏字] に置換)。goal / purpose_background は解釈を含むため、初稿診断 (run-build-skill の build-improvement-gate.py --user-request-file) が当初目的の正本として evaluator へ渡すのはこちら。任意。"},
     "checklist": {"type": "array", "items": {"type": "string"}, "description": "ゴールシーク用。ゴール達成の受入基準 (二値判定可能)。prefix ∈ {run,wrap,assign,delegate} では allOf により必須 (minItems 1、ref のみ任意)。output_contract / key_constraints と同源に保つ。"},
     "boundary": {"type": "string", "minLength": 1, "maxLength": 200},
     "deterministic_checks": {"type": "array", "items": {"type": "string"}},
@@ -101,12 +102,12 @@
     },
     "with_subagent_hint": {
       "type": "boolean",
-      "description": "決定論的 placement hint (19章 factory 障害 #6 対応)。placement_candidates に Subagent / Agent Team を含むとき true。resolve-brief-to-category.py が agent-teams category を強制し、run-build-skill に --with-subagent を推奨する。needs_independent_context と併設する (前者=配置事実、本フィールド=build フラグ推奨シグナル)。build-flags.schema.json の object 型 with_subagent とは別物 (こちらは brief 用 boolean)。"
+      "description": "決定論的 placement hint (19章 factory 障害 #6 対応)。placement_candidates に Subagent / Agent Team を含むとき true。run-build-skill は agent-teams category を読み、--with-subagent を推奨する。needs_independent_context と併設する (前者=配置事実、本フィールド=build フラグ推奨シグナル)。build-flags.schema.json の object 型 with_subagent とは別物 (こちらは brief 用 boolean)。"
     },
     "goal_seek": {"type": "object", "additionalProperties": false, "description": "goal-seek の実行 profile。省略時は loop kind に対し engine=inline、needs_independent_context=false なら fork=inline とする。task-graph / run-goal-seek / subagent / agent-team は必要性を設計が明示した場合だけ使う。Goal・Checklist・検証契約は profile にかかわらず維持する。", "properties": {"engine": {"type": "string", "enum": ["inline", "run-goal-seek", "task-graph"], "default": "inline", "description": "inline=既定の自己完結。task-graph=実在する依存グラフ用。run-goal-seek=明示された重い周回用。"}, "max_loops": {"type": "integer", "minimum": 1}, "fork": {"type": "string", "enum": ["subagent", "agent-team", "inline"], "default": "inline", "description": "inline=既定。needs_independent_context=true なら subagent、独立並列所有権が明示された場合だけ agent-team。"}}},
     "with_hooks": {
       "type": "boolean",
-      "description": "決定論的 placement hint (19章 factory 障害 #6 対応)。placement_candidates に Hook を含むとき true。resolve-brief-to-category.py が subagent-hook-integration category を強制し、run-build-skill に --with-hooks を推奨する。needs_lifecycle_enforcement と併設する (前者=配置事実、本フィールド=build フラグ推奨シグナル)。build-flags.schema.json の object 型 with_hooks とは別物 (こちらは brief 用 boolean)。"
+      "description": "決定論的 placement hint (19章 factory 障害 #6 対応)。placement_candidates に Hook を含むとき true。run-build-skill は subagent-hook-integration category を読み、--with-hooks を推奨する。needs_lifecycle_enforcement と併設する (前者=配置事実、本フィールド=build フラグ推奨シグナル)。build-flags.schema.json の object 型 with_hooks とは別物 (こちらは brief 用 boolean)。"
     }
   },
   "allOf": [

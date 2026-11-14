@@ -57,7 +57,7 @@
       "name": "skill-governance-lint",
       "source": "./plugins/skill-governance-lint",
       "description": "Skill / Agent / Hook / manifest の静的解析スクリプト群。命名・依存方向・rubric 参照・frontmatter 整合などを自動検証する lint プラグイン。",
-      "version": "0.1.24",
+      "version": "0.1.25",
       "category": "governance",
       "tags": [
         "governance",
@@ -136,7 +136,7 @@
       "name": "system-spec-harness",
       "source": "./plugins/system-spec-harness",
       "description": "システム構築(Web/モバイル/タブレット/デスクトップ横断)に必要な仕様情報を、ユーザーとの往復ヒアリングでカテゴリ×プラットフォームの網羅マトリクスとして漏れなく収集し、設計知識 (クリーンアーキテクチャ/デザインパターン/API デザインパターン/セキュアバイデザイン/DDD/クリーンコード) の参照と最新公式ドキュメントの出典記録を添えて、章立て複数 Markdown ファイル + index の仕様書ドキュメントセットへまとめるハーネス plugin。ヒアリングは5周ごとに状態保存+resume で継続し未収集セルを完了扱いしない。収集マトリクス網羅性 (validate-coverage-matrix.py) と出典記録 (validate-source-citation.py) を決定論ゲートで検証し、独立 context の完成度評価 (assign-system-spec-completeness-evaluator) と 3 監査 sub-agent (hearing/matrix/doc-freshness) で網羅性を担保する。確定済み章は fail-closed hook で誤上書きを防ぐ。改善要望は `/run-skill-feedback system-spec-harness` で投入可能。",
-      "version": "0.1.26",
+      "version": "0.1.27",
       "category": "productivity",
       "tags": [
         "spec",
@@ -161,7 +161,7 @@
       "name": "dev-graph",
       "source": "./plugins/dev-graph",
       "description": "ローカル task graph と Markdown を正本に、feature orchestration、tracker 投影、複数 worktree 実行を管理する開発グラフ harness。",
-      "version": "0.1.32",
+      "version": "0.1.33",
       "category": "development-planning",
       "tags": [
         "task-graph",
@@ -188,7 +188,7 @@
       "name": "spec-drift-guardian",
       "source": "./plugins/spec-drift-guardian",
       "description": "検知済み spec-drift issue の影響トリアージと rubric/schema/template 更新提案 (Edit 差分 artifact emit) を半自動化し、close 前ゲートで対応漏れを防ぐ plugin。検知 (fetch/diff/issue 起票) は既存 workflow / ref-yaml-spec-fetcher に委ね、本 plugin は full-diff 再構成 → 4 軸+semantics triage → 独立 verdict → propose → 独立 audit → 明示承認 → allowlist 限定 apply → post-image 検証 → close ゲートを担う。",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "category": "developer-tools",
       "tags": [
         "spec-drift",

@@ -13,11 +13,10 @@ PLUGIN = ROOT / "plugins" / "x-longpost-creator"
 # その書式で書いた plugin だけが検査に当たり、当たらない書式へ逃げる圧力になる
 # (実測: 書式を要求する形は CHANGELOG を持つ 6 plugin のうち 1 件にしか当たらず、
 #  残り 5 件では検査が何もしていなかった)。
-_NOTIFIER = (ROOT / "plugins" / "harness-creator" / "skills"
-             / "run-skill-update-notifier" / "scripts" / "notifier-check.py")
-_SPEC = importlib.util.spec_from_file_location("notifier_check_parity", _NOTIFIER)
-NOTIFIER = importlib.util.module_from_spec(_SPEC)
-_SPEC.loader.exec_module(NOTIFIER)
+_RELEASE_SCRIPT = ROOT / "scripts" / "build-plugin-release.py"
+_SPEC = importlib.util.spec_from_file_location("build_plugin_release_parity", _RELEASE_SCRIPT)
+RELEASE = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(RELEASE)
 
 
 def _json(relative_path: str):
@@ -52,7 +51,7 @@ def test_release_metadata_and_visual_capability_match_on_both_hosts():
     # 落ちる。しかし守りたいのは「配布面どうしが食い違っていないこと」であって番号の
     # 値ではない。CHANGELOG の最上位見出しを基準に据えると、番号が動いても検査は生き
     # 続け、さらに「CHANGELOG に節の無い版を配らない」ことまで同時に保証される。
-    changelog_version = NOTIFIER._extract_latest_version(PLUGIN / "CHANGELOG.md")
+    changelog_version = RELEASE.latest_changelog_version(PLUGIN / "CHANGELOG.md")
     assert changelog_version, "CHANGELOG.md の最上位に版数の節がない"
     assert (
         claude["version"]

@@ -2,21 +2,21 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-build-skill",
-    "skill_md_sha256": "62bf44a72bb64e227d38c961c2eb672423cbf789fa1aae5620107ba2527dd1fb"
+    "skill_md_sha256": "f8118ed3fb9b00ea9b401cd7beb1ff63675b4da4d6baaea0e24bb974b8a61d92"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "independent-content-reviewer (Claude subagent, incremental profile)",
-  "reviewed_at": "2026-10-11T23:25:10Z",
-  "iterations": 3,
-  "human_review_required": false,
   "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 4,
-    "dependency_break": 0,
-    "smell": 5
+    "contradiction": 1,
+    "omission": 2,
+    "inconsistency": 3,
+    "dependency_break": 1,
+    "smell": 2
   },
+  "reviewer": "independent-content-reviewer-20261114 (Claude subagent, incremental profile, focused combined review of SKILL.md 6cc8a208)",
+  "reviewed_at": "2026-11-14T09:26:42+09:00",
+  "iterations": 1,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
@@ -27,28 +27,53 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "rubric 1.6.0（L0）に assign-skill-design-evaluator の L2 を重ねた機械採点（render-findings-score.py --kind skill --emit-hash）は score 100（threshold 80）、passed=true、findings 0。coverage は applicable 24・scored 23・pending_human 1。composition_hash は sha256:cebbd0864fda5cf07c2104c31ab4bdad5e160b8d7d1ad8a2ee8bd1f4b597299c。L0 単独でも score 100、findings 0、applicable 20・scored 19・pending_human 1・not_applicable 21、composition_hash は sha256:2713eeaf2ead46a2760bc5f1e4195f429883a8cd14cecdf0e7f7a8323655ec98。rubric_hash は両方とも sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9。",
-      "pending_human の BD-004 は評価者が判定して充足とした。description の1つ目の trigger（Capability 7 kind の新規作成・更新）は Step 0 の L265〜271、Step 1〜4、argument-hint の --mode create|update に対応する。2つ目の trigger（CapabilityManifest と plugin-composition.yaml の整備）は Step 0.3 の L270、Step 0.4 の L271（lint-plugin-composition.py）、Key Rule 18 の L211、Step 12.4 の L414（--bundle）に対応する。",
-      "前回の medium（L216 の ratchet の範囲が狭い）は解消した。L216 は「repo 外の生成物では warning のままだが、repo 内に入った配線の無い loop 系スキルは plugin を問わず `lint-goal-seek.py` の ratchet が exit 1 で落とす」とし、harness-creator のスキル（GRANDFATHERED_WARNINGS へ根拠付きで登録するか配線を戻す）とほかの plugin のスキル（baseline が追記禁止なので配線を戻す）を書き分け、文末も「(repo 内では、未登録のものを上の ratchet が exit 1 にする)」に直った。実装（lint-goal-seek.py の repo_relative L689、check_warning_ratchet L733、GRANDFATHERED_WARNINGS L630、main L901 の exit 0/1/2）と実際に試した結果が一致する。plugins/skill-intake/skills/run-intake-status/SKILL.md を単体で lint すると exit 1（grace 未登録の3 kind）、cmp で同じ中身と確かめた repo 外の写しは exit 0（warning 3件）、同じ path に --baseline を付けると exit 0（猶予3件、baseline に載っている）。関数で試すと、新規の harness-creator の path も新規のほかの plugin の path も violation 3件、repo 外は violation なしだった。",
-      "前回の medium の関連ファイルも揃った。正本の references/goal-seek-paradigm.md L81、schemas/build-flags.schema.json の with_goal_seek.description、doc/harness-creator-完全解剖.md L422、plugin-dev-planner の harness-creator-spec-reflection.md L57（D5「repo 内の SKILL.md なら plugin を問わず exit 1」）が L216 と同じ3つの場合を述べ、互いに矛盾しない。完全解剖 L422 は exit 1 を明記しないが「落とす」とあり、食い違いではない。",
-      "前回の low（L414 の「毎回の判定の最初に」）は解消した。L414 は「毎回の判定で (提示receipt・診断選択の検査より前に)」となり、build-improvement-gate.py の build_gate（L1098）の順序、つまり _validate_verification_plan（L1100）、_validate_manifest（L1101）、_validate_target_scope（L1102）、_validate_usable_draft_proof（L1103）、_validate_artifact_presentation_receipt（L1125）、_validate_pre_diagnostic_choice_event（L1142）と合う。proof の検査は artifact の sha256（L485〜486）、authoritative target manifest 上の同じ sha256（L493〜494）、validator の sha256（L506〜507）、validator の再実行と stdout digest（L519〜520）で、--usable-draft-proof は必須引数（L1319）、GateError は exit 2（L1379〜1381）。本文の fail-closed の主張どおり。",
-      "Step の番号は本文・workflow-manifest.json・周辺の文書で前回どおり揃っている。L274 の合流先（Step 12.4 → `artifact-present-handoff` Step 12.45 → `diagnostic-choice` Step 12.5）、Step 12.6（選択時のsemantic診断）と Step 12.7（L432、ユーザー選択範囲だけの有界改善）が manifest の phase と1対1に対応する。本文は 461 行・本文 299/300 行で、今回の修正で行を増やしていない。"
+      "lint-skill-description.py に `--skill DIR|SKILL.md` が入り (ヘッダ L6、`_parse_opt` L152、単一 skill 分岐 L176-196)、SKILL.md L328 は生成した skill だけを検査するようになった。前回 low #3 (`--skills-dir \"$OUT_BASE\"` が生成先 plugin の全 skill を巻き込む副作用) は解消している。実測では `--skill DIR`・`--skill SKILL.md`・`--skill=DIR` が exit 0、存在しないパスの `--skill` は VIOLATION で exit 1、引数なしは exit 0 (OK=186) だった。指定を誤ったときに OK で通さず失敗させる (L196 のコメント) 作りは、他の lint の単一対象オプションにもそのまま使える。",
+      "run-skill-create/workflow-manifest.json L179-187 の `build_lint_reuse` は、receipt の扱いを 2 通りに分けている。receipt が無い、skill_name が違う、PASS でない場合は build へ戻す (`on_missing_or_fail`)。sha が違う場合はその場で covered_scripts を再実行する (`on_digest_mismatch`、L185)。別 skill の古い trace を流用しない照合 (`skill_name`、L182) も入っている。lint を重ねて走らせない高速化と、fail-closed を両立させる型になっている。ファイルの対象 (build の `$OUT_BASE/$SKILL_NAME/SKILL.md`、SKILL.md L343、と create の `<skill_dir>/SKILL.md`、L182) と時点 (build は Step 4 の PASS 時に書き、create は p0-lint で比べる) も揃っている。",
+      "前回 low #5 (未定義の resourceIds) は解消した。`schema-artifact-presentation-receipt` と `schema-pre-diagnostic-choice-event` が workflow-manifest.json の resources L343-344 に登録され、参照している L223・L239・L262 の resourceId はすべて定義済みで、ファイルも実在する。前回 low #2 (git 管理外の sync-content-review-sha.py) も commit 740f63f0 で追跡下に入った。",
+      "本文は lint-skill-tree の数え方で 291 行になった (SS-203 warn は 280 超なので残る)。規範採点器 render-findings-score.py (L0+L2) は score 100 / threshold 80、findings 0 だった。前回 low #1 で余裕が 0 だった 300 行上限に、9 行の余裕ができている。",
+      "content-review-protocol.md L153-158 の強制経路の記述は実物と一致している。CI は governance-check.yml L40 の `lint-content-review.py --all`、手元は Makefile L224 の同じコマンド、push 前は `.githooks/pre-push` が `scripts/run-ci-checks.sh` 経由で CI の段を再生する。SKILL.md L399 の「content-review は feedback-deploy を待たない」も、manifest の content-review.dependsOn=[\"trace-write\"] (L178) と一致する。"
     ],
     "negative_feedback": [
-      "[low/inconsistency・今回・新規] plugins/harness-creator/CHANGELOG.md（未コミット）に、直す前の狭い書き方が残っている。L184 は「CI scope に入った配線の無い loop 系スキルはこの ratchet で落ちる（通すには `GRANDFATHERED_WARNINGS` に根拠付きで登録するか、配線を戻す）」とし、続けて「SKILL.md・`goal-seek-paradigm.md`・`build-flags.schema.json` と `doc/harness-creator-完全解剖.md` に同じ文言で書いた」としているが、今の4つは repo 内・plugin を問わずに直っており、文言も同じではない。L261 は「毎回の判定の最初に（提示の receipt と診断の選択を検査する前に）」で、L414 の新しい書き方と違う。L263 は「「CI scope では ratchet が exit 1 にする」を補った」で、今の文末は「repo 内では…」。commit 前に CHANGELOG を今の本文に合わせることを勧める。",
-      "[low/inconsistency・今回・新規] L216・正本の goal-seek-paradigm.md L81・schema・完全解剖 L422 は、harness-creator のスキルに対して GRANDFATHERED_WARNINGS への根拠付きの登録を、配線を戻すことと並ぶ一般の選択肢として示す。一方、lint-goal-seek.py のメッセージ（L759〜762「新規スキルは with-goal-seek 配線を省略できない。既存負債なら GRANDFATHERED_WARNINGS へ根拠付きで登録」）と docstring（L36〜39「配線系の 3 warning は既存スキルの grace」）は、登録を既存負債に限る。--no-goal-seek で新しく作った harness-creator のスキルを登録してよいかが、文書と lint で違って読める。本文は正本と一致しているので本文の誤りではないが、下の L759〜762 の low と一緒に方針を決め、どちらかに揃えることを勧める。",
-      "[low/inconsistency・前回から残る] lint-goal-seek.py の grace 未登録のメッセージ（L759〜762）は、ほかの plugin の path にも「既存負債なら GRANDFATHERED_WARNINGS へ根拠付きで登録」と勧める。関数で試すと、ほかの plugin の path を GRANDFATHERED_WARNINGS に足せば ratchet を通る。正本の「ほかの plugin は配線を戻す」は、今も review でしか守られていない。",
-      "[low/inconsistency・前回から残る] lint-goal-seek.py の docstring（L20）は根拠を「run-build-skill SKILL.md Key Rule 18」としているが、ゴールシークの規則は Key Rule 19 で、18 は Capability 7 kind の規則。",
-      "[low/smell・前回から残る] L432 の「### Step 12.7: ユーザー選択範囲だけの有界改善」の直後に空行が無い。本文の `### Step` 見出し23個のうち、この1つだけ。CommonMark では有効。",
-      "[low/smell・前回から残る] 本文は 299/300 行（lint-skill-tree の SS-203 は warn）。上限に1行しか余裕がない。",
-      "[low/smell・前回から残る] run-build-skill 自身の lint-goal-seek の warning 3件（配線の見出しとアンカー用のトークンが無い）は GRANDFATHERED_WARNINGS に登録されて通っている。goal_seek.engine=inline なので違反ではないが、Key Rule 19 と食い違って見える。",
-      "[low/smell・前回から残る] lint-feedback-contract --all が run-build-skill に warn を1件出す。allowed-tools から acceptance_tier=live が導かれるのに、loop_scope=outer かつ verify_by=live-trial の criterion が無い（baseline 免除中、exit 0）。",
-      "[low/smell・前回から残る] scripts の header の dependencies に兄弟ファイルを並べている（build-external-intelligence.py L10、lint-knowledge-loop.py L14、record-verification-evidence.py L12 など）。設計書28章 §7.2 の「必ず []」と repo の慣行がずれている。"
+      "[medium/contradiction・今回] lint receipt を書く順番が一意に決まらない。SKILL.md L338 は Step 4 の lint ブロックの中で `validate-build-trace.py` を走らせ、L343 は「全て exit 0 なら」lint=PASS と lint_target_sha256 を書くとしている。ところが validate-build-trace.py L1785-1788 は lint の値として PASS / N/A 以外 (FAIL を含む) を `invalid gate status` で拒否する (lint=FAIL の trace で exit 1 を実測)。一方で prompts/R4-trace-write.md L23・L95 は PASS/FAIL/N/A で埋めると定め、L31 は検証スクリプト未実行のまま pass を埋めることを禁じている。このため Step 3.5 で書いた trace が Step 4 の validator を通るには、どこにも書かれていない N/A の仮置きか、禁じられている PASS の先書きのどちらかが要る。さらに workflow-manifest.json L138-141 は trace-write (step 9) を scripts (step 4) の後に置いており (dependsOn [\"scripts\"])、SKILL.md の Step 3.5→Step 4 (L311・L321) と順番が逆である。R4 は lint_target_sha256 に一言も触れていない。直し方: lint receipt と lint_target_sha256 を書く場所を 1 つに決める (例: Step 4 の末尾で trace を更新する段を SKILL.md と R4 に明記する)。Step 3.5 時点の lint の値は N/A で仮置きすると R4 に書き、R4 の PASS/FAIL/N/A を validator が受け付ける値と揃える。",
+      "[medium/omission・今回] lint_target_sha256 が SKILL.md 1 ファイルしか束縛しないのに、再利用される lint は skill dir 全体を見ている。SKILL.md L343、skill-build-trace.schema.json L103-107、run-skill-create/workflow-manifest.json L182 は、どれも `<skill_dir>/SKILL.md` の sha256 だけを照合キーにしている。しかし L183 の covered_scripts には、skill dir 全体を走査する lint-skill-tree.py (prompts/ の列挙と行数 L111-154、rglob L245) と、ディスク上の成果物を突合する validate-build-plan.py --check (SKILL.md L339) が入っている。validate-build-plan.py は CI に無い (lint-matrix.json L183 の ci_exclusion_reason)。このため Step 4 の後に SKILL.md 以外 (prompts/・scripts/・schemas/・references/) だけが変わると、create の p0-lint は sha 一致で再利用し、validate-build-plan の再検査はどこでも行われない。SKILL.md 以外が変わる場面は、manifest の順で scripts より後に来る assets・prompts-emit・evaluator-emit (workflow-manifest.json L104-135) と、Step 12.7 の有界改善 (SKILL.md L425) である。直し方: lint_target_sha256 を `$OUT_BASE/$SKILL_NAME` の tree digest (相対パス順の内容ハッシュ) にする。または covered_scripts を SKILL.md だけで判定できる lint (lint-skill-name / lint-skill-description / validate-frontmatter) に絞り、lint-skill-tree と validate-build-plan は p0-lint で毎回走らせる。",
+      "[low/omission・今回] lint_target_sha256 の有無と形式を機械で検査していない。validate-build-trace.py は trace mode で jsonschema を使わない (jsonschema を呼ぶのは validate_manifest L1458 の中の L1469-1476 だけ)。lint_target_sha256 を参照する箇所も無い (grep 0 件)。実際に `\"NOT-A-SHA\"` を入れた trace も exit 0 になった。schema L103-107 の pattern は実行時には効いていない。直し方: lint=PASS のときは lint_target_sha256 の存在と `^[0-9a-f]{64}$` を validate-build-trace.py で検査する。",
+      "[low/inconsistency・今回] create の receipt は `eval-log/skill-build-trace.json#/reproducibility_gates/lint` (run-skill-create/workflow-manifest.json L180) を指すが、lint_target_sha256 は trace の top-level (skill-build-trace.schema.json L103) にある。L182 の required_match には取り出し元の JSON pointer が無いので、読み手が `#/lint_target_sha256` だと推測するしかない。直し方: required_match の値に `trace#/lint_target_sha256 == sha256(<skill_dir>/SKILL.md)` のように取り出し元を書く。",
+      "[low/dependency_break・今回] feedback-deploy (workflow-manifest.json L161-172) は on_pass が \"complete\" で、ほかのどの phase の dependsOn にも入っていない。content-review→usable-draft-proof→…→live-acceptance (L175-318) も別に \"complete\" へ至るため、終点が 2 つある。SKILL.md L399 が「content-review はこの配備を待たない」と明記したのは正しい。ただ handoff 側もこの配備を待たないので、配備の失敗に気づける経路が L399 の言う lint だけになる。直し方: usable-draft-proof の dependsOn に feedback-deploy を加えるか、終点の合流点を 1 つにまとめる。",
+      "[low/smell・今回の周辺] content-review-verdict.schema.json L80 の hook_trigger の説明が、例としていまも「PostToolUse:Skill / Stop / pre-push / manual」を挙げている。content-review-protocol.md L153 は「content-review は Claude Code hook から発火させず、queue も持たない」としており、廃止した経路を例として勧める形になっている。直し方: 例を「pre-push / CI / manual / manual-incremental-content-review」に変える。",
+      "[low/inconsistency・以前から] workflow-manifest.json の phase の step 番号と SKILL.md の Step 見出しが一致しない。trace-write は step 9 (L139) だが見出しは Step 3.5 (SKILL.md L311)、notion-register は 10 (L150) だが Step 11 (L384)、feedback-deploy は 11 (L162) だが Step 11.5 (L395) である。前回 low #4 のまま残っている。直し方: どちらかの番号にもう一方を揃える。",
+      "[low/inconsistency・以前から] SKILL.md L355 (Step 7) は `build-subagent.py` で `.claude/agents/<skill-name>-subagent.md` を直接派生させている。一方 L439 は `.claude/{skills,agents,commands}` を派生面として直接編集を禁じ、C01 (sync-native-surfaces.py) だけを使い、child generator を重ねて実行しないとしている。直し方: Step 7 の出力先を plugin の agents/ にして .claude への反映を C01 に任せるか、L439 に Step 7 の例外を書く。",
+      "[low/smell・以前から] lint-goal-seek.py SKILL.md は exit 0 だが、grandfather 登録済みの warning 3 件を出し続けている。前回 low #6 のまま残っている。直し方: 本文の行数に余裕ができたので、with-goal-seek combinator を当てて grandfather 登録を外す。"
     ],
-    "iteration": 3,
-    "iteration_limit": 3,
-    "hook_trigger": "manual:20261012-content-review-iter3-goal-seek-ratchet-scope",
-    "next_action": "none"
+    "iteration": 1,
+    "iteration_limit": 1,
+    "hook_trigger": "manual-incremental-content-review",
+    "next_action": "improve"
   },
-  "notes": "SKILL.md の sha256 は 62bf44a7…2527dd1fb（461行）で、依頼の値と一致した。前回の対象（ccf17e2e…fda5d）からの差分は L216 と L414 の書き換えで、関連ファイルとして goal-seek-paradigm.md、build-flags.schema.json、doc/harness-creator-完全解剖.md L422 も直っていた。機械採点は render-findings-score.py --kind skill --emit-hash で行い、L0+L2 は score 100・passed・findings 0、L0 単独も score 100・findings 0、rubric_hash は sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9（rubric 1.6.0）。pending_human の BD-004 は評価者が充足と判定した（根拠の行は positive_feedback）。content-review-protocol.md の incremental に従い (a)〜(e) を一度に判定して2本の verdict に分けた。4条件はすべて満たし、high 0・medium 0・low 9（うち今回の新規2件、前回から残る7件）なので PASS とした。回した lint はすべて exit 0：lint-skill-tree ok（32 skills、SS-203 warn は run-build-skill の 299/300 行、LS-203 warn は範囲外の run-skill-rubric-governance）、lint-skill-name ok、lint-skill-description OK=189、validate-frontmatter --skills-dir ok（範囲外の warn 2件）と --self-test ok、lint-skill-completeness ok（32）、lint-ssot-duplication --strict OK（schemas=93、md=224）、lint-criteria-provenance OK（32）と --self-test ok（6 cases）、lint-script-frontmatter（run-build-skill/scripts）OK（checked=30、pending=0）、lint-knowledge-loop --self-test PASS（本体は knowledge/ が無いので skip）、lint-capability-graph-knowledge not-applicable、lint-feedback-contract --all OK（80 skills、run-build-skill に live-trial の warn 1件）、lint-matrix-sync OK と --self-test ok（4 cases）、lint-feedback-protocol --strict OK、lint-goal-seek は --self-test OK、本体単体 OK（warning 3件）、--skills-dir plugins/harness-creator/skills OK（32 files、warning 37件）、--skills-dir plugins --baseline scripts/goal-seek-lint-baseline.json OK（127 files、warning 147件、猶予 140件）。pytest は tests/ と plugins/harness-creator/tests を別々に、-p no:cacheprovider と PYTHONDONTWRITEBYTECODE=1 で回した。tests/ -k \"run_build_skill or build_subagent or lint_goal_seek or build_review_launch or render_combinators\" は 411 passed、tests/ -k \"external_intelligence or plugin_resources or capability_manifest or feedback_loop_deployment or lint_matrix or build_improvement_gate or usable_draft or goal_seek\" は 306 passed、plugins/harness-creator/tests の12ファイル（capability_build_runtime_contract、audit_capability_parity、hook_event_vocabulary_parity、lint_skill_runtime_profiles、validate_goal_seek_anchor、validate_route_build_reports、build_script_route、task_graph_engine_reproducibility、task_graph_engine_templates、verification_obligation_planner、verification_evidence_input_guards、lint_matrix_script_locations）は 314 passed。test の全件は回していない。範囲外の manage-build-lease.py・sync-native-surfaces.py・upstream-pins.json は評価の材料にしておらず、それらの test も回していない。lint-goal-seek の試験は worktree 外の scratchpad/iter3-rbs-copies に写しを置いて行った。作業中に git status が 398 行から 399 行に増えたが、ほかの担当による範囲外の plugins/harness-creator/tests/test_sync_native_surfaces.py の変更で、この評価による変更ではない。実際の full build、live trial、人による承認の trial はしておらず、したとも主張しない。30種の思考法は使っておらず、使ったとも申告しない。force_pass は使っていない。"
+  "notes": "rubric 観点: 規範採点器 render-findings-score.py (skill-design、L0 ref-skill-design-rubric + L2 assign-skill-design-evaluator) は score 100 / threshold 80、findings 0、required_fixes 0 で、rubric の high は 0 件。下の指摘は採点器が拾わない、ファイルをまたぐ意味の整合の指摘である。incremental profile の focused combined review として、1 つの context で (a) 矛盾なし (b) 漏れなし (c) ref-skill-design-rubric の規約との整合 (d) 依存関係の整合 (e) rubric の high が 0 件、の 5 点をまとめて判定した。30 思考法は使っていない。対象は SKILL.md (sha 6cc8a208、452 行)、workflow-manifest.json、references/build-steps.md、references/content-review-protocol.md、references/resource-map.yaml、schemas/skill-build-trace.schema.json、scripts/validate-build-trace.py、それに `git diff 3e1b394b` の変更範囲。加えて、lint-skill-description.py の `--skill` と、run-skill-create の build_lint_reuse を突き合わせた。前回の指摘の判定: #1 (本文の行数の余裕が 0) は改善 (291 行)、#2 (sync script が git 管理外) は解消 (740f63f0)、#3 (`--skills-dir` の副作用) は解消 (`--skill`)、#4 (step 番号の不一致) は残存 (今回の low #7)、#5 (未定義の resourceIds) は解消 (resources L343-344)、#6 (lint-goal-seek の warning) は残存 (今回の low #9)。今回の変更で生じた指摘: medium 2 件 (#1 lint receipt を書く順番、#2 sha が SKILL.md しか束縛しない) と low 4 件 (#3〜#6)。high は 0 件なので PASS とし、medium は negative_feedback に残した。build_lint_reuse の lint_target_sha256 の定義は、ファイル (build の `$OUT_BASE/$SKILL_NAME/SKILL.md`、SKILL.md L343 と、create の `<skill_dir>/SKILL.md`、create manifest L182) と時点 (build Step 4 の PASS 時に書き、create の p0-lint で比べる) の両方で build と一致する。ずれているのは束縛の範囲 (medium #2) と、取り出し元の pointer の書き方 (low #4) である。criteria ごとの根拠: IN1 は validate-frontmatter・lint-skill-tree・lint-skill-name・lint-skill-description・lint-ssot-duplication --strict がすべて exit 0 で成立。IN2 は既存の trace (eval-log/skill-build-trace.json) で validate-build-trace が exit 0 で成立。ただし新しいフィールド lint_target_sha256 は検査されていない (low #3)。IN3 は route の一括 build を実行していないため未実測で、manifest の phase の参照整合の確認にとどめた。OUT1 は規範採点器が score 100・findings 0 で成立。OUT2 は Step 12.6 / 12.7 の契約 (SKILL.md L421-427、manifest L245-283) が一致して成立。回したコマンドと exit code: shasum -a 256 SKILL.md=0 (開始時と書き込み前で同じ 6cc8a208)、lint-skill-description.py --skill DIR / --skill SKILL.md / --skill=DIR=0、--skill に存在しないパス=1 (VIOLATION)、引数なし=0 (OK=186)、validate-frontmatter.py=0、lint-skill-tree.py=0 (SS-203 warn 291 行)、lint-skill-name.py=0、lint-goal-seek.py=0 (warn 3、grandfather)、lint-ssot-duplication.py --strict=0、lint-matrix-sync.py=0、render-findings-score.py (L0+L2)=0 (score 100、passed、findings 0、BD-004 は pending_human で、description の trigger と本文の対応を見て満たすと判断)、validate-build-trace.py eval-log/skill-build-trace.json=0。一時コピーでの検証: lint=FAIL の trace は 1、lint_target_sha256=\"NOT-A-SHA\" の trace は 0。していないこと: full build、route の一括 build、live trial、全テストスイートの実行、SKILL.md と script の修正、sha_rebinds の追記 (新しい verdict なので前回の rebind 記録は引き継いでいない)。force_pass は使っていない。対象外の参考 (finding にはしていない): manifest の resources の phaseIds と phase の resourceIds が一部で対応していない (例: schema-build-plan↔scripts)。また eval-log/review-queue.jsonl が git 管理外で残っており、古いインストール版の Stop hook が書いたものとみられる。",
+  "sha_rebinds": [
+    {
+      "from_sha": "6cc8a2086d706101b33ea6d7e687bfe7015f41a3589f1f6cd39acb04241cd9db",
+      "to_sha": "f8118ed3fb9b00ea9b401cd7beb1ff63675b4da4d6baaea0e24bb974b8a61d92",
+      "finding_ids": [
+        "elegance:1",
+        "rubric:1",
+        "elegance:2",
+        "rubric:2",
+        "elegance:3",
+        "rubric:3",
+        "elegance:4",
+        "rubric:4",
+        "elegance:5",
+        "rubric:5",
+        "elegance:6",
+        "rubric:6",
+        "elegance:7",
+        "rubric:7",
+        "elegance:8",
+        "rubric:8"
+      ],
+      "rebound_at": "2026-11-14T00:44:52Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

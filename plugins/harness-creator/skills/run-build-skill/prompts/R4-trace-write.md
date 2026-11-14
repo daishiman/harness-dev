@@ -20,9 +20,12 @@
 - doc_coverage は validate-build-trace.py の REQUIRED_DOC_COVERAGE (02-skill-structure〜35-meta-harness-feedback-loop のスラッグ形式24件) を必ず網羅する
   - 目的: 必須参照章の被覆漏れを validator で機械検知
   - 背景: doc は schema 上自由文字列だが validator が必須スラッグ集合との差分を検査する
-- reproducibility_gates (lint / evaluator / elegant_review / governance) を必ず PASS/FAIL/N/A で埋める
+- reproducibility_gates (lint / evaluator / elegant_review / governance) を必ず PASS か N/A で埋める
   - 目的: 再現性ゲート可視化 (4条件 C1-C4 は four_conditions プロパティ側へ記入)
-  - 背景: 未記入は false-pass を生む
+  - 背景: 未記入は false-pass を生む。validate-build-trace.py は FAIL を受理しないので、通っていないゲートは PASS にせず止める
+- lint は Step 3.5 の記入では N/A とし、Step 4 の lint が全て exit 0 になってから PASS と lint_target_sha256 (skill ディレクトリ全体の digest。コマンドは SKILL.md Step 4) へ書き換える
+  - 目的: run-skill-create が lint receipt を使い回せるかを、検査した内容そのものと結び付ける
+  - 背景: Step 4 は Step 3.5 の trace を validate-build-trace.py で検査するため、lint を走らせる前に PASS を書くと自己申告になる
 - 未読章は status=N/A と reason を残す
   - 目的: 監査可能性の確保
   - 背景: 黙示の skip は審査不能

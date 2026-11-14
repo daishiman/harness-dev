@@ -99,7 +99,7 @@ script 種別ごとに「**どのコンテキストで実行してよいか**」
 - **format** は Hook か CI で自動修正するのが基本。A は対話的修正を許す例外。
 - **adapter** は 31 章の Sink Contract v1.0 に従う例外分類である。外部API呼出し、Keychain参照、fallback は許可するが、stdout は最終JSONのみ、secret は context に出さない。
 - **sync / install / record / manage / migrate** は既にある状態を書き換える動詞である (意味と境界は §4.1.1)。D (Stop Hook) は §6.2 で write 全面禁止なので5つとも x。書き込み先は frontmatter の `write-scope` に固定の path で宣言し (7 節)、その外へは書かない。§6.1 の「出力ディレクトリ」は、この5つでは宣言した書き込み先と読む。名前が規約を満たしても、§6.1 のネットワーク禁止は外れない (外部サービスへ書くなら 31 章の adapter に従う)。
-- **sync** は正本を直したあとに明示的に回す (A)。PreToolUse / PostToolUse から回すと tool 呼び出しのたびに書き込みが連鎖するので禁止。Hook (C) で許すのは SessionStart から1セッションに1回だけ回すもので、lock と再入防止を持ち、中身が同じなら書かないものに限る (`auto-sync-on-session-start.py` が `--apply` で呼ぶ)。SessionStart は §2 の表に行が無いが、呼び出す hook 側の宣言に合わせて C に数える。CI (E) では `--check` (書かずに乖離だけ返す) で回す。
+- **sync** は正本を直したあとに明示的に回す (A)。PreToolUse / PostToolUse から回すと tool 呼び出しのたびに書き込みが連鎖するので禁止。Hook (C) で許すのは SessionStart から1セッションに1回だけ回すもので、lock と再入防止を持ち、中身が同じなら書かないものに限る。SessionStart は §2 の表に行が無いが、呼び出す hook 側の宣言に合わせて C に数える。CI (E) では `--check` (書かずに乖離だけ返す) で回す。
 - **install** は利用者の環境を変えるので、利用者が明示的に頼んだとき (A) と、使い捨ての環境での導入試験 (E) に限る。Subagent と Hook からは入れない。
 - **record** は既にある記録を書き換えず1件ずつ足すだけなので A/B で推奨。Hook (C) は、追記だけで、失敗しても tool 呼び出しを止めない (exit 0) ものに限って許す。
 - **manage** は作業の始めと終わりに明示的に lock・lease を取り、放す (A)。Subagent (B) は自分が取った lease の延長と解放に限る。Hook (C) から取ると、取った主体と放す主体がずれるので禁止。

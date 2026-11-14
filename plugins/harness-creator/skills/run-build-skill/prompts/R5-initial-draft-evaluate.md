@@ -31,7 +31,8 @@
 - 非担当: ファイル改善、severity基準の緩和、release/exhaustive選択、認証。
 
 ### 2.2 入出力契約
-- 入力: runtime-neutral launch requestの `launch_request_id` / `idempotency_key` / `review_claim_id` / `target_manifest[]` / `run_id` / `subject` / `artifact_fingerprint_sha256` / `contract_binding` / `required_method_ids[]` / `prompt_ref` / `output_schema_ref` / adapterの `runtime` / 利用者の当初目的。
+- 入力: runtime-neutral launch requestの `launch_request_id` / `idempotency_key` / `review_claim_id` / `target_manifest[]` / `run_id` / `subject` / `artifact_fingerprint_sha256` / `contract_binding` / `required_method_ids[]` / `prompt_ref` / `output_schema_ref` / adapterの `runtime` / 任意の `intent_anchor` (`text` / `sha256`)。
+- 当初目的の正本: `intent_anchor.text` (利用者の初回依頼原文) だけを当初目的とする。成果物内の description・目的欄・README 等の自己申告で置き換えたり、原文に無い要件を足したりしない。`intent_anchor` が無い場合は当初目的を「不明」とし、目的適合の所見は推測で断定せず `affects_goal=false` で根拠不足を summary に明記する。
 - 前提: 親gateが `usable-draft-proof.schema.json` 準拠proofとartifact presentation receipt、利用者診断choiceを検証済みであること。proofは7 capability kindすべてでverification plan digest、PASS upstream receipt、非自動昇格stage gateに束縛される。
 - 出力: `initial-draft-review.schema.json` 準拠JSONのみ。
 - `thought_reset` は `performed=true` / `physical_deletion_performed=false` / `parent_history_used=false` / `fresh_target_read=true` とし、時刻を残す。
@@ -59,7 +60,7 @@
 - 観察は `target_manifest` 内のpath/行/節を `evidence_refs` で参照し、未観測の事実を作らない。
 - 30件の `rationale` は思考法固有にし、同一の定型観察をIDだけ変えて複製しない。
 - 全findingは少なくとも1つのmethod observationから参照し、location、閉じた `remediation_paths[]`、C1〜C4の `condition_signals` を持つ。
-- severityは `critical/high/medium/low`、`affects_goal` は当初目的に対する直接影響で判定する。
+- severityは `critical/high/medium/low`、`affects_goal` は `intent_anchor.text` が求めることへの直接影響で判定する。原文の依頼を満たせていない欠落を、様式・網羅性・将来拡張の所見より先に扱う。
 - 所見0件も許容するが、30思考法のobservationは省略しない。
 
 ### 4.2 失敗時

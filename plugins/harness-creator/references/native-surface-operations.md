@@ -24,7 +24,7 @@ CI は修復しない。`make native-surfaces-check` だけで drift を検出�
 手元へ戻す。これにより CI が未レビューの生成差分を作って緑になることを防ぐ。
 
 plugin の install / enable / hook trust / re-trust / uninstall はユーザーが製品 UI で行う。
-build や SessionStart hook が代行してはならない。未実行の runtime 操作は失敗ではなく
+build や hook が代行してはならない。未実行の runtime 操作は失敗ではなく
 `pending_user_gate` として記録し、local implementation の PASS と分ける。
 
 ## Part 2 — Operator / technical runbook
@@ -39,7 +39,7 @@ build や SessionStart hook が代行してはならない。未実行の runtim
 - repo-owned writes: `.claude` managed projection、repo marketplace、plugin manifest など
   contract が許可した path のみ。
 - forbidden writes: `~/.codex/config.toml`、`~/.claude/`、Codex/Claude trust store、
-  `.agents/skills/beads`、推測 `.agents/{agents,commands,hooks}`。C01/C05 は global state を
+  `.agents/skills/beads`、推測 `.agents/{agents,commands,hooks}`。C01 は global state を
   一切変更しない。
 - supported kinds: `skill` / `hook`。Codex の Claude-style `agent` / `command` mapping は
   `unsupported/deferred` であり、silent success や推測 symlink を禁止する。
@@ -105,7 +105,7 @@ cloneから生成するlocal marketplace `harness-local`をuser scopeへ登録�
    併存する場合、helperは自動disableせず`pending_user_gate`で停止する。
 3. **trust**: Claude Code が hook trust review を提示したら、現在の hook command と path を
    review してユーザー自身が承認する。自動承認は禁止。
-4. repo-owned projectionも使う場合は`make native-surfaces`を実行し、新しいsessionでSessionStartのstructured resultを
+4. repo-owned projectionも使う場合は`make native-surfaces`を実行し、続けて走る C01 check が通ることを
    確認する。
 5. hook 定義・command・manifest digest が変わった upgrade では、旧 trust を流用せず製品の
    review 画面で current definition を **re-trust** してから新 session を開始する。
@@ -232,19 +232,6 @@ local source の実在、product での enable、hook trust、new-session runtim
 | Claude Code | `plugins/harness-creator/.claude-plugin/plugin.json` present | project `.claude/settings.json` で enabled | current hook digest の trust/new-session はこの wave で未実行 | `local_implementation_pass` + runtime evidence pending |
 | Codex | `.codex-plugin/plugin.json` + repo marketplace present | install/enable は repo から断定不可 | **hook trust pending (`pending_user_gate`)** | `runtime_activation_pending` |
 
-wrong repository では `.build` を作らず C01 を呼ばない。stdout は公式 SessionStart fields のみで、
-`skipped_wrong_repository` の構造化詳細を対象 repo に書かないため無音にする。
-
-```json
-{"continue":true,"suppressOutput":true,"hookSpecificOutput":{"hookEventName":"SessionStart"}}
-```
-
-warning 時も child stdout/stderr/report は stdout へ出さず、要約と remediation/log path だけを
-`systemMessage` / `additionalContext` に出す。完全な内部 status、bounded `child_report`、redacted
-session id / diagnostic は harness identity 確認後の
-`.build/logs/auto-sync-on-session-start.jsonl` のみに保存し、1 MiB または7日で rotate、
-backup は3世代までとする。
-
 ### 6. CI sequence
 
 CI は次の read-only sequence だけを実行する。
@@ -306,8 +293,7 @@ product lifecycle はどちらもユーザー承認 gate であり、本 runbook
 - plugin envelope/wiring: `plugins/harness-creator/.claude-plugin/plugin.json`,
   `plugins/harness-creator/.codex-plugin/plugin.json`, `plugins/harness-creator/hooks/hooks.json`,
   `plugins/harness-creator/plugin-composition.yaml`
-- implementation/gates: `plugins/harness-creator/hooks/auto-sync-on-session-start.py`,
-  `plugins/harness-creator/scripts/sync-native-surfaces.py`,
+- implementation/gates: `plugins/harness-creator/scripts/sync-native-surfaces.py`,
   `plugins/harness-creator/scripts/check-native-surface-parity.py`,
   `plugins/harness-creator/scripts/record-task-graph-knowledge.py`,
   `plugins/harness-creator/commands/capability-build.md`,
@@ -315,8 +301,7 @@ product lifecycle はどちらもユーザー承認 gate であり、本 runbook
 - operations/contract: `plugins/harness-creator/README.md`,
   `plugins/harness-creator/references/native-surface-contract.md`,
   `plugins/harness-creator/references/native-surface-operations.md`
-- focused regression: `plugins/harness-creator/tests/test_auto_sync_on_session_start.py`,
-  `plugins/harness-creator/tests/test_check_native_surface_parity.py`,
+- focused regression: `plugins/harness-creator/tests/test_check_native_surface_parity.py`,
   `plugins/harness-creator/tests/test_native_surface_repo_integration.py`,
   `plugins/harness-creator/tests/test_sync_native_surfaces.py`,
   `plugins/harness-creator/tests/test_record_task_graph_knowledge.py`,

@@ -62,7 +62,9 @@ receiptは実行器が取得できる場合に `usage.input_tokens` / `output_to
 
 ## 学習ラチェット
 
-同じ `finding_code` が同一 obligation で2回以上 `FAIL/INCONCLUSIVE` になった場合、plannerは `automation_candidates[]` に `promote-to-deterministic-checker` を出す。繰り返し発見される規則はpromptへ追記せずschema/lint/testへ昇格させる。これにより運用を重ねるほど意味判定が機械判定へ移り、LLMコストが下がる。反復の検知は `scripts/extract-recurring-findings.py` が eval-log と plan-findings を横断して機械集計し (`status: unreviewed` の台帳を出力)、昇格の判断と実施は人間/AI が行う。
+同じ `finding_code` が同一 obligation で2回以上 `FAIL/INCONCLUSIVE` になった場合、plannerは `automation_candidates[]` に `promote-to-deterministic-checker` を出す。繰り返し発見される規則はpromptへ追記せずschema/lint/testへ昇格させる。これにより運用を重ねるほど意味判定が機械判定へ移り、LLMコストが下がる。昇格の判断と実施は人間/AI が行う。
+
+完了時、今回だけで閉じる事実は保存しない。別案件でも判断を変えうる新規構造が証拠付きで得られた場合だけ `build-external-intelligence.py capture` を最大1件実行し、`--evidence-source` に issue/テスト系/調査元など意味的な出典を指定する。同じ失敗の自動観測は `auto-record-lesson.py` が PostToolUse から捕捉するため重ねて登録しない。対話操作の `possible_duplicate` (exit 3) は、`--merge-with` または根拠付き `--force-new --distinct-reason` で解決する。`promote` は verified 前に実行せず、`--approved-by` と `--approval-evidence-ref` を必須とする。
 
 ## 30思考法の位置づけ
 
@@ -74,6 +76,15 @@ receiptは実行器が取得できる場合に `usage.input_tokens` / `output_to
 | adversarial audit | reset + 3独立analyst | 利用者が `release + exhaustive` を別途明示 | 完全監査obligationを閉じる |
 
 初回診断は `initial-draft-review.schema.json` と `build-improvement-gate.py` で制御する。canonical method IDは `run-elegant-review/references/thought-methods.yaml` を再利用し、別の30件リストを持たない。所見提示後に `references/improvement-levels.json` の `accept-draft/light/standard/detailed/release` を質問し、回答前は `improvement.authorized=false`。`exhaustive` は既定表示せず、二重確認と `confirm_exhaustive=true` でのみ許可する。
+
+### 初回診断の起動契約
+
+SKILL.md Step 12.6 の起動で `build-review-launch.py` と評価Agentが守る規則。親contextのAIが手順中に判断するものではない。
+
+- **配送lease**: launcherは `state_ref` と同じlockで `<state_ref>.launch.json` の単一active delivery leaseをatomicに取得し、gateのdurable claimを消費して `authorized=true / launch_count=1` のschema準拠requestを返す。active lease中の重複配送と再生は `authorized=false / launch_count=0` で拒否し、leaseがstaleになった場合は同一 `request_id / idempotency_key` で再配送する。同artifact+contractの完了receiptは別runでも再利用する。このleaseはexactly-once resultを保証せず、古いruntime実行が生存したまま再配送される可能性を受け入れる。unsupported runtime、durable state/identity不一致はfail-closedにする。
+- **起動順序**: 評価Agentはread-onlyで思考リセットを先に行い、target manifestをfresh readする。30 method observationは固有rationaleと実在evidenceを持ち、`launch_request_id` / durable claim / runtimeに束縛して返す。launcherは `artifact_created_at < artifact_presented_at < semantic_evaluator_started_at` を検査し、choice前の起動を拒否する。
+
+承認receiptの扱い (捏造・代理選択の禁止) は AI 自身が守る行動規則なので、ここではなく SKILL.md Step 12.6 に置く。
 
 ## 安全弁との違い
 

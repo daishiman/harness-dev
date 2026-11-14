@@ -204,7 +204,7 @@ def _build_repo(
             {**shared, "name": claude_name or slug, "hooks": {
                 "SessionStart": [{"matcher": "", "hooks": [{
                     "type": "command",
-                    "command": "python3 ${PLUGIN_ROOT}/hooks/auto-sync-on-session-start.py",
+                    "command": "python3 ${PLUGIN_ROOT}/hooks/fixture-hook.py",
                 }]}]
             }},
         )
@@ -228,7 +228,7 @@ def _build_repo(
                             "hooks": [
                                 {
                                     "type": "command",
-                                    "command": "python3 ${PLUGIN_ROOT}/hooks/auto-sync-on-session-start.py",
+                                    "command": "python3 ${PLUGIN_ROOT}/hooks/fixture-hook.py",
                                 }
                             ]
                         }
@@ -282,7 +282,7 @@ id = "sync"
 owner = "myplugin"
 event = "SessionStart"
 matcher = ""
-command = "python3 ${{PLUGIN_ROOT}}/hooks/auto-sync-on-session-start.py"
+command = "python3 ${{PLUGIN_ROOT}}/hooks/fixture-hook.py"
 delivery = "plugin"
 products = ["claude", "codex"]
 ''',
@@ -325,7 +325,7 @@ def test_plugin_delivery_duplicated_in_project_layer_conflicts(tmp_path):
     repo = _build_repo(tmp_path)
     _write_json(repo[0] / ".codex" / "hooks.json", {"hooks": {"SessionStart": [{
         "matcher": "", "hooks": [{"type": "command", "command":
-        "python3 ${PLUGIN_ROOT}/hooks/auto-sync-on-session-start.py"}]
+        "python3 ${PLUGIN_ROOT}/hooks/fixture-hook.py"}]
     }]}})
     report, code = _eval(repo)
     assert code == 2 and "hook_delivery_duplicate_or_missing" in _codes(report)
@@ -871,10 +871,28 @@ def test_plugin_hooks_missing_is_drift(tmp_path):
     assert "plugin_hooks_missing" in _codes(report)
 
 
-def test_plugin_hooks_sessionstart_entrypoint_required(tmp_path):
+def test_plugin_hooks_without_session_start_is_confirmed(tmp_path):
+    # 特定 event (SessionStart など) の配線は必須にしない。
     repo = _build_repo(tmp_path)
     root, slug = repo[0], repo[1]
-    _write_json(root / "plugins" / slug / "hooks" / "hooks.json", {"hooks": {"SessionStart": []}})
+    _write_json(
+        root / "plugins" / slug / "hooks" / "hooks.json",
+        {"hooks": {"PostToolUse": [{"matcher": "Bash", "hooks": [{
+            "type": "command",
+            "command": "python3 ${PLUGIN_ROOT}/hooks/fixture-hook.py",
+            "timeout": 5,
+        }]}]}},
+    )
+    report, _code = _eval(repo)
+    assert report["hook_parity"]["status"] == "confirmed"
+    assert report["hook_parity"]["events"] == ["PostToolUse"]
+    assert "plugin_hooks_schema_invalid" not in _codes(report)
+
+
+def test_plugin_hooks_group_requires_nonempty_hooks(tmp_path):
+    repo = _build_repo(tmp_path)
+    root, slug = repo[0], repo[1]
+    _write_json(root / "plugins" / slug / "hooks" / "hooks.json", {"hooks": {"Stop": [{"hooks": []}]}})
     report, code = _eval(repo)
     assert code == 3
     assert "plugin_hooks_schema_invalid" in _codes(report)
@@ -900,7 +918,7 @@ def test_plugin_hooks_accept_projector_dual_root_fallback(tmp_path):
             "SessionStart": [{
                 "hooks": [{
                     "type": "command",
-                    "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/auto-sync-on-session-start.py",
+                    "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/fixture-hook.py",
                 }]
             }]
         }
@@ -940,14 +958,14 @@ def test_plugin_hooks_dual_root_fallback_escape_is_invalid(tmp_path):
     assert report["hook_parity"]["command_paths_confined"] is False
 
 
-def test_plugin_hooks_sessionstart_command_path_escape_is_invalid(tmp_path):
+def test_plugin_hooks_any_event_command_path_escape_is_invalid(tmp_path):
     repo = _build_repo(tmp_path)
     root, slug = repo[0], repo[1]
     _write_json(
         root / "plugins" / slug / "hooks" / "hooks.json",
         {
             "hooks": {
-                "SessionStart": [
+                "PostToolUse": [
                     {
                         "hooks": [
                             {

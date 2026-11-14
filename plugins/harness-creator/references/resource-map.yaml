@@ -17,21 +17,6 @@ version: 1
 plugin: harness-creator
 
 references:
-  - id: di-quartet
-    path: references/di-quartet.md
-    kind: pattern
-    read_when:
-      - "新規 skill の prefix 選定時 (ref-/lookup-/assign-/run-)"
-      - "assign-* と run-* の責務境界が曖昧と感じた時"
-      - "assign-* が write 副作用を持つ提案を検出した時 (アンチパターン #2)"
-    produced_by: team-platform
-    consumed_by:
-      - run-skill-create
-      - run-skill-rename
-      - run-elegant-review
-      - assign-skill-design-evaluator
-    relates_to: [orchestrate-gate-pattern]
-
   - id: orchestrate-gate-pattern
     path: references/orchestrate-gate-pattern.md
     kind: pattern
@@ -44,7 +29,7 @@ references:
       - run-plugin-package-check
       - run-elegant-review
       - assign-skill-design-evaluator
-    relates_to: [di-quartet]
+    relates_to: []
 
   - id: ssot-dedup-procedure
     path: references/ssot-dedup-procedure.md
@@ -86,7 +71,6 @@ references:
     produced_by: team-platform
     consumed_by:
       - capability-build
-      - run-build-skill
     relates_to: [pipeline-boundary-contract]
 
   - id: feedback-to-improvement-runbook

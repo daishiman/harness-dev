@@ -7,7 +7,7 @@ prev_phase: 3
 next_phase: 5
 status: 完了
 gate_type: tdd-red
-entities_covered: [C01, C02, C03, C04, C05]
+entities_covered: [C01, C02, C03, C04]
 applicability:
   applicable: true
   reason: ""
@@ -21,7 +21,7 @@ C1-C10 を positive/negative/concurrency/trust/freshness の test matrix へ変�
 
 ## 背景
 
-単純な未反映 fixture だけでは、unknown event 脱落、trust bypass、同時SessionStart、stale evidence、unsupported silent skip を検出できない。
+単純な未反映 fixture だけでは、unknown event 脱落、trust bypass、stale evidence、unsupported silent skip を検出できない。
 
 ## 前提条件
 
@@ -37,7 +37,7 @@ C1-C10 を positive/negative/concurrency/trust/freshness の test matrix へ変�
 ## 成果物
 
 - AC→test ID→fixture→command→evidence path matrix。
-- C01/C02/C03/C05/C04 と repo integration task の focused test plan。
+- C01/C02/C03/C04 と repo integration task の focused test plan。
 
 ## スコープ外
 

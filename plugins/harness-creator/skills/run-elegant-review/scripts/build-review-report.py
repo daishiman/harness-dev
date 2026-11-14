@@ -50,6 +50,11 @@ CONDITION_LABEL = {
 SEVERITY_ORDER = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 
 
+def _finding_id(issue: dict) -> str:
+    """schema 正本の `id` を優先し、旧データの `finding_id` へ落とす。"""
+    return str(issue.get("id") or issue.get("finding_id") or "")
+
+
 def collect_issues(data: dict) -> list[dict]:
     return [i for p in data.get("paradigm_findings", []) for i in p.get("issues", [])]
 
@@ -104,11 +109,11 @@ def render(data: dict) -> str:
     lines.append("")
     lines.append("| finding_id | condition | signal | severity | 対象 |")
     lines.append("|---|---|---|---|---|")
-    for i in sorted(issues, key=lambda x: (SEVERITY_ORDER.get(x.get("severity"), 9), x.get("finding_id", ""))):
+    for i in sorted(issues, key=lambda x: (SEVERITY_ORDER.get(x.get("severity"), 9), _finding_id(x))):
         loc = i.get("location") or {}
         target = loc.get("clause") or loc.get("section") or loc.get("file") or "—"
         lines.append(
-            f"| {i.get('finding_id', '—')} | {i.get('condition') or '—'} | "
+            f"| {_finding_id(i) or '—'} | {i.get('condition') or '—'} | "
             f"{i.get('condition_signal') or '—'} | {i.get('severity', '—')} | {target} |"
         )
     lines.append("")

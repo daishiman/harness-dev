@@ -44,7 +44,7 @@ plugin_meta:
 - **対象**: `plugins/harness-creator` の既存 plugin 更新。
 - **目的**: 有効化・信頼済みのリポジトリ capability を、Claude Code と Codex それぞれの公式 native surface へ手作業・推測投影なしに一貫公開し、片側だけ未反映・stale になる drift を build 完了ゲートと CI で検出・修復できるようにする。
 - **観測済み問題**: (事実) Claude reflector は存在するが Makefile/CI/完了ゲートへ未配線で、現行 target hook event を未知として exit 3 になる。Codex native surface は `.agents/skills`・`.codex/{config.toml,hooks.json}`・`.codex-plugin/plugin.json`・`.agents/plugins/marketplace.json`・plugin hooks であり、plugin hook は install/enable 後も trust を要する。(判断) ゆえに `.agents` 全反映と推測 TOML merge を前提にした旧案は撤回し native-first を採る。
-- **ゴール**: 上記5系統 (Claude reflector 互換修復と機械配線 / Codex dual manifest・repo marketplace・native hooks / supported-unsupported matrix / 競合安全な SessionStart / freshness gate) が4正本へ矛盾なく落ち、planner 決定論ゲートと elegant-review 4条件が全 PASS する1つの整合した plan にする。
+- **ゴール**: 上記4系統 (Claude reflector 互換修復と機械配線 / Codex dual manifest・repo marketplace・native hooks / supported-unsupported matrix / freshness gate) が4正本へ矛盾なく落ち、planner 決定論ゲートと elegant-review 4条件が全 PASS する1つの整合した plan にする。
 - **非ゴール**: product 側 plugin install/enable/trust、public marketplace publish、commit/push/PR。local capability build・repo-owned apply/check・hook fixture 実行は handoff consumer の実装対象。
 - **正本**: 要件=`goal-spec.json`、buildable component=`component-inventory.json`、routing=`handoff-run-plugin-dev-plan.json`、依存 graph=`task-graph.json`。
 
@@ -79,11 +79,12 @@ Codex は Claude の投影方式をコピーしない。native plugin が直接�
 - **C02** `check-native-surface-parity.py`: authoritative surface、dual manifest、marketplace、trust、unsupported、artifact digest を read-only 検証。
 - **C01** `sync-native-surfaces.py`: Claude apply/check と Codex native parity を単一 orchestration。lock/atomic replace/hash no-op を所有。
 - **C03** `record-task-graph-knowledge.py`: TG-C08 に hooks settings / native surface parity gate を追加。
-- **C05** `auto-sync-on-session-start`: install/enable/trust 後に C01 を1回呼ぶ薄い hook。failure は構造化 warning として保持。
 - **C04** `capability-build`: build後 pre-step を C01/C02 へ集約。
 - **repo integration task (P05 owner)**: `plugins/harness-creator/native-surfaces.toml` は共通 hook delivery と Codex discovery entry の意味論 SSOT、各 plugin manifest と root marketplace は capability/activation identity の正本とする。C01 がこれらを結合し、`scripts/build-claude-settings.py`、Codex project `.codex/hooks.json`/`.codex/config.toml` adapter、Makefile/全CI、dual manifest、`.agents/plugins/marketplace.json`、composition、native surface contract を単一 desired-set として生成・検査する。plugin hook と project hook は delivery owner を分け二重配線しない。plugin-root route ではなく phase singleton task として write scope を一意にする。
 
-依存 DAG は `C02 → C01 → {C03,C05} → C04`。`couples_with` は使用せず、実依存だけを edge 化して graph 密度を抑える。
+依存 DAG は `C02 → C01 → C03 → C04`。`couples_with` は使用せず、実依存だけを edge 化して graph 密度を抑える。
+
+SessionStart で C01 を自動実行する hook は持たない。build 外の drift は CI の C01 `--check` が検出し、手元の `make native-surfaces` で直す。goal-spec.json の SessionStart 自動同期の記述は採用しない。
 
 ## 環境ポリシー
 
@@ -118,16 +119,15 @@ Codex は Claude の投影方式をコピーしない。native plugin が直接�
 - [ ] C3: Claude apply/check が Makefile・CI・dispatcher・TG-C08 に配線される。
 - [ ] C4: Codex native manifest/hooks/repo marketplace が正本となり推測 projection が無い。
 - [ ] C5: skills/hooks と unsupported agents/commands の mapping が silent skip なく報告される。
-- [ ] C6: SessionStart が trust 前提・lock・atomicity・hash・timeout・structured warning を持つ。
+- [ ] C6: (廃止) SessionStart 自動同期 hook は削除した。
 - [ ] C7: negative/concurrency/trust/lifecycle regression tests が揃う。
 - [ ] C8: ownership/security matrix により global config と beads を非破壊に保つ。
 - [ ] C9: goal/inventory/handoff/task-graph/findings の digest freshness parity が PASS する。
 - [ ] C10: elegant-review 4条件と planner validator が全 PASS する。
-- [ ] 5 component と5 route が1:1で、依存 DAG が `C02 → C01 → {C03,C05} → C04` と一致する。
+- [ ] 4 component と4 route が1:1で、依存 DAG が `C02 → C01 → C03 → C04` と一致する。
 - [ ] P05 repo integration task が共通 TOML、Claude settings、Codex project hooks/config、Makefile、全CI、dual manifest、repo marketplace の owner/path/order/rollback/evidence を持つ。
 - [ ] `.agents/plugins/marketplace.json` と `.agents/skills` 以外の推測 `.agents` runtime surface、非公式 TOML merge、plugin/project hook の二重配線が0件。
 - [ ] install/enable/trust と runtime smoke は build 完了から分離され user-gated になる。
-- [ ] SessionStart が lock/atomicity/hash/timeout/structured warning を持つ。
 - [ ] stale `plan-findings` を PASS 根拠にできない freshness gate がある。
 - [ ] planner 決定論 gate と elegant-review 4条件が全 PASS する。
 
@@ -138,10 +138,9 @@ Codex は Claude の投影方式をコピーしない。native plugin が直接�
 | Claude reflector compatibility | target unknown event preserve / managed source unknown event block / existing INV green | P05 + focused pytest |
 | Claude mechanical wiring | Makefile・CI・dispatcher・TG-C08 の全4箇所で apply→check | C01/C03/C04 |
 | Codex native discovery | repo marketplace が `.codex-plugin/plugin.json` を指し、skills/hooks parity が PASS | C02 + envelope |
-| Codex trust boundary | 未trustでは hook非実行、trust後のみ SessionStart が発火 | P11 user-gated evidence |
+| Codex trust boundary | 未trustでは hook非実行、trust後のみ plugin hook が発火 | P11 user-gated evidence |
 | unsupported visibility | agents/commands が silent PASS せず report に unsupported と出る | C02 fixture |
-| SessionStart safety | 二重実行/同時2session/no-diff/timeout/conflict で state破壊なし | C05 fixture |
-| ownership/security | beads/global config/secret/PII 変更0 | C01/C02/C05 tests |
+| ownership/security | beads/global config/secret/PII 変更0 | C01/C02 tests |
 | evidence freshness | artifact digest 不一致時に review PASS 拒否 | C02 + plan validator |
 
 上表を満たして初めて runtime-ready と判定する。今回の仕様レビュー完了は runtime-ready や build 完了を意味しない。

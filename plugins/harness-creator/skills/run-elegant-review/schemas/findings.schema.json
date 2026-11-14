@@ -117,6 +117,10 @@
               }
             ],
             "properties": {
+              "id": {
+                "comment": "finding の識別子。/skill-improve の選択と executor の selected_finding_ids、depends_on はこの値で結ぶ。新規は F-NNNN。旧データには別形式の id と finding_id が混在するため pattern は課さず、読み手は id → finding_id の順に読む。",
+                "type": "string"
+              },
               "condition": {"type": "string", "enum": ["C1", "C2", "C3", "C4"]},
               "severity": {"type": "string", "enum": ["low", "medium", "high", "critical"]},
               "bucket": {"type": "string", "enum": ["dependency-loop", "eval-log", "hook-ci", "rubric-governance", "dogfooding", "variable-abstraction", "doc", "schema", "other"]},

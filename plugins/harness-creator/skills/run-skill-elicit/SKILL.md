@@ -8,6 +8,8 @@ arguments: [topic]
 allowed-tools:
   - Read
   - Write
+  - Bash(python3 *)
+  - Bash(mkdir *)
 kind: run
 prefix: run
 effect: local-artifact
@@ -38,7 +40,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       verify_by: lint
     - id: IN2
       loop_scope: inner
-      text: prefix が ref run wrap assign delegate の5分岐決定木で確定し条件付き必須(wrap は base_skill delegate は delegate_agent L2 は rubric_refs)が埋まり trigger_conditions が動詞ベース2〜3個に収まっている
+      text: prefix が ref run wrap assign delegate の5分岐決定木で確定し条件付き必須(wrap は base_skill delegate は delegate_agent L2 は rubric_refs)が埋まり trigger_conditions が動詞ベースでちょうど2個になっている
       verify_by: lint
     - id: OUT1
       loop_scope: outer
@@ -64,11 +66,12 @@ artifact_delivery:
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+本スキルの最小の実成果物は`eval-log/skill-brief.json`とする。brief は下の「局面カタログ」に沿ったヒアリングを 1 回通して作る (manifest の intro→elicit→structure→validate)。実成果物を作る作業なので、4択より前に必ず行う。schema検証だけを最小guardとして通し、現物path・digest・要点を提示する。run-skill-createから呼ばれたときはcreateのGate 1がこの提示と承認を兼ね、ここで別に4択を聞かない。
+単独で呼ばれたときだけaccept-as-is/light/standard/detailedを記録し、accept-as-isはその場でhandoff完了とする。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+light/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ、下のゴールシークループで brief を見直し・評価・修正する (2 回目以降のヒアリング)。workflow-manifest.json の phase_activation は全 skill 共通の値で、この skill ではこの 2 回目以降を指す。create 経由では4択を記録しないので 2 回目は行わず、1 回目の brief を create の Gate 1 に渡して終わる。release/exhaustiveは別の明示eventを必要とする。
 
 
 # run-skill-elicit
@@ -78,6 +81,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 ユーザーの曖昧な要求を構造化し、`run-build-skill` へ渡す要件定義（brief）を作る。
 
 **入力**: topic (任意。省略時は対話形式で確認)
+**禁止**: 利用者の初回依頼を要約・言い換えして `user_request_verbatim` に入れない (個人特定情報と secret だけ `[伏字]` にする)。trigger_conditions を 3 個以上にしない。
 **出力**: `eval-log/skill-brief.json` (固定パス。プロジェクトルート基準。正本スキーマ `../run-skill-create/schemas/skill-brief.schema.json` に準拠)
 
 含むフィールド:
@@ -87,11 +91,13 @@ prefix            : ref|run|wrap|assign|delegate              # 01a Step3 5 pref
 role_suffix       : null | generator|evaluator|contributor|delegate
 kind              : run|ref|assign|wrap|delegate              # frontmatter kind (旧フィールド、prefixと一致が原則)
 hierarchy_level   : L0|L1|L2                                  # 01a Step4b L0/L1/L2階層
-trigger_conditions: [2〜3個の動詞ベース条件]
+trigger_conditions: [ちょうど2個の動詞ベース条件]                 # schema は 3 個まで通すが、description の lint (validate-frontmatter) は 2 個ちょうどを要求する
+user_request_verbatim: <利用者の初回依頼の原文>                    # 任意だが必ず残す。build の初稿診断が当初目的の正本として使う
 output_contract   : <成果物の形と完了条件>
-goal              : <達成すべき最終状態を観測可能な完了形1文で>        # ゴールシーク用 (実行系で推奨)
-purpose_background: <なぜこのゴールか (目的・背景)>                     # ゴールシーク用
-checklist         : [ゴール達成の受入基準 (二値判定可能)]              # ゴールシーク用 (実行系で推奨)
+goal              : <達成すべき最終状態を観測可能な完了形1文で>        # prefix=run|wrap|assign|delegate で必須
+purpose_background: <なぜこのゴールか (目的・背景)>                     # prefix=run|wrap|assign|delegate で必須
+checklist         : [ゴール達成の受入基準 (二値判定可能)]              # prefix=run|wrap|assign|delegate で必須 (1 件以上)
+responsibilities  : [{id: R1-..., prompt_required: true}]              # kind=run|assign で必須 (prompt_required:true を 1 件以上)
 key_constraints   : [制約事項]
 boundary          : <このSkillが「やらない」ことを1文で>     # 01 設計思想 Boundary要素
 deterministic_checks: [script/hook/CIへ寄せる決定論的検査]
@@ -111,13 +117,13 @@ knowledge_loop    : null | {pattern, categories, source_kind} # Loop A: 生成�
 consult_build_knowledge: true|false                         # Loop B: 作成時に harness-creator 蓄積知見を参照するか (既定 true)
 ```
 
-**完了条件**: skill_name / prefix / hierarchy_level / trigger_conditions / output_contract / boundary が全て確定。`prefix=wrap` なら base_skill、`prefix=delegate` なら delegate_agent、`hierarchy_level=L2` なら rubric_refs も必須。
+**完了条件**: skill_name / prefix / hierarchy_level / trigger_conditions / output_contract / boundary が全て確定し、user_request_verbatim に依頼の原文が入っている。`prefix=wrap` なら base_skill、`prefix=delegate` なら delegate_agent、`hierarchy_level=L2` なら rubric_refs、実行系 (prefix≠ref) なら goal / purpose_background / checklist、`kind=run|assign` なら responsibilities も必須。
 
 ## Key Rules
 
 1. **質問は最大5個まで**: 対話は5問以内で brief を完成させる。超過分は open_questions として残す。
 2. **kind 確定チェック**: 辞書型(ref)か手順型(run/assign)かを最初に確認する。
-3. **trigger 2〜3個**: description の Use when 句候補を2〜3個に絞る。
+3. **trigger 2個**: description の Use when 句候補をちょうど2個に絞る。
 4. **open_questions**: 設計判断が分かれる細部は OPEN_QUESTION(escalate) として明示して残す (TODO(human) ラベル使用は禁止)。
 5. **handoff**: 完成した brief は `run-build-skill` の入力として引き渡す。
 
@@ -136,8 +142,9 @@ build へ渡る brief の品質が後工程全体の質を決める。曖昧さ�
 - [ ] `eval-log/skill-brief.json` が固定パス (プロジェクトルート基準) に Write 出力され、`schemas/skill-brief.schema.json` (`../run-skill-create/schemas/skill-brief.schema.json`) を満たす
 - [ ] 必須フィールド skill_name / prefix / hierarchy_level / trigger_conditions / output_contract / boundary が全て確定
 - [ ] prefix は 5 分岐 (ref/run/wrap/assign/delegate) を全網羅した決定木で確定 (wrap/delegate の聞き忘れなし)。`prefix=wrap`→base_skill、`prefix=delegate`→delegate_agent、`hierarchy_level=L2`→rubric_refs (空は禁止) も埋まっている
-- [ ] trigger_conditions が動詞ベース 2〜3 個に整理されている (4 個以上は不可)
-- [ ] 実行系 (prefix≠ref) の場合 goal / purpose_background / checklist が brief に埋め込まれている (判定不能表現・手順そのものは項目化しない)。ref は skip
+- [ ] trigger_conditions が動詞ベースでちょうど 2 個に整理されている
+- [ ] 実行系 (prefix≠ref) の場合 goal / purpose_background / checklist が brief に埋め込まれている (判定不能表現・手順そのものは項目化しない)。ref は skip。kind=run|assign は responsibilities (prompt_required:true を 1 件以上) もある
+- [ ] user_request_verbatim に利用者の初回依頼が要約せずに入っている (個人特定情報と secret だけ伏字)
 - [ ] placement_candidates と決定論的 hint (Subagent/Agent Team→needs_independent_context/with_subagent_hint、Hook→needs_lifecycle_enforcement/with_hooks。いずれも正本スキーマ定義済み boolean) が設定されている
 - [ ] cross_platform / os_preamble_required が確認済み
 - [ ] ナレッジループ要否を判定済み (ref-knowledge-loop の5条件に1つ以上該当→`knowledge_loop.pattern` 設定、非該当→null)。`consult_build_knowledge` (既定true) の場合は蓄積知見を参照し設計へ反映している
@@ -233,8 +240,8 @@ prefix=run の場合は原則 `role_suffix=null` とし、生成者・評価者�
 
 #### trigger 抽出
 
-「このスキルをいつ呼びますか？ 動詞ベースで2〜3個の状況を教えてください」
-→ ユーザーの回答から trigger_conditions を2〜3個に整理。
+「このスキルをいつ呼びますか？ 動詞ベースで2個の状況を教えてください」
+→ ユーザーの回答から trigger_conditions をちょうど2個に整理。
 
 #### output contract 確認
 
@@ -269,9 +276,9 @@ prefix=run の場合は原則 `role_suffix=null` とし、生成者・評価者�
 | `Agent Team` | `needs_independent_context: true`, `with_subagent_hint: true` | 上記に加え `placement_candidates` に `Agent Team` を残す。run-build-skill が 17 章 (Agent Teams) を必ず読み、`TaskCompleted` hook 配線も build skeleton に含める |
 | `Hook` | `needs_lifecycle_enforcement: true`, `with_hooks: true` | run-build-skill に `--with-hooks` フラグを推奨。10 章を category=subagent-hook-integration で必ず読む |
 
-これら 3 フィールド (`needs_independent_context` / `needs_lifecycle_enforcement` / `with_subagent_hint` / `with_hooks`) は全て正本スキーマ `../run-skill-create/schemas/skill-brief.schema.json` に boolean として定義済みであり、`additionalProperties:false` 下でも valid。`scripts/resolve-brief-to-category.py` の `CONDITIONAL_CATEGORIES` がこれらを読んで決定論的に 17 章 / 10 章を読むべき category として返し、LLM 主観依存を排除する。
+これら 4 フィールド (`needs_independent_context` / `needs_lifecycle_enforcement` / `with_subagent_hint` / `with_hooks`) は全て正本スキーマ `../run-skill-create/schemas/skill-brief.schema.json` に boolean として定義済みであり、`additionalProperties:false` 下でも valid。run-build-skill はこれらの値を見て `references/resource-map.yaml` の `agent-teams` / `subagent-hook-integration` category を選ぶ。
 
-> **注**: brief の `with_subagent_hint` / `with_hooks` は boolean の **build フラグ推奨シグナル** であり、`run-build-skill/schemas/build-flags.schema.json` の同名 object 型フラグ (`{enabled, ...}`) とは別レイヤーの別物。Agent Team は専用 boolean を設けず `placement_candidates: ["Agent Team", ...]` で表現する (resolve は Subagent/Agent Team いずれも `agent-teams` category へ同一に解決するため、片肺の死にフィールドを作らない)。
+> **注**: brief の `with_subagent_hint` / `with_hooks` は boolean の **build フラグ推奨シグナル** であり、`run-build-skill/schemas/build-flags.schema.json` の同名 object 型フラグ (`{enabled, ...}`) とは別レイヤーの別物。Agent Team は専用 boolean を設けず `placement_candidates: ["Agent Team", ...]` で表現する (Subagent と Agent Team はどちらも `agent-teams` category を選ぶので、片方にしか効かないフィールドを作らない)。
 
 #### クロスプラットフォーム確認 (11章 / 14章)
 
@@ -322,7 +329,7 @@ echo "eval-log/skill-brief.json を生成。run-build-skill / run-skill-create �
 - **質問の連打禁止**: 1回のやり取りで複数の質問を並べない。1問ずつ確認する。
 - **5 prefix を必ず全分岐網羅**: wrap/delegate を聞き忘れない (01a Step3 CE要件)。
 - **副作用×採点の重複ケース**: 副作用ありかつ採点ありなら、`run-* (orchestrator) + assign-*-evaluator` に分割することを推奨し open_questions に明記。
-- **trigger 過剰**: 4個以上は冗長。2〜3個に絞る (lint-skill-description.py の R1 と rubric FM-003 の合意値)。
+- **trigger 過剰**: 3個以上は違反。ちょうど2個にする (validate-frontmatter.py は 2 個ちょうど、lint-skill-description.py の R1 は 3 個以上を違反とする。rubric FM-003 は 3 個まで許すが、機械ゲートが先に落とす)。
 - **L2 で rubric_refs 空は禁止**: L2 案件固有Skill は必ず L0/L1 の rubric を参照する (01a Step4b 一方向依存)。
 - **wrap/delegate 必須フィールド**: base_skill / delegate_agent を埋め忘れない。
 - **設計判断を代理決定しない**: 判断が分かれる細部はユーザーに返す（open_questions）。

@@ -47,7 +47,7 @@ P02 設計を提案者と別 context で審査し、4条件と structural blocke
 ## 完了チェックリスト
 
 - [ ] official source と plan の意味 parity を確認する。
-- [ ] 5 component/5 route/digest が現物と一致する。
+- [ ] 4 component/4 route/digest が現物と一致する。
 - [ ] structural blocker 未解決なら P04 以降を block する。
 - [ ] proposer≠approver が証跡化される。
 

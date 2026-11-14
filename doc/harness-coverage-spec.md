@@ -104,7 +104,7 @@ upstream rubric pointer の references/ 欠落[rubric governance 横断・follow
 ref-review を必須化 (§kind 別パス)。skills llm_eval = (非ref 35 PASS + ref 4 PASS)/48 = 81.2%。
 
 ### 多エージェント backfill で発見・修正した実バグ (genuine LLM 評価の価値)
-deep-verify / code-review は機械 lint を通る実バグを多数検出。修正済: agents/commands 12件 (dangling/schema虚偽/enum drift/placement) + run-intake-revise effect enum + re-evaluate-on-rubric-bump のパス2重バグ (parents[2]→[1] + references/ 欠落でコア機能が常に no-op だった)。未修正で FAIL 記録に正直に残置 (follow-up, 移行絡みで複雑): check-rubric-sync / lint-template-variables (creator-kit 移行でデータファイル取り残し) / build-claude-settings (hook event allowlist stale) / notifier-check (TODO(human) 未実装) / check-five-axes-coverage (argv ガード皆無)。
+deep-verify / code-review は機械 lint を通る実バグを多数検出。修正済: agents/commands 12件 (dangling/schema虚偽/enum drift/placement) + run-intake-revise effect enum + re-evaluate-on-rubric-bump のパス2重バグ (parents[2]→[1] + references/ 欠落でコア機能が常に no-op だった)。未修正で FAIL 記録に正直に残置 (follow-up, 移行絡みで複雑): check-rubric-sync / lint-template-variables (creator-kit 移行でデータファイル取り残し) / build-claude-settings (hook event allowlist stale) / check-five-axes-coverage (argv ガード皆無)。
 
 ### scripts mechanical が 80% に届かない理由 (honest)
 network/Notion/keychain 系のスクリプトは実 API を叩かないと残行に到達しない (副作用回避方針で意図的に未到達)。80% には HTTP モック層の大規模導入が必要 = 別プロジェクト規模。import smoke + 純関数 + エラー経路は genuine に網羅済。

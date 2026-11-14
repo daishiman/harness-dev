@@ -393,6 +393,27 @@ def test_main_inproc_skills_dir_override_ignores_manifest(MOD, tmp_path, monkeyp
     assert "kit-skill" in capsys.readouterr().err
 
 
+def test_main_inproc_skill_checks_only_the_named_skill(MOD, tmp_path, monkeypatch, capsys):
+    # --skill は同じ skills dir の他 skill の違反を拾わない (build が生成物だけを検査する経路)
+    _mk_skill_md(tmp_path, "ref-foo", description=GOOD)
+    _mk_skill_md(tmp_path, "bad-skill", description="採点する処理")
+    monkeypatch.chdir(tmp_path)
+    for target in (".claude/skills/ref-foo", ".claude/skills/ref-foo/SKILL.md"):
+        _argv(monkeypatch, "--skill", target)
+        assert MOD.main(sys.argv[1:]) == 0
+        assert "OK=1 VIOLATION=0" in capsys.readouterr().out
+    _argv(monkeypatch, "--skill=.claude/skills/bad-skill")
+    assert MOD.main(sys.argv[1:]) == 1
+    assert "bad-skill" in capsys.readouterr().err
+
+
+def test_main_inproc_skill_missing_is_violation(MOD, tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    _argv(monkeypatch, "--skill", "no-such-skill")
+    assert MOD.main(sys.argv[1:]) == 1
+    assert "SKILL.md not found" in capsys.readouterr().err
+
+
 # ---------------------------------------------------------------------------
 # main (subprocess) — __main__ ガードと exit code 契約
 # ---------------------------------------------------------------------------

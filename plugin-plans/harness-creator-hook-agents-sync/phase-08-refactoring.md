@@ -30,7 +30,7 @@ native adapter、orchestrator、gate、hook、dispatcher の責務境界を保�
 
 ## ドメイン知識
 
-- C02=read-only policy/parity、C01=orchestration、C03=completion enforcement、C05=lifecycle adapter、C04=command integration。
+- C02=read-only policy/parity、C01=orchestration、C03=completion enforcement、C04=command integration。
 - product-specific schema は adapter 境界の外へ漏らさない。
 - criterion owner は1件、phase-wide obligation は singleton task。
 

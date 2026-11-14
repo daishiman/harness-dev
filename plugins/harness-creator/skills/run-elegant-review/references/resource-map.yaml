@@ -16,9 +16,6 @@ resources:
   - file: convergence-policy.json
     topic: 収束ループの停止条件 (Δneg/Δpos しきい値、安全弁ルール)
     read_when: Phase2→3 のループを終了させる条件を確認するとき
-  - file: elegant-4-conditions.json
-    topic: 4-conditions.json への後方互換 redirect (condition_ref のみ。定義の正本は 4-conditions.json)
-    read_when: 旧 rubric_id (elegant-4-conditions) 参照を解決するとき
   - file: orchestration-flow.md
     topic: Phase1→2→3 の詳細フロー図と各フェーズの入出力仕様
     read_when: エージェント起動順序やデータフローを確認するとき
@@ -56,9 +53,6 @@ related_artifacts:
   - file: ../scripts/build-verdict.py
     topic: findings 由来の fail_counts と C1-C4 verdict を単一導出するスクリプト
     read_when: condition_matrix/issues の一致検証後に verdict.json を生成・照合するとき
-  - file: ../scripts/check-review-trigger.py
-    topic: 変更規模から elegant-review 推奨を判定する Stop hook スクリプト
-    read_when: 自動レビュー推奨の発火条件を確認するとき
   - file: ../scripts/validate_phase_order.py
     topic: Phase1→Phase2→Phase3 順序と signal/verdict 導出整合の補助検査
     read_when: run directory の handoff 順序を検証するとき
@@ -74,6 +68,9 @@ related_artifacts:
   - file: ../scripts/build-capability-graph-knowledge-entry.py
     topic: capability 依存グラフと discovered task を Loop A/B knowledge へ source_ref 付きで記録するスクリプト
     read_when: 依存グラフ由来の学びを knowledge entry 化するとき
+  - file: ../scripts/sync-content-review-sha.py
+    topic: content-review verdict の指摘を当てた直後に限り 2 verdict の skill_md_sha256 を結び直し sha_rebinds に監査記録を足す決定論スクリプト
+    read_when: executor が content-review verdict の指摘を SKILL.md へ適用し終えたとき
   - file: ../schemas/findings-partial.schema.json
     topic: Phase2 9/9/12 lane payload の agent 別件数契約
     read_when: 並列 agent payload を materialize 前に検証するとき

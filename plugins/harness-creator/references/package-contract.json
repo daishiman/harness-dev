@@ -34,11 +34,9 @@
       "run-skill-live-trial",
       "run-skill-rename",
       "run-skill-rubric-governance",
-      "run-skill-update-notifier",
       "wrap-git-commit-safe"
     ],
     "agents": [
-      "elegant-bounded-improvement-executor",
       "elegant-improvement-executor",
       "elegant-initial-draft-evaluator",
       "elegant-logical-structural-analyst",
@@ -57,15 +55,9 @@
     ],
     "hooks": [
       "aggregate-evals.py",
-      "auto-sync-on-session-start.py",
-      "cache-refresh.py",
-      "content-review-queue.py",
       "diff-rubric-impact.py",
-      "elegant-review-trigger.py",
       "external-intelligence-observe.py",
       "lint-capability-manifest.py",
-      "notify-skill-end.py",
-      "ref-task-context-map-preload.py",
       "wrap-git-commit-safe.py"
     ]
   },
@@ -259,30 +251,6 @@
       }
     },
     "agents": {
-      "elegant-bounded-improvement-executor": {
-        "relation": "semantic-equivalent",
-        "purpose": "Expose Claude agent elegant-bounded-improvement-executor through the owning Codex skill route.",
-        "arguments": {
-          "policy": "preserve",
-          "notes": "Preserve the user request and translate only host-specific invocation syntax."
-        },
-        "effect": {
-          "policy": "equivalent",
-          "notes": "Reach the same user-visible capability through the declared Codex entry point set."
-        },
-        "discovery": {
-          "kind": "skill",
-          "entry_points": [
-            "run-build-skill"
-          ]
-        },
-        "owner_route": {
-          "plugin": "harness-creator",
-          "entry_points": [
-            "run-build-skill"
-          ]
-        }
-      },
       "elegant-improvement-executor": {
         "relation": "semantic-equivalent",
         "purpose": "Expose Claude agent elegant-improvement-executor through the owning Codex skill route.",
@@ -297,12 +265,14 @@
         "discovery": {
           "kind": "skill",
           "entry_points": [
+            "run-build-skill",
             "run-elegant-review"
           ]
         },
         "owner_route": {
           "plugin": "harness-creator",
           "entry_points": [
+            "run-build-skill",
             "run-elegant-review"
           ]
         }

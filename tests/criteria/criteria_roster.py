@@ -48,7 +48,6 @@ ROSTER: list[tuple[str, str, tuple[str, ...]]] = [
     ("harness-creator", "run-skill-live-trial", ("IN1", "IN2", "OUT1", "OUT2", "OUT3")),
     ("harness-creator", "run-skill-rename", ("IN1", "IN2", "OUT1")),
     ("harness-creator", "run-skill-rubric-governance", ("IN1", "IN2", "OUT1", "OUT2")),
-    ("harness-creator", "run-skill-update-notifier", ("IN1", "IN2", "IN3", "OUT1")),
     ("harness-creator", "wrap-git-commit-safe", ("IN1", "IN2", "OUT1")),
     ("plugin-dev-planner", "run-plugin-dev-plan", ("IN1", "IN2", "OUT1", "OUT2")),
     ("prompt-creator", "run-prompt-create", ("IN1", "IN2", "OUT1")),

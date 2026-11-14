@@ -36,7 +36,7 @@ Capability の生成・更新を、入力形態に応じた 1 経路へ正規化
 - **fail-closed**: handoff/schema/parity、graph hash pin、lock/lease、route report、artifact/validator SHA、evidence freshness、budget gate のどれかが不正・欠落・stale なら起動または completed 宣言を止める。未実測を PASS と推定しない。
 - **単一 writer**: `task-graph.json` は planner 所有で build 中に直接編集しない。runtime state は dispatcher が TG-C02 を直列呼出ししてだけ更新し、SubAgent は state を書かない。build lease の `owner_token` はメモリだけに保持し、所有者一致で renew/release する。
 - **承認境界**: structural discovered-task の受理、初回診断後の改善、`release`、`exhaustive`、install/enable/hook trust/re-trust/uninstall は人間の明示承認なしに進めない。`pending_user_gate` を成功へ畳まない。
-- **初回診断**: 現物と試し方の提示後に `AskUserQuestion` で深度を選び、選択時だけ `elegant-initial-draft-evaluator` を生成 context と分離して起動する。`accept-draft` は evaluator/improver 0 のまま引き渡す。3独立分析 Agent の30思考法監査は別の明示確認を要する `exhaustive` に限る。
+- **初回診断**: 現物と試し方の提示後に `AskUserQuestion` で深度を選び、選択時だけ `elegant-initial-draft-evaluator` を生成 context と分離して起動する。`accept-draft` は evaluator/improver 0 のまま引き渡す。改善を選んだときだけ `elegant-improvement-executor` を `selected_finding_ids` / `max_rounds` 付きで 1 worker 起動する。skill route の `/run-skill-create` はこの診断 receipt を使い回し、C1-C4 を評価し直さず rubric governance も既定で起動しない。3独立分析 Agent の30思考法監査は別の明示確認を要する `exhaustive` に限る。
 - **証拠鮮度**: proof/receipt は current target・route-local入力・checker契約・上流fingerprint・evidence SHA に束縛する。`completion-evidence.json.evidence[]` は注釈なしの実在パスだけを列挙し、実測不能は `blocked` にする。
 - **実行量**: `generation_queue` / `llm_batches` / `observational_queue` に列挙された claim だけを起動する。`budget_gate=blocked` は開始前に停止し、上限を黙って緩めない。
 - **native surface**: release 完了ゲートでは C01 `sync-native-surfaces.py` の apply→同一 desired-set の check だけを順に使う。legacy generator を連続実行せず、C01/TG-C08 がともに成功するまで completed にしない。

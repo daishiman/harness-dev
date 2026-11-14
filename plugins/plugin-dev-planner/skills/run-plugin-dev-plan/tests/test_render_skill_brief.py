@@ -56,6 +56,46 @@ def test_main_out_writes_brief_path(tmp_path):
     assert out.read_text(encoding="utf-8") == first, "同一 inventory の射影が byte 同一でない (再現性違反)"
 
 
+def _plan_with_goal_spec(tmp_path, goal_spec):
+    """golden inventory を tmp の plan dir へ写し、隣に goal-spec.json を置く。"""
+    plan = tmp_path / "plan"
+    plan.mkdir()
+    inventory = plan / "component-inventory.json"
+    inventory.write_text(_GOLDEN_INVENTORY.read_text(encoding="utf-8"), encoding="utf-8")
+    (plan / "goal-spec.json").write_text(json.dumps(goal_spec, ensure_ascii=False), encoding="utf-8")
+    return inventory
+
+
+def test_main_copies_user_request_from_adjacent_goal_spec(tmp_path):
+    """inventory 隣の goal-spec.json の user_request_verbatim が brief へ写る (初稿診断の正本を build まで運ぶ)。"""
+    inventory = _plan_with_goal_spec(tmp_path, {"user_request_verbatim": "依頼の原文"})
+    result = _run("--inventory", str(inventory), "--component", "C01")
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)["user_request_verbatim"] == "依頼の原文"
+
+
+def test_main_without_user_request_keeps_brief_unchanged(tmp_path):
+    """goal-spec に原文が無ければ golden と byte 同一 (既存 plan の射影を変えない)。"""
+    inventory = _plan_with_goal_spec(tmp_path, {"purpose": "p"})
+    result = _run("--inventory", str(inventory), "--component", "C01")
+    golden = _run("--inventory", str(_GOLDEN_INVENTORY), "--component", "C01")
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == golden.stdout
+
+
+def test_main_explicit_missing_goal_spec_exit2(tmp_path):
+    result = _run("--inventory", str(_GOLDEN_INVENTORY), "--component", "C01", "--goal-spec", str(tmp_path / "ghost.json"))
+    assert result.returncode == 2
+    assert "goal-spec.json が見つからない" in result.stderr
+
+
+def test_project_brief_keeps_component_user_request(skill_brief, specfm_mod):
+    """component 自身が原文を持つときは goal-spec 側で上書きしない。"""
+    comp = specfm_mod.minimal_frontmatter("skill", spec_id="C01", skill_kind="run")
+    comp["user_request_verbatim"] = "component の原文"
+    assert skill_brief.project_brief(comp, "goal-spec の原文")["user_request_verbatim"] == "component の原文"
+
+
 def test_main_usage_and_missing_component_exit2(tmp_path):
     """引数不足・inventory 不在・component 不在は usage error (exit 2)。"""
     assert _run().returncode == 2

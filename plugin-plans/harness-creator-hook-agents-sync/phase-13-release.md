@@ -52,7 +52,7 @@ local implementation、runtime activation、git publish を独立 gate として
 
 - [ ] R1 apply→check が repo-present / exact project-enabled identity の local projection scope で exit0。install/trust は R2 user gate と分離される。
 - [ ] C02 native parity/freshness PASS。
-- [ ] R2 trust前 non-run / trust後 SessionStart run / concurrency safety PASS。
+- [ ] R2 trust前 non-run / trust後 hook run PASS。
 - [ ] uninstall/prune/rollback PASS。
 - [ ] R3 は明示承認後のみ実行。
 - [ ] local observation と failure remediation が記録される。R4 merge後 observation は R3 が `not_applicable` の current wave では同じく非実行と明記する。

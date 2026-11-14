@@ -1488,6 +1488,67 @@ def test_cli_atomically_authorizes_only_the_first_review_claim(tmp_path: Path):
     assert json.loads(second.stdout)["status"] == "initial-review-in-progress"
 
 
+def _cli_claim_argv(mod, tmp_path: Path) -> tuple[list[str], Path]:
+    plan = _verification_plan()
+    plan_path = tmp_path / "verification-plan.json"
+    target = tmp_path / "target.md"
+    state_dir = tmp_path / "review-state"
+    plan_path.write_text(json.dumps(plan), encoding="utf-8")
+    _write_capability_artifact(target, "skill")
+    proof_path = _usable_draft_proof_file(tmp_path, plan, capability_artifact=target)
+    argv = [sys.executable, str(SCRIPT), "--verification-plan", str(plan_path), "--usable-draft-proof", str(proof_path), "--repo-root", str(tmp_path), "--target-path", str(target), "--state-dir", str(state_dir)]
+    pre_args, _, _ = _cli_pre_diagnostic_args(mod, tmp_path, plan=plan, proof_path=proof_path, target_paths=[target], state_dir=state_dir)
+    return argv + pre_args, state_dir
+
+
+def test_cli_user_request_file_anchors_intent_from_gate_to_launch_request(tmp_path: Path):
+    """SKILL.md Step 12.6 の手順どおり state_dir に置いた原文が evaluator request まで届く。"""
+    mod = _load_module()
+    launch_mod = _load_launch_module()
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    state_dir.mkdir(parents=True)
+    request_text = "会議メモから決定事項だけを抜き出すスキルが欲しい。宿題は要らない。"
+    (state_dir / "user-request.txt").write_text(f"\n{request_text}\n", encoding="utf-8")
+
+    proc = subprocess.run(argv + ["--user-request-file", str(state_dir / "user-request.txt")], cwd=REPO_ROOT, capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr
+    assert "WARN" not in proc.stderr
+    gate_plan = json.loads(proc.stdout)
+    expected = {"text": request_text, "sha256": hashlib.sha256(request_text.encode("utf-8")).hexdigest()}
+    assert gate_plan["initial_review"]["intent_anchor"] == expected
+    # durable state の key 集合は固定なので錨を持ち込まない。
+    assert "intent_anchor" not in json.loads(Path(gate_plan["state_ref"]).read_text(encoding="utf-8"))
+
+    request = launch_mod.build_launch_request(gate_plan, runtime="claude-code")
+    assert request["runtime_neutral_request"]["intent_anchor"] == expected
+
+
+def test_cli_claim_without_user_request_warns_but_still_claims(tmp_path: Path):
+    """原文なしの claim は互換のため通すが、目的適合が判定不能になることを黙らせない。"""
+    mod = _load_module()
+    argv, _ = _cli_claim_argv(mod, tmp_path)
+    proc = subprocess.run(argv, cwd=REPO_ROOT, capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr
+    assert json.loads(proc.stdout)["status"] == "initial-review-required"
+    assert "WARN" in proc.stderr and "--user-request-file" in proc.stderr
+    # 冪等な再 claim (in-progress) では繰り返さない。
+    again = subprocess.run(argv, cwd=REPO_ROOT, capture_output=True, text=True)
+    assert again.returncode == 0, again.stderr
+    assert "WARN" not in again.stderr
+
+
+@pytest.mark.parametrize("content", [" \n\t\n", "あ" * 8001], ids=["blank", "over-limit"])
+def test_cli_rejects_blank_or_transcript_sized_user_request(tmp_path: Path, content: str):
+    mod = _load_module()
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    request_path = tmp_path / "runtime" / "user-request.txt"
+    request_path.write_text(content, encoding="utf-8")
+    proc = subprocess.run(argv + ["--user-request-file", str(request_path)], cwd=REPO_ROOT, capture_output=True, text=True)
+    assert proc.returncode == 2
+    assert "user request" in proc.stderr
+    assert not state_dir.exists() or not any(state_dir.iterdir())
+
+
 def test_cli_e2e_requires_presentation_then_prechoice_and_accept_is_zero_context(tmp_path: Path):
     mod = _load_module()
     plan = _verification_plan()

@@ -59,4 +59,3 @@ Gate D は `run-skill-live-trial` が担い、対象は **behavioral trait (自�
 
 - 25 章 §runbook Step 5 / 5.5 / 6
 - 35 章 § 3 層メタモデル (Layer 2 = Review-level)
-- ANAL-001 di-quartet (ref / lookup / assign / run の役割四重奏)

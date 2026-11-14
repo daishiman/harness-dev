@@ -40,6 +40,12 @@
     "handoff_targets": { "type": "array", "items": { "type": "string" } },
     "max_loops": { "type": "integer", "minimum": 1 },
     "open_questions": { "type": "array", "items": { "type": "string" } },
+    "user_request_verbatim": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 8000,
+      "description": "利用者の初回依頼の原文 (要約・言い換えをしない。個人特定情報だけ [伏字] に置換)。purpose/goal は解釈を含むため、render-skill-brief.py が各 skill-brief の user_request_verbatim へ写し、run-build-skill の初稿診断が当初目的の正本として使う。任意。"
+    },
     "source_intake": {
       "description": "E1 provenance: 消費した intake.json の源泉参照 (任意)。欠落は後方互換で WARN 受理。",
       "type": ["object", "null"],

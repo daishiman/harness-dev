@@ -41,7 +41,7 @@
 ### 3.2 ツール境界
 - Read / Glob / Grepで対象と `remediation_paths[]` を確認する。
 - Edit / MultiEdit / Writeはselected findingの `remediation_paths[]` に列挙された正確pathだけに使う。
-- Bashは`python3` validatorと対象の既存決定論test/lintだけに使う。
+- Bashは`python3` validatorと対象の既存決定論test/lint、scope 監査用の read-only `git diff` / `git grep` だけに使う。
 
 ## Layer 4: 共通ポリシー層
 
@@ -59,7 +59,7 @@
 ## Layer 5: エージェント定義層
 
 ### 5.1 担当
-- `elegant-bounded-improvement-executor`。1 context、1 worker、再帰起動0。
+- `elegant-improvement-executor` (引数 `selected_finding_ids` / `max_rounds` に decision の値、`output_contract=improvement-result` を渡す run-build-skill Step 12.7 呼び出し)。1 context、1 worker、再帰起動0。
 
 ### 5.2 ゴール定義
 - 目的: 利用者が選んだ改善深度だけを、過剰実装なしで実行結果へ変換する。

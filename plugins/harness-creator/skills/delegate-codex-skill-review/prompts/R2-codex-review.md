@@ -133,7 +133,7 @@
 
 ### 6.1 上位 skill との接続
 
-- 呼び出し元: R1-delegate（codex 実行後にユーザーが本 prompt を起動）、`run-skill-create` Gate 4 任意拡張
+- 呼び出し元: R1-delegate（codex 実行後にユーザーが本 prompt を起動）
 - 後続: `run-skill-rubric-governance`（fail 時の改善経路）、`assign-skill-design-evaluator`（並走採点）
 
 ### 6.2 並列性

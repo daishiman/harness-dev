@@ -35,7 +35,7 @@
       "name": "dev-graph",
       "source": "./plugins/dev-graph",
       "description": "ローカル task graph と Markdown を正本に、feature orchestration、tracker 投影、複数 worktree 実行を管理する開発グラフ harness。",
-      "version": "0.1.32",
+      "version": "0.1.33",
       "category": "development-planning",
       "tags": [
         "task-graph",
@@ -89,7 +89,7 @@
       "name": "harness-creator",
       "source": "./plugins/harness-creator",
       "description": "Codex と Claude Code のハーネスを新規作成・既存改善し、Capability の評価・統治・プラグイン配布を一貫して行うメタプラグイン。",
-      "version": "1.4.63",
+      "version": "1.4.65",
       "category": "development-tools",
       "tags": [
         "capability-build",
@@ -101,7 +101,7 @@
       "name": "plugin-dev-planner",
       "source": "./plugins/plugin-dev-planner",
       "description": "プラグイン構想を index + 13 フェーズファイル(phase-01〜phase-13) + component-inventory.json へ目的ドリブンで分解し、skill/sub-agent/slash-command/hook/script/harness/manifest を漏れなく評価する前段の計画プラグイン。ライフサイクル軸=13 フェーズ / 成果物実体軸=N component の 2 軸直交に加え、タスク粒度の型付き依存グラフ (task-graph) を第 3 の射影として保持し、依存駆動の並列実行・成果物連結・discovered-task 還流を機械保証する。orchestrator skill (run-plugin-dev-plan) + prompt-creator 仕様準拠の agents (elicitor=R1 / architect=R2,R3 / evaluator=R4 / improvement-reviewer) + command + hook + harness で構成。実ビルドは harness-creator へ委譲し、本プラグインは計画生成までを担う。改善要望は `/run-skill-feedback plugin-dev-planner` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.26",
+      "version": "0.1.27",
       "category": "development-tools",
       "tags": []
     },
@@ -170,7 +170,7 @@
       "name": "skill-governance-lint",
       "source": "./plugins/skill-governance-lint",
       "description": "skill / frontmatter / SSOT 重複 / goal-seek / completeness など P0 lint 群を提供する検査プラグイン。CI の merge gate と build-skill Step 4 の preflight 両方で実行される。改善要望は `/run-skill-feedback skill-governance-lint` で投入可能 (SSOT: harness-creator/skills/run-skill-feedback、symlink 配備)。",
-      "version": "0.1.24",
+      "version": "0.1.25",
       "category": "development-tools",
       "tags": [
         "skill-governance",
@@ -236,7 +236,7 @@
       "name": "spec-drift-guardian",
       "source": "./plugins/spec-drift-guardian",
       "description": "検知済み spec-drift issue の影響トリアージと rubric/schema/template 更新提案 (Edit 差分 artifact emit) を半自動化し、close 前ゲートで対応漏れを防ぐ plugin。検知 (fetch/diff/issue 起票) は既存 workflow / ref-yaml-spec-fetcher に委ね、本 plugin は full-diff 再構成 → 4 軸+semantics triage → 独立 verdict → propose → 独立 audit → 明示承認 → allowlist 限定 apply → post-image 検証 → close ゲートを担う。",
-      "version": "0.1.16",
+      "version": "0.1.17",
       "category": "developer-tools",
       "tags": [
         "spec-drift",
@@ -275,7 +275,7 @@
       "name": "system-spec-harness",
       "source": "./plugins/system-spec-harness",
       "description": "カテゴリ×プラットフォームの網羅マトリクス、公式出典、独立完成度評価を用いてシステム仕様書を生成するハーネス plugin。",
-      "version": "0.1.26",
+      "version": "0.1.27",
       "category": "productivity",
       "tags": [
         "spec",
