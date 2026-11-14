@@ -42,6 +42,7 @@
 - checklist 各項目は `{id:^C[0-9]+$, criterion, done, verify_by ∈ {reasoning,script,lint,test,human}}`。手順を checklist にしない
 - criterion は EARS 形推奨 (「<状態/イベント> のとき <観測可能な結果> を満たす」・指針=`references/purpose-driven-requirements.md` SDD 節・非強制)。id は R3 が index 完了チェックリスト/受入確認で引用する RTM の追跡キー (`check-requirements-coverage.py` が被覆を機械検査)
 - 推定根拠が弱い項目は `constraints`、未確定だが停止不要な事項は `open_questions` に明示する
+- 利用者の初回依頼は要約せず `user_request_verbatim` に原文のまま残す (個人特定情報・secret だけ `[伏字]` に置換)。purpose/goal は解釈なので、後段の初稿診断はこの原文と現物を突き合わせて解釈ずれを見つける
 - **E1 (intake→goal-spec)**: `intake_json` 提供時は §0 executive_summary / §3 purpose_excavator / next-action の split_candidates[] を purpose/background/goal/checklist へ源泉反映し `source_intake` を記録する。反映漏れは `scripts/check-intake-consumption.py --intake <intake> --goal-spec <PLAN_DIR>/goal-spec.json` が検出する (未提供時は従来 fallback で動作する = 非適用例)
 - **E3 (改善→goal-spec)**: `mode=update` かつ `improvement_handoff` 提供時は `findings[]` を再生成材料として反映し `source_improvement` を記録する。provenance chain の連続性は `scripts/check-provenance-chain.py --goal-spec <PLAN_DIR>/goal-spec.json --plan-dir <PLAN_DIR>` が検証する
 

@@ -3,7 +3,7 @@
 # name: render-skill-brief
 # purpose: component-inventory.json の skill component を run-skill-create が消費する skill-brief JSON へ決定論射影する (planner 固有キー除去 + skill_kind→kind 写像 + 実 schema との required/余剰キー突合)。
 # inputs:
-#   - argv: --inventory FILE --component ID [--out PATH] | --self-test
+#   - argv: --inventory FILE --component ID [--goal-spec FILE] [--out PATH] | --self-test
 # outputs:
 #   - stdout: skill-brief JSON (--out 省略時) / OK サマリ
 #   - stderr: 非 skill 射影・schema required 欠落・余剰キー violation / standalone 開示
@@ -71,11 +71,12 @@ def find_schema_path() -> Path | None:
     return None
 
 
-def project_brief(comp: dict) -> dict:
+def project_brief(comp: dict, user_request: str | None = None) -> dict:
     """skill component を brief dict へ決定論射影する (planner キー除去 + skill_kind→kind)。
 
     キー順は base required 14 (specfm.SKILL_BRIEF_FIELDS 順) → 残余キー辞書順で安定させる
-    (同一 inventory → byte 同一 brief の再現性)。
+    (同一 inventory → byte 同一 brief の再現性)。user_request は goal-spec の
+    user_request_verbatim で、component 自身が持たないときだけ brief へ入れる。
     """
     ck = str(comp.get("component_kind", "")).strip()
     if ck != "skill":
@@ -87,6 +88,8 @@ def project_brief(comp: dict) -> dict:
         k: v for k, v in comp.items()
         if k not in PLANNER_ONLY_KEYS and k not in ("kind", "skill_kind")
     }
+    if user_request and "user_request_verbatim" not in passthrough:
+        passthrough["user_request_verbatim"] = user_request
     brief: dict = {}
     for field in specfm.SKILL_BRIEF_FIELDS:
         if field == "kind":
@@ -183,6 +186,10 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="inventory の skill component から skill-brief JSON を射影する")
     ap.add_argument("--inventory", default=None, help="component-inventory.json")
     ap.add_argument("--component", default=None, help="component id (例 C01)")
+    ap.add_argument(
+        "--goal-spec", default=None,
+        help="goal-spec.json (省略時は inventory と同じ dir の goal-spec.json を探す)。user_request_verbatim を brief へ写す",
+    )
     ap.add_argument("--out", default=None, help="出力先 (省略時 stdout。推奨 <plan-dir>/briefs/skill-brief-<id>.json)")
     ap.add_argument("--self-test", action="store_true", help="埋め込み skeleton fixture で射影と schema 突合を自己検査する")
     args = ap.parse_args(argv)
@@ -197,7 +204,9 @@ def main(argv: list[str] | None = None) -> int:
         return code
 
     if not args.inventory or not args.component:
-        sys.stderr.write("usage: render-skill-brief.py --inventory FILE --component ID [--out PATH] | --self-test\n")
+        sys.stderr.write(
+            "usage: render-skill-brief.py --inventory FILE --component ID [--goal-spec FILE] [--out PATH] | --self-test\n"
+        )
         return 2
     inventory_path = Path(args.inventory)
     if not inventory_path.is_file():
@@ -218,8 +227,22 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write(f"component {args.component!r} が components[] に存在しない: {inventory_path}\n")
         return 2
 
+    goal_spec_path = Path(args.goal_spec) if args.goal_spec else inventory_path.parent / "goal-spec.json"
+    user_request = None
+    if goal_spec_path.is_file():
+        try:
+            goal_spec = json.loads(goal_spec_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            sys.stderr.write(f"goal-spec JSON parse error: {exc}\n")
+            return 2
+        value = goal_spec.get("user_request_verbatim") if isinstance(goal_spec, dict) else None
+        user_request = value if isinstance(value, str) and value.strip() else None
+    elif args.goal_spec:
+        sys.stderr.write(f"goal-spec.json が見つからない: {goal_spec_path}\n")
+        return 2
+
     try:
-        brief = project_brief(comp)
+        brief = project_brief(comp, user_request)
     except ValueError as exc:
         sys.stderr.write(f"[{args.component}] {exc}\n")
         return 1

@@ -190,7 +190,6 @@ PENDING_RENAME_PATHS = {
     "plugins/skill-governance-migration/scripts/migrate/to-brief.py",
     "plugins/skill-governance-migration/scripts/migrate/backfill-source-tier.py",
     "plugins/harness-creator/skills/wrap-git-commit-safe/scripts/pre-commit-secret-scan.py",
-    "plugins/harness-creator/skills/run-skill-create/scripts/resolve-brief-to-category.py",
     "plugins/harness-creator/skills/run-build-skill/scripts/set-frontmatter-field.py",
     "scripts/phase2/gen-rollback.py",
     # skill-intake js→py migration (PR #4): keep snake_case until kebab-case rename PR

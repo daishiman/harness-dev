@@ -185,6 +185,10 @@ def split_frontmatter(text: str) -> tuple[dict, str]:
         return {}, text
     fm_raw = parts[1]
     body = parts[2]
+    # 閉じ `---` 行末の改行が body 先頭に 1 つ残り、BD-003/PD-001 の行数が 1 多くなる。
+    # lint-skill-tree.py の count_body_lines と同じく 1 個だけ除く。
+    if body.startswith("\n"):
+        body = body[1:]
     fm: dict = {}
     for line in fm_raw.splitlines():
         m = re.match(r"^([a-zA-Z_-]+):\s*(.*)$", line)

@@ -13,6 +13,7 @@ monkeypatch / in-process import で完全に置換し、HTML→text 抽出ロジ
 実 .claude/ は一切書き換えない (OUT_PATH を tmp_path へ差し替え, subprocess は cwd=tmp_path)。
 network: false。
 """
+import datetime
 import importlib.util
 import io
 import subprocess
@@ -218,6 +219,63 @@ def test_main_partial_failure_returns_two(monkeypatch, tmp_path, capsys):
     assert "GOOD" in text
     assert "FETCH_FAILED: TimeoutError" in text
     assert "failures=1" in capsys.readouterr().out
+
+
+def _cache_text(stamp: str, body: str) -> str:
+    return "\n".join([
+        "# YAML Spec Cache", "", f"last_fetched: {stamp}",
+        "fetcher: scripts/build-yaml-spec-cache.py", "",
+        "## Source (s): https://x/y", "", body, "",
+    ])
+
+
+def _days_ago(days: int) -> str:
+    when = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=days)
+    return when.strftime(MOD.STAMP_FORMAT)
+
+
+def test_main_keeps_file_when_body_unchanged_and_fresh(monkeypatch, tmp_path, capsys):
+    # 本文が同じ週は last_fetched も書き換えない (毎週の commit と版上げを生まない)
+    out = _patch_outpath(monkeypatch, tmp_path)
+    out.parent.mkdir(parents=True)
+    before = _cache_text(_days_ago(7), "SAME")
+    out.write_text(before, encoding="utf-8")
+    monkeypatch.setattr(MOD, "SOURCES", [("s", "https://x/y")])
+    monkeypatch.setattr(MOD, "fetch", lambda url: "<p>SAME</p>")
+    assert MOD.main() == 0
+    assert out.read_text(encoding="utf-8") == before
+    assert "unchanged" in capsys.readouterr().out
+
+
+def test_main_refreshes_stamp_when_body_unchanged_but_old(monkeypatch, tmp_path):
+    # 30 日の鮮度 WARNING に届く前に last_fetched だけ更新する
+    out = _patch_outpath(monkeypatch, tmp_path)
+    out.parent.mkdir(parents=True)
+    old_stamp = _days_ago(MOD.REFRESH_AFTER_DAYS)
+    out.write_text(_cache_text(old_stamp, "SAME"), encoding="utf-8")
+    monkeypatch.setattr(MOD, "SOURCES", [("s", "https://x/y")])
+    monkeypatch.setattr(MOD, "fetch", lambda url: "<p>SAME</p>")
+    assert MOD.main() == 0
+    text = out.read_text(encoding="utf-8")
+    assert old_stamp not in text
+    assert "SAME" in text
+
+
+def test_main_rewrites_when_body_changed(monkeypatch, tmp_path):
+    out = _patch_outpath(monkeypatch, tmp_path)
+    out.parent.mkdir(parents=True)
+    out.write_text(_cache_text(_days_ago(1), "OLD"), encoding="utf-8")
+    monkeypatch.setattr(MOD, "SOURCES", [("s", "https://x/y")])
+    monkeypatch.setattr(MOD, "fetch", lambda url: "<p>NEW</p>")
+    assert MOD.main() == 0
+    text = out.read_text(encoding="utf-8")
+    assert "NEW" in text and "OLD" not in text
+
+
+def test_keep_previous_rejects_missing_or_bad_stamp():
+    now = datetime.datetime.now(datetime.timezone.utc)
+    assert MOD.keep_previous("", _cache_text(_days_ago(0), "X"), now) is False
+    assert MOD.keep_previous(_cache_text("not-a-date", "X"), _cache_text(_days_ago(0), "X"), now) is False
 
 
 def test_main_creates_parent_directory(monkeypatch, tmp_path):

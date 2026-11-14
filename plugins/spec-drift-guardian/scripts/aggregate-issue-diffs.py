@@ -46,6 +46,11 @@ _CACHE_SUBJECT_TEMPLATE = "chore: update yaml-spec-cache ({heading})"
 # 決定論的な git diff を得るためのフラグ。色/外部差分/textconv を無効化し、環境非依存にする。
 _DIFF_FLAGS = ("-c", "color.ui=false", "diff", "--no-color", "--no-ext-diff", "--no-textconv")
 
+# 復元する diff を cache 本体に限る。週次 workflow は cache・spec-diff-history・版上げを
+# 1 commit にまとめるため、pathspec なしでは history の preview や plugin.json の版差分が混ざる。
+# cache だけを変えた過去の commit では、pathspec の有無で diff は変わらない。
+_CACHE_PATHSPEC = "plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md"
+
 
 class GeneralError(Exception):
     """exit 1 に対応する一般エラー。"""
@@ -279,7 +284,7 @@ def _resolve_commit_pair(
 
 def _restore_diff(repo_root: Path, base_commit: str, source_commit: str) -> str:
     """base..source の完全 diff テキストを決定論的に復元する。"""
-    proc = _git(repo_root, [*_DIFF_FLAGS, base_commit, source_commit])
+    proc = _git(repo_root, [*_DIFF_FLAGS, base_commit, source_commit, "--", _CACHE_PATHSPEC])
     return proc.stdout
 
 

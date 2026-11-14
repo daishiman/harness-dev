@@ -15,6 +15,21 @@
 - content-review の指摘を当てた直後に限り、2 本の verdict の SKILL.md sha を結び直す `sync-content-review-sha.py` を追加した。指摘を当てるたびに全文を再レビューしていたループを断つため。両 verdict が PASS で、記録 sha が編集前の sha と一致し、指定した指摘 id が実在して未使用のときだけ結び直し、`sha_rebinds[]` に記録を残す。それ以外の編集は従来どおり再レビューが要る。`lint-content-review.py` は変えていない。
 - run-skill-create 独自の build-trace / findings schema を削除し、build の `skill-build-trace.schema.json` に一本化した (build の lint receipt 再利用は `skill_name` の一致を必須にした)。handoff schema は Gate (1 / 2.5 / 2) の approver を `user` に限り、`solo_operator_auto` を廃止した。`system_auto` は Gate の無い step 通過だけに使える。
 - run-elegant-review の findings schema に issue の `id` を足し、`/skill-improve` の選択と executor の `selected_finding_ids` を同じ値で結ぶようにした。
+- run-build-skill Step 4 の description lint を、生成した skill だけに絞った (`lint-skill-description.py --skill`)。同じ plugin の既存 skill に違反があっても新規 build は止まらない。
+- build の lint receipt を、生成した skill ディレクトリ全体の内容に結び付けた。lint-skill-tree や `validate-build-plan --check` は SKILL.md 以外も見るので、digest も SKILL.md だけでなくディレクトリ全体 (`directory_content_sha256`、`__pycache__` と `.DS_Store` は除く) から取る。build は Step 3.5 で trace の `reproducibility_gates.lint` を `N/A` と書き、Step 4 の lint が全部 exit 0 になってから `PASS` と `lint_target_sha256` に書き換える (lint を走らせる前に PASS を書く自己申告をやめた)。run-skill-create は今の digest と一致するときだけ receipt を再利用し、一致しなければ build へ戻さず、receipt が覆う lint だけをその場で再実行する。その再実行が 1 本でも fail なら止めて利用者に提示する。
+- `validate-build-trace.py` が、`lint_target_sha256` が 64 桁の小文字 hex でない trace を拒否するようにした。形の崩れた値は照合を必ず外し、黙って再実行に回ってしまうため。値の無い旧 trace は再利用されないだけなので通す。
+- run-skill-create に `--brief-path` で持ち込んだ brief に `user_request_verbatim` が無いとき、Gate 1 でその旨を利用者に示すようにした。
+- run-skill-elicit の brief を schema と validator に揃えた。trigger_conditions はちょうど 2 個 (validate-frontmatter と lint-skill-description が 3 個以上を落とすため)。goal / purpose_background / checklist (prefix が run・wrap・assign・delegate のとき) と responsibilities (kind が run・assign のとき) の条件付き必須を本文に書いた。`user_request_verbatim` を要約せずに原文のまま入れ、個人特定情報と secret (token・password・API key) だけ伏字にする。必須フィールド数の記述を 14 に直し、allowed-tools に `Bash(python3 *)` と `Bash(mkdir *)` を足した。
+- run-build-skill が、brief の `with_subagent_hint` / `with_hooks` を見て `agent-teams` / `subagent-hook-integration` の category を必ず読むようにした (elicit が立てたフラグの受け手が無かった)。
+- run-build-skill の draft では、利用者への提示 (Step 12.45) が feedback-deploy を待って合流し、配備結果を現物と一緒に見せるようにした。content-review は従来どおり配備を待たない。Step 7 の subagent は対象 plugin の `agents/` へ書き、`.claude/agents/` への反映は C01 に任せる。局面カタログの Step 番号と manifest の `step` が別の番号であることを明記した。
+- run-skill-create の残りを片付けた。完了レポートに release 検証の続け方 (`--mode=update --stage release`) を 1 行添える。Gate 2.5 (manifest-register) にも handoff を宣言する。handoff の `next_phase` は完了時に null と決めた。参照章のリストを 05/06/07/13/23/25 に揃えた。`### ゴールシーク配線` を持たない理由を本文に書いた。
+- content-review verdict schema の `hook_trigger` の例から、廃止した Claude Code hook の経路 (PostToolUse / Stop) を外した。設計書 25 章が削除済みの agent 名を指していたのを直した。
+- run-skill-create の完了レポートに `build_stage` と `deferred_to_release` を載せる。create は build に `--stage` を渡さないので build は draft で動き、release 用の検証は後回しになる。その件数と id を隠さない。frontmatter の `pair: assign-skill-design-evaluator` は、create が evaluator を起動しなくなったので外した。
+- gate-templates.md の確認項目の数え方を実数 (検証1-5 + Layering Review で 9 項目) に合わせ、拒否の閾値を質問文と同じ「1 つでも NG なら拒否 (当てはまらない項目は理由付き N/A)」に揃えた。出典の無い「3 項目以上」をやめた。
+- capability-build-runtime-contract に runtime-evidence-ledger の書き手を明記した。install / enable / trust / new-session / uninstall / PR のような利用者が行う runtime node を保留するときだけ、dispatcher が書く。書かないと TG-C08 が保留を受け付けない。resource-map の consumed_by から、この契約を読まない run-build-skill を外した。
+- run-skill-live-trial の Codex poll は、yield の上限値を断定せず「tool 定義が許す範囲で大きく」と書き、値は例示にした (上限は Codex の版で変わる)。
+- render-findings-score.py の BD-003 が、frontmatter の閉じ `---` 直後の改行を本文 1 行として数え、300 行ちょうどの本文を 301 行として落としていたのを直した。
+- どの step からも呼ばれていなかった `resolve-brief-to-category.py` を削除し、schema・elicit 本文・lint の除外リストからの言及も消した。
 
 ## 1.4.64 — 2026-11-09
 

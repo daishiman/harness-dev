@@ -2,20 +2,20 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-create",
-    "skill_md_sha256": "b1aebfbaa85761f11f7a0a9fe743a971260af11b0bc34caab137a7573f236424"
+    "skill_md_sha256": "a70116c49996d261dee106e79423b81f610eb19cbd1ac26ac3cfa200e325dc73"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
-    "contradiction": 0,
-    "omission": 3,
-    "inconsistency": 4,
+    "contradiction": 1,
+    "omission": 4,
+    "inconsistency": 3,
     "dependency_break": 1,
-    "smell": 3
+    "smell": 2
   },
-  "reviewer": "independent-content-reviewer-20261114 (Claude subagent, incremental profile, fresh review of SKILL.md b1aebfba)",
-  "reviewed_at": "2026-11-14T02:53:07+09:00",
-  "iterations": 2,
+  "reviewer": "independent-content-reviewer-20261114 (Claude subagent, incremental profile, focused combined review of SKILL.md 879ee8a6)",
+  "reviewed_at": "2026-11-14T09:26:15+09:00",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -27,30 +27,60 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "1 周目の high (build-trace schema の食い違い) は根本から解消した。create 独自の schemas/build-trace.schema.json・findings.schema.json・rubric-merge.schema.json を削除した。そのうえで、SKILL.md:50 (IN2)・118 (出力)・182 (CL-3)・229 (Additional Resources)、workflow-manifest.json:64 (build.resourceIds)、references/resource-map.yaml:14 の参照先を、run-build-skill/schemas/skill-build-trace.schema.json に一本化している。build の schema は reproducibility_gates.lint (enum PASS/FAIL/N/A) を required に持つ。このため、CL-3 (schema 準拠) と CL-7 (lint receipt PASS) が同じ schema の上で両立する。jsonschema の check_schema では handoff・skill-brief・skill-build-trace の 3 schema とも妥当だった。削除したファイルへの生きた参照は、git grep で spec-drift-guardian のテストに 1 件残るだけ",
-      "OUT2 (SKILL.md:63-67) の verify_by を elegant-review に変えた。outer criterion の検査主体が OUT1 と同じ content-review/elegant-review にそろい、存在しない script を検査主体として名乗らなくなった。derived_from [CL-9] と Checklist の写像は、lint-criteria-provenance (exit 0) と lint-feedback-contract --all (exit 0) で整合を確かめた",
-      "「評価は build の receipt を転記するだけで、create では評価し直さない。receipt が無ければ未診断と書く」という規則を、workflow-manifest.json:30-33 (evaluation_source) と report phase の evaluation_receipts / evaluation_receipts_comment に機械可読で宣言した。SKILL.md の 113・120・124・139・161・192・203・220 行もすべて同じ規則を指している。評価の二重実行を無くしながら、評価を省いたことを完了レポートで隠さない作りで、横展開する価値がある",
-      "build_lint_reuse に required_match {skill_name: brief.skill_name} を足した (workflow-manifest.json:182)。comment (185) は、別 skill の trace が残っていた場合も build へ戻すと明記している。build trace の schema と skill-brief.schema.json はどちらも skill_name を required にしているので、この突合は schema の上で成り立つ",
-      "gate_order [G1, G2.5, G2] は、phases の gate 値と transition に一致している。全 11 phase が gate 条件と on_pass/on_fail を持ち、ref-skill-design-rubric の WF-001/WF-002 を満たす。R2 は責務 (2.1)・ドメイン表 (2.2)・入力 enum (2.3)・ゴール (5.2) が Gate 1 / 2.5 / 2 にそろっている。gate-templates.md:45 には Gate 3/4 を外した理由を残している。設計書 23 章 140 行・25 章 20 行も新しいフローに追従した",
-      "rubric の high 項目は満たしている: FM-001 (名前の規約)、BD-001 (## Purpose & Output Contract が 111 行にある)、BD-003 (本文 143 行で 300 行以下)、NM-001 (ディレクトリ名と name が一致)。R1/R2 は 7 Layer と Output Contract を持ち、PR-001/PR-003 も満たす。rubric の high 違反は 0 件"
+      "前回の medium だった NEG0 (artifact-delivery の accept-as-is) は根本から解消した。phase_activation に gated orchestrator 用の \"gate-ordered-phases-with-delegated-choice\" を足し (workflow-manifest.json:18、scripts/lint-entrypoint-artifact-first.py:91 で gate_order が空でないことを要求)、gate_order [\"G1\",\"G2.5\",\"G2\"] (manifest:28) を明示した。SKILL.md:91-98 も書き直し、最小成果物を Gate 1 の skill-brief.json にした。4 択は build Step 12.5 の diagnostic-choice.json を転記するだけにし、accept-as-is でも gate_order・P0 lint・完了レポートを通すと明記した。同じ 4 択を二度聞く問題も消えた。lint-artifact-delivery.py と lint-entrypoint-artifact-first.py はどちらも exit 0。",
+      "前回の medium だった NEG1 (Gate の自動承認) も解消した。schemas/handoff.schema.json:9-14 の allOf if/then で gate_id が数値なら approver を const \"user\" に固定し、prompts/R2-gate-review.md:33・95・114 も「Gate の approver は user だけ」に揃えた。文章と schema の両方で同じ規則を強制しており、横展開できる型になっている。",
+      "build lint の再利用 (workflow-manifest.json:179-187 build_lint_reuse) は、receipt の JSON pointer (eval-log/skill-build-trace.json#/reproducibility_gates/lint)、top-level の lint_target_sha256、skill_name のどれもが run-build-skill/schemas/skill-build-trace.schema.json:91-107 の実際の定義と一致した。stage_receipts (manifest:227-236) の flags.build_stage と stage_gate.deferred_to_release も、validate-build-plan.py:166・183 と plan-verification-obligations.py:655-667 の実装と一致している。重複 lint を消しつつ、別 skill の trace の取り違えを skill_name 一致で防いでいる。",
+      "未使用資産の削除 (pair、resolve-brief-to-category.py、create 独自 schema) のあと、SKILL.md・workflow-manifest.json・schemas/skill-brief.schema.json に、削除済みの物への参照は残っていなかった。p0-lint.commands (lint-dependency-direction・lint-skill-dep-step7・lint-forbidden-deps・lint-manifest-contents・audit-capability-parity) はすべて exit 0 で、依存方向も壊れていない。"
     ],
     "negative_feedback": [
-      "[medium/inconsistency・以前から (1 周目指摘 2 が残っている)] SKILL.md:92-98 の artifact-delivery 節と、workflow-manifest.json:18 の phase_activation \"all-legacy-phases-after-semantic_evaluator_started\" は変わっていない。文字どおり読むと、accept-as-is では Gate 1・Gate 2・create 固有の P0 lint を含む全 phase を実行しないまま handoff が完了する。これは禁則 (SKILL.md:126)・Key Rule 1 (136)・OUT1 (60) の「明示的な gate decision なしに前進しない」と食い違う。4 択は build Step 12.5 でも聞かれるので、同じ質問を二度することになる。さらに create は evaluator を起動しない (OUT1・139・203) のに、light/standard/detailed で入る状態の名前は semantic_evaluator_started のままで、名前と実際の動きが合わない。repo 共通の生成契約 (scripts/build-artifact-delivery.py。lint-artifact-delivery.py は exit 0) なので、create だけでは直せない。直し方の提案: 生成契約に orchestrator 向けの variant を足す。pre-choice で提示するものを Gate 1 の skill-brief.json にし、4 択は build Step 12.5 にまとめる。accept-as-is でも Gate 2・P0 lint・完了レポートは省かないと本文に書き、lint-artifact-delivery がその variant を受け入れるようにする",
-      "[medium/inconsistency・今回 (この branch の簡素化で prompts/R3-governance-decide.md を削除し、OUT1 から solo 自動承認を外した変更に、周りが追従していない。1 周目では指摘していない)] 自動承認の条件を定義する文書は、create 配下に無くなった (git grep で R3-governance-decide・auto_approve_conditions・solo_operator_mode は create 配下に 0 件)。それでも prompts/R2-gate-review.md は次の記述を残している: 33 行「自動承認条件を恣意的に緩めない」、95 行「system_auto は条件成立時のみ」、114 行の完了チェック「approver が user / solo_operator_auto / system_auto のいずれか (条件成立時のみ自動承認)」、122 行の手順「自動承認条件評価」。114 行は、同じ R2 の CONST_001 (21 行「ユーザー承認なしに次フェーズへ進まない」) と食い違う。schemas/handoff.schema.json も、21 行の approver enum で solo_operator_auto と system_auto を許している。17 行の gate_id の説明は「(1, 2, 2.5, 3, 4)」のままで、33 行の artifacts.kind には、書く側がいなくなった elegant-findings と governance-decision が残る。R2 は全ゲートで読まれる (Key Rule 1、SKILL.md:136)。このため、定義の無い「条件」を実行者が解釈し、人間承認 gate を自動で通す余地が残る。schema も Gate 1・2・2.5 の handoff を approver=solo_operator_auto のまま通すので、IN2 の schema 検証では OUT1 違反を捕まえられない。一方、R2 の CONST_001 (21)・5.2 (106) と SKILL.md:126 はユーザー承認を必須にしており、本文の上で自動承認が成り立つ経路は無い。そのため high にはしない。直し方の提案: handoff.schema.json に if/then を入れ、gate_id が 1・2・2.5 のときは approver を user に限る。solo_operator_auto は enum から外し、system_auto は gate_id=null の step 通過だけに許す。gate_id の説明は (1, 2, 2.5) に直す。R2 の 33・95・114・122 行は「人間承認 gate は user のみ。system_auto は gate の無い step 通過だけ」に書き換える",
-      "[low/omission・以前から (1 周目指摘 7 は一部だけ解消)] workflow-manifest.json:182 に required_match {skill_name: brief.skill_name} が足され、別 skill の trace を使い回すことは防げるようになった。ただし、生成物との結び付き (digest や build の artifact-fingerprint) はまだ無い。そのため、同じ skill の build が trace を書く前に失敗すると、前回の PASS を使い回し得る。また SKILL.md の本文は skill_name の不一致に触れていない。差し戻し条件 (204) は「lint receipt が PASS でない、または P0 lint fail」だけで、Key Rule 3 (138) も同じ。CL-7 (189) は manifest を参照するだけで、不一致の扱いは manifest の comment (185) にしか書かれていない。直し方の提案: SKILL.md の 204 行と 138 行に「receipt の skill_name が brief と違う」を差し戻し条件として足す。あわせて build trace に生成物の digest を持たせ、required_match に加える",
-      "[low/omission・以前から (1 周目指摘 8 が残っている)] SKILL.md:131 の E2 (--brief-path) 節は変わっていない。plugins/plugin-dev-planner 配下の .py には user_request_verbatim が 0 件で (grep)、skill-brief.schema.json でも任意項目のままである。このため E2 経路では、build Step 12.6 の --user-request-file に渡す初回依頼の原文が欠ける。直し方の提案: E2 節に、上流の初回依頼を user_request_verbatim へ写すことを書く。原文が無いときは Gate 1 で利用者に確かめることも足す",
-      "[low/smell・以前から (1 周目指摘 9 が残っている)] lint-goal-seek.py plugins/harness-creator/skills/run-skill-create/SKILL.md は exit 0 だが、WARN を 3 件出す: 『### ゴールシーク配線』が無い / intermediate.jsonl・original_goal・merged_directive_for_next が無い / required_keys・original_goal_hash・hashlib.sha256 が無い。ゴールシークループ (SKILL.md:197-206) には、当初目的の hash アンカーが無い。直し方の提案: with-goal-seek combinator を当てる。または、orchestrator では build の intent_anchor を正本にすると明記し、WARN を除外する理由を残す",
-      "[low/omission・今回] create は build を Skill(run-build-skill, args=[skill_name, kind, --mode={mode}]) (SKILL.md:182) で呼び、--stage を渡さない。argument-hint (6) にも --stage は無い。このため build は常に build_stage=draft で動き (run-build-skill/SKILL.md:179・301)、本出荷用の評価は deferred_to_release へ回される (同 238・349)。今回 create 側の evaluator を外したので、release 相当の評価は既定の流れでは一度も走らない。それなのに、完了レポートの項目 (SKILL.md:195: mode/gates_passed/creator_kit_registration/build_lint_receipt/build_evaluation_receipt/open_questions) には build_stage も deferred_to_release も無い。description (3 行) の「品質保証付きフロー」を使う人は、release の評価が先送りされたことを報告から読み取れない。直し方の提案: 完了レポートの項目に build_stage と deferred_to_release を足す。release の評価を求めるときの手順 (build へ --stage release を渡す、または利用者が build を release で呼び直す) を、起動モードに 1 行書く",
-      "[low/smell・今回] SKILL.md:27 に pair: assign-skill-design-evaluator が残っている。create はもう evaluator を起動しない (OUT1・139・203)。evaluator 側の pair は run-build-skill で (assign-skill-design-evaluator/SKILL.md:8)、その run-build-skill が evaluator を pair にしている (run-build-skill/SKILL.md:42)。pair は所有関係の宣言で、実行時の依存ではないので (lint-dependency-direction は exit 0)、動作は壊れない。ただ、読み手には create が evaluator と組んでいるように見え、本文と食い違う。直し方の提案: pair を外すか、create が実際に組む相手を宣言し直し、lint-dependency-direction で確かめる",
-      "[low/inconsistency・以前から] 参照する設計書の章が箇所によって違う。SKILL.md:38 (context-budget コメント) と 214 (Gotchas 5) は「05/06/07/13/23/25 章のみ」だが、233 (Additional Resources) は「05/06/07/11/13/23/25 章」で 11 章を含む。HEAD でも同じ。直し方の提案: 11 章を参照するかどうかを決め、3 か所の並びをそろえる",
-      "[low/inconsistency・以前から] references/gate-templates.md で、確認項目の数え方が食い違っている。20 行の見出しは「01a Step8 検証1-3」、22 行は「以下3項目」と書くが、実際の項目は 24-33 行の 9 項目 (検証1-5 と 05 Layering Review の 4 項目) ある。38 行の質問文は「上記5検証 (検証1-5)」と書く。35 行の拒否条件は「3項目以上 NG」なので、1-2 項目が NG でも Gate 2 を通せるように読める。直し方の提案: 見出しと文言を 9 項目 (検証1-5 と Layering Review 4 項目) にそろえる。拒否条件は「1 項目でも NG なら拒否」にするか、閾値をこの値にした理由を書く",
-      "[low/dependency_break・以前から] SKILL.md の 214・233 行が参照する設計書 25 章のうち、20 行の E2E 説明は新しいフローに直った。ところが同じ章の「自動フロー (全体図)」は、今も 52 行で「[Step 6] forked evaluator 起動 (assign-skill-design-evaluator)」、55-57 行で「[Step 7] score >= threshold?」を既定の手順として描いている。build の draft は本出荷用の評価を起動しないので (run-build-skill/SKILL.md:349)、20 行と 52 行が同じ章の中で食い違う。直し方の提案: 全体図の Step 6/7 に「release のときだけ。draft では利用者が選んだときだけ初稿診断を行う」と注記するか、build の Step 12.5-12.8 に合わせて描き直す",
-      "[low/smell・今回 (create の外。1 周目指摘 1 の直し方から生じた)] plugins/spec-drift-guardian/tests/test_check_triage_complete.py:44 の TARGET_REL2 が、今回削除した plugins/harness-creator/skills/run-skill-create/schemas/build-trace.schema.json を指したままになっている。このテストは tmp_path にファイルを作り、fnmatch で glob を照合するだけなので、結果は変わらない (40 passed)。ただ、実在しない path を例に使っているので、読む人が迷う。直し方の提案: run-build-skill/schemas/skill-build-trace.schema.json など、実在する schema の path に替える"
+      "[medium/contradiction・今回の変更で生じた] SKILL.md:159 の Step 4a は今回書き換えたのに「fail→Step 2、最大3周」が残っている。これは自動で最大 3 回やり直す、という読み方になる。一方、SKILL.md:138 (Key Rule 3「停止し findings 提示」)・SKILL.md:204 (差し戻し「自動で再実行しない…利用者が選んだときだけ run-build-skill から 1 回やり直す」)・workflow-manifest.json:195 (max_retry 0)・workflow-manifest.json:198 (on_fail \"abort\"、「自動で build へ戻さない」)・設計書 25-meta-skill-runbook.md:102-106 (「自動の作り直し (retry) はしない」) は、自動では戻らない方針で揃っている。同じ manifest の中でも、workflow-manifest.json:184 の on_missing_or_fail \"build\" と 186 の comment「commands を走らせずに build へ戻す」が、198 の「自動で build へ戻さない」と食い違う。high にしない理由: 機械が読む transition (198) と本文の差し戻し規則 (204) は安全側 (止まる) で一致しており、実行が暴走する経路ではない。直し方の提案: SKILL.md:159 を「fail→停止して findings 提示 (再実行は利用者が選んだときだけ 1 回)」に、manifest:184 を \"abort\" などの停止値に、186 の comment を「build へ戻さず止める」に揃える。",
+      "[low/inconsistency・前回指摘 NEG2 の残り] workflow-manifest.json:182 の required_match.lint_target_sha256 と run-build-skill/SKILL.md:343 は、SKILL.md 1 ファイルの sha256 だけを結び付けている。ところが再利用される covered_scripts (run-build-skill/SKILL.md:329-340 の lint-skill-tree・validate-build-plan --skill-dir など) は skill ディレクトリ全体を検査する。build Step 12.7 の改善が references/ や scripts/ だけを変えた場合、digest は一致したまま古い lint 結果が使い回され得る。直し方の提案: digest の対象を skill ディレクトリの tree hash に広げるか、SKILL.md:189 に「SKILL.md 以外を変えたら再実行」と書く。",
+      "[low/omission・新しい指摘] workflow-manifest.json:185-186 と SKILL.md:189 は、digest が一致しないときに covered_scripts を再実行することだけを決めている。その再実行が fail したときの扱い (198 の abort に入るのか、build へ戻すのか) は書かれていない。1 件目の食い違いを直すときに、合わせて「再実行 fail も停止」と明記するとよい。",
+      "[low/omission・前回指摘 NEG5 の残り] 完了レポートに build_stage と deferred_to_release を載せる仕組み (SKILL.md:195 CL-13、workflow-manifest.json:227-236 stage_receipts) は入った。しかし SKILL.md:182 CL-3 は `--mode` しか渡さず、run-build-skill/SKILL.md:17・299 にある `--stage release` を create から指定する方法がない。draft の後回し分を見た利用者が release 検証を求めたときの続け方も書かれていない。直し方の提案: Step 2 の引数に --stage を通すか、完了レポートに「release が必要なら run-build-skill を --stage release で呼ぶ」と案内を 1 行足す。",
+      "[low/omission・以前から] Gate 2.5 の manifest-register phase (workflow-manifest.json:71-86) だけ handoff の宣言が無い。ほかのゲート付き phase は 51・68・197・212・238 行で handoff を宣言している。SKILL.md:140 (Key Rule 5「各ゲート通過時に handoff 保存」) と SKILL.md:194 (CL-12) を満たす経路が、Gate 2.5 だけ manifest から追えない。",
+      "[low/inconsistency・前回指摘 NEG8 の残り] references/gate-templates.md の確認項目数 (20・22 行の検証1-5 + Layering 4 項目) は直った。ただし 35 行の拒否条件「検証1-5 のうち 3 項目以上が NG」と 38 行の質問「上記5検証 (検証1-5) は全てOKですか?」が食い違う。2 項目 NG なら通るのか分からず、閾値の理由も書かれていない。さらに references/resource-map.yaml:24 の topic は「(Step8 検証 1-3)」のままで、gate-templates.md:20 の「検証1-5」と合わない。",
+      "[low/inconsistency・以前から] schemas/handoff.schema.json:46 の next_phase の説明は「完了時は null」だが、workflow-manifest.json:239 の report phase は on_pass \"complete\" で終わる。最後の handoff-done.json (238 行) の next_phase に null と \"complete\" のどちらを書くかが一意に決まらない。",
+      "[low/dependency_break・今回の変更で生じた] 設計書 25-meta-skill-runbook.md:107 に今回足された行は `elegant-bounded-improvement-executor` を参照している。この agent は commit 740f63f0 で削除され、plugins/harness-creator/agents/ には elegant-improvement-executor.md しか無い。run-build-skill/workflow-manifest.json の Step 12.7 (bounded-improvement) も executor を \"elegant-improvement-executor\" にしている。107 行の agent 名を elegant-improvement-executor に直す。",
+      "[low/smell・前回指摘 NEG7 の残り] 参照する設計書の章のリストが揃っていない。SKILL.md:37 と SKILL.md:214 は 05/06/07/13/23/25 章、SKILL.md:233 (Additional Resources) は 05/06/07/11/13/23/25 章で、11 章が入っている。どちらかに揃える。",
+      "[low/smell・前回指摘 NEG4 の残り] run-build-skill/scripts/lint-goal-seek.py を SKILL.md に当てると exit 0 だが WARN が 3 件出る。内容は「### ゴールシーク配線」節が無いことと、その節で必要な token (intermediate.jsonl / original_goal / merged_directive_for_next、required_keys / original_goal_hash / hashlib.sha256) が無いこと。orchestrator に goal-seek 配線が要らないのであれば、対象外である理由を SKILL.md に 1 行書くと WARN の意味がはっきりする。",
+      "[low/omission・前回指摘 NEG3 の残り (ごく軽微)] 初回依頼の原文 user_request_verbatim は、schemas/skill-brief.schema.json:35 に任意項目として追加された。plugin-dev-planner の render-skill-brief.py:79-92・238 が goal-spec から brief へ写すので、E2 経路でも実質的に届く。ただし SKILL.md:131 の --brief-path 節にはこの項目への言及が無く、既存 brief を持ち込んだときに原文が欠けても気づけない。"
     ],
-    "iteration": 2,
-    "iteration_limit": 3,
-    "hook_trigger": "manual:independent-content-review",
-    "next_action": "none"
+    "iteration": 1,
+    "iteration_limit": 1,
+    "hook_trigger": "manual-incremental-content-review",
+    "next_action": "improve"
   },
-  "notes": "独立 content-review (incremental profile。unresolved semantic batch を 1 context で判定)。判定は PASS。high 0 件・medium 2 件・low 9 件で、rubric の high 違反も 0 件。 1 周目の指摘ごとの判定: (1) high/contradiction の build-trace schema = 解消 (create 独自の schema を削除し、参照先を build の正本 schema に一本化。ただし削除によって、spec-drift-guardian のテストの例示 path が古くなった。low・害なし) / (2) medium/inconsistency の artifact-delivery の accept-as-is = 残っている (SKILL.md:92-98 は変わっていない。repo 共通の生成契約) / (3) medium/omission の OUT2 の検査 script 不在 = 解消 (verify_by を elegant-review に変更) / (4) medium/dependency_break の設計書 23/25 章 = 解消 (23:140・25:20 を更新済み。同じ 25 章の全体図 52 行は以前からの low として別に記録) / (5) low の delegate-codex-skill-review の prompt = 解消 (R1-delegate.md:142・R2-codex-review.md:136) / (6) low の findings.schema.json = 解消 (p0-lint の resourceIds は []、schema も削除、参照は 0 件) / (7) low の build_lint_reuse の結び付け = 一部解消 (skill_name の突合は足されたが、digest の結び付けが無い。本文の差し戻し条件にも未記載) / (8) low の E2 経路の user_request_verbatim = 残っている / (9) low の lint-goal-seek の WARN 3 件 = 残っている (実行して確認)。 1 周目の指摘とは別に、今回新しく見つけた medium: R3 の削除と solo 自動承認の撤去に、R2-gate-review.md と handoff.schema.json が追従していない (approver enum・gate_id の説明・artifacts.kind)。 回したコマンドと exit code (作業ルート、PYTHONPYCACHEPREFIX は scratchpad): shasum -a 256 SKILL.md (開始時・終了時ともに b1aebfba…) / run-build-skill/scripts/lint-ssot-duplication.py --plugin-dir plugins/harness-creator --strict = 0 / skill-governance-lint/scripts/validate-frontmatter.py run-skill-create/SKILL.md = 0 / lint-skill-tree.py run-skill-create = 0 / scripts/lint-feedback-contract.py --all = 0 (WARN 15 件。run-skill-create の分は live-trial の baseline 免除 WARN だけ) / python3 -m pytest -q -p no:cacheprovider tests/scripts-plugins/ -k \"skill_create or build_trace\" = 0 (198 passed, 5363 deselected) / run-build-skill/scripts/lint-goal-seek.py run-skill-create/SKILL.md = 0 (WARN 3) / p0-lint.commands の 5 本 (PLUGIN_ROOT=plugins/harness-creator, SKILLS_DIR=plugins/harness-creator/skills): lint-dependency-direction = 0、lint-skill-dep-step7 = 0、lint-forbidden-deps = 0 (skill-governance-lint/manifest.json が無いため SKIP)、lint-manifest-contents = 0、audit-capability-parity.py --repo-root . --plugin plugins/harness-creator --json = 0 / lint-skill-name.py run-skill-create/SKILL.md = 0 (最初にディレクトリを渡して IsADirectoryError で exit 1。これは呼び方の誤りで、SKILL.md の path で再実行して 0) / lint-skill-description.py = 0 (OK=186) / lint-skill-completeness.py run-skill-create = 0 / lint-criteria-provenance.py run-skill-create/SKILL.md = 0 / lint-matrix-sync.py plugins/harness-creator/references/lint-matrix.json = 0 / scripts/lint-artifact-delivery.py = 0 / pytest -q -p no:cacheprovider plugins/spec-drift-guardian/tests/test_check_triage_complete.py = 0 (40 passed) / jsonschema の check_schema (handoff・skill-brief・run-build-skill の skill-build-trace の 3 schema。python3 inline) = 0。 run-skill-create には skill 専用の tests/ ディレクトリが無い。 eval-log/skill-build-trace.json は別 skill (run-slide-report-generate) の trace で、今回の対象外。 verdict を書いた後の確認: content-review-verdict.schema.json による jsonschema 検証 = 2 本とも 0 errors / scripts/lint-content-review.py --all = 1 (違反 2 件はどちらも harness-creator/run-build-skill の stale-sha で、run-skill-create の違反は 0 件) / pytest -q -p no:cacheprovider tests/criteria/test_all_skills_criteria.py -k run-skill-create = 0 (5 passed)。"
+  "notes": "独立 content-review (incremental profile。focused combined review を 1 context で 1 回)。判定は PASS。high 0 件・medium 1 件・low 10 件。4 条件の判定: 矛盾 = medium 1 件 (SKILL.md:159 の「最大3周」と、止まる方針の 138・204・manifest:184/186/195/198・設計書 25:102-106) / 漏れ = low 4 件 / 整合 = low 3 件 / 依存 = low 1 件 (設計書 25:107 が削除済み agent を参照)。 前回 verdict (SKILL.md b1aebfba) の指摘ごとの判定: NEG0 medium (accept-as-is) = 解消 / NEG1 medium (Gate 自動承認) = 解消 / NEG2 low (lint digest) = 一部解消 (SKILL.md だけを束縛しているので low で残す) / NEG3 low (user_request_verbatim) = 上流で実質解消、SKILL.md:131 の記載だけ残る / NEG4 low (lint-goal-seek WARN) = 残っている / NEG5 low (build_stage) = 報告は解消、release の続け方は残る / NEG6 low (pair) = 解消 / NEG7 low (章リスト) = 残っている / NEG8 low (gate-templates) = 項目数は解消、閾値と resource-map が残る / NEG9 low (設計書 25 章) = 全体図は解消、ただし 107 行に削除済み agent への参照が新たに入った / NEG10 low (spec-drift-guardian のテスト path) = create の外なので今回は確かめていない。 参考 (指摘には数えない): scripts/validate-intake-publish-ready.py に PEP723 block が無く、lint-script-frontmatter は run-skill-create で exit 1 になる。origin でも同じ結果で、今回の変更とは関係なく、CI の対象 dir の外。",
+  "sha_rebinds": [
+    {
+      "from_sha": "879ee8a627d275afb9d63d42f7457163057233dc32a091f6317afa375658162e",
+      "to_sha": "a70116c49996d261dee106e79423b81f610eb19cbd1ac26ac3cfa200e325dc73",
+      "finding_ids": [
+        "elegance:1",
+        "rubric:1",
+        "elegance:2",
+        "rubric:2",
+        "elegance:3",
+        "rubric:3",
+        "elegance:4",
+        "rubric:4",
+        "elegance:5",
+        "rubric:5",
+        "elegance:6",
+        "rubric:6",
+        "elegance:7",
+        "rubric:7",
+        "elegance:8",
+        "rubric:8",
+        "elegance:9",
+        "rubric:9",
+        "elegance:10",
+        "rubric:10",
+        "elegance:11",
+        "rubric:11"
+      ],
+      "rebound_at": "2026-11-14T00:44:52Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

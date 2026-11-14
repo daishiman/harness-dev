@@ -25,7 +25,6 @@ EXEMPT_NAMES = {"__init__.py"}
 # このセットに含まれるファイルは frontmatter 不備でも警告にダウングレードする（EXCEPTION 扱い）。
 PENDING_FILES = {
     "render-findings-score.py",
-    "resolve-brief-to-category.py",
     "diff-rubric-impact.py",
     "lint-rubric-violation.py",
     "pre-commit-secret-scan.py",

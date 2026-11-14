@@ -15,7 +15,7 @@
       "pre_choice_forbidden": ["semantic-evaluator", "task-fork", "subagent", "multi-worker", "revise-loop"],
       "accept_contexts": {"evaluator": 0, "improver": 0}
     },
-    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
+    "phase_activation": "gate-ordered-phases-with-delegated-choice",
     "release": "explicit-only",
     "exhaustive": "explicit-only"
   },
@@ -82,6 +82,7 @@
       "delegateSkill": null,
       "command": "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-automation)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/build-manifest-registration-plan.py\"",
       "fatal_exit_codes": [1, 2],
+      "handoff": "eval-log/handoff-after_manifest_register.json",
       "transition": {"gate": "登録plan検証PASSかつGate 2.5の明示decisionがPASS", "on_pass": "bundle-register", "on_fail": "abort"}
     },
     {
@@ -179,10 +180,11 @@
       "build_lint_reuse": {
         "receipt": "eval-log/skill-build-trace.json#/reproducibility_gates/lint",
         "required_status": "PASS",
-        "required_match": {"skill_name": "brief.skill_name"},
+        "required_match": {"skill_name": "brief.skill_name", "lint_target_sha256": "eval-log/skill-build-trace.json#/lint_target_sha256 == directory_content_sha256(<skill_dir>) (コマンドは run-build-skill SKILL.md Step 4)"},
         "covered_scripts": ["lint-skill-name.py", "lint-skill-description.py", "lint-skill-tree.py", "validate-frontmatter.py", "validate-build-plan.py"],
-        "on_missing_or_fail": "build",
-        "comment": "covered_scripts は run-build-skill Step 4 (lint-matrix の build-preflight) が同じ生成物に対して実行済みなので、ここでは再実行しない。receipt が無い、receipt の skill_name が今回の brief.skill_name と違う (別 skill の trace が残っている)、または lint が PASS でなければ commands を走らせずに build へ戻す。skills ディレクトリ全体への横断検査は CI (lint-matrix の ci) が受け持つ。"
+        "on_missing_or_fail": "abort",
+        "on_digest_mismatch": "rerun_covered_scripts",
+        "comment": "covered_scripts は run-build-skill Step 4 (lint-matrix の build-preflight) が同じ生成物に対して実行済みなので、ここでは再実行しない。receipt が無い、receipt の skill_name が今回の brief.skill_name と違う (別 skill の trace が残っている)、または lint が PASS でなければ commands を走らせずに止め、利用者に提示する (transition.on_fail と同じく自動で build へ戻さない)。lint_target_sha256 が無いか今の skill ディレクトリの digest と違う (build 後に改善や prompts の追加などで中身が変わった) ときは、build へ戻さず covered_scripts を build Step 4 と同じ引数でここで実行する。その再実行が 1 本でも exit 0 でなければ on_missing_or_fail と同じく止めて利用者に提示する (自動で build へ戻さない)。skills ディレクトリ全体への横断検査は CI (lint-matrix の ci) が受け持つ。"
       },
       "commands": [
         "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-dependency-direction.py\" --skills-dir \"${SKILLS_DIR}\"",
@@ -191,10 +193,10 @@
         "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-lint)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/lint-manifest-contents.py\"",
         "python3 ${PLUGIN_ROOT}/scripts/audit-capability-parity.py --repo-root . --plugin plugins/<plugin> --json"
       ],
-      "max_retry": 3,
+      "max_retry": 0,
       "fatal_exit_codes": [1, 2],
       "handoff": "eval-log/handoff-after_lint.json",
-      "transition": {"gate": "build lint receiptがPASSかつcreate固有のP0 lintがexit 0かつGate 2の明示decisionがPASS", "on_pass": "pkg-check", "on_fail": "build"}
+      "transition": {"gate": "build lint receiptがPASSかつcreate固有のP0 lintがexit 0かつGate 2の明示decisionがPASS", "on_pass": "pkg-check", "on_fail": "abort", "on_fail_comment": "自動で build へ戻さない。失敗した lint と根本原因を利用者に提示して止め、利用者が修正と再実行を選んだときだけ build から 1 回やり直す"}
     },
     {
       "id": "pkg-check",
@@ -228,6 +230,11 @@
         "eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/improvement-validation.json"
       ],
       "evaluation_receipts_comment": "evaluation_source.c1_c4 の receipt をそのまま転記する。無ければ未診断と書き、ここで評価 Agent を起動しない。",
+      "stage_receipts": {
+        "build_stage": "eval-log/build-plan.json#/flags/build_stage",
+        "deferred_to_release": "eval-log/<plugin>/build/verification-plan.json#/stage_gate/deferred_to_release"
+      },
+      "stage_receipts_comment": "draft で後回しにした release 検証を利用者に見せる。完了レポートに build_stage と deferred_to_release の件数・id をそのまま書き、draft を release 済みと読ませない。",
       "fatal_exit_codes": [],
       "handoff": "eval-log/handoff-done.json",
       "transition": {"gate": "完了reportと全handoffがschema検証済み", "on_pass": "complete", "on_fail": "abort"}

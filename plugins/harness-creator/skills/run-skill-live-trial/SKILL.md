@@ -262,7 +262,7 @@ SESSION_ID="$SESSION_ID" python3 $SCRIPTS/live-trial-poll.py --state-file "$WORK
 | orchestrator の実行環境 | 起動と待機 |
 |---|---|
 | Claude Code | Bash の `run_in_background: true` で 1 回起動し、終了通知を待つ。背景実行が使えないときは前景 `timeout: 600000` に `--max-ticks 36` (36 tick × 15s = 540s で 600s 上限に収まる) を付け、exit 5 なら同一 `--state-file` で再呼びする |
-| Codex | `exec_command` で起動し (`yield_time_ms: 30000`、tool 定義上の上限)、未終了なら `write_stdin` に空入力と `yield_time_ms: 300000` (空 poll の上限) を渡して待つ。JS `exec` / `wait` 経路では `wait` の `yield_time_ms` を同程度に大きく取る |
+| Codex | `exec_command` で起動し、未終了なら `write_stdin` に空入力を渡して待つ。`yield_time_ms` は使っている Codex の tool 定義が許す範囲で大きく取る (例: 起動 30000、空 poll 300000。上限値は Codex の版で変わりうるので tool 定義を確かめる)。JS `exec` / `wait` 経路では `wait` の `yield_time_ms` を同程度に大きく取る |
 
 途中で切れた場合 (tool の上限、exit 5) は、同一 `--state-file` で再呼びする。経過・停滞の計数は引き継がれる。
 

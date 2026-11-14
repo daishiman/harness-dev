@@ -2,19 +2,19 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-elicit",
-    "skill_md_sha256": "ab89356982b6866f14ae443a462bb7d27c17b5d8ceaaeeff2d030faac778884f"
+    "skill_md_sha256": "5f70617e8a1e6bf2d9fba31c630b7ae1a7774e73872def8a7cc7a73133c95c2c"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 0
+    "contradiction": 1,
+    "omission": 2,
+    "inconsistency": 3,
+    "dependency_break": 1,
+    "smell": 2
   },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:09Z",
+  "reviewer": "independent-incremental-focused-reviewer-20261114",
+  "reviewed_at": "2026-11-14T09:30:00+09:00",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,13 +25,54 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "inline/inline がbrief生成の対話・schema検証を単一contextで完結させ、不要なAgent委譲を導入していない。"
+      "削除した resolve-brief-to-category.py への言及が SKILL.md と schema と lint から消え、plugins と scripts に残るのは CHANGELOG.md:25 の削除記録だけなので、存在しない script を指す参照が残っていない。",
+      "SKILL.md:67 の「create の Gate 1 がこの提示と承認を兼ね、ここで別に4択を聞かない」は run-skill-create/SKILL.md:93 と同じ取り決めで、create 経由のときに利用者へ診断深度の4択を二重に聞かない。",
+      "user_request_verbatim という名前が skill-brief.schema.json:35、prompts/R1-elicit.md:47、run-skill-create/prompts/R1-elicit.md:34、run-build-skill/SKILL.md:423、validate-build-trace.py:138、plugin-dev-planner の render-skill-brief.py:91-92 で一致しており、elicit・create・build・planner の間で別名になっていない。",
+      "lint-skill-name、lint-skill-description --skill、validate-frontmatter、lint-skill-tree、lint-entrypoint-artifact-first、validate-plugin-completeness がすべて通り、SKILL.md が参照する goal-seek-paradigm.md、search_knowledge.py と record_usage.py の CLI flag、knowledge/、ref-knowledge-loop、with-knowledge.patch、build-flags.schema.json、設計書の各章は実在する。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "medium(漏れ): SKILL.md:84-113 のフィールド一覧にも :115 の完了条件にも user_request_verbatim が一度も出てこず、原文を残せという指示は frontmatter の responsibility_refs(SKILL.md:27) が指す prompts/R1-elicit.md:47 にしかないので、本文だけを読んで brief を書く実行者は intent_anchor の元になる原文を落とし、run-build-skill/SKILL.md:423 の目的適合判定が fallback に回る。",
+      "medium(矛盾): SKILL.md:67-68 は create から呼ばれたときは4択を聞かないとする一方、SKILL.md:72 と workflow-manifest.json:18 は既存 workflow (brief を作るヒアリング本体を含む) を light/standard/detailed が記録されて semantic_evaluator_started へ移ったときだけ実行するとしているため、create 経由では4択の記録が永久に起きず、ヒアリングをどの状態で始めるのかが本文から決まらない。",
+      "medium(不整合・差分外): SKILL.md:121・:140・:238・:326 は trigger を2〜3個とし、:326 はそれを「lint-skill-description.py の R1 と rubric FM-003 の合意値」と書くが、lint-skill-description.py:138-139 は3個以上を R1 違反、validate-frontmatter.py:456-466 はちょうど2個を必須とし、ref-skill-design-rubric/SKILL.md:66 と run-build-skill/templates/run.md:3 も2個を前提にしているので、3個の brief を書くと build 後の機械ゲートで落ちる。",
+      "medium(漏れ・差分外): SKILL.md:84-113 のフィールド一覧に responsibilities がなく、:93・:95 は goal と checklist を「実行系で推奨」とするが、skill-brief.schema.json:126-131 は prefix が run/wrap/assign/delegate なら goal・purpose_background・checklist を、:153-164 は kind が run/assign なら responsibilities を必須にしているので、本文どおりに作った run 系 brief は :67 の schema 検証で落ちる。",
+      "low(不整合): SKILL.md:273 は「これら 3 フィールド」と書きながら needs_independent_context / needs_lifecycle_enforcement / with_subagent_hint / with_hooks の4つを並べている。",
+      "low(依存の断絶): SKILL.md:269-273 は run-build-skill が with_subagent_hint / with_hooks を見て agent-teams / subagent-hook-integration category を「必ず読む」とするが、run-build-skill/SKILL.md:207・:277 は resource-map.yaml で category を選ぶとしか書かず、resource-map.yaml:173・:180 も keyword で選ぶだけなので、brief のフラグから category を強制する受け手がいない。",
+      "low(臭い): SKILL.md:67 の schema 検証を誰がどのコマンドで行うかが書かれておらず、allowed-tools(SKILL.md:8-10) が Read/Write だけなのに本文は :167・:302 で python3、:316 で mkdir を実行させている。",
+      "low(不整合): references/brief-template.md:5 は「13 必須フィールド」と書くが、skill-brief.schema.json:8-23 の required は14件ある。",
+      "low(臭い): prompts/R1-elicit.md:47 は原文の PII だけを伏字にするので、plugin-dev-planner/skills/run-plugin-dev-plan/prompts/R1-elicit-goal.md:45 のように secret も伏字にしておかないと、依頼文に混ざった秘密情報が eval-log/skill-brief.json にそのまま残る。"
+    ],
     "iteration": 1,
-    "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
-    "next_action": "none"
+    "iteration_limit": 1,
+    "hook_trigger": "manual-incremental-content-review",
+    "next_action": "improve"
   },
-  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
+  "notes": "incremental profile の focused combined review として、git diff 3e1b394b -- plugins/harness-creator/skills/run-skill-elicit と、連動する run-skill-create/schemas/skill-brief.schema.json と run-skill-create/SKILL.md を1つの context で読み、(a)矛盾なし (b)漏れなし (c)ref-skill-design-rubric 規約との整合 (d)依存関係の整合 (e)rubric high 0 を同時に判定した。前回 verdict の negative_feedback は空だったので、解消を確かめる対象の指摘はなかった。high は0件、medium は4件 (うち2件は今回の差分の外にある既存の問題) なので PASS とし、medium と low は negative_feedback に残した。",
+  "sha_rebinds": [
+    {
+      "from_sha": "31524497cae55397047e0ab264112e8f2866d7d50def0b38a1c0f83eee27d0ca",
+      "to_sha": "5f70617e8a1e6bf2d9fba31c630b7ae1a7774e73872def8a7cc7a73133c95c2c",
+      "finding_ids": [
+        "elegance:1",
+        "rubric:1",
+        "elegance:2",
+        "rubric:2",
+        "elegance:3",
+        "rubric:3",
+        "elegance:4",
+        "rubric:4",
+        "elegance:5",
+        "rubric:5",
+        "elegance:6",
+        "rubric:6",
+        "elegance:7",
+        "rubric:7",
+        "elegance:8",
+        "rubric:8",
+        "elegance:9",
+        "rubric:9"
+      ],
+      "rebound_at": "2026-11-14T00:44:52Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

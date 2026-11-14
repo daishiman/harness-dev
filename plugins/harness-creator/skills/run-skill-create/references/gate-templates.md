@@ -17,9 +17,9 @@ options:
 
 **前提**: Step 4a の P0 lint 全て exit 0 で通過済みであること。
 
-### Gate 2 前 必須手動チェックリスト (01a Step8 検証1-3)
+### Gate 2 前 必須手動チェックリスト (01a Step8 検証1-5 + 05 Layering Review)
 
-P0 lint が pass しても以下3項目は**手動確認**が必要 (自動化不能):
+P0 lint が pass しても以下 9 項目 (検証1-5 と 05 Layering Review 4 項目) は**手動確認**が必要 (自動化不能):
 
 - [ ] **検証1 (直接呼び出し)**: `/skill-name` で直接 invoke して動くか確認
 - [ ] **検証2 (description自動発動)**: trigger phrase に合致する自然文を投げて発動するか確認
@@ -32,10 +32,10 @@ P0 lint が pass しても以下3項目は**手動確認**が必要 (自動化�
 - [ ] **05 Layering Review**: MCP/CLI/API/script は選定理由・fallback・依存方向・macOS stdlib適合が `skill-build-trace.json` に残っている
 - [ ] **05 Layering Review**: 採用しない layer にも skip 理由がある
 
-3項目以上 NG、または 05 Layering Review に NG があるなら Gate 2 を拒否し Step 2 (run-build-skill --mode update) へ戻す。
+上記 9 項目のうち 1 つでも NG なら Gate 2 を拒否し Step 2 (run-build-skill --mode update) へ戻す。当てはまらない項目 (例: 危険操作を持たないスキルの検証5) は N/A と理由を書けば NG に数えない。下の質問は 9 項目全部を聞くので、閾値をここと揃えている。
 
 ```
-question: "生成されたスキルのdiffを確認しました。上記5検証 (検証1-5) は全てOKですか? 完了レポートへ進みますか？"
+question: "生成されたスキルのdiffを確認しました。上記9項目 (検証1-5 と 05 Layering Review) は全てOKまたは理由付きN/Aですか? 完了レポートへ進みますか？"
 options:
   - "承認 (Step4a.5→7へ)": 条件該当時の PKG check を経て完了レポートを作成 (C1-C4 は run-build-skill の初稿診断 receipt を転記し、評価し直さない)
   - "修正が必要": run-build-skill --mode update で再生成

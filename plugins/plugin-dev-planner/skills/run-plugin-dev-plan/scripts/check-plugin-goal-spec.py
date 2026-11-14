@@ -45,6 +45,8 @@ ALLOWED = REQUIRED | {
     "max_loops",
     "open_questions",
     "requested_count",
+    # 利用者の初回依頼原文 (任意)。purpose/goal の解釈ずれを後段の初稿診断で検出する正本。
+    "user_request_verbatim",
     # E1/E3 provenance (任意): 改善/intake 由来の再生成 goal-spec が源泉を追跡できるようにする。
     # 欠落は後方互換で WARN 受理 (既存 goal-spec を壊さない)、present-but-malformed のみ fatal。
     "source_intake",
@@ -148,6 +150,10 @@ def validate(data: object) -> list[str]:
     requested = data.get("requested_count")
     if requested is not None and (not isinstance(requested, int) or isinstance(requested, bool) or requested < 1):
         errors.append("requested_count は null または正の int")
+
+    verbatim = data.get("user_request_verbatim")
+    if verbatim is not None and (not isinstance(verbatim, str) or not verbatim.strip() or len(verbatim) > 8000):
+        errors.append("user_request_verbatim は 1-8000 文字の非空 string")
 
     max_loops = data.get("max_loops")
     if max_loops is not None and (not isinstance(max_loops, int) or isinstance(max_loops, bool) or max_loops < 1):

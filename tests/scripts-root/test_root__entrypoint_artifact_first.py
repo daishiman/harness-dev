@@ -88,12 +88,15 @@ def _write_workflow(
     *,
     activate_legacy_phase: bool = True,
     choices: list[str] | None = None,
+    phase_activation: str | None = None,
+    gate_order: list[str] | None = None,
 ) -> None:
-    phase_activation = (
-        "all-legacy-phases-after-semantic_evaluator_started"
-        if activate_legacy_phase
-        else "unbound"
-    )
+    if phase_activation is None:
+        phase_activation = (
+            "all-legacy-phases-after-semantic_evaluator_started"
+            if activate_legacy_phase
+            else "unbound"
+        )
     (skill.parent / "workflow-manifest.json").write_text(
         json.dumps(
             {
@@ -117,6 +120,7 @@ def _write_workflow(
                         **({"choices": choices} if choices is not None else {}),
                     }
                 ],
+                **({"gate_order": gate_order} if gate_order is not None else {}),
             }
         ),
         encoding="utf-8",
@@ -235,6 +239,38 @@ Run selected improvement only.
     _write_workflow(skill, activate_legacy_phase=False)
     errors = mod.lint_repository(tmp_path)
     assert any("workflow legacy phases require exact post-choice activation" in error for error in errors)
+
+
+_GATED_BODY = """# Future
+
+## Pre-choice usable artifact execution
+
+Create, minimally guard, and present the actual artifact, then record the choice.
+
+## Post-choice selected improvement execution
+
+Run selected improvement only.
+"""
+
+
+def test_gated_orchestrator_activation_requires_gate_order(tmp_path: Path):
+    mod = _load_module()
+    skill = _write_temp_entrypoint(tmp_path, _GATED_BODY)
+    _write_workflow(skill, phase_activation=mod.GATED_ORCHESTRATOR_ACTIVATION)
+    errors = mod.lint_repository(tmp_path)
+    assert any("gate-ordered activation requires a non-empty gate_order" in error for error in errors)
+
+
+def test_gated_orchestrator_activation_passes_with_gate_order(tmp_path: Path):
+    mod = _load_module()
+    skill = _write_temp_entrypoint(tmp_path, _GATED_BODY)
+    _write_workflow(
+        skill,
+        phase_activation=mod.GATED_ORCHESTRATOR_ACTIVATION,
+        gate_order=["G1", "G2"],
+    )
+    errors = mod.lint_repository(tmp_path)
+    assert not any("activation" in error for error in errors)
 
 
 def test_future_temp_workflow_rejects_noncanonical_diagnostic_choice_vocabulary(tmp_path: Path):

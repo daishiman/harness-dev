@@ -24,7 +24,6 @@ goal_seek:
 owner: team-platform
 since: 2026-05-18
 version: 0.1.0
-pair: assign-skill-design-evaluator
 manifest: workflow-manifest.json
 responsibility_refs:
   - prompts/R1-elicit.md
@@ -91,11 +90,12 @@ runtime_root_policy: host-skill-path
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+本スキルの最小の実成果物はGate 1の`eval-log/skill-brief.json`とする。schema検証だけを最小guardとして通し、現物path・digest・要点を提示してGate 1の承認を得る。診断深度の4択はここでは聞かず、run-build-skillのStep 12.5が1回だけ記録した`diagnostic-choice.json`を`record_user_choice`として転記する。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+accept-as-isでも、`workflow-manifest.json`の`gate_order`に残るGateとP0 lintと完了レポートはhandoff完了の条件として通す (決定論lintと利用者承認だけで、evaluatorは起動しない)。light/standard/detailedで増えるのはrun-build-skillのStep 12.6-12.8だけで、`semantic_evaluator_started`はbuild側で初稿診断が始まったことを指す。
+release/exhaustiveは別の明示eventを必要とする。
 
 
 # run-skill-create
@@ -128,7 +128,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 ### 起動モード
 
 - **引数なし**: Step 1 (run-skill-elicit) が起動、対話で topic を確定。フィールド意味は `schemas/skill-brief.schema.json` (詳細は `references/skill-brief-schema.json`)。
-- **`--brief-path` 指定あり (E2 直接消費)**: 上流 `run-plugin-dev-plan` の `handoff-run-plugin-dev-plan.json` を `render-skill-brief.py` で決定論射影した `skill-brief.json` を Step 1 の対話ヒアリング (run-skill-elicit) を skip して直接 Step 1 成果物に採用する (再ヒアリングなし)。詳細契約は `prompts/R1-elicit.md` CONST_014。`--handoff` 併給時は build dispatch 前に `python3 "$PLUGIN_ROOT/scripts/check-route-component-parity.py" <handoff>` を実行し exit0 (routes↔inventory 一致) を確認する (CONST_015、非0 で停止)。`PLUGIN_ROOT` は共有Runtime root contractで解決済みのabsolute rootとする。
+- **`--brief-path` 指定あり (E2 直接消費)**: 上流 `run-plugin-dev-plan` の `handoff-run-plugin-dev-plan.json` を `render-skill-brief.py` で決定論射影した `skill-brief.json` を Step 1 の対話ヒアリング (run-skill-elicit) を skip して直接 Step 1 成果物に採用する (再ヒアリングなし)。詳細契約は `prompts/R1-elicit.md` CONST_014。持ち込んだ brief に `user_request_verbatim` (依頼の原文) が無ければ、build の目的照合は原文なしで進むことになるので、Gate 1 でその旨を利用者に示す。`--handoff` 併給時は build dispatch 前に `python3 "$PLUGIN_ROOT/scripts/check-route-component-parity.py" <handoff>` を実行し exit0 (routes↔inventory 一致) を確認する (CONST_015、非0 で停止)。`PLUGIN_ROOT` は共有Runtime root contractで解決済みのabsolute rootとする。
 - **Notion 指定あり**: topic / 引数に `--page-url` または `--page-id` が含まれる場合、Step 1 は `skill-intake` の publish 完了証跡を必須入力とする。`output/<hint>/notion-log.json.status=="published"`、`notion-publish-result.json.page_id`、`notion-url.txt` が揃い、指定 page と一致するまで Step 2 build へ進まない。
 
 ## Key Rules
@@ -156,7 +156,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 [Step 3.56 codex-platform-check] 同じ入力をcheck-onlyで再検査
 [Step 3.6 local-marketplace-register] build-local-marketplace.py (非配布 plugin の install 経路)
 [Step 3.7 plugin-release-record] build-plugin-release.py --only <plugin> (内容 hash 記録 / patch 採番。Gate 2.5 承認後・--only 必須。Key Rule 6)
-[Step 4a p0-lint] create 固有 lint のみ (build と重複する lint は build-trace の lint receipt を再利用。fail→Step 2、最大3周) ─[Gate 2 diff]─▶
+[Step 4a p0-lint] create 固有 lint のみ (build と重複する lint は build-trace の lint receipt を再利用。fail→停止して findings を提示し、利用者が選んだときだけ build から 1 回やり直す) ─[Gate 2 diff]─▶
 [Step 4a.5 pkg-check] run-plugin-package-check (条件: kind==plugin-composition or 新規 plugin 横展開)
 [Step 7 report] C1-C4 は build の初稿診断 receipt を転記 (評価し直さない)
 ```
@@ -186,13 +186,13 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - [ ] `python3 ${HARNESS_ROOT:-.}/scripts/build-plugin-release.py --only <plugin>` 実行済みで `--check` が exit 0 (書き込みを伴う実行は Gate 2.5 承認後・`--only` 必須。Key Rule 6)。marketplace install は version 単位の copy なので、version を据え置いたまま内容を直すと install 済み plugin へ届かない。内容 hash 対応表への記録 (新 plugin) と patch 採番 (既存 plugin の変更) がここで済む <!-- CL-4c exempt: 登録の運用操作項目。build-plugin-release.py --check が機械検査し評価 criteria の対象外 -->
 - [ ] 他 plugin リソースを呼ぶ場合 `.claude-plugin/bundles.json` の現行 bundle (`skills-full` / `skills-intake`) のうち `plugin.json.bundle_targets` で宣言した対象へ登録済み (上記 `--fix` が `bundle_targets` を読み自動 append)。不要なら理由がレポートにある (理由なき未登録は rubric 違反) <!-- CL-5 exempt: 登録の運用操作項目。validate-plugin-completeness.py が機械検査し評価 criteria の対象外 -->
 - [ ] (legacy manifest.json 形式のみ) plugin/marketplace 登録が Gate 2.5 承認後 `--apply` 済み (`build-manifest-registration-plan.py`) <!-- CL-6 exempt: legacy 経路の条件付き運用項目 -->
-- [ ] `eval-log/skill-build-trace.json` の `reproducibility_gates.lint` が PASS (build Step 4 の lint を再実行せず使い回す。`phases[id=p0-lint].build_lint_reuse`) で、`workflow-manifest.json` の `phases[id=p0-lint].commands` 全件 (create 固有分。lint-manifest-contents 含む) が exit 0。`TODO`/未展開 `{{...}}`/英語仮文の残存なし (パラメーター名除く) <!-- CL-7 -->
+- [ ] `eval-log/skill-build-trace.json` の `reproducibility_gates.lint` が PASS で `lint_target_sha256` が今の skill ディレクトリ全体の digest と一致する (一致すれば build Step 4 の lint を使い回す。不一致なら covered_scripts をここで再実行し、1 本でも fail なら止めて提示する。`phases[id=p0-lint].build_lint_reuse`)。そのうえで `workflow-manifest.json` の `phases[id=p0-lint].commands` 全件 (create 固有分。lint-manifest-contents 含む) が exit 0。`TODO`/未展開 `{{...}}`/英語仮文の残存なし (パラメーター名除く) <!-- CL-7 -->
 - [ ] create/update 共通で `audit-capability-parity.py --plugin plugins/<plugin> --json` が PASS。Claude 固有 command/agent/hook は Codex skill 代替または理由・replacement 付き omission contract を持つ。SKILL/promptのplugin-root付き実行行はowner SKILLに `runtime_root_policy: host-skill-path` とRuntime root本文契約を必須とし、bare `CLAUDE_PLUGIN_ROOT`、cwd推測、literal placeholderを残さない。env unset + foreign cwdでもabsolute owner `SKILL.md` pathからmanifest祖先を解決できる <!-- CL-14 -->
 - [ ] Gate 2 で `git diff <skill_path>` + build-trace を提示し承認済み <!-- CL-8 -->
 - [ ] 完了レポートの C1-C4 が `run-build-skill` の初稿診断 receipt (`eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/review.json`、改善した場合は `improvement-validation.json`) の転記で、本スキルで evaluator / elegant-review を起動していない。receipt が無い (accept-as-is) 場合は未診断と明記している <!-- CL-9 -->
 - [ ] 既定の流れで `run-skill-rubric-governance` を起動していない。rubric を変更した場合だけ、利用者が明示的に呼んだ governance の結果を完了レポートに記録している <!-- CL-11 -->
 - [ ] 各ゲート通過時に `eval-log/handoff-<step>.json` が `schemas/handoff.schema.json` 準拠で保存されている <!-- CL-12 -->
-- [ ] 完了レポート (下記項目: mode/gates_passed/creator_kit_registration/build_lint_receipt/build_evaluation_receipt/open_questions) が日本語本文で提示されている (パラメーター名のみ英語) <!-- CL-13 exempt: レポート提示の運用項目。完了レポート契約は本文で規定済み -->
+- [ ] 完了レポート (下記項目: mode/gates_passed/creator_kit_registration/build_lint_receipt/build_evaluation_receipt/build_stage/deferred_to_release/open_questions。draft なら後回しにした release 検証の件数と id を `deferred_to_release` に書き、release 検証が要るときは `Skill(run-build-skill, args=[skill_name, kind, --mode=update, --stage release])` で続けられると 1 行添える) が日本語本文で提示されている (パラメーター名のみ英語) <!-- CL-13 exempt: レポート提示の運用項目。完了レポート契約は本文で規定済み -->
 
 ### ゴールシークループ
 
@@ -201,9 +201,10 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - **未達評価の単位はゲート**: `workflow-manifest.json` の `gate_order` 順に「未承認」とみなして都度埋める (Gate 番号順の直書き禁止、順序正本は manifest)。人間承認gateは AskUserQuestion (`prompts/R2-gate-review.md`) で承認を取る。
 - **委譲先 (子 Skill)**: `run-skill-elicit` / `run-build-skill` (C1-C4 の初稿診断も build 側で完結する)。Notion 指定ありの非技術者 intake は `skill-intake` 完了証跡を先に検証する。本スキルは制御のみ、各子が自設計書を参照。
 - **評価を重ねない**: C1-C4 は build の初稿診断 receipt を転記し、本スキルで evaluator / elegant-review / governance reviewer を起動しない。
-- **差し戻し**: build の lint receipt が PASS でない、または P0 lint fail なら `run-build-skill` 再実行へ戻す (最大 3 周)。
+- **差し戻し**: build の lint receipt が PASS でない、または P0 lint fail なら自動で再実行しない。失敗した lint と根本原因を利用者に提示して止め、利用者が修正と再実行を選んだときだけ `run-build-skill` から 1 回やり直す。
 - **lint 自動修正禁止**: 根本原因をユーザー提示し LLM 判断で勝手に直さない。
 - 各フェーズ phase=id・entryHook/exitHook・dependsOn・fatal_exit_codes は `workflow-manifest.json` 参照。プロンプト R1/R2 は `prompts/*.md`。
+- **`### ゴールシーク配線` は持たない**: 本スキルは子スキルへ渡す orchestrator で、反復は利用者のゲート判断でしか起きない。中間成果物の anchor (intermediate.jsonl / original_goal など) は子スキル側が持つので、`lint-goal-seek.py` が出す WARN 3 件は対象外として `GRANDFATHERED_WARNINGS` に登録してある。
 
 ## Gotchas
 
@@ -230,4 +231,4 @@ C1-C4 の評価は `run-build-skill` の初稿診断 (Step 12.5 で利用者が�
 - `prompts/R1-elicit.md` / `prompts/R2-gate-review.md` — R1/R2 責務別プロンプト
 - `references/gate-templates.md` — Gate 確認質問テンプレ (人間向け詳細手順)
 - 子スキル: `run-skill-elicit`, `run-build-skill`, `run-plugin-package-check`, `run-skill-rename`。rubric 変更時だけ利用者が明示的に呼ぶ: `run-skill-rubric-governance`
-- 設計書: 05/06/07/11/13/23/25 章
+- 設計書: 05/06/07/13/23/25 章

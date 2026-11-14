@@ -557,7 +557,9 @@ def test_manifest_routes_every_kind_build_through_common_usable_draft_proof():
     assert "script-validate-build-trace" in proof["resourceIds"]
 
     delivery = phases["artifact-present-handoff"]
-    assert delivery["dependsOn"] == ["usable-draft-proof"]
+    # 提示は feedback-deploy の配備結果も待って合流する (配備失敗を提示の場で見せる)。
+    assert delivery["dependsOn"] == ["usable-draft-proof", "feedback-deploy"]
+    assert phases["feedback-deploy"]["transition"]["on_pass"] == "artifact-present-handoff"
     assert delivery["events"] == [
         "artifact_created", "minimal_guard_passed", "artifact_presented"
     ]

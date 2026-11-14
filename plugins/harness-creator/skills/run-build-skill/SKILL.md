@@ -257,7 +257,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## 局面カタログ (順序は都度判断)
 
-詳細フローは `workflow-manifest.json` の phases、各責務プロンプトは `prompts/<R-id>.md` (Markdown 既定。legacy `.yaml` も読み取り可) に委譲する。下記は固定順序ではなく、ゴールシークループが未達チェックリスト項目に応じて選ぶ局面群。
+詳細フローは `workflow-manifest.json` の phases、各責務プロンプトは `prompts/<R-id>.md` (Markdown 既定。legacy `.yaml` も読み取り可) に委譲する。下記は固定順序ではなく、ゴールシークループが未達チェックリスト項目に応じて選ぶ局面群。見出しの Step 番号は本文の局面番号で、manifest の `step` (phase の並び順) とは別の番号である。1 つの phase に複数の Step が載ることもあるので、両者の対応は各見出しの `(phase: <id>)` で取る。
 
 ### Step 0: kind 分岐ナビゲーション (phase: init-pre)
 
@@ -272,9 +272,9 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ### Step 1: 要求ヒアリング (phase: init)
 
-> **[MANDATORY]** 冒頭で `Skill(ref-yaml-spec-fetcher)` を呼び `yaml-spec-cache.md` を Read。`validate-build-trace.py` が 15/16 章未実施を exit 1 で拒否する。
+> **[MANDATORY]** 公式仕様 cache (`$PLUGIN_ROOT/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md`、約600KB) は全文を Read しない。`last_fetched:` と、生成する kind に要る節だけを読む: skill は `awk '/^Frontmatter reference$/{p=1} /^## Source \(settings\)/{exit} p'` (約16KB)、agent / hook / plugin は `awk -v s='## Source (subagents)' 'index($0,s)==1{p=1;next} p&&/^## Source /{exit} p'` の `s` を `(hooks)` / `(plugins-reference)` に替えた節 (各約50KB)。確認結果は trace の 15/16 章 coverage に出典日付つきで残す。
 
-`resolve-skill-dirs.py` で `$PLUGIN_ROOT` / `$SKILL_DIR` / `$OUT_BASE` を確定する。`$SKILL_DIR` は harness-creator plugin 内資産、`$OUT_BASE` は生成先であり、両者を同一パスと仮定しない。続けて `references/resource-map.yaml` で task category 選択 → 01章 5 要素 + 01a Step2 実行レイヤー判断表を埋める。詳細は `references/build-steps.md`。
+`resolve-skill-dirs.py` で `$PLUGIN_ROOT` / `$SKILL_DIR` / `$OUT_BASE` を確定する。`$SKILL_DIR` は harness-creator plugin 内資産、`$OUT_BASE` は生成先であり、両者を同一パスと仮定しない。続けて `references/resource-map.yaml` で task category 選択 (keyword で選ぶ。ただし brief の `with_subagent_hint` が true なら `agent-teams`、`with_hooks` が true なら `subagent-hook-integration` を keyword に関係なく必ず選ぶ。run-skill-elicit が brief に立てたフラグの受け手はここ) → 01章 5 要素 + 01a Step2 実行レイヤー判断表を埋める。詳細は `references/build-steps.md`。
 
 **蓄積知見の参照 (Loop B / build-time)**: `brief.consult_build_knowledge` が true (既定) のとき、harness-creator 自身の蓄積知見を検索し、過去の設計判断・落とし穴回避を初期設計に反映する (`knowledge/knowledge-index.json` の consult 宣言と対。`run-skill-elicit` の同名節と同形):
 
@@ -312,6 +312,8 @@ run 系は `templates/` / `scripts/` / `examples/`、ref 系は `references/arti
 
 `eval-log/skill-build-trace.json` を `schemas/skill-build-trace.schema.json` と `prompts/R4-trace-write.md` (R4) に従って章別記入。loop 実行系 (run/wrap/delegate) は Step 1 で導出した `feedback_contract` (inner/outer criteria を id/loop_scope/text/verify_by で記述) を **生成 SKILL.md frontmatter と trace の両方** に固定する。frontmatter は量産先が携帯する評価基準の正本、trace は再現性証跡。ref/assign は `feedback_contract.skip_reason` で N/A escape。`validate-build-trace.py` と `lint-feedback-contract.py` が kind-aware に gating する。
 
+この時点では lint をまだ走らせていないので、`reproducibility_gates.lint` は `N/A` と書く (validator は PASS と N/A しか通さない。FAIL は書かない)。PASS に書き換えるのは Step 4 の lint が全て exit 0 になってからで、この初回記入は Step 4 の `validate-build-trace.py` が検査する。
+
 **要望カバレッジ (RTM)**: brief 経由 build は `requirement_coverage[]` を trace に記録する。brief の非空要求フィールド (例 `key_constraints[2]` / `boundary`) ごとに `disposition: mapped` (+`mapped_to`=反映先 criteria id/生成物) か `not_applicable` (+`reason`) を宣言する。被覆完全性と requirement_id 実在は `validate-build-trace.py` が機械検査し (段階導入: coverage 無しは WARN)、写像の意味的妥当性は Step 12 content-review (LLM 層) が判定する。
 
 **agent/prompt 生成の provenance (route C09)**: agents/*.md・skills/*/prompts/*.md を生成/更新した build は `prompt_provenance` を trace に記録する。`prompt_creator_invocation`=true (prompt-creator 経由で本文7層を生成)・`source_contract_ref` (準拠契約: agent=`subagent-hybrid-format.md` / prompt=`seven-layer-format.md`)・`content_lint`={mode, status:PASS} (route C02 `lint-agent-prompt-content.py` の結果) の3点を持つ。`run` / `assign` が **prompt を生成する** build (`per_responsibility` 非空) では `resolved_policy=optional/skip` を禁止し `required`+provenance を強制する (生成物があるのに optional へ降格する迂回=バイパスを封鎖)。本 build が prompt を生成しない場合 (共有 prompt を消費する等、`per_responsibility` 空) は `optional` で宣言してよい (`skip` は不可)。`required` の build ではこのブロックが必須で、`validate-build-trace.py` が invocation=false・契約参照欠落・content_lint≠PASS・ブロック欠落のいずれも exit1 で止める (バイパス不能性)。実際の本文7層準拠は route C02 の CI repo 全走査が trace 非依存で独立強制する。
@@ -325,7 +327,7 @@ run 系は `templates/` / `scripts/` / `examples/`、ref 系は `references/arti
 ```bash
 GOV_LINT_DIR="$(python3 "$PLUGIN_ROOT/scripts/extract-plugin-root.py" skill-governance-lint)" || exit $?
 python3 "$GOV_LINT_DIR/scripts/lint-skill-name.py" "$OUT_BASE/$SKILL_NAME/SKILL.md"
-python3 "$GOV_LINT_DIR/scripts/lint-skill-description.py" --skills-dir "$OUT_BASE"
+python3 "$GOV_LINT_DIR/scripts/lint-skill-description.py" --skill "$OUT_BASE/$SKILL_NAME"
 python3 "$GOV_LINT_DIR/scripts/lint-skill-tree.py" "$OUT_BASE/$SKILL_NAME"
 python3 "$GOV_LINT_DIR/scripts/validate-frontmatter.py" "$OUT_BASE/$SKILL_NAME/SKILL.md"
 python3 "$GOV_LINT_DIR/scripts/lint-script-frontmatter.py" "$OUT_BASE/$SKILL_NAME"
@@ -340,7 +342,13 @@ python3 "$SKILL_DIR/scripts/validate-build-plan.py" --brief eval-log/skill-brief
 python3 ${HARNESS_ROOT:-.}/scripts/lint-readme-plugin-root-portability.py  # kind=plugin / README 更新時。裸のplugin root変数・repo相対直書き・os.environ添字を検出
 ```
 
-全て exit 0 でなければ Step 2 / 3.5 へ戻る。
+全て exit 0 でなければ trace の lint を N/A のまま Step 2 / 3.5 へ戻る。全て exit 0 なら trace の `reproducibility_gates.lint` を PASS にし、検査した skill ディレクトリ全体の digest を `lint_target_sha256` に書く。lint-skill-tree や `validate-build-plan --check` は SKILL.md 以外のファイルも見るので、digest も SKILL.md だけでなくディレクトリ全体を覆う (`__pycache__` と `.DS_Store` は除く)。
+
+```bash
+python3 -c 'import sys; from pathlib import Path; sys.path.insert(0, sys.argv[1]); from feedback_contract_ssot import directory_content_sha256; print(directory_content_sha256(Path(sys.argv[2])))' "$PLUGIN_ROOT/scripts" "$OUT_BASE/$SKILL_NAME"
+```
+
+create の p0-lint は、同じコマンドで出した今の digest がこの値と一致するときだけ lint 結果を使い回す。Step 4 の後に prompts や assets を足すなど、SKILL.md 以外だけを変えた場合も一致しなくなり、create 側で lint をやり直す。
 
 ### Step 5: 出荷用フォーク評価 (phase: trace-write, release のみ)
 
@@ -352,7 +360,7 @@ draft は決定論ゲートが通ったら Step 12.4 で `usable-draft` proofを
 
 ### Step 7: subagent 派生 (phase: prompts-emit, `--with-subagent`)
 
-`build-subagent.py` で `.claude/agents/<skill-name>-subagent.md` を派生 → `lint-skill-description.py` で検証。7層本文と発話・自己採点の2節に準拠。
+`build-subagent.py --output-dir <対象 plugin>/agents/` で `<skill-name>-subagent.md` を派生 → `lint-skill-description.py` で検証。`.claude/agents/` へは直接書かない (script の既定値 `.claude/agents/` は使わない)。`.claude/agents/` への反映は下記「配置先」の C01 が行う。7層本文と発話・自己採点の2節に準拠。
 
 ### Step 7.5: prompt-creator ループ (phase: prompts-emit, `--with-prompts` or `brief.use_prompt_creator`)
 
@@ -396,7 +404,7 @@ build 完了後、量産プラグインを Notion の SSOT (スキル一覧 DB) 
 
 量産プラグインに改善要望ループを **default-ON で機械的に保証** する。詳細は `references/feedback-loop-deployment.md`。要点:
 
-- **配備**: phase `feedback-deploy` (workflow-manifest, `default_on: true`) が `<target-plugin>/skills/run-skill-feedback` を実体コピーで冪等配備。plugin 境界を越える symlink は marketplace install で dangling するため禁止。trace-write から分かれる独立 branch で、Step 12 (content-review) はこの配備を待たない (`content-review.dependsOn` は `trace-write` だけ。配備の検証は下記 lint)。
+- **配備**: phase `feedback-deploy` (workflow-manifest, `default_on: true`) が `<target-plugin>/skills/run-skill-feedback` を実体コピーで冪等配備。plugin 境界を越える symlink は marketplace install で dangling するため禁止。trace-write から分かれる branch で、Step 12 (content-review) はこの配備を待たない (`content-review.dependsOn` は `trace-write` だけ)。利用者への提示 (Step 12.45 `artifact-present-handoff`) はこの配備を待ち、配備結果 (配備済み / opt-out の理由) を現物と一緒に見せる。そのため配備の失敗は lint より前に提示の場で分かる。
 - **SSOT**: 発火条件 / 対話項目は `doc/notion-schema/skill-list.schema.json#feedback_protocol`。プラグイン側で再定義しない。
 - **周知**: 量産先の plugin.json / README / commands / agents いずれかに `run-skill-feedback` への発火経路を必ず記載。
 - **lint**: `scripts/lint-feedback-protocol.py --strict` が R1-R7 (schema/SKILL.md/upsert 三者整合 + R6 周知 + R7 配備存在) を CI で検査。違反時 merge ブロック。

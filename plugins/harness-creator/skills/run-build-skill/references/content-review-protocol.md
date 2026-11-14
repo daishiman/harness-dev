@@ -106,10 +106,9 @@ Agent({
 
 ## 機械検査 (CI / pre-push)
 
-`scripts/lint-content-review.py --changed-only --base origin/main`:
+`scripts/lint-content-review.py --all` (下記「強制の経路」の CI 段):
 
-- `git diff origin/main...HEAD` から `plugins/*/skills/*/SKILL.md` 変更を抽出
-- 各変更 skill について `eval-log/<plugin>/<skill>/content-review/{elegance,rubric}-verdict.json` の存在 + `verdict=="PASS"` + `target.skill_md_sha256` が現在の SKILL.md と一致することを検査
+- 全 skill (symlink と Codex 配布用コピーを除く) について `eval-log/<plugin>/<skill>/content-review/{elegance,rubric}-verdict.json` の存在 + `verdict=="PASS"` + `target.skill_md_sha256` が現在の SKILL.md と一致することを検査
 - `feedback_loop` は必須。`criteria_evaluated` は**量産先 SKILL.md frontmatter** の `feedback_contract.criteria[].id` 全件と突合し、未評価 ID があれば PASS 不可（frontmatter が正本＝携帯する評価基準。trace は frontmatter 不在時の後方互換 fallback）
 - `kind: ref` / symlink skill は対象外。`harness-creator` 自身は dogfooding 対象なので CI/pre-push では除外しない
 - 違反時 exit 1 → merge ブロック
