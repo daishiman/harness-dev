@@ -26,15 +26,6 @@
     ]
   },
   "hooks": {
-    "UserPromptSubmit": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-skill-update-notifier/scripts/hook-cache-refresh.py" },
-          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/ref-task-context-map/scripts/preload-context-map.py", "timeout": 3000 }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -47,30 +38,19 @@
       {
         "matcher": "Skill",
         "hooks": [
-          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-skill-update-notifier/scripts/hook-notify-skill-end.py" },
-          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/auto-record-lesson.py", "timeout": 5000 },
-          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-elegant-review/scripts/check-review-trigger.py", "timeout": 3000 }
+          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/auto-record-lesson.py", "timeout": 5000 }
         ]
       },
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/lint-capability-manifest.py", "timeout": 5000 },
-          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-elegant-review/scripts/check-review-trigger.py", "timeout": 3000 }
+          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-build-skill/scripts/lint-capability-manifest.py", "timeout": 5000 }
         ]
       },
       {
         "matcher": "Edit",
         "hooks": [
           { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-skill-rubric-governance/scripts/diff-rubric-impact.py", "timeout": 5000 }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "matcher": ".*",
-        "hooks": [
-          { "type": "command", "command": "python3 $CLAUDE_PLUGIN_ROOT/skills/run-elegant-review/scripts/check-review-trigger.py", "timeout": 3000 }
         ]
       }
     ],

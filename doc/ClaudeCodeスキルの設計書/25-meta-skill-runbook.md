@@ -17,61 +17,56 @@
 
 Phase 2 以降の標準運用では、配布単位は harness-creator-kit ではなく `plugins/<plugin-name>/` の plugin package になる。ユーザーは `/plugin install <plugin>` だけで必要な Skill / Agent / Hook / script / settings を利用できる状態を完了条件とする。どの component を同梱するか、どの検査を package completeness check とするかは [36-plugin-package-harness-contract.md](./36-plugin-package-harness-contract.md) を正本とする。`skill-only` は legacy / dev-only / migration exception 扱いであり（36章 §`skill-only`）、新規量産では選択しない。
 
-標準のE2E入口は `run-skill-create` である。`run-skill-create` は要望から完成までを、`run-skill-elicit` → `run-build-skill` → creator-kit登録判定 → P0 lint → `assign-skill-design-evaluator` → `run-elegant-review` → governance の順でゲート付きに連鎖させる。新規作成と更新のどちらもこの入口から開始し、途中でユーザー判断が必要な箇所だけ gate template に従って確認する。
+標準のE2E入口は `run-skill-create` である。`run-skill-create` は要望から完成までを、`run-skill-elicit` → `run-build-skill` (生成と、利用者が選んだときだけの初稿診断) → creator-kit登録判定 → create 固有の P0 lint (build と重複する lint は build の lint receipt を再利用) → Gate 2 → package 検査 → 完了レポートの順でゲート付きに連鎖させる。評価は build の初稿診断 1 回に一本化し、`assign-skill-design-evaluator` / `run-elegant-review` / governance は利用者が明示的に呼んだときだけ走らせる。新規作成と更新のどちらもこの入口から開始し、途中でユーザー判断が必要な箇所だけ gate template に従って確認する。
 
 既存プロジェクトを kit 化する場合は、まず `bash installers/migrate-from-project.sh --dry-run` で移動対象を確認し、問題なければ本実行する。ただしこの script は旧 `creator-kit/` の配置（kit 直下の `skills/`・`scripts/`・`config/`）へ移す作りのままで、今の `plugins/` の配置には移さない。`--dry-run` でも `installers/` の下に空の dir を作る。kit 由来 symlink だけを uninstall 対象とし、プロジェクト固有 Skill や業務設計書は移動しない。`xl-skills` 本体の symlink 配置は完了しており、`.claude/skills/` の大半は `plugins/*/skills/*` への symlink である（32章冒頭の注記）。ただし `migrate-from-project.sh` の正式実行ログは未取得であり、C4は暫定PASSとして扱う (32章参照)。
 
 ## 自動フロー (全体図)
 
+phase の正本は `plugins/harness-creator/skills/run-skill-create/workflow-manifest.json`。利用者に確認するのは `gate_order` の 3 か所 (Gate 1 → Gate 2.5 → Gate 2) と、build が現物を見せた後の診断深度の選択だけ。
+
 ```text
 [User] "○○する Skill を作って"
    │
    ▼
-[Step 1] OS確認 (Mac / Windows) ──► scripts ランタイム選択
+[elicit] 要求ヒアリング → eval-log/skill-brief.json
+   │     Gate 1: brief を見せて承認 (要件の確認はここで 1 回だけ)
+   ▼
+[build] run-build-skill がスキルを生成
+   │     Step 4 lint (lint-matrix の build-preflight) → 現物を提示
+   │     Step 12.5 診断深度の選択 (accept-as-is / light / standard / detailed)
+   │       └ accept-as-is 以外を選んだときだけ、初稿診断 1 回と選んだ finding だけの改善
+   ▼
+[manifest-register] Gate 2.5: plugin / marketplace 登録判定 (承認後だけ apply)
+   │     3.5 bundle 登録 / 3.55-3.56 Codex 同期 (plugin.json がある場合)
+   │     3.6 local marketplace 再生成 / 3.7 fingerprint 記録・version 採番
+   ▼
+[p0-lint] create 固有の P0 lint
+   │     build の lint receipt が PASS で SKILL.md の sha256 も一致すれば、重なる lint は再実行しない
+   │     Gate 2: diff と build-trace を見せて承認
+   ▼
+[pkg-check] plugin-composition か新規 plugin のときだけ PKG completeness check
    │
    ▼
-[Step 2] 要件ヒアリング (name / kind / trigger / output)
-   │
-   ▼
-[Step 3] 設計書参照 (Progressive Disclosure（段階的開示）)
-   │     06 → kind 決定
-   │     09 → evaluator 必要性
-   │     03/11 → frontmatter & 雛形
-   │
-   ▼
-[Step 4] 雛形展開 + scripts 生成 (Python 標準ライブラリ。ps1 版は計画。22章)
-   │
-   ▼
-[Step 5] creator-kit登録判定（現行: installers/manifest.json）
-   │     scripts/build-manifest-registration-plan.py
-   │     ├── 共通基盤なら登録案を提示 → 承認後 apply
-   │     └── project固有なら登録せず理由を記録
-   │     ※ Phase 2 以降は plugin package（.claude-plugin/plugin.json）を対象に
-   │       PKG completeness check（36章フロー[5]）を実施。skill-only 時のみ creator-kit 経路。
-   ▼
-[Step 6] forked evaluator 起動 (assign-skill-design-evaluator)
-   │     Read references/rubric.json
-   │
-   ▼
-[Step 7] score >= threshold?
-   │       ├── No  → findings 反映 → Step 4 へ (max 3 retry)
-   │       └── Yes → install + ユーザーに path を返す
+[report] 完了レポート
+         C1-C4 は build の診断 receipt を転記する (評価し直さない。未診断ならそう書く)
+         build_stage と deferred_to_release (draft で後回しにした release 検証) も書く
 ```
 
 ## ステップ別: 参照ドキュメント・テンプレ
 
-| Step | 参照する設計書 | 使うテンプレ/asset |
+| phase | 参照する設計書 | 使うテンプレ/asset |
 |---|---|---|
-| 1 OS確認 | 22-cross-platform-runtime | - |
-| 2 要件 | 06-classification-and-naming | - |
-| 3 分類 | 06 / 09 / 10 | - |
-| 4 frontmatter | 03-yaml-frontmatter-reference | `templates/<kind>.md` |
-| 4 本文 | 07 / 08 / 11 | `examples/*.md` |
-| 4 scripts | 22 | `scripts/render-frontmatter.py`（ps1 版は計画） |
-| 4 self-check | 13-checklists | チェックリスト雛形 |
-| 5 creator-kit登録判定 | 23 / 28 / 32 | `scripts/build-manifest-registration-plan.py` |
-| 6 evaluator | 09-evaluation-orchestration | `assign-skill-design-evaluator/references/rubric.json` |
-| 7 retry | 09 / 19-troubleshooting | findings JSON |
+| elicit | 06-classification-and-naming | `run-skill-elicit` / `schemas/skill-brief.schema.json` |
+| build: frontmatter | 03-yaml-frontmatter-reference | `run-build-skill/templates/<kind>.md` |
+| build: 本文 | 07 / 08 / 11 | `examples/*.md` |
+| build: scripts | 22-cross-platform-runtime | `scripts/render-frontmatter.py`（ps1 版は計画） |
+| build: lint | 13-checklists | `references/lint-matrix.json` |
+| build: 診断 (選んだときだけ) | 09-evaluation-orchestration | `elegant-initial-draft-evaluator` |
+| manifest-register | 23 / 28 / 32 / 36 | `scripts/build-manifest-registration-plan.py` |
+| p0-lint | 13 | `workflow-manifest.json` の `phases[id=p0-lint]` |
+| pkg-check | 36-plugin-package-harness-contract | `run-plugin-package-check` |
+| 失敗時 | 19-troubleshooting | 失敗した lint の出力 |
 
 ## creator-kit登録ゲート
 
@@ -102,23 +97,22 @@ python3 scripts/lint-manifest-contents.py
 
 ここで `manifest.json` が指すのは `installers/manifest.json`（kit 収録目録）であり、Claude Code 公式 plugin manifest（`plugins/<plugin-name>/.claude-plugin/plugin.json`）とは別物である。Phase 2 以降の plugin package mode では、本ゲートは PKG completeness check（36章フロー[5]、PKG-001〜010）に置き換わる。本 runbook で「manifest」と書かれた箇所は、文脈が creator-kit 配布なら前者、plugin package 配布なら後者を指す。
 
-## 失敗時 retry ルール
+## 失敗時の扱い
 
-evaluator から返る JSON に基づく:
+自動の作り直し (retry) はしない。止まったときは原因を見せ、続け方は利用者が選ぶ。
 
 | 条件 | 動作 |
 |---|---|
-| `passed: true` | 完了、ユーザーに artifact path を返す |
-| `passed: false` かつ retry < 3 | `required_fixes` を入力に generator 再実行 |
-| retry == 3 で fail | 中断、findings 全件をユーザーに提示し手動介入要請 |
-| evaluator 自体が落ちた | runbook 中断、`xl-skills/eval-log/` に stderr を残す |
+| lint・Gate が fail | build へ自動で戻さない。失敗した lint と根本原因を見せて止まり、利用者が修正と再実行を選んだときだけ build から 1 回やり直す |
+| 初稿診断で finding が出た | 利用者が選んだ finding だけを、指定した round 数の中で改善する (`elegant-improvement-executor`) |
+| evaluator 自体が落ちた | 中断し、stderr を `eval-log/` に残す |
 
-threshold は `references/rubric.json` の `threshold: 80` をデフォルトとし、`run-build-skill` の引数で override 可能 (例: deploy-critical Skill は 90)。
+`references/rubric.json` の `threshold: 80` は、`build_stage=release` の出荷評価 (score>=80 かつ high=0) で使う。draft の build では出荷評価を走らせず、`deferred_to_release` に記録する。
 
-## retry時の注意
+## 改善時の注意
 
-- generator は会話履歴を保持しているため self-correction で sycophancy が出やすい (09)
-- 同じ findings が 2 回連続で出たら rubric 側にバグの可能性 → 自動 retry を止めて報告
+- generator は会話履歴を保持しているため self-correction で sycophancy が出やすい (09)。診断は fresh context の evaluator 1 回に限る
+- 同じ finding が 2 回続けて出たら rubric 側のバグを疑い、改善を止めて報告する
 
 ## Mac / Windows 別実行手順
 
@@ -163,12 +157,13 @@ python .claude\skills\run-build-skill\scripts\render-frontmatter.py `
 
 ### 共通の後処理
 
+evaluator は既定の流れでは起動しない。`build_stage=release` の出荷評価か、利用者が明示したときだけ次を呼ぶ。
+
 ```bash
-# evaluator 起動 (Claude Code 内から Skill 呼び出し)
 /skill assign-skill-design-evaluator .claude/skills/run-foo
 ```
 
-evaluator 出力 JSON を `xl-skills/eval-log/<timestamp>-run-foo.json` に保存。
+evaluator 出力 JSON は `eval-log/` に保存する。
 
 evaluator 出力には `rubric_hash` を含める。rubric を変更する場合は生成物修正とは別 PR / 別承認者で扱い、評価基準を緩めて合格させる Goodhart（評価基準を都合よく歪める罠）を防ぐ。
 
@@ -187,11 +182,11 @@ Skill を増やす条件は、artifact 種別、実行副作用、または作�
 
 ## 完了判定
 
-- evaluator が `passed: true` を返す
-- evaluator 出力 JSON に `rubric_hash` が記録されている
-- P0 lint (`lint-skill-name` / `lint-skill-tree` / `validate-frontmatter` / `lint-dependency-direction` / `lint-forbidden-deps` / `lint-manifest-contents`) が通過する。P0 未実装、または hook / CI へ未接続なら「暫定PASS」と明記する
-- `.claude/skills/<name>/SKILL.md` が存在し YAML がパース可能
+- `gate_order` の全 Gate (Gate 1 / Gate 2.5 / Gate 2) に利用者の明示承認がある
+- build の lint receipt が PASS で、create 固有の P0 lint (`lint-dependency-direction` / `lint-skill-dep-step7` / `lint-forbidden-deps` / `lint-manifest-contents` / `audit-capability-parity`) が通過する
+- `.claude/skills/<name>/SKILL.md` (plugin なら `plugins/<plugin>/skills/<name>/SKILL.md`) が存在し YAML がパース可能
 - `name` ディレクトリ名と frontmatter `name` が一致 (rubric NM-001)
+- 完了レポートに C1-C4 の診断 receipt (未診断ならその旨)、`build_stage`、`deferred_to_release` がある
 - README 等の設計書側変更は不要 (`run-build-skill` は設計書を読むのみで編集しない)
 
 ---
@@ -228,5 +223,5 @@ Opus モデル + 全30章 + SubAgent 生成を同一コンテキストで実行�
 | Step 3 補助ファイル | 07/08章（どちらか一方） |
 | Step 4 Lint | 13章のみ |
 | Step 5 creator-kit登録判定 | 23章または32章のみ |
-| Step 6 評価 | 09章のみ |
+| Step 12.6 診断 (選んだときだけ) | 09章のみ |
 | Step 7 SubAgent生成 | references/build-steps.md のみ |

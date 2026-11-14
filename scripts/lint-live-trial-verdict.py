@@ -15,14 +15,19 @@ importlib で再利用する (SSOT: 生成側と検査側の実装乖離を排�
 
 D13 パイロットゲート: verdict **不在** は FAIL にしない (record-only WARN + 件数出力)。
 --enforce (P3 常設化 go/no-go で昇格するまで既定 OFF) 指定時のみ不在も FAIL。
-verdict が **存在する** 場合の stale-sha / schema 不適合 / FAIL verdict / downgrade は
-パイロット中も exit 1 (存在する証拠の偽装・陳腐化は soft にしない)。
+verdict が **存在する** 場合の schema 不適合 / FAIL verdict / downgrade / denylist は
+パイロット中も exit 1 (存在する証拠の偽装は soft にしない)。
+stale-sha (古い挙動閉包に対する PASS) は既定で「要再実走」WARN に留める。CI では
+実走できない (D14) ため、FAIL にすると変更のたびに手元で再実走ループが走る。
+--enforce か LIVE_TRIAL_ENFORCE_FRESHNESS=1 のとき FAIL (方針の正本は
+live-trial-verdict.py の freshness_enforced)。WARN でも sha の手書き更新はしない。
 stale-sha は、verdict を commit したツリーと今の挙動閉包を比べ、挙動投影が
 変わったファイル名を同じ行に出す。manifest の version だけが動いたファイルは
-出さない。sha の手書き更新はしない。
+出さない。
 
 Usage:
   python3 scripts/lint-live-trial-verdict.py --all [--enforce]
+  LIVE_TRIAL_ENFORCE_FRESHNESS=1 python3 scripts/lint-live-trial-verdict.py --all
   python3 scripts/lint-live-trial-verdict.py --plugin harness-creator [--enforce]
   python3 scripts/lint-live-trial-verdict.py --self-test
 """
@@ -215,11 +220,26 @@ def contractual_exemption(path):
     return None
 
 
+def is_advisory(err: str) -> bool:
+    """check_verdict のエラーのうち、既定で WARN (要再実走) に留めるものか。
+
+    True を返したエラーは、鮮度強制 (--enforce か LIVE_TRIAL_ENFORCE_FRESHNESS=1)
+    が無いとき exit 1 にしない。False のエラーは常に exit 1。
+
+    err の先頭語 (check_verdict が付ける): invalid-json / schema / target-mismatch /
+    denylist-subject / stale-sha / runtime-evidence / downgraded / verdict= /
+    gate_kind=contractual
+    """
+    return err.startswith("stale-sha:")
+
+
 def run_lint(plugin_filter=None, enforce=False):
     verdict_mod, backend_mod, schema = load_harness()
     skills = sorted(_all_skills(plugin_filter))
+    strict_freshness = verdict_mod.freshness_enforced(enforce)
 
     violations = []  # 存在する verdict の違反 (常に exit 1)
+    stale = []  # 古い挙動閉包に対する証跡 (既定 WARN、鮮度強制時は violations へ)
     missing = []  # verdict 不在 (D13 パイロットゲート: record-only WARN、--enforce で FAIL)
     exempted = []  # 契約 gate による自走未達免除 (合格だが黙って通さない)
     checked = 0
@@ -241,7 +261,8 @@ def run_lint(plugin_filter=None, enforce=False):
             continue
         checked += 1
         for err in check_verdict(latest, plugin, skill, verdict_mod, backend_mod, schema):
-            violations.append(f"{plugin}/{skill}: {latest.parent.name}/verdict.json {err}")
+            line = f"{plugin}/{skill}: {latest.parent.name}/verdict.json {err}"
+            (stale if is_advisory(err) and not strict_freshness else violations).append(line)
         # 契約 gate 免除は「降格しない」だけで「無かったこと」ではない。
         # 免除が黙って通ると、rescue を contractual と申告するだけで自走未達を消せる。
         note = contractual_exemption(latest)
@@ -258,6 +279,12 @@ def run_lint(plugin_filter=None, enforce=False):
         print(f"[NOTE] 契約 gate による自走未達免除: {len(exempted)} verdict(s)")
         for e in exempted:
             print(f"  - {e}")
+    if stale:
+        print(f"[WARN] live-trial verdict 要再実走: {len(stale)} verdict(s)"
+              " (挙動閉包が verdict 後に変わった。release 前・定期再取得では"
+              f" --enforce か {verdict_mod.FRESHNESS_ENFORCE_ENV}=1 で FAIL にする)")
+        for s in stale:
+            print(f"  - {s}")
     if violations:
         print(f"[FAIL] live-trial verdict lint: {len(violations)} violation(s)")
         for v in violations:
@@ -269,7 +296,8 @@ def run_lint(plugin_filter=None, enforce=False):
         return 1
     if enforce and missing:
         return 1
-    print(f"[OK] live-trial verdict lint: {checked} verdict(s) verified, {len(missing)} missing (record-only)")
+    print(f"[OK] live-trial verdict lint: {checked} verdict(s) verified, {len(stale)} stale (re-trial advised),"
+          f" {len(missing)} missing (record-only)")
     return 0
 
 
@@ -358,7 +386,7 @@ def main():
     g.add_argument("--plugin", help="対象 plugin を限定")
     g.add_argument("--self-test", action="store_true", help="合成 fixture で自己検査")
     ap.add_argument("--enforce", action="store_true",
-                    help="違反を FAIL (exit 1) にする。既定は D13 record-only WARN")
+                    help="verdict 不在と stale-sha も FAIL (exit 1) にする。既定は WARN")
     args = ap.parse_args()
 
     if args.self_test:

@@ -40,7 +40,6 @@ harness-creator 自身 (生成器メタプラグイン) への除外/非除外�
 
 | 機構 | harness-creator | SSOT 述語 | 理由 |
 |------|---------------|-----------|------|
-| Stop hook decision:block (`run-elegant-review/scripts/check-review-trigger.py`) | **除外** | `is_stop_block_exempt` | 自己編集セッションの自己ブロック=評価不能 (無限ループ) を回避 |
 | feedback-loop 配備/周知 — 実体コピー (`render-combinators.py apply_feedback_loop`) / R6・R7 (`lint-feedback-protocol.py`) | **除外** | `is_feedback_deploy_exempt` | 生成器自身が `run-skill-feedback` の正本。自己コピーは不要 |
 | content-review verdict — CI/pre-push (`lint-content-review.py`) | **非除外** | `is_content_review_exempt` (常に False) | dogfooding 対象。自己改善の品質も機械強制する |
 | iter-improve (実走 eval 駆動の反復改善) が harness-creator 自身 / エンジン閉包 (`run-elegant-review`・convergence-policy・content-review 経路・`feedback_contract_ssot.py`) を対象とする場合 | **被験体コピー必須** | `requires_subject_copy` | エンジンが自分自身を実走改善すると評価器と被験体が同一閉包になり自己確証する。1 周完結の elegant-review self-review は従来通り直接編集可 |

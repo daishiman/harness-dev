@@ -25,7 +25,7 @@ skill-intake → plugin-dev-planner → harness-creator の3プラグイン量�
 | `/plugin-dev-plan "<構想>" [--intake-json <p>] [--mode create\|update] [--out-dir <p>] [--improvement-handoff <p>]` | command → `run-plugin-dev-plan` skill | **タスク仕様書 (plan) 作成**。新規は `--intake-json <intake.json>`、改善は `--mode update --improvement-handoff <handoff>`。plan一式 + `handoff-run-plugin-dev-plan.json` を生成 |
 | `/capability-build --handoff <handoff> [--route-id <Cxx>]` (または `<kind> <name>`) | command → `run-build-skill` skill (skill route は内部で `run-skill-create` へ dispatch) | **ハーネス構築**。既定 = `--handoff` のみで task-graph 全体を並列 dispatch + 2 ループ駆動 (planner handoff は `task_graph_ref` 常時携帯)。`--route-id <Cxx>` は単一 route だけ消費する段階 build / デバッグ用の escape hatch |
 | `/capability-review <capability-path>` | command → `run-elegant-review` (dry-run) | **レビューのみ**。多視点 agent 並列レビュー→4条件ゲート判定を analyse-only で実行 (改善は実行しない) |
-| `/skill-improve <capability-path>` | command → `run-elegant-review` → `elegant-improvement-executor` | **単発の直接改善 (近道)**。レビュー→その場修正を1コマンドで。※plan は再生成されないので、仕様書を正本に保ちたい改善は `/plugin-dev-plan --mode update` 経由を使う |
+| `/skill-improve <capability-path>` | command → `run-elegant-review` (dry-run) → 利用者が finding を選択 → `elegant-improvement-executor` | **単発の直接改善 (近道)**。レビュー→findings 提示→選んだものだけその場修正を1コマンドで。※plan は再生成されないので、仕様書を正本に保ちたい改善は `/plugin-dev-plan --mode update` 経由を使う |
 | `/run-skill-feedback` | **skill (user-invocable)** ※command ファイルは無い | **フィードバック収集**。利用者が「こう直してほしい」を Notion 改善要望 DB へ投入。`未対応要望数` rollup が優先度シグナルになる (改善着手は自動発火しない) |
 | `python3 plugins/harness-creator/scripts/emit-improvement-handoff.py --source-kind manual --source-ref <url> --origin-request-ref <url> --target-plugin-slug <p> --plan-dir plugin-plans/<p> --findings <f.json> -o improvement-handoff.json` | **script** | **人間ブリッジ (手動)**。Notion 要望を `improvement-handoff.json` に正規化し planner の `--improvement-handoff` へ渡す。手順の正本は `feedback-to-improvement-runbook.md` |
 
@@ -41,7 +41,7 @@ skill-intake → plugin-dev-planner → harness-creator の3プラグイン量�
 | `run-intake-next-action` | skill | `/intake` 内で handoff 先 (A-D=harness / P=planner) を決定論的に判定 |
 | `plugin-dev-plan-elicitor` / `-architect` / `-evaluator` / `-improvement-reviewer` | subagent | `/plugin-dev-plan` が起動。ゴール確定→分解→評価 (改善時は反映の意味検証) |
 | `run-build-skill-subagent` | subagent | `/capability-build` が起動。brief から実体を生成 |
-| `elegant-reset-observer` / `elegant-*-analyst` / `elegant-improvement-executor` | subagent | `run-elegant-review` (=`/skill-improve`・`/capability-review`) が起動 |
+| `elegant-reset-observer` / `elegant-*-analyst` / `elegant-improvement-executor` | subagent | `run-elegant-review` (=`/skill-improve`・`/capability-review`) が起動。`elegant-improvement-executor` は `/skill-improve` と `/capability-build` の初回診断後にも、選ばれた finding (`selected_finding_ids`) だけを改善する |
 | `check-route-component-parity.py` | script | `/capability-build` が preflight (routes↔inventory 一致・exit0 で継続) |
 | `build-script-route.py` | script | `/capability-build` の `build_kind=script` route 専用 executor (run-build-skill の 7 kind 外) |
 | `render-skill-brief.py` (planner 側) | script | `/capability-build` が skill route dispatch 前の brief preflight で inventory から skill-brief を決定論射影 |
@@ -84,7 +84,6 @@ skill-intake → plugin-dev-planner → harness-creator の3プラグイン量�
 ## 関連
 
 - `command-usage-prompts/` — 各コマンドの「用途プロンプト集」(コマンド入力→構造化プロンプト)。分析系5ファイルは30思考法エレガント検証つき、収集専用の `run-skill-feedback.md` は最小対話 (適用範囲は同ディレクトリ README を参照)
-- `pr-creation-prompt.md` — 全変更を feature→main で PR 化する完全自律プロンプト(このrepo実コマンド版: make test / pytest / gh / git archive HEAD)
 - `pipeline-boundary-contract.md` — E1/E2/E3/E4 境界契約の正本
 - `feedback-to-improvement-runbook.md` — ③更新の人間ブリッジ手順の正本
 - `plugins/harness-creator/skills/run-build-skill/references/feedback-loop-deployment.md` — フィードバック配備 (各量産先へ run-skill-feedback 同梱)

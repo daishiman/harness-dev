@@ -611,3 +611,21 @@ def test_cli_backcompat_trace_incomplete_is_validation_fail(tmp_path):
     # source_docs 空 + 各種 missing が stderr に並ぶ
     assert "source_docs" in proc.stderr
     assert "missing design_model" in proc.stderr
+
+
+@pytest.mark.parametrize(
+    ("value", "expected_rc"),
+    [(None, 0), ("a" * 64, 0), ("NOT-A-SHA", 1), ("A" * 64, 1)],
+)
+def test_cli_trace_lint_target_sha256_format(tmp_path, value, expected_rc):
+    # create は lint_target_sha256 と今の skill ディレクトリの digest の一致で lint receipt を
+    # 使い回す。値の無い旧 trace は通し、形の崩れた値だけを止める。
+    data = json.loads((ROOT / "eval-log" / "skill-build-trace.json").read_text(encoding="utf-8"))
+    data.pop("lint_target_sha256", None)
+    if value is not None:
+        data["lint_target_sha256"] = value
+    f = tmp_path / "skill-build-trace.json"
+    f.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    proc = _run(str(f), cwd=ROOT)
+    assert proc.returncode == expected_rc, proc.stderr
+    assert ("lint_target_sha256 must be" in proc.stderr) is (expected_rc == 1)

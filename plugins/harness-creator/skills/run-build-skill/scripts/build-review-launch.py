@@ -37,6 +37,7 @@ SCHEMA_REF = "schemas/initial-draft-review.schema.json"
 EVALUATOR_ID = "elegant-initial-draft-evaluator"
 LAUNCH_LEASE_SECONDS = 300
 PRE_DIAGNOSTIC_LEVELS = {"light", "standard", "detailed"}
+INTENT_ANCHOR_MAX_CHARS = 8000
 PRESENTATION_RECEIPT_KEYS = {
     "schema_version", "event_id", "event_type", "source", "run_id", "subject",
     "artifact_path", "artifact_sha256", "target_manifest_sha256",
@@ -296,6 +297,19 @@ def _validate_gate_plan(gate_plan: Any) -> tuple[dict, dict]:
     return gate, initial
 
 
+def _validate_intent_anchor(value: Any) -> dict:
+    """gate が渡した初回依頼原文の錨を検証する。原文と sha256 の一致で途中改変を拒否する。"""
+    anchor = _require_dict(value, "intent_anchor")
+    if set(anchor) != {"text", "sha256"}:
+        raise LaunchError("intent_anchor must contain exactly text and sha256")
+    text = anchor["text"]
+    if not isinstance(text, str) or not text.strip() or len(text) > INTENT_ANCHOR_MAX_CHARS:
+        raise LaunchError(f"intent_anchor.text must be 1-{INTENT_ANCHOR_MAX_CHARS} characters")
+    if _require_sha(anchor["sha256"], "intent_anchor.sha256") != hashlib.sha256(text.encode("utf-8")).hexdigest():
+        raise LaunchError("intent_anchor.sha256 does not match its text")
+    return {"text": text, "sha256": anchor["sha256"]}
+
+
 def _prepare_launch_request(gate_plan: dict, *, runtime: str) -> tuple[dict, dict, dict]:
     """Validate input and prepare one envelope without consuming its claim."""
     if runtime not in SUPPORTED_RUNTIMES:
@@ -330,6 +344,9 @@ def _prepare_launch_request(gate_plan: dict, *, runtime: str) -> tuple[dict, dic
             "fresh_target_read_required": True,
         },
     }
+    if "intent_anchor" in initial:
+        # request_id の計算前に入れ、錨の差し替えを別 request として扱わせる。
+        common["intent_anchor"] = _validate_intent_anchor(initial["intent_anchor"])
     adapter = (
         {
             "runtime": "claude-code",

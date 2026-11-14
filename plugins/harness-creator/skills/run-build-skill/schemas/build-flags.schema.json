@@ -134,12 +134,12 @@
         },
         "hook_triggers": {
           "type": "array",
-          "description": "評価を要求する hook 発火点。実行環境で LLM を直接起動できない場合も、queue + lint で未評価をブロックする。",
+          "description": "未評価・stale verdict を止める強制点。既定は pre-push と CI の lint-content-review.py で、常時発火 hook は使わない。PostToolUse/Stop 系の値は旧 trace 互換のため enum に残す。",
           "items": {
             "type": "string",
             "enum": ["PostToolUse:Skill", "PostToolUse:Edit", "PostToolUse:Write", "SubagentStop", "Stop", "SessionEnd", "pre-push", "CI"]
           },
-          "default": ["PostToolUse:Skill", "Stop", "pre-push"]
+          "default": ["pre-push", "CI"]
         },
         "skip_reason": {"type": "string"}
       }

@@ -137,7 +137,7 @@ creator-kit（harness-creator-kit。旧 `creator-kit/`。今の置き場所は `
 
 `installers/manifest.json` を kit 構成の正本とし、含めるものは「複数プロジェクトで同じものを使う」メタSkill、rubric/reference、lint/hook scripts、出力routing/adapter、設定雛形に限定する。業務workflow skill、プロジェクト固有設計書、分析ログ、具体的な routing 設定値は kit 外に置く。
 
-現行 kit は `run-skill-create` を E2E オーケストレーターとして持ち、`run-skill-elicit` → `run-build-skill` → creator-kit登録判定 → P0 lint → `assign-skill-design-evaluator` → `run-elegant-review` → governance の順にゲート付きで連鎖する。独立した出力先や秘密管理は 31 章の `ref-output-routing` と adapter scripts に委譲し、Bash/Python 規約は 28 章に委譲する。
+現行 kit は `run-skill-create` を E2E オーケストレーターとして持ち、`run-skill-elicit` → `run-build-skill` (生成と、利用者が選んだときだけの初稿診断) → creator-kit登録判定 → create 固有の P0 lint (build と重複する lint は build の lint receipt を再利用) → Gate 2 → package 検査 → 完了レポートの順にゲート付きで連鎖する。評価は build の初稿診断 1 回に一本化し、`assign-skill-design-evaluator` / `run-elegant-review` / governance は利用者が明示的に呼んだときだけ走る。独立した出力先や秘密管理は 31 章の `ref-output-routing` と adapter scripts に委譲し、Bash/Python 規約は 28 章に委譲する。
 
 ### creator-kit登録判定
 

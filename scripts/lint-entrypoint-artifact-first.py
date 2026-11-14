@@ -85,6 +85,10 @@ CHOICE_HEADING_PAIRS = {
     "ja": (PRE_CHOICE_HEADING_JA, POST_CHOICE_HEADING_JA),
 }
 LEGACY_BOUNDARY_HEADING = "## Artifact delivery boundary (hard gate)"
+# Gate を持つ orchestrator (gate_order 宣言あり) だけが使える phase の起動宣言。
+# phase は gate_order の順に人間承認 Gate を通って進み、診断深度の選択は委譲先 build の
+# receipt を転記する。evaluator を起動しない点は state machine の accept_contexts が担保する。
+GATED_ORCHESTRATOR_ACTIVATION = "gate-ordered-phases-with-delegated-choice"
 
 
 class Entrypoint(NamedTuple):
@@ -345,7 +349,12 @@ def _lint_workflow_manifest(path: Path) -> list[str]:
                         "workflow diagnostic choices must be canonical: "
                         "accept-as-is|light|standard|detailed"
                     )
-    if contract.get("phase_activation") != "all-legacy-phases-after-semantic_evaluator_started":
+    activation = contract.get("phase_activation")
+    gate_order = document.get("gate_order")
+    gated_orchestrator = isinstance(gate_order, list) and bool(gate_order)
+    if activation == GATED_ORCHESTRATOR_ACTIVATION and not gated_orchestrator:
+        errors.append("workflow gate-ordered activation requires a non-empty gate_order")
+    elif activation not in {"all-legacy-phases-after-semantic_evaluator_started", GATED_ORCHESTRATOR_ACTIVATION}:
         errors.append("workflow legacy phases require exact post-choice activation")
     if contract.get("release") != "explicit-only" or contract.get("exhaustive") != "explicit-only":
         errors.append("workflow release/exhaustive must remain explicit-only")

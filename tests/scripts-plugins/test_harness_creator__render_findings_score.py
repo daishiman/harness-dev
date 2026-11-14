@@ -290,6 +290,14 @@ def test_bd003_fail_over_300():
     assert "> 300" in f["message"]
 
 
+def test_bd003_counts_exactly_300_body_lines_after_frontmatter():
+    # 閉じ `---` 直後の改行を本文の 1 行目に数えない (lint-skill-tree と同じ数え方)
+    text = "---\nname: x\n---\n" + "\n".join(["line"] * 300) + "\n"
+    _, body = RFS.split_frontmatter(text)
+    assert len(body.splitlines()) == 300
+    assert RFS.check_rule(_rule("BD-003"), {}, body, Path(".")) is None
+
+
 def test_bd004_always_none():
     assert RFS.check_rule(_rule("BD-004"), {}, "", Path(".")) is None
 

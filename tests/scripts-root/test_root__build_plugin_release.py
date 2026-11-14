@@ -451,8 +451,8 @@ def test_bump_adds_the_changelog_section_for_the_version_it_distributes(
 def test_changelog_section_is_written_below_an_unreleased_heading(mod, tmp_path, monkeypatch):
     """`## [Unreleased]` がある CHANGELOG では、新しい節をその下へ入れる。
 
-    Keep a Changelog の通例であると同時に、読む側 (notifier-check の
-    `_extract_latest_version`) が版の形をしていない見出しを飛ばして次へ進むため、
+    Keep a Changelog の通例であると同時に、読む側 (`latest_changelog_version`) が
+    版の形をしていない見出しを飛ばして次へ進むため、
     下へ入れても版数整合検査は通る (2026-10-10 22:26 実測)。飛ばすのは先頭の 1 つ
     だけにする — Unreleased を全部飛ばすと、2 つ以上ある CHANGELOG (実測:
     prompt-creator) で新しい節が古い節より下へ回って新旧の順序が壊れる。

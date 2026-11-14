@@ -33,6 +33,8 @@ _SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "aggregate-issue-dif
 _HEADING = "2026-07-13T02:32:50Z"
 _SUBJECT = f"chore: update yaml-spec-cache ({_HEADING})"
 _DIFF_FLAGS = ("-c", "color.ui=false", "diff", "--no-color", "--no-ext-diff", "--no-textconv")
+# 本番と同じ位置に cache を置く (script は diff をこの path に限って復元する)。
+_CACHE = "plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md"
 
 
 def _git_env() -> dict:
@@ -64,14 +66,15 @@ def _init_repo(repo: Path) -> None:
     repo.mkdir(parents=True, exist_ok=True)
     _git(repo, "init", "-q")
     _git(repo, "config", "commit.gpgsign", "false")
-    (repo / "cache.md").write_text("# YAML Spec Cache\nline1\n", encoding="utf-8")
-    _git(repo, "add", "cache.md")
+    (repo / _CACHE).parent.mkdir(parents=True, exist_ok=True)
+    (repo / _CACHE).write_text("# YAML Spec Cache\nline1\n", encoding="utf-8")
+    _git(repo, "add", _CACHE)
     _git(repo, "commit", "-q", "-m", "initial commit")
 
 
 def _add_cache_commit(repo: Path, subject: str, body: str) -> None:
-    (repo / "cache.md").write_text(body, encoding="utf-8")
-    _git(repo, "add", "cache.md")
+    (repo / _CACHE).write_text(body, encoding="utf-8")
+    _git(repo, "add", _CACHE)
     _git(repo, "commit", "-q", "-m", subject)
 
 
@@ -139,6 +142,29 @@ def test_happy_path_restores_entries_and_stable_digest(tmp_path: Path) -> None:
     proc2 = _run_script(events, repo)
     assert proc2.returncode == 0
     assert proc2.stdout == proc.stdout
+
+
+def test_restored_diff_is_limited_to_cache_when_commit_bundles_history_and_bump(tmp_path: Path) -> None:
+    # 週次 workflow は cache・history・版上げを 1 commit にする。復元 diff は cache だけを含む。
+    repo = tmp_path / "repo"
+    _init_repo(repo)
+    (repo / _CACHE).write_text("# YAML Spec Cache\nline1\nline2 added\n", encoding="utf-8")
+    history = repo / "plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/spec-diff-history.md"
+    history.write_text(f"## {_HEADING}\n\npreview\n", encoding="utf-8")
+    plugin_json = repo / "plugins/harness-creator/.claude-plugin/plugin.json"
+    plugin_json.parent.mkdir(parents=True, exist_ok=True)
+    plugin_json.write_text('{"version": "9.9.9"}\n', encoding="utf-8")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", _SUBJECT)
+
+    events = tmp_path / "events.json"
+    _write_events(events, [{"event_at": _HEADING, "history_heading": _HEADING}])
+    proc = _run_script(events, repo)
+    assert proc.returncode == 0, proc.stderr
+    diff = json.loads(proc.stdout)["entries"][0]["diff"]
+    assert "line2 added" in diff
+    assert "spec-diff-history.md" not in diff
+    assert "plugin.json" not in diff
 
 
 def test_since_filter_excludes_older_events(tmp_path: Path) -> None:

@@ -1,5 +1,5 @@
 {
-  "$comment": "lint 集合の単一正本 (LS-02/LS-07)。build-preflight = run-build-skill SKILL.md Step4 bash ブロック / p0-gate = run-skill-create workflow-manifest.json p0-lint.commands / ci = CI workflow の実効集合。各消費面との突合は plugins/skill-governance-lint/scripts/lint-matrix-sync.py が機械検査する。lint の追加・削除は本ファイルを先に更新し、消費面 (SKILL.md / manifest / CI) を追従させること。ci を持たない lint は ci_exclusion_reason 必須。PostToolUse hook 配線 lint (lint-capability-manifest.py) は本 matrix の 3 context (build-preflight/p0-gate/ci) のスコープ外 — hook 層で常時発火し、配線正本は .claude-plugin/plugin.json の hooks。",
+  "$comment": "lint 集合の単一正本 (LS-02/LS-07)。build-preflight = run-build-skill SKILL.md Step4 bash ブロック / p0-gate = run-skill-create workflow-manifest.json p0-lint.commands (create 固有の lint だけ。build-preflight と重複する lint は build-trace の lint receipt を再利用し p0-gate に重ねて宣言しない) / ci = CI workflow の実効集合。各消費面との突合は plugins/skill-governance-lint/scripts/lint-matrix-sync.py が機械検査する。lint の追加・削除は本ファイルを先に更新し、消費面 (SKILL.md / manifest / CI) を追従させること。ci を持たない lint は ci_exclusion_reason 必須。PostToolUse hook 配線 lint (lint-capability-manifest.py) は本 matrix の 3 context (build-preflight/p0-gate/ci) のスコープ外 — hook 層で常時発火し、配線正本は .claude-plugin/plugin.json の hooks。",
   "$comment_script_location": "本ファイルは harness-creator に置かれた台帳だが、lints[].script の実体は harness-creator 配下に限らない (2026-10-10 21:35 実測: 分母 20 に対し harness-creator 配下 8 / 配下外 12。配下外は skill-governance-lint 10 + repo-root scripts/ 2)。所在が台帳から読めないと「harness-creator の台帳が外部実体を指している」ことが分からないため、各エントリに owner_plugin (実体の所有単位。harness-creator / skill-governance-lint / repo-root) と script_path (repo-root 相対の実在パス) を併記する。この2フィールドは lint-matrix-sync.py の突合 (script basename のみ参照) には影響せず、実在性は plugins/harness-creator/tests/test_lint_matrix_script_locations.py が検査する。repo-root scripts/ 配下には skill-governance-lint 実体への symlink が複数あるが、script_path は symlink 先ではなく正本実体のパスを書く。",
   "version": 1,
   "consumers": {
@@ -18,7 +18,6 @@
       "script_path": "plugins/skill-governance-lint/scripts/lint-skill-name.py",
       "contexts": [
         "build-preflight",
-        "p0-gate",
         "ci"
       ]
     },
@@ -29,7 +28,6 @@
       "script_path": "plugins/skill-governance-lint/scripts/lint-skill-description.py",
       "contexts": [
         "build-preflight",
-        "p0-gate",
         "ci"
       ]
     },
@@ -40,7 +38,6 @@
       "script_path": "plugins/skill-governance-lint/scripts/lint-skill-tree.py",
       "contexts": [
         "build-preflight",
-        "p0-gate",
         "ci"
       ]
     },
@@ -51,7 +48,6 @@
       "script_path": "plugins/skill-governance-lint/scripts/validate-frontmatter.py",
       "contexts": [
         "build-preflight",
-        "p0-gate",
         "ci"
       ]
     },
@@ -64,7 +60,7 @@
         "build-preflight",
         "ci"
       ],
-      "ci_scope": "governance-check.yml で plugins/harness-creator/scripts (plugin-root 直下 scripts) を CI 配線し、メタプラグイン自身の flow-level scripts の frontmatter 自己免除を解消 (dogfooding 破れの中核=compute-dogfooding-metrics.py/notion_config.py を封鎖)。skill の scripts は、frontmatter の欠けたファイルが無いディレクトリだけを別の段で配線する (全 plugin の run-skill-feedback/scripts・ubm-goal-setting の run-ubm-*/scripts・run-build-skill/scripts・assign-skill-design-evaluator/scripts・assign-plugin-package-evaluator/scripts・run-plugin-dev-plan/scripts・run-prompt-creator-7layer/scripts・run-system-spec-elicit/scripts。段は先にディレクトリの存在を確かめる)。plugins/*/skills/*/scripts の残りと full plugins/ tree は、frontmatter の無いファイル (2026-10-10 時点で harness-creator・skill-intake の 23 本と PENDING_FILES) が残るので未配線=段階棚卸し後に拡張する。build-preflight は従来どおり新規生成物を強制。"
+      "ci_scope": "governance-check.yml で plugins/harness-creator/scripts (plugin-root 直下 scripts) を CI 配線し、メタプラグイン自身の flow-level scripts の frontmatter 自己免除を解消 (dogfooding 破れの中核=notion_config.py を封鎖)。skill の scripts は、frontmatter の欠けたファイルが無いディレクトリだけを別の段で配線する (全 plugin の run-skill-feedback/scripts・ubm-goal-setting の run-ubm-*/scripts・run-build-skill/scripts・assign-skill-design-evaluator/scripts・assign-plugin-package-evaluator/scripts・run-plugin-dev-plan/scripts・run-prompt-creator-7layer/scripts・run-system-spec-elicit/scripts。段は先にディレクトリの存在を確かめる)。plugins/*/skills/*/scripts の残りと full plugins/ tree は、frontmatter の無いファイル (2026-10-10 時点で harness-creator・skill-intake の 23 本と PENDING_FILES) が残るので未配線=段階棚卸し後に拡張する。build-preflight は従来どおり新規生成物を強制。"
     },
     {
       "id": "skill-completeness",
@@ -182,10 +178,9 @@
       "owner_plugin": "harness-creator",
       "script_path": "plugins/harness-creator/skills/run-build-skill/scripts/validate-build-plan.py",
       "contexts": [
-        "build-preflight",
-        "p0-gate"
+        "build-preflight"
       ],
-      "ci_exclusion_reason": "入力の skill-brief.json が build 実行時 (eval-log/) にのみ存在するため CI 一括適用は不可。量産経路では build-preflight と p0-gate の2面で強制され、brief 不在の単発 build は NOTE 付き skip (fail-open は量産経路外に限定)"
+      "ci_exclusion_reason": "入力の skill-brief.json が build 実行時 (eval-log/) にのみ存在するため CI 一括適用は不可。量産経路では build-preflight で強制し、run-skill-create の p0-gate は build-trace の lint receipt (reproducibility_gates.lint=PASS) を再利用して再実行しない。brief 不在の単発 build は NOTE 付き skip (fail-open は量産経路外に限定)"
     },
     {
       "id": "capability-graph-knowledge",

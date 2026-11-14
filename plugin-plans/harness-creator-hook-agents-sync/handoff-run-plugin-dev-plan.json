@@ -59,26 +59,11 @@
       "status": "planned"
     },
     {
-      "id": "C05",
-      "component_kind": "hook",
-      "name": "auto-sync-on-session-start",
-      "spec": "phase-05-implementation.md",
-      "depends_on": ["C01", "C02"],
-      "builder": "run-build-skill",
-      "build_kind": "hook",
-      "build_args": {
-        "kind": "hook",
-        "name": "auto-sync-on-session-start"
-      },
-      "build_target": "plugins/harness-creator/hooks/auto-sync-on-session-start.py",
-      "status": "planned"
-    },
-    {
       "id": "C04",
       "component_kind": "slash-command",
       "name": "capability-build",
       "spec": "phase-05-implementation.md",
-      "depends_on": ["C03", "C05"],
+      "depends_on": ["C03"],
       "builder": "run-build-skill",
       "build_kind": "command",
       "build_args": {

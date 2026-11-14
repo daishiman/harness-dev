@@ -1,10 +1,10 @@
 ---
-description: 既存 Skill/Capability を読み、run-elegant-review → 改善実行 (elegant-improvement-executor) を自動チェインする。レビューと修正を 1 コマンドで完結させる入口。
+description: 既存 Skill/Capability を run-elegant-review で分析し、findings を提示して利用者が選んだものだけを elegant-improvement-executor で改善する入口。選ばれなかった finding には手を付けない。
 argument-hint: "<capability-path>  例: plugins/harness-creator/skills/run-build-skill / agents/elegant-reset-observer.md"
-allowed-tools: Read, Write, Edit, Bash
+allowed-tools: Read, Write, Edit, Bash, Skill, Task, AskUserQuestion
 name: skill-improve
 kind: command
-version: 0.1.0
+version: 0.2.0
 owner: team-platform
 since: 2026-05-24
 entrypoint: run-elegant-review
@@ -12,15 +12,17 @@ entrypoint: run-elegant-review
 
 # /skill-improve
 
-`$ARGUMENTS` の `<capability-path>` を対象に、レビュー → 改善 → 再レビューのループを最大 3 周回まで自動実行する。
+`$ARGUMENTS` の `<capability-path>` を対象に、分析 → findings 提示 → 利用者の選択 → 選んだものだけ改善 → 検証 の順で進める。改善範囲を決めるのは利用者で、command は自動で範囲を広げない。
 
 ## 振る舞い
 
-1. target を読み、`run-elegant-review` を起動 (Phase 1-3)。
-2. 集約 findings の severity `critical` / `high` を `elegant-improvement-executor` agent に渡し、最小パッチを適用。
-3. 適用後に validation script (`validate-build-trace.py` 等) を実行。
-4. C1〜C4 ゲートが PASS するか `iteration_count >= 3` まで 1-3 をループ。
-5. 完了時に `changed_paths / validation_commands / residual_risks` を報告。
+1. target を読み、`run-elegant-review` を `--dry-run` で起動する (対象ファイルは編集せず、findings と C1〜C4 判定を eval-log に保存するだけ)。
+2. 集約 findings を `id`・severity・C1〜C4 のどれか・location・1 行要約で一覧にして見せる (critical/high を先頭)。`id` が無い issue には表示順に `F-NNNN` を振り、選んでもらう前に findings.json へ書き戻す (選択と executor の `selected_finding_ids` を同じ id で結ぶため)。
+3. `AskUserQuestion` で改善する finding を選んでもらう。選択肢は「critical/high だけ」「全件」「id を個別に選ぶ」「改善しない」。回答を得るまで編集を始めない。
+4. 「改善しない」または選択 0 件なら executor を起動せず、findings の保存先を示して停止する。
+5. 選択があれば `elegant-improvement-executor` を 1 worker で起動する。引数は `selected_finding_ids` = 選ばれた id、`max_rounds` = 3 (`convergence-policy.json` の安全弁)、`aggregated_findings` = 手順 1 の findings。
+6. executor が返した `validation_commands[]` が全件 exit 0 で、選んだ finding の C1〜C4 が再判定されていることを確かめる。
+7. `changed_paths / validation_commands / residual_risks`、選んだ finding ごとの結果、選ばなかった finding の一覧 (未実施と明記) を報告する。
 
 ## 引数
 
@@ -31,10 +33,11 @@ entrypoint: run-elegant-review
 ## 失敗時
 
 - target 不在: パス候補を表示し停止
-- max iteration 超過: human_review に escalate し、未解決 finding を一覧出力
+- `max_rounds` を使い切っても収束しない: human_review に escalate し、未解決 finding を一覧出力
 - validation script 不在: skip 理由を明示し、手動検証コマンドを提示
+- 改善中に新しい問題が見つかった: 編集せず `residual_risks` に載せ、もう一度 `/skill-improve` で選ぶよう案内
 
 ## 注意
 
-- 本 command は破壊的変更を行う。事前に git commit clean を推奨。
+- 選んだ finding については破壊的変更を行う。事前に git commit clean を推奨。
 - review のみを行いたい場合は `/capability-review` を使う。

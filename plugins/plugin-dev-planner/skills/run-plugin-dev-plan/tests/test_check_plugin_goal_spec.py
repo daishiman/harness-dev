@@ -51,6 +51,15 @@ def test_plugin_goal_spec_rejects_extra_key(plugin_goal_spec):
     assert any("additionalProperties" in e for e in errors)
 
 
+def test_plugin_goal_spec_user_request_verbatim_is_optional_nonempty_string(plugin_goal_spec):
+    data = _goal_spec()
+    data["user_request_verbatim"] = "harness-creator を速くして。意図とずれないようにして"
+    assert plugin_goal_spec.validate(data) == []
+    for bad in ("", "   ", 3, "x" * 8001):
+        data["user_request_verbatim"] = bad
+        assert any("user_request_verbatim" in e for e in plugin_goal_spec.validate(data)), bad
+
+
 def test_plugin_goal_spec_rejects_bad_slug(plugin_goal_spec):
     data = _goal_spec()
     data["target_plugin_slug"] = "Notion Task Sync"

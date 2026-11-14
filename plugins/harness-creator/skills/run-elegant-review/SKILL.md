@@ -49,7 +49,7 @@ schema_refs:
   - schemas/verdict.schema.json
 rubric_refs:
   - ref-skill-design-rubric
-  - references/4-conditions.json        # 4 条件の唯一正本 (elegant-4-conditions.json は後方互換 redirect)
+  - references/4-conditions.json        # 4 条件の唯一正本
 reference_refs:
   - references/30-paradigms-full.md
   - references/thought-methods.yaml
@@ -71,7 +71,7 @@ script_refs:
   - scripts/build-verdict.py
   - scripts/build-review-report.py
   - scripts/validate_phase_order.py
-  - scripts/check-review-trigger.py
+  - scripts/sync-content-review-sha.py
 merge_strategy: deep-merge
 conflict_policy: most-specific-wins
 source: doc/ClaudeCodeスキルの設計書/09-evaluation-orchestration.md

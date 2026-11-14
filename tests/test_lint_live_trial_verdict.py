@@ -1,8 +1,10 @@
 """scripts/lint-live-trial-verdict.py の機械検査を合成 fixture で固定する。
 
 正: schema 適合 + sha 一致 + PASS + tier=live 非降格 → exit 0
-負: DEGRADED / stale-sha / downgrade / schema 違反 / denylist 被験体 →
+負: DEGRADED / downgrade / schema 違反 / denylist 被験体 →
     存在する verdict の違反は record-only 中 (--enforce なし) でも exit 1
+古い: stale-sha は既定で要再実走 WARN (exit 0)。--enforce か
+      LIVE_TRIAL_ENFORCE_FRESHNESS=1 で exit 1。
 不在: verify_by: live-trial 宣言 skill の verdict 欠落は D13 パイロットゲート中
       record-only WARN (exit 0)、--enforce で exit 1。
 """
@@ -58,6 +60,8 @@ body
 
 @pytest.fixture()
 def lint(monkeypatch, tmp_path):
+    # 実行環境の鮮度強制 env が既定挙動の検査へ漏れないようにする
+    monkeypatch.delenv("LIVE_TRIAL_ENFORCE_FRESHNESS", raising=False)
     monkeypatch.setattr(_MOD, "PLUGINS_DIR", tmp_path / "plugins")
     monkeypatch.setattr(_MOD, "EVAL_LOG", tmp_path / "eval-log")
     return _MOD
@@ -239,15 +243,51 @@ def test_degraded_verdict_hard_fails(lint, capsys):
     assert "verdict=DEGRADED" in capsys.readouterr().out
 
 
-def test_stale_sha_hard_fails(lint, capsys):
+def _make_stale(lint):
     skill_dir = _make_skill(lint)
     _write_verdict(lint, _valid_doc(lint, skill_dir))
     # verdict 後に挙動面 (SKILL.md) を変更 → tree sha 不一致
     (skill_dir / "SKILL.md").write_text(
         SKILL_MD_DECLARING.format(name="run-demo") + "\nchanged\n", encoding="utf-8"
     )
+    return skill_dir
+
+
+def test_stale_sha_warns_by_default(lint, capsys):
+    """CI で実走できない以上、古い PASS は要再実走の WARN に留め、再実走ループを起こさない。"""
+    _make_stale(lint)
+    assert lint.run_lint() == 0
+    out = capsys.readouterr().out
+    assert "[WARN] live-trial verdict 要再実走: 1 verdict(s)" in out
+    assert "stale-sha" in out
+    assert "1 stale (re-trial advised)" in out
+
+
+def test_stale_sha_fails_with_enforce(lint, capsys):
+    _make_stale(lint)
+    assert lint.run_lint(enforce=True) == 1
+    out = capsys.readouterr().out
+    assert "[FAIL]" in out and "stale-sha" in out
+
+
+def test_stale_sha_fails_with_freshness_env(lint, monkeypatch, capsys):
+    """release 前の再取得では env だけで FAIL に戻せること (不在の扱いは変えない)。"""
+    _make_stale(lint)
+    monkeypatch.setenv("LIVE_TRIAL_ENFORCE_FRESHNESS", "1")
     assert lint.run_lint() == 1
     assert "stale-sha" in capsys.readouterr().out
+
+
+def test_stale_sha_does_not_hide_other_violations(lint, capsys):
+    """古いうえに FAIL の verdict は、WARN 扱いの陰で FAIL を消さないこと。"""
+    skill_dir = _make_skill(lint)
+    doc = _valid_doc(lint, skill_dir)
+    doc["skill_dir_tree_sha"] = "0" * 64
+    doc["overall"]["verdict"] = "FAIL"
+    _write_verdict(lint, doc)
+    assert lint.run_lint() == 1
+    out = capsys.readouterr().out
+    assert "verdict=FAIL" in out and "stale-sha" in out
 
 
 def test_stale_sha_names_drifted_skill_and_skips_manifest_version(lint, monkeypatch, tmp_path, capsys):
@@ -277,7 +317,7 @@ def test_stale_sha_names_drifted_skill_and_skips_manifest_version(lint, monkeypa
     (skill_dir / "SKILL.md").write_text(
         SKILL_MD_DECLARING.format(name="run-demo") + "\nchanged\n", encoding="utf-8"
     )
-    assert lint.run_lint() == 1
+    assert lint.run_lint() == 0
     out = capsys.readouterr().out
     assert "stale-sha" in out
     assert "plugins/demo-plugin/skills/run-demo/SKILL.md" in out
@@ -375,7 +415,7 @@ def test_stale_receipt_verdict_is_reported_instead_of_newer_fail(lint, capsys):
     _write_verdict(lint, good, run_id="20260701T000000")
     _write_verdict(lint, bad, run_id="20260702T000000")
     _receipt(lint, "eval-log/demo-plugin/run-demo/live-trial/20260701T000000/verdict.json")
-    assert lint.run_lint() == 1
+    assert lint.run_lint() == 0
     out = capsys.readouterr().out
     assert "20260701T000000/verdict.json stale-sha" in out
     assert "verdict=FAIL" not in out

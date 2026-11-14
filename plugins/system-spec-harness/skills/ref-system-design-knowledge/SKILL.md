@@ -91,7 +91,7 @@ runtime_root_policy: host-skill-path
 - **exit 0 を「依存が正しい」と読まない**: validator の保証範囲は上の「知識依存グラフ」節の通り well-formedness だけ。カード追加時は本文で依存の理由を述べること — 機械は理由の不在を検出しない。
 - **カード追加はカタログ 1 行では終わらない**: `references/*.md` 実体・`knowledge-catalog.json` entry・`resource-map.yaml` の `read_when` の三者が parity を保つ必要があり、加えて `read_when` の字面は下流の写像そのものである — `run-system-spec-compile` の `category_design_refs()` はハードコード表を持たず `read_when` へのカテゴリ id 部分一致で章の設計知識ポインタを導出する。`read_when` からカテゴリ名を言い換えただけで写像は静かに空へ落ちる (`../run-system-spec-compile/tests/test_compile_spec_doc.py::test_category_design_refs_derived_from_resource_map` が代表カテゴリを pin している)。
 - **`resource-map.yaml` の path は `references/` からの相対**: skill 外の資産も載せてよく (`run-system-spec-elicit` が `../../../scripts/validate-coverage-matrix.py` を列挙している)、**基点は skill root ではなく `references/`** なので `../../scripts/…` と書くと 1 段浅く外して解決しない。この誤りは repo 内に実在する — `run-system-spec-compile` の resource-map の skill 外 3 entry は全て `../../scripts/*.py` で、`references/` 起点では 1 本も解決しない (真似る先を間違えないこと)。frontmatter 側は逆に **skill root 相対**なので、同じ資産を両方へ書くと段数が 1 つずれる (揃えられない)。ただし `validate-frontmatter.py:check_refs_exist` が実在検査するのは `rubric_refs` / `reference_refs` / `script_refs` の 3 つだけで、**`schema_refs` は検査対象外** — ここの段数ミスは機械では止まらない。
-- **`kind: ref` は CI の content-review 対象外**: `scripts/lint-content-review.py` の `EXEMPT_KINDS` に `ref` が入るため verdict 不在でも CI は緑になる。一方 stop hook (`check-review-trigger.py`) には同じ除外が無いので、変更すればローカルではレビューを求められる。CI が緑=レビュー済み、と読み替えないこと。
+- **`kind: ref` は CI の content-review 対象外**: `scripts/lint-content-review.py` の `EXEMPT_KINDS` に `ref` が入るため verdict 不在でも CI は緑になる。CI が緑=レビュー済み、と読み替えないこと。
 - **`allowed-tools: [Read]` は事故防止であって不便ではない**: 検索・取得・書込を足したくなったら C01/C02 側へ置く (責務は上の「完了条件」と「境界」の通り)。ここに取得処理が入ると、参照した瞬間に内容が変わりうる正本になる。
 
 ## 責務プロンプト

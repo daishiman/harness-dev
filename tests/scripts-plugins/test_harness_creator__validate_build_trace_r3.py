@@ -1351,7 +1351,6 @@ def test_responsibility_schema_patterns_accept_same_id_grammar():
     schema_paths = [
         ROOT / "plugins/harness-creator/skills/run-build-skill/schemas/responsibility-slot.schema.json",
         ROOT / "plugins/harness-creator/skills/run-build-skill/schemas/skill-build-trace.schema.json",
-        ROOT / "plugins/harness-creator/skills/run-skill-create/schemas/build-trace.schema.json",
         ROOT / "plugins/harness-creator/skills/run-skill-create/schemas/skill-brief.schema.json",
     ]
     patterns = []
@@ -1362,12 +1361,7 @@ def test_responsibility_schema_patterns_accept_same_id_grammar():
         skill_trace["properties"]["prompt_generation_model"]["properties"]
         ["per_responsibility"]["items"]["properties"]["id"]["pattern"]
     )
-    create_trace = json.loads(schema_paths[2].read_text(encoding="utf-8"))
-    patterns.append(
-        create_trace["properties"]["prompt_generation_model"]["properties"]
-        ["per_responsibility"]["items"]["properties"]["id"]["pattern"]
-    )
-    skill_brief = json.loads(schema_paths[3].read_text(encoding="utf-8"))
+    skill_brief = json.loads(schema_paths[2].read_text(encoding="utf-8"))
     patterns.append(
         skill_brief["properties"]["responsibilities"]["items"]["properties"]
         ["id"]["pattern"]

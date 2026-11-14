@@ -125,13 +125,17 @@ REQUIRED_GOVERNANCE_ROLES = {"proposer", "reviewer", "approver", "tooling"}
 
 # RTM (requirement_coverage): brief の非空フィールドのうち被覆宣言を要求しないもの。
 # 識別・分類・build フラグ配管系は他ゲート (lint-skill-name / brief schema enum /
-# variant_support クロスチェック / resolve-brief-to-category) が既に担保している。
+# variant_support クロスチェック) が既に担保している。
 NON_REQUIREMENT_BRIEF_FIELDS = {
     "skill_name", "prefix", "kind", "role_suffix", "hierarchy_level",
     "output_language", "parameter_language_exception",
     "source_url_or_path", "source_tier", "last_audited_date", "audit_trigger",
     "mass_production_profile", "paradigm_profile",
     "consult_build_knowledge", "with_subagent_hint", "with_hooks",
+    # 初回依頼の原文は要件の出典であって要件そのものではない。要件は goal /
+    # purpose_background / key_constraints 等へ構造化済みで、原文との突合は初稿診断の evaluator が
+    # intent_anchor として担う (Step 12.6)。成果物要素への写像を求めると空宣言になる。
+    "user_request_verbatim",
 }
 REQUIREMENT_DISPOSITIONS = {"mapped", "not_applicable"}
 # brief フィールドパス: 例 key_constraints[2] / boundary / knowledge_loop.pattern
@@ -1782,6 +1786,14 @@ def main() -> int:
             status = str(gates.get(gate, "")).upper()
             if status not in {"PASS", "N/A"}:
                 errs.append(f"invalid gate status: {gate}={gates.get(gate)}")
+
+    # run-skill-create は lint_target_sha256 が今の skill ディレクトリの digest と一致するときだけ
+    # lint receipt を使い回す。形の崩れた値は照合を常に外して黙って再実行に回すので、ここで止める。
+    # 値の無い旧 trace は再利用されないだけなので許す。
+    if "lint_target_sha256" in data and not re.fullmatch(
+        r"[0-9a-f]{64}", str(data.get("lint_target_sha256", ""))
+    ):
+        errs.append("lint_target_sha256 must be 64 lowercase hex chars")
 
     script_model = data.get("script_execution_model")
     if not isinstance(script_model, dict):

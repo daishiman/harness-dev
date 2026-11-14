@@ -61,10 +61,10 @@ source-tier: internal
 
 | ID | 仕様 | 絶対パス | 何を強制 | 焼き先 |
 |---|---|---|---|---|
-| E1 | skill-brief.schema | `plugins/harness-creator/skills/run-skill-create/schemas/skill-brief.schema.json` | 必須 14 フィールド・optional `goal_seek` (engine/fork 省略時は inline、task-graph/SubAgent/Agent Team は必要性明示時のみ)・skill_name pattern `^(ref\|run\|wrap\|assign\|delegate)-…$` max60・trigger_conditions 2-3 各≤80・boundary≤200・allOf(wrap→base_skill / delegate→delegate_agent / L2→rubric_refs≥1 / run・wrap・assign・delegate→goal+purpose_background+checklist / 全 prefix→kind 必須 / run・assign→responsibilities≥1 かつ prompt_required:true) | P4 inventory component エントリ (§3 は planner 内に節を持たない外部=`source` 設計書 `doc/ClaudeCodeスキルの設計書/` の章番号) |
+| E1 | skill-brief.schema | `plugins/harness-creator/skills/run-skill-create/schemas/skill-brief.schema.json` | 必須 14 フィールド・optional `goal_seek` (engine/fork 省略時は inline、task-graph/SubAgent/Agent Team は必要性明示時のみ)・optional `user_request_verbatim` (利用者の初回依頼原文。初稿診断が当初目的の正本として evaluator へ渡す)・skill_name pattern `^(ref\|run\|wrap\|assign\|delegate)-…$` max60・trigger_conditions 2-3 各≤80・boundary≤200・allOf(wrap→base_skill / delegate→delegate_agent / L2→rubric_refs≥1 / run・wrap・assign・delegate→goal+purpose_background+checklist / 全 prefix→kind 必須 / run・assign→responsibilities≥1 かつ prompt_required:true) | P4 inventory component エントリ (§3 は planner 内に節を持たない外部=`source` 設計書 `doc/ClaudeCodeスキルの設計書/` の章番号) |
 | E2 | SKILL.md 構造仕様 | `plugins/harness-creator/skills/run-build-skill/SKILL.md`(+ governance-lint) | 本文≤300 行(P0-2)目安 170・description 発動条件のみ trigger2-3・dir 名==frontmatter.name・commonCore(name/description/kind/version/owner)・Python 標準ライブラリ正本(.sh/.js 新規禁止)・update 差分のみ・具体値直書き禁止({{PROJECT_ROOT}})・配置非依存($CLAUDE_PLUGIN_ROOT) | P4/P5 |
 | E3 | run-build-skill Step0-12 カタログ | `plugins/harness-creator/skills/run-build-skill/SKILL.md` | kind 分岐→ヒアリング(criteria test-first)→テンプレ→references→trace+feedback_contract 固定→命名/構造 lint→fork 評価→ゲート(score≥80,high0,3 周)→subagent→prompt-creator→evaluator ペア→hook→knowledge loop→Notion→feedback 配備→content-review・ゴール駆動 | P4 |
-| E4 | run-skill-create 7Step+4Gate | `plugins/harness-creator/skills/run-skill-create/SKILL.md` | Step1 elicit→Gate1→build→manifest/Gate2.5/bundle→P0lint(fail→build3 周)/Gate2→pkg-check→design-evaluate fork→elegant-review/Gate3→governance/Gate4→report・ゲート前必ず停止/承認・evaluator/governance は fork・P0 自動修正禁止・--fast 条件(1 ファイル≤30 行 kind∈{ref,wrap}) | P4/P8(投入先ゲート) |
+| E4 | run-skill-create 3Gate フロー | `plugins/harness-creator/skills/run-skill-create/SKILL.md` | Step1 elicit→Gate1→build→manifest/Gate2.5/bundle/release 記録→P0lint(create 固有分のみ・build の lint receipt を再利用・fail→build3 周)/Gate2→pkg-check→report・ゲート前必ず停止/承認・P0 自動修正禁止・C1-C4 は build の初稿診断 receipt を正本とし create で再評価しない・rubric governance は rubric 変更時だけ利用者が明示起動 | P4/P8(投入先ゲート) |
 | E5 | prompt-placement-convention + lint | `plugins/harness-creator/skills/run-build-skill/references/prompt-placement-convention.md` / `plugins/harness-creator/skills/run-build-skill/scripts/lint-prompt-placement.py` | prompts/<R-id>.md 正本・agents/<role>.md 薄いアダプタ+responsibility anchor・逆転禁止 exit1・ファイル名 regex・run/assign は prompts 必須・no-split threshold(第二消費者/機械検証/280 行超) | P3/P4 |
 | E6 | prompt-creator 7 層 | `plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-markdown-template.md` | L1 基本定義→L2 ドメイン→L3 インフラ→L4 共通ポリシー→L5 エージェント(ゴール+完了チェックリスト 5-8+固定手順なし)→L6 オーケスト→L7 UI・依存方向 L7→L1 単方向・1 ファイル 1 責務 1agent・.md 既定 | P3/P4 prompt 設計 |
 
@@ -99,13 +99,13 @@ A1-A11(11) + B1-B5(5) + C1-C4(4) + D1-D6(6) + E1-E6(6) + F1-F8(8) + G1-G6(6) = *
 ## 完全性の証明 (§14.1 / 全サーフェス列挙 → ラベル付け)
 
 > 上記 46 行のうち 43 行は「指示インベントリ」と 1 対 1 (F8 install-portability は per-phase 転換で追加した配布携帯性規律、B4/B5 は feedback-Notion 連携で追加した宣言スロット規律) だが、それだけでは *分母が自己定義* で完全性を証明しない。
-> ここでは **harness-creator の全サーフェス (skills 32 本 + 設計書の関連章) を独立列挙**し、各々を
+> ここでは **harness-creator の全サーフェス (skills 31 本 + 設計書の関連章) を独立列挙**し、各々を
 > `反映済(行ID)` / `含意済(行IDに包含)` / `意図的除外(理由)` でラベル付けする。これにより「漏れていない」が
 > 監査可能になる (循環論法の解消)。新規 skill/章が harness-creator に増えたら本表へ追記する運用とする。
 
-### skills/ 全 32 本
+### skills/ 全 31 本
 
-> 注: `plugins/harness-creator/skills/` の skill directory と、その直下に実在する `SKILL.md` はともに **32 本**。旧 contract-generator 参照 (`run-contract-finalize`/`run-contract-generate`/`run-template-sync`) は harness-creator から削除済みで、現在の分母には含めない。
+> 注: `plugins/harness-creator/skills/` の skill directory と、その直下に実在する `SKILL.md` はともに **31 本**。旧 contract-generator 参照 (`run-contract-finalize`/`run-contract-generate`/`run-template-sync`) は harness-creator から削除済みで、現在の分母には含めない。
 
 | skill | ラベル | 根拠 |
 |---|---|---|
@@ -132,14 +132,13 @@ A1-A11(11) + B1-B5(5) + C1-C4(4) + D1-D6(6) + E1-E6(6) + F1-F8(8) + G1-G6(6) = *
 | run-goal-seek | 反映済 D4 | ゴールシーク反復 |
 | run-migrate-audit | 意図的除外 | 移行監査の運用 skill。生成規律でない |
 | run-plugin-package-check | 反映済 F5/A7 | PKG smoke/permission |
-| run-skill-create | 反映済 E4 | 7Step+4Gate (後段投入先) |
+| run-skill-create | 反映済 E4 | 3Gate フロー (後段投入先) |
 | run-skill-elicit | 含意済 E3/E4 | brief ヒアリング (run-skill-create Step1) |
 | run-skill-feedback | 反映済 D6 | feedback 配備 |
 | run-skill-iter-improve | 意図的除外 (部分含意 D4/D6) | 実走 eval 駆動の反復改善ループ。goal-seek(D4)/feedback 配備(D6) の改善思想に連なるが、harness-creator 自身の品質改善運用機構であり生成タスク仕様書へ焼く計画規律でない |
 | run-skill-live-trial | 意図的除外 | 対象 skill を本物の claude セッション(tmux)で実走させる受け入れ評価機構。harness-creator の実走品質検証運用で、計画生成段階の規律でない |
 | run-skill-rename | 意図的除外 (update で別扱い) | 改名は `--mode update` の運用で、計画生成段階の規律でない |
 | run-skill-rubric-governance | 反映済 A10 | rubric governance runbook |
-| run-skill-update-notifier | 意図的除外 | 更新通知の運用 skill。生成規律でない |
 | wrap-git-commit-safe | 意図的除外 | git commit ラッパー。生成規律でない (PR/commit は最終仕様書が言及・本スキル責務外) |
 
 ### 設計書 関連章 (46 行が直接引用しないが関連)

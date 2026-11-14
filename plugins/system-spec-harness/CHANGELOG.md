@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.1.27 — 2026-11-14
+
+- ref-system-design-knowledge の Gotchas から、harness-creator で削除された stop hook (`check-review-trigger.py`) への言及を外した。content-review の強制は CI / pre-push の `lint-content-review.py` だけになった。
+
 ## 0.1.26 — 2026-11-02
 
 - Codexの実spawn・親子関係・fresh子context・監査定義の全文Read・終了応答を、保護された原ログから再検証する監査帰属を追加。

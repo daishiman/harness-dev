@@ -46,7 +46,7 @@ coverage 数値だけでは trust bypass や stale review を防げないため�
 
 ## 完了チェックリスト
 
-- [ ] 全5 component の kind gate と coverage が PASS。
+- [ ] 全4 component の kind gate と coverage が PASS。
 - [ ] existing Claude tests が green。
 - [ ] C02 parity/freshness gate が PASS。
 - [ ] forbidden write/secret scan が PASS。

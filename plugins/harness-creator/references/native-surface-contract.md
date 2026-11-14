@@ -42,8 +42,8 @@ dev-graph のみで、Codex が提供しない `TaskCompleted` を Claude 共通
 Codex manifest は `./codex/hooks.json` を明示する。その omission は capability parity
 contract に理由と `PostToolUse` / `SessionStart` の代替経路を持つ場合に限り PASS とする。
 Codex manifest の `skills` は実在する `./skills/` だけを許可する。
-`hooks/hooks.json` は `hooks.SessionStart[].hooks[]` の command schema を満たし、
-`auto-sync-on-session-start.py` の実行 path は plugin root 内に限る。
+`hooks/hooks.json` は宣言した全 event の `hooks[]` が command schema を満たし、
+各 command の実行 path は plugin root 内に限る。特定 event の配線は必須にしない。
 
 repo marketplace は plugin 名に一致する単一 entry が
 `source={"source":"local","path":"./plugins/<slug>"}` を持つ。各 entry は

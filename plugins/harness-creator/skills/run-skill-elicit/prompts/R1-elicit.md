@@ -24,7 +24,7 @@
 ### 1.2 背景 / 期待成果 / 成功基準
 - 背景: 自然言語要望は曖昧。schema 正本フィールドを最小対話で構造化する必要がある。
 - 期待成果: 正本スキーマ準拠の `skill-brief.json` (フィールド集合は schema 正本に従う)。
-- 成功基準: 対話 5 ターン以内で schema PASS + `trigger_conditions 2〜3 件`。
+- 成功基準: 対話 5 ターン以内で schema PASS + `trigger_conditions` ちょうど 2 件。
 
 ### 1.3 スコープ
 - 含む: 対話で必須フィールドを埋める / schema 検証 / diff 提示
@@ -36,14 +36,15 @@
 | 用語 | 定義 |
 |---|---|
 | brief | Skill 化の最小設計書 (schema 正本フィールド準拠の JSON) |
-| trigger_conditions | Skill 発動を意図する動詞ベース条件 (2〜3 件) |
+| trigger_conditions | Skill 発動を意図する動詞ベース条件 (ちょうど 2 件) |
 | 必須フィールド | skill_name / prefix / kind / hierarchy_level / trigger_conditions / output_contract / boundary ほか schema required。実行系 (prefix∈{run,wrap,assign,delegate}) は goal / purpose_background / checklist、kind∈{run,assign} は responsibilities (prompt_required:true 1 件以上) も allOf 必須 |
 
 ### 2.2 ビジネスルール
 - CONST_001: 対話は最小回数 (目安 5 ターン以内)。
 - CONST_002: 既存 brief があれば上書きせず diff を提示。
-- CONST_003: `trigger_conditions` は 2〜3 件。
+- CONST_003: `trigger_conditions` はちょうど 2 件 (schema は 3 件まで通すが、description の lint `validate-frontmatter.py` が 2 件ちょうどを要求する)。
 - OUTPUT_CONST: `eval-log/skill-brief.json` を正本スキーマ準拠で書く。
+- INTENT_CONST: 利用者の初回依頼は要約・言い換えせず、PII と secret (token・password・API key など) だけ `[伏字]` に置換して `user_request_verbatim` に保存する。`goal` / `purpose_background` は解釈なので当初目的の正本にしない (初稿診断の evaluator はこの原文で目的適合を判定する)。
 
 ## Layer 3: インフラ層
 
@@ -74,12 +75,12 @@
 ### 5.3 ゴール定義
 - 目的: 曖昧な skill 要望を schema 準拠 brief.json に最小対話で構造化。
 - 背景: run-build-skill が受理可能な構造化が要る。
-- 達成ゴール: 正本スキーマ準拠 + `trigger_conditions 2〜3` + 全必須項目に有意値の brief。
+- 達成ゴール: 正本スキーマ準拠 + `trigger_conditions` ちょうど 2 件 + 全必須項目に有意値の brief。
 
 ### 5.4 完了チェックリスト (停止条件)
 - [ ] 正本スキーマ PASS (skill-brief.schema.json validator exit 0)
 - [ ] 実行系 (prefix∈{run,wrap,assign,delegate}) は goal / purpose_background / checklist を brief に埋め、kind∈{run,assign} は responsibilities に prompt_required:true を 1 件以上含む (欠くと validator exit≠0 で上の PASS に到達不能)
-- [ ] `trigger_conditions 2〜3` 件
+- [ ] `trigger_conditions` がちょうど 2 件
 - [ ] 対話 5 ターン以内
 - [ ] 既存 brief 衝突時は diff 提示と user 確認の記録あり
 - [ ] 推測を事実として述べていない (inferred 値に `source=inferred` 明記)

@@ -100,6 +100,11 @@
         "governance": {"type": "string", "enum": ["PASS", "FAIL", "N/A"]}
       }
     },
+    "lint_target_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Step 4 の lint が全て exit 0 になったときの生成 skill ディレクトリ全体の digest (feedback_contract_ssot.directory_content_sha256。__pycache__ と .DS_Store は除く)。run-skill-create の p0-lint は、今のディレクトリの digest と一致するときだけ build の lint 結果を使い回す。build 後にディレクトリ内のどれかが変わっていれば covered_scripts をその場で再実行する。"
+    },
     "four_conditions": {
       "type": "object",
       "description": "run-elegant-review の最終4条件。C1=矛盾なし、C2=漏れなし、C3=整合性あり、C4=依存関係整合。content-review / evaluator / trace の意味的最終判定をここへ集約する。",
@@ -146,7 +151,7 @@
         "hook_triggers": {
           "type": "array",
           "items": {"type": "string"},
-          "description": "評価要求を発火する hook/CI 契機。例: PostToolUse:Skill / Stop / pre-push。"
+          "description": "未評価・stale verdict を止める強制点。既定は pre-push / CI (lint-content-review.py)。"
         }
       }
     },

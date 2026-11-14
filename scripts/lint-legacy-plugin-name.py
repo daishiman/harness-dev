@@ -53,8 +53,6 @@ ALLOWLIST = {
     "plugins/harness-creator/README.md": "改名の経緯と移行手順",
     "doc/harness-creator-完全解剖.md":
         "harnessの対象拡大を説明するための旧名→現名の歴史的な一度きりの言及",
-    "plugins/harness-creator/references/plugin-rename-checklist.md":
-        "plugin 単位改名手順の恒久チェックリスト",
     "plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md":
         "外部 fetch した YAML spec の cache mirror (ref-yaml-spec-fetcher 自動生成)。"
         "逐語の外部由来内容で能動層でないため凍結層と同等に扱う",

@@ -21,18 +21,6 @@ scope = "repo-and-git"
 activation_requires = ["user-install", "user-enable", "user-hook-trust"]
 
 [[hooks]]
-id = "harness-creator-session-start-sync"
-owner = "harness-creator"
-event = "SessionStart"
-matcher = "startup|resume|clear"
-command = "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/auto-sync-on-session-start.py\""
-delivery = "plugin"
-# Codex は plugin_hooks が removed で plugin 配下 hooks.json を読まない。
-# Codex への配達は build-hook-registry.py が生成する project 層 hook-router が担うため、
-# plugin delivery の products は claude のみが真。
-products = ["claude"]
-
-[[hooks]]
 id = "harness-creator-external-intelligence-observe"
 owner = "harness-creator"
 event = "PostToolUse"

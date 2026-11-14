@@ -19,7 +19,7 @@ SCRIPT = RUN_BUILD / "scripts/validate-improvement-result.py"
 SCHEMA = RUN_BUILD / "schemas/improvement-result.schema.json"
 DECISION_SCHEMA = RUN_BUILD / "schemas/improvement-decision.schema.json"
 PROMPT = RUN_BUILD / "prompts/R6-bounded-improve.md"
-AGENT = REPO_ROOT / "plugins/harness-creator/agents/elegant-bounded-improvement-executor.md"
+AGENT = REPO_ROOT / "plugins/harness-creator/agents/elegant-improvement-executor.md"
 
 
 def _load_module():
@@ -715,7 +715,9 @@ def test_prompt_and_agent_define_one_bounded_improvement_worker():
         "auto_promote_release=false",
     ):
         assert token in prompt
-    assert "elegant-bounded-improvement-executor" in agent
+    assert "elegant-improvement-executor" in agent
+    assert "selected_finding_ids" in agent
+    assert "max_rounds" in agent
     assert "R6-bounded-improve.md" in agent
     assert "--gate-state <state_ref> --target-root <target_root>" in agent
     assert "remediation_paths[]" in agent

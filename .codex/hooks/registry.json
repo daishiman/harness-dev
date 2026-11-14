@@ -170,40 +170,6 @@
       "event": "PostToolUse",
       "tool_scoped": true,
       "matcher": {
-        "claude": "Skill",
-        "codex": ""
-      },
-      "scope": {},
-      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/notify-skill-end.py\"",
-      "timeout": null,
-      "async": false,
-      "products": [
-        "claude"
-      ]
-    },
-    {
-      "id": "harness-creator:PostToolUse:1:1",
-      "plugin": "harness-creator",
-      "event": "PostToolUse",
-      "tool_scoped": true,
-      "matcher": {
-        "claude": "Skill",
-        "codex": ""
-      },
-      "scope": {},
-      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/content-review-queue.py\"",
-      "timeout": 3,
-      "async": false,
-      "products": [
-        "claude"
-      ]
-    },
-    {
-      "id": "harness-creator:PostToolUse:2:0",
-      "plugin": "harness-creator",
-      "event": "PostToolUse",
-      "tool_scoped": true,
-      "matcher": {
         "claude": "Edit|Write",
         "codex": "apply_patch"
       },
@@ -217,25 +183,7 @@
       ]
     },
     {
-      "id": "harness-creator:PostToolUse:2:1",
-      "plugin": "harness-creator",
-      "event": "PostToolUse",
-      "tool_scoped": true,
-      "matcher": {
-        "claude": "Edit|Write",
-        "codex": "apply_patch"
-      },
-      "scope": {},
-      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/content-review-queue.py\"",
-      "timeout": 3,
-      "async": false,
-      "products": [
-        "claude",
-        "codex"
-      ]
-    },
-    {
-      "id": "harness-creator:PostToolUse:3:0",
+      "id": "harness-creator:PostToolUse:2:0",
       "plugin": "harness-creator",
       "event": "PostToolUse",
       "tool_scoped": true,
@@ -298,78 +246,6 @@
       },
       "scope": {},
       "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/aggregate-evals.py\"",
-      "timeout": 3,
-      "async": false,
-      "products": [
-        "claude",
-        "codex"
-      ]
-    },
-    {
-      "id": "harness-creator:SessionStart:0:0",
-      "plugin": "harness-creator",
-      "event": "SessionStart",
-      "tool_scoped": false,
-      "matcher": {
-        "claude": "startup|resume|clear",
-        "codex": "startup|resume|clear"
-      },
-      "scope": {},
-      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/auto-sync-on-session-start.py\"",
-      "timeout": 60,
-      "async": false,
-      "products": [
-        "claude",
-        "codex"
-      ]
-    },
-    {
-      "id": "harness-creator:Stop:0:0",
-      "plugin": "harness-creator",
-      "event": "Stop",
-      "tool_scoped": false,
-      "matcher": {
-        "claude": ".*",
-        "codex": ".*"
-      },
-      "scope": {},
-      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/elegant-review-trigger.py\"",
-      "timeout": 3,
-      "async": false,
-      "products": [
-        "claude",
-        "codex"
-      ]
-    },
-    {
-      "id": "harness-creator:UserPromptSubmit:0:0",
-      "plugin": "harness-creator",
-      "event": "UserPromptSubmit",
-      "tool_scoped": false,
-      "matcher": {
-        "claude": ".*",
-        "codex": ".*"
-      },
-      "scope": {},
-      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/cache-refresh.py\"",
-      "timeout": null,
-      "async": false,
-      "products": [
-        "claude",
-        "codex"
-      ]
-    },
-    {
-      "id": "harness-creator:UserPromptSubmit:0:1",
-      "plugin": "harness-creator",
-      "event": "UserPromptSubmit",
-      "tool_scoped": false,
-      "matcher": {
-        "claude": ".*",
-        "codex": ".*"
-      },
-      "scope": {},
-      "command": "python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/ref-task-context-map-preload.py\"",
       "timeout": 3,
       "async": false,
       "products": [
@@ -744,20 +620,6 @@
       "id": "dev-graph:TaskCompleted:0:0",
       "reason": "event-unsupported-on-codex",
       "tools": []
-    },
-    {
-      "id": "harness-creator:PostToolUse:1:0",
-      "reason": "no-codex-tool-equivalent",
-      "tools": [
-        "Skill"
-      ]
-    },
-    {
-      "id": "harness-creator:PostToolUse:1:1",
-      "reason": "no-codex-tool-equivalent",
-      "tools": [
-        "Skill"
-      ]
     },
     {
       "id": "harness-creator:PostToolUseFailure:0:0",

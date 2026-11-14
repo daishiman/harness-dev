@@ -7,7 +7,7 @@ prev_phase: 4
 next_phase: 6
 status: 完了
 gate_type: tdd-green
-entities_covered: [C01, C02, C03, C04, C05]
+entities_covered: [C01, C02, C03, C04]
 applicability:
   applicable: true
   reason: ""
@@ -17,11 +17,11 @@ applicability:
 
 ## 目的
 
-repo integration singleton task と5 component を依存順に実装し、各 write scope の owner を一意に保つ。
+repo integration singleton task と4 component を依存順に実装し、各 write scope の owner を一意に保つ。
 
 ## 背景
 
-旧 handoff は root reflector repair、Makefile/CI、manifest、marketplace を phase prose に埋めて owner を持たせず、C05 は manifest wiring と aggregate script を1 routeに混在させていた。
+旧 handoff は root reflector repair、Makefile/CI、manifest、marketplace を phase prose に埋めて owner を持たせていなかった。
 
 ## 前提条件
 
@@ -36,13 +36,13 @@ repo integration singleton task と5 component を依存順に実装し、各 wr
 2. repo integration: common `plugins/harness-creator/native-surfaces.toml`、native surface contract/schema、Claude settings adapter、Codex project `.codex/hooks.json`/`.codex/config.toml` adapter、`.codex-plugin/plugin.json`、`hooks/hooks.json`、`.agents/plugins/marketplace.json`、`plugin-composition.yaml`。
 3. C02 parity validator。
 4. C01 orchestrator。
-5. C03 completion gates と C05 hook を並列実装。
+5. C03 completion gates。
 6. C04 dispatcher。
 7. Makefile/CI は apply 可能な current state を作った後に blocking check を有効化。
 
 ## 成果物
 
-- C01/C02/C03/C04/C05 の route target。
+- C01/C02/C03/C04 の route target。
 - repo integration path matrix の全 target と focused tests。
 - manifest/marketplace/source digest snapshot、created-path inventory、fixture 内の managed projection rollback→restore 実行結果と migration note。
 
@@ -56,7 +56,6 @@ repo integration singleton task と5 component を依存順に実装し、各 wr
 - [ ] target unknown event preserve / managed source unknown event block が実装される。
 - [ ] `.agents/{agents,commands,hooks}` と非公式 TOML writer が存在せず、`.agents/plugins/marketplace.json`・`.codex/hooks.json`・`.codex/config.toml` は公式 schema の repo-owned managed 部分だけを更新する。
 - [ ] common TOML の1 hook は delivery=`plugin|project` のどちらか1つだけを所有し、Claude/Codex の native location へ製品別変換される。
-- [ ] C05 は hook script target を持ち、manifest/marketplace wiring は repo integration owner が担う。
 - [ ] lock/atomic replace/hash no-op/timeout/structured status が実装される。
 - [ ] Makefile/CI/dispatcher/TG-C08 が apply→check 順に配線される。
 - [ ] global config/beads/trust store write が0。
@@ -67,7 +66,7 @@ repo integration singleton task と5 component を依存順に実装し、各 wr
 
 ### 受入例 (満たす例 / 満たさない例)
 
-- 満たす例: build対象5 routeとrepo integration taskの各 changed pathを owner 1件へ逆引きできる。
+- 満たす例: build対象4 routeとrepo integration taskの各 changed pathを owner 1件へ逆引きできる。
 - 満たさない例: manifest 更新や root script 修正が「ついで」に入り route/evidence owner がない。
 
 ### 事前解決済み判断

@@ -2,19 +2,19 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-elicit",
-    "skill_md_sha256": "ab89356982b6866f14ae443a462bb7d27c17b5d8ceaaeeff2d030faac778884f"
+    "skill_md_sha256": "5f70617e8a1e6bf2d9fba31c630b7ae1a7774e73872def8a7cc7a73133c95c2c"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
-    "smell": 0
+    "contradiction": 1,
+    "omission": 2,
+    "inconsistency": 4,
+    "dependency_break": 1,
+    "smell": 1
   },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:09Z",
+  "reviewer": "independent-incremental-focused-reviewer-20261114",
+  "reviewed_at": "2026-11-14T09:30:00+09:00",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -25,13 +25,53 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "inline/inline がbrief生成の対話・schema検証を単一contextで完結させ、不要なAgent委譲を導入していない。"
+      "ref-skill-design-rubric/references/rubric.json (v1.6.0) の severity=high の規則はすべて満たしており、名前・frontmatter・tree・artifact-first の機械 lint (lint-skill-name、lint-skill-description --skill、validate-frontmatter、lint-skill-tree、lint-entrypoint-artifact-first) も通る。",
+      "workflow-manifest.json:18 の phase_activation は gate_order を持たない skill に許された all-legacy-phases-after-semantic_evaluator_started で、pre-choice と post-choice の見出し (SKILL.md:65・:70) も artifact-delivery-v1 の規約どおりにそろっている。",
+      "user_request_verbatim は skill-brief.schema.json:35 で optional・1-8000文字の string として定義され、prompts/R1-elicit.md:47 と run-skill-create/prompts/R1-elicit.md:34 の書き込み指示、run-build-skill/SKILL.md:423 の読み取りと名前が一致しているので、elicit が書くと宣言したフィールドが schema に無いという破綻はない。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "medium(不整合): rubric PD-002 は frontmatter を除く本文の冒頭30行に目的見出しと禁則語を求めるが、SKILL.md:64-93 には :77 の「## Purpose & Output Contract」があるだけで MUST/禁止/必ず などの禁則語が1つもなく、最初の禁則は :117 の「## Key Rules」まで出てこない (基点 3e1b394b の時点から続いている未達)。",
+      "medium(不整合・差分外): SKILL.md:121・:140・:238・:326 は trigger を2〜3個とし、:326 はそれを lint-skill-description.py の R1 と FM-003 の合意値と書くが、lint-skill-description.py:138-139 は3個以上を違反、validate-frontmatter.py:456-466 はちょうど2個を必須とし、ref-skill-design-rubric/SKILL.md:66 自身が「trigger は 2 個ちょうどで書く」と定めているので、rubric 規約に合っていない。",
+      "medium(漏れ・差分外): SKILL.md:84-113 に responsibilities がなく、:93・:95 は goal と checklist を「実行系で推奨」とするが、skill-brief.schema.json:126-131 は run/wrap/assign/delegate で goal・purpose_background・checklist を、:153-164 は kind=run/assign で responsibilities を必須にしているので、schema_refs(SKILL.md:29) が指す正本 schema と本文の必須条件が食い違っている。",
+      "medium(漏れ): SKILL.md:84-113 のフィールド一覧と :115 の完了条件に user_request_verbatim がなく、原文保存の指示は responsibility_refs(SKILL.md:27) の prompts/R1-elicit.md:47 にしかないので、本文から brief を書く実行者には今回のブランチの目的である intent_anchor 用の原文保存が伝わらない。",
+      "medium(矛盾): SKILL.md:67-68 は create 経由では4択を聞かないとする一方、SKILL.md:72 と workflow-manifest.json:18 はヒアリングを含む既存 workflow を light/standard/detailed の記録後に限るため、create 経由で brief を作るヒアリングの起動条件が本文と manifest から決まらない。",
+      "low(不整合): SKILL.md:273 は「これら 3 フィールド」と書きながら4つのフィールドを並べている。",
+      "low(不整合): references/brief-template.md:5 は「13 必須フィールド」と書くが、skill-brief.schema.json:8-23 の required は14件ある。",
+      "low(依存の断絶): SKILL.md:269-273 は with_subagent_hint / with_hooks を見て run-build-skill が agent-teams / subagent-hook-integration category を「必ず読む」とするが、run-build-skill/SKILL.md:207・:277 と resource-map.yaml:173・:180 は keyword で category を選ぶだけで、フラグから強制する受け手がいない。",
+      "low(臭い): allowed-tools(SKILL.md:8-10) は Read/Write だけなのに、本文は :167・:302 で python3、:316 で mkdir を実行させ、:67 の schema 検証を行うコマンドも示していない。"
+    ],
     "iteration": 1,
-    "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
-    "next_action": "none"
+    "iteration_limit": 1,
+    "hook_trigger": "manual-incremental-content-review",
+    "next_action": "improve"
   },
-  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
+  "notes": "incremental profile の focused combined review として、rubric.json v1.6.0 の各規則と assign-skill-design-evaluator の L2 上書きを、git diff 3e1b394b の run-skill-elicit 差分と、連動する skill-brief.schema.json と run-skill-create/SKILL.md に当て、elegance と同じ1つの context で判定した。前回 verdict の negative_feedback は空だったので、解消を確かめる対象の指摘はなかった。rubric の high は0件。medium は5件で、そのうち PD-002 と trigger 個数と responsibilities の3件は今回の差分の外にある既存の問題なので PASS とし、negative_feedback に残した。",
+  "sha_rebinds": [
+    {
+      "from_sha": "31524497cae55397047e0ab264112e8f2866d7d50def0b38a1c0f83eee27d0ca",
+      "to_sha": "5f70617e8a1e6bf2d9fba31c630b7ae1a7774e73872def8a7cc7a73133c95c2c",
+      "finding_ids": [
+        "elegance:1",
+        "rubric:1",
+        "elegance:2",
+        "rubric:2",
+        "elegance:3",
+        "rubric:3",
+        "elegance:4",
+        "rubric:4",
+        "elegance:5",
+        "rubric:5",
+        "elegance:6",
+        "rubric:6",
+        "elegance:7",
+        "rubric:7",
+        "elegance:8",
+        "rubric:8",
+        "elegance:9",
+        "rubric:9"
+      ],
+      "rebound_at": "2026-11-14T00:44:52Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

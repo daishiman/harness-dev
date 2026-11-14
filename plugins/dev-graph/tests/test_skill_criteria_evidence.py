@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import warnings
 from pathlib import Path
 
 import jsonschema
@@ -46,6 +47,15 @@ def _load_live_trial_verdict():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def _report_stale(verdict_mod, message: str) -> None:
+    """古い証跡の扱い。正本は live-trial-verdict.py の freshness_enforced で、
+    lint-live-trial-verdict.py と同じ判断を使う。既定は要再実走の警告、
+    鮮度強制 (LIVE_TRIAL_ENFORCE_FRESHNESS=1) のときだけ FAIL。"""
+    if verdict_mod.freshness_enforced():
+        pytest.fail(message)
+    warnings.warn(message, stacklevel=2)
 
 
 def _behavior_drift_suffix(verdict_mod, skill_dir: Path, receipt: dict) -> str:
@@ -159,18 +169,19 @@ def test_independent_scenario_receipt_covers_exact_criteria(
     recorded_sha = receipt["target"].get("skill_md_sha256")
     live_verdict_module = _load_live_trial_verdict()
     drift = _behavior_drift_suffix(live_verdict_module, skill_path.parent, receipt)
-    assert recorded_sha == current_sha, (
-        f"{component_id}: criteria receipt は現在の SKILL.md を覆っていない "
-        f"(receipt={recorded_sha} current={current_sha})。"
-        " skill_md_sha256 を手で現在値へ書き換えるのは証拠の偽装になる。"
-        " 現在のバイト列に対する live-trial PASS と、その run を指す receipt の再評価が要る。"
-        f"{drift}"
-    )
+    if recorded_sha != current_sha:
+        _report_stale(live_verdict_module, (
+            f"{component_id}: criteria receipt は現在の SKILL.md を覆っていない "
+            f"(receipt={recorded_sha} current={current_sha})。"
+            " skill_md_sha256 を手で現在値へ書き換えるのは証拠の偽装になる。"
+            " 現在のバイト列に対する live-trial PASS と、その run を指す receipt の再評価が要る。"
+            f"{drift}"
+        ))
     assert receipt["target"] == {
         "plugin": "dev-graph",
         "skill": skill_name,
         "component_id": component_id,
-        "skill_md_sha256": current_sha,
+        "skill_md_sha256": recorded_sha,
     }
     assert receipt["verdict"] == "PASS"
     assert receipt["reviewer"].strip()
@@ -224,13 +235,14 @@ def test_independent_scenario_receipt_covers_exact_criteria(
         runtime = verdict.get("environment", {}).get("runtime", "claude")
         digest = (live_verdict_module.skill_dir_tree_sha(skill_path.parent, runtime=runtime)
                   if runtime == "codex" else live_verdict_module.skill_dir_tree_sha(skill_path.parent))
-        assert verdict["skill_dir_tree_sha"] == digest, (
-            f"{component_id}/{criterion_id}: stale behavior closure digest "
-            f"(recorded={verdict['skill_dir_tree_sha']} current={digest})。"
-            " digest を手で現在値へ書き換えるのは証拠の偽装になる。"
-            " 現在の挙動閉包に対する live-trial PASS を取り、receipt の ref をその run へ更新する。"
-            f"{drift}"
-        )
+        if verdict["skill_dir_tree_sha"] != digest:
+            _report_stale(live_verdict_module, (
+                f"{component_id}/{criterion_id}: stale behavior closure digest "
+                f"(recorded={verdict['skill_dir_tree_sha']} current={digest})。"
+                " digest を手で現在値へ書き換えるのは証拠の偽装になる。"
+                " 現在の挙動閉包に対する live-trial PASS を取り、receipt の ref をその run へ更新する。"
+                f"{drift}"
+            ))
         if runtime == "codex":
             assert not live_verdict_module.validate_runtime_evidence(
                 verdict, verdict_path.parent / "transcript.jsonl", skill_path.parent,
@@ -328,6 +340,39 @@ def test_failed_receipt_remains_blocked_by_acceptance_gate(tmp_path, monkeypatch
         test_independent_scenario_receipt_covers_exact_criteria(
             component_id, skill_name, skill_path, criteria_ids,
         )
+
+
+def test_stale_evidence_warns_by_default_and_fails_when_enforced(monkeypatch) -> None:
+    """古い証跡は既定で警告に留め、鮮度強制のときだけ FAIL にする (lint と同じ正本)。"""
+    verdict_mod = _load_live_trial_verdict()
+    monkeypatch.delenv(verdict_mod.FRESHNESS_ENFORCE_ENV, raising=False)
+    with pytest.warns(UserWarning, match="stale behavior closure"):
+        _report_stale(verdict_mod, "C02/OUT1: stale behavior closure digest")
+    monkeypatch.setenv(verdict_mod.FRESHNESS_ENFORCE_ENV, "1")
+    with pytest.raises(pytest.fail.Exception, match="stale behavior closure"):
+        _report_stale(verdict_mod, "C02/OUT1: stale behavior closure digest")
+
+
+def test_stale_failed_receipt_is_not_hidden_by_freshness_warning(tmp_path, monkeypatch) -> None:
+    """古さを警告に下げても、FAIL の receipt は受入ゲートで止まること。"""
+    monkeypatch.delenv("LIVE_TRIAL_ENFORCE_FRESHNESS", raising=False)
+    component_id, skill_name, skill_path, criteria_ids = _targets()[0]
+    receipt = _synthetic_scenario_receipt("FAIL", ("FAIL",))
+    receipt["target"] = {
+        "plugin": "dev-graph", "skill": skill_name, "component_id": component_id,
+        "skill_md_sha256": "0" * 64,
+    }
+    result = receipt["criteria_results"]["OUT1"]
+    receipt["criteria_results"] = {criterion_id: dict(result) for criterion_id in criteria_ids}
+    receipt_path = tmp_path / "eval-log" / "dev-graph" / skill_name / "criteria-test" / "scenario-verdict.json"
+    receipt_path.parent.mkdir(parents=True)
+    receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+    monkeypatch.setitem(globals(), "REPO", tmp_path)
+    with pytest.warns(UserWarning, match="SKILL.md を覆っていない"):
+        with pytest.raises(AssertionError, match="FAIL"):
+            test_independent_scenario_receipt_covers_exact_criteria(
+                component_id, skill_name, skill_path, criteria_ids,
+            )
 
 
 def test_positive_live_trial_scenarios_cover_out1_without_eval_log_fixture_coupling() -> None:

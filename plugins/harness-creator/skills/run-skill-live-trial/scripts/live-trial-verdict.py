@@ -1125,6 +1125,19 @@ def format_closure_drift(labels: list[str] | None, *, limit: int = 30) -> str:
     return text
 
 
+# 鮮度ポリシーの正本。lint-live-trial-verdict.py と各 plugin の受入証拠テストが共有する。
+# 既定では、古い挙動閉包に対する PASS は「要再実走」の WARN にとどめる。CI では
+# 実走できない (D14) ため、FAIL にすると変更のたびに手元での再実走ループが走り、
+# 無関係な変更でも一斉に stale になる (PR #86 では 9 件の再実走で十数時間)。
+# release 前や定期の再取得では --enforce か、この env を 1 にして FAIL へ戻す。
+FRESHNESS_ENFORCE_ENV = "LIVE_TRIAL_ENFORCE_FRESHNESS"
+
+
+def freshness_enforced(explicit: bool = False) -> bool:
+    """古い verdict を FAIL にするか。明示指定か env=1 のときだけ True。"""
+    return explicit or os.environ.get(FRESHNESS_ENFORCE_ENV, "") == "1"
+
+
 def format_stale_sha(recorded: object, current: str, labels: list[str] | None) -> str:
     """stale-sha 違反。label があるときだけ挙動ファイル名を足す。"""
     text = (

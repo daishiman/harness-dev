@@ -7,7 +7,7 @@ prev_phase: 10
 next_phase: 12
 status: 完了
 gate_type: evidence
-entities_covered: [C05]
+entities_covered: []
 applicability:
   applicable: true
   reason: ""
@@ -31,7 +31,7 @@ Codex plugin hook は manifest/marketplace が正しくても trust 前には実
 ## ドメイン知識
 
 - local evidence: lint/schema/build-trace/content-review/coverage + manifests/marketplace/parity/failure logs。
-- runtime evidence: install、enable、trust review、new session、SessionStart status、uninstall/prune。
+- runtime evidence: install、enable、trust review、new session、uninstall/prune。
 - trust 定義変更時は re-trust pending へ戻る。
 
 ## 成果物
@@ -49,7 +49,6 @@ Codex plugin hook は manifest/marketplace が正しくても trust 前には実
 
 - [ ] local evidence 全件 present。
 - [ ] trust前 non-run と trust後 run の両証跡がある、または pending_user_gate と明記される。
-- [ ] SessionStart warning が child failure detail/remediation を保持する。
 - [ ] global/beads/secret/PII diff 0。
 - [ ] install/uninstall/prune 後の orphan 0。
 - [ ] local evidence は artifact path+SHA-256+graph hash+UTC timestamp を持つ schema-valid ledger で、runtime user gate と local-required gate を混同しない。

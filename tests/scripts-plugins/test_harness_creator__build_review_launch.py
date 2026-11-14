@@ -325,6 +325,46 @@ def test_gate_contract_fails_closed_before_launch(mod, tmp_path: Path, mutate, m
         mod.build_launch_request(gate, runtime="codex")
 
 
+def _with_intent(gate: dict, text: str = "会議メモから決定事項だけを抜き出すスキルが欲しい") -> dict:
+    gate["initial_review"]["intent_anchor"] = {
+        "text": text,
+        "sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+    }
+    return gate
+
+
+def test_intent_anchor_is_carried_verbatim_and_bound_into_request_identity(mod, tmp_path: Path):
+    """初回依頼原文は evaluator の当初目的の正本。改変なく渡り、request_id にも効く。"""
+    plain = mod.build_launch_request(_gate_plan(tmp_path, state_name="plain"), runtime="codex")
+    anchored_gate = _with_intent(_gate_plan(tmp_path, state_name="anchored"))
+    anchored = mod.build_launch_request(anchored_gate, runtime="codex")
+
+    assert "intent_anchor" not in plain["runtime_neutral_request"]
+    assert anchored["runtime_neutral_request"]["intent_anchor"] == anchored_gate["initial_review"]["intent_anchor"]
+    assert anchored["request_id"] != plain["request_id"]
+    schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+    assert list(Draft7Validator(schema).iter_errors(anchored)) == []
+
+
+@pytest.mark.parametrize(
+    ("mutate", "match"),
+    [
+        (lambda anchor: anchor.update(sha256="0" * 64), "does not match"),
+        (lambda anchor: anchor.update(summary="言い換え"), "exactly text and sha256"),
+        (
+            lambda anchor: anchor.update(text="", sha256=hashlib.sha256(b"").hexdigest()),
+            "1-8000",
+        ),
+    ],
+)
+def test_tampered_intent_anchor_is_rejected_before_consumption(mod, tmp_path: Path, mutate, match):
+    gate = _with_intent(_gate_plan(tmp_path))
+    mutate(gate["initial_review"]["intent_anchor"])
+    with pytest.raises(mod.LaunchError, match=match):
+        mod.build_launch_request(gate, runtime="codex")
+    assert not mod.launch_state_path(Path(gate["state_ref"])).exists()
+
+
 def test_unsupported_runtime_fails_closed_without_writing(tmp_path: Path):
     gate_path = tmp_path / "gate.json"
     out_path = tmp_path / "launch.json"
@@ -517,7 +557,9 @@ def test_manifest_routes_every_kind_build_through_common_usable_draft_proof():
     assert "script-validate-build-trace" in proof["resourceIds"]
 
     delivery = phases["artifact-present-handoff"]
-    assert delivery["dependsOn"] == ["usable-draft-proof"]
+    # 提示は feedback-deploy の配備結果も待って合流する (配備失敗を提示の場で見せる)。
+    assert delivery["dependsOn"] == ["usable-draft-proof", "feedback-deploy"]
+    assert phases["feedback-deploy"]["transition"]["on_pass"] == "artifact-present-handoff"
     assert delivery["events"] == [
         "artifact_created", "minimal_guard_passed", "artifact_presented"
     ]
@@ -551,7 +593,8 @@ def test_manifest_routes_every_kind_build_through_common_usable_draft_proof():
     bounded = phases["bounded-improvement"]
     assert bounded["dependsOn"] == ["initial-draft-review"]
     assert set(bounded["capability_kind_filter"]) == CAPABILITY_KINDS
-    assert bounded["executor"] == "elegant-bounded-improvement-executor"
+    assert bounded["executor"] == "elegant-improvement-executor"
+    assert set(bounded["executor_args"]) >= {"selected_finding_ids", "max_rounds"}
     assert bounded["accept_draft_executor_contexts"] == 0
 
     post = phases["post-improvement-verification"]

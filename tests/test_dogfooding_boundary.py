@@ -1,8 +1,8 @@
 """dogfooding 境界 (harness-creator 自身の除外/非除外) の SSOT 一本化を機械担保する。
 
 findings SS-01 / SS-08 / SS-10 で検出した綻びを再発防止する:
-  - 制御リテラル "harness-creator" が4 consumer に独立散在し、非対称な除外ルール
-    (Stop block=除外 / feedback 配備=除外 / content-review=非除外) の SSOT が無かった。
+  - 制御リテラル "harness-creator" が複数 consumer に独立散在し、非対称な除外ルール
+    (feedback 配備=除外 / content-review=非除外) の SSOT が無かった。
   - 本テストは (a) SSOT 述語の真偽値、(b) 各 consumer が判定用スタンドアロン
     リテラルを残さず SSOT 述語へ委譲していること (textual + behavioral) を固定する。
 
@@ -20,11 +20,6 @@ SSOT_PATH = ROOT / "scripts" / "feedback_contract_ssot.py"
 
 LINT_CONTENT_REVIEW = ROOT / "scripts" / "lint-content-review.py"
 LINT_FEEDBACK_PROTOCOL = ROOT / "scripts" / "lint-feedback-protocol.py"
-CHECK_REVIEW_TRIGGER = (
-    ROOT
-    / "plugins" / "harness-creator" / "skills" / "run-elegant-review"
-    / "scripts" / "check-review-trigger.py"
-)
 RENDER_COMBINATORS = (
     ROOT
     / "plugins" / "harness-creator" / "skills" / "run-build-skill"
@@ -34,7 +29,6 @@ RENDER_COMBINATORS = (
 CONSUMERS = [
     LINT_CONTENT_REVIEW,
     LINT_FEEDBACK_PROTOCOL,
-    CHECK_REVIEW_TRIGGER,
     RENDER_COMBINATORS,
 ]
 
@@ -73,13 +67,6 @@ def test_self_dogfooding_plugin_constant(fc):
     assert fc.SELF_DOGFOODING_PLUGIN == "harness-creator"
 
 
-def test_stop_block_exempt_truth_table(fc):
-    """Stop block: harness-creator は除外 (True)、他は非除外。"""
-    assert fc.is_stop_block_exempt("harness-creator") is True
-    for other in ("company-master", "mf-kessai-invoice-check", "skill-intake", ""):
-        assert fc.is_stop_block_exempt(other) is False
-
-
 def test_feedback_deploy_exempt_truth_table(fc):
     """feedback 配備: harness-creator は除外 (True)、他は非除外。"""
     assert fc.is_feedback_deploy_exempt("harness-creator") is True
@@ -95,9 +82,9 @@ def test_content_review_exempt_is_asymmetric(fc):
 
 
 def test_asymmetry_holds(fc):
-    """非対称性の核: harness-creator は block/配備では除外だが content-review では非除外。"""
+    """非対称性の核: harness-creator は feedback 配備では除外だが content-review では非除外。"""
     p = fc.SELF_DOGFOODING_PLUGIN
-    assert fc.is_stop_block_exempt(p) and fc.is_feedback_deploy_exempt(p)
+    assert fc.is_feedback_deploy_exempt(p)
     assert not fc.is_content_review_exempt(p)
 
 
@@ -140,7 +127,7 @@ def test_no_standalone_judgment_literal(path, fc):
 
 def test_self_dogfooding_plugin_dir_exists(fc):
     """SELF_DOGFOODING_PLUGIN が指す plugin dir が実在する。dir 改名×定数据え置きの
-    象限 (Stop hook 自己ブロック+feedback 自己配備の同時誤作動) を fail-closed 化する。"""
+    象限 (feedback 自己配備の誤作動) を fail-closed 化する。"""
     assert (ROOT / "plugins" / fc.SELF_DOGFOODING_PLUGIN).is_dir(), (
         f"plugins/{fc.SELF_DOGFOODING_PLUGIN} が存在しない: plugin dir 改名時は "
         "SELF_DOGFOODING_PLUGIN (正本+vendored) を同一 commit で更新すること"
@@ -148,9 +135,9 @@ def test_self_dogfooding_plugin_dir_exists(fc):
 
 
 def test_self_derive_parity_with_ssot_literal(fc):
-    """parents[N].name self-derive する consumer (check-review-trigger/render-combinators)
+    """parents[N].name self-derive する consumer (render-combinators)
     と SSOT literal の値が一致する。二重管理 drift (consumer 依存で述語真理値が分裂) を検知。"""
-    for consumer, depth in ((CHECK_REVIEW_TRIGGER, 3), (RENDER_COMBINATORS, 3)):
+    for consumer, depth in ((RENDER_COMBINATORS, 3),):
         derived = consumer.resolve().parents[depth].name
         assert derived == fc.SELF_DOGFOODING_PLUGIN, (
             f"{consumer.name}: parents[{depth}].name={derived!r} が "
@@ -172,12 +159,6 @@ def test_feedback_protocol_uses_predicate():
     assert "import feedback_contract_ssot" in src
 
 
-def test_check_review_trigger_uses_predicate():
-    src = CHECK_REVIEW_TRIGGER.read_text(encoding="utf-8")
-    assert "is_stop_block_exempt" in src
-    assert "feedback_contract_ssot" in src
-
-
 def test_render_combinators_uses_predicate():
     src = RENDER_COMBINATORS.read_text(encoding="utf-8")
     assert "is_feedback_deploy_exempt" in src
@@ -185,12 +166,6 @@ def test_render_combinators_uses_predicate():
 
 
 # ───────────── (b-3) 二段確認: import して runtime で SSOT に解決する ─────────────
-
-
-def test_check_review_trigger_resolves_ssot_at_runtime():
-    mod = _load(CHECK_REVIEW_TRIGGER, "check_review_trigger_under_test")
-    assert mod._FC.is_stop_block_exempt("harness-creator") is True
-    assert mod._FC.is_stop_block_exempt("company-master") is False
 
 
 def test_render_combinators_resolves_ssot_at_runtime():

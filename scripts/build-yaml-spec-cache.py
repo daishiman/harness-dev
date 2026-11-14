@@ -49,6 +49,12 @@ OUT_PATH = pathlib.Path(
 )
 MAX_BODY_CHARS = 50000
 FETCH_TIMEOUT_SEC = 30
+# 本文が前回と同じ週は、last_fetched だけの差分で commit と plugin の版上げが毎週起きていた。
+# 本文が同じで前回取得から REFRESH_AFTER_DAYS 日未満なら書き換えない。週次で回る前提で、
+# lint-manifest-contents の 30 日 WARNING に届く前 (最長 28 日) に last_fetched だけ更新する
+# (ref-yaml-spec-fetcher SKILL.md 手順 4)。
+REFRESH_AFTER_DAYS = 23
+STAMP_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
 
 class TextExtractor(html.parser.HTMLParser):
@@ -91,11 +97,36 @@ def extract_body(html_doc: str) -> str:
     return parser.text()[:MAX_BODY_CHARS]
 
 
+def _split_stamp(text: str) -> tuple[str | None, list[str]]:
+    """(last_fetched の値, last_fetched 行を除いた本文行) を返す。"""
+    stamp = None
+    body = []
+    for line in text.splitlines():
+        if line.startswith("last_fetched:"):
+            stamp = line.partition(":")[2].strip()
+        else:
+            body.append(line)
+    return stamp, body
+
+
+def keep_previous(prev_text: str, new_text: str, now: datetime.datetime) -> bool:
+    """本文が同じで前回の last_fetched がまだ新しいとき True (= 書き換えない)。"""
+    prev_stamp, prev_body = _split_stamp(prev_text)
+    if prev_stamp is None or prev_body != _split_stamp(new_text)[1]:
+        return False
+    try:
+        fetched = datetime.datetime.strptime(prev_stamp, STAMP_FORMAT).replace(
+            tzinfo=datetime.timezone.utc
+        )
+    except ValueError:
+        return False
+    return now - fetched < datetime.timedelta(days=REFRESH_AFTER_DAYS)
+
+
 def main() -> int:
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    now = datetime.datetime.now(datetime.timezone.utc).strftime(
-        "%Y-%m-%dT%H:%M:%SZ"
-    )
+    now_dt = datetime.datetime.now(datetime.timezone.utc)
+    now = now_dt.strftime(STAMP_FORMAT)
     lines = [
         "# YAML Spec Cache",
         "",
@@ -114,7 +145,12 @@ def main() -> int:
             failures += 1
         lines.append(body)
         lines.append("")
-    OUT_PATH.write_text("\n".join(lines), encoding="utf-8")
+    text = "\n".join(lines)
+    prev_text = OUT_PATH.read_text(encoding="utf-8") if OUT_PATH.exists() else ""
+    if keep_previous(prev_text, text, now_dt):
+        print(f"unchanged {OUT_PATH} (sources={len(SOURCES)}, failures={failures})")
+        return 0
+    OUT_PATH.write_text(text, encoding="utf-8")
     print(f"wrote {OUT_PATH} (sources={len(SOURCES)}, failures={failures})")
     return 0 if failures == 0 else 2
 

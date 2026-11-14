@@ -147,7 +147,7 @@ plugin 名には aliases 機構が無いため、改名前から使っている�
 
 この設定は clone した worktree 内のローカル有効化であり、marketplace からの `/plugin install` ではない。
 
-過去の評価履歴は `eval-log/skill-creator/` に凍結保存されている (遡及書換なし)。改名後の新規 run は `eval-log/harness-creator/` に記録される。
+評価の記録は `eval-log/harness-creator/` に残る。
 
 ## 入口の使い分け (何を作るかで入口が変わる)
 
@@ -183,9 +183,9 @@ plugin 名が `harness-creator` (総体) でも、**単体スキルを作る入�
 | ハーネス総体 (複数 Capability の束 = plugin-composition) | `/plugin-compose <plugin-name>` / `/capability-build plugin-composition <name>` | `plugin-composition.yaml` (CapabilityBundle) |
 | plugin 総体の出荷前検査 | `/run-plugin-package-check <plugin-name> --phase all` | PKG-001〜015 verdict |
 | 既存 Capability / plugin のレビュー | `/capability-review <target-path> [skill|plugin|repo]` | 4 条件 verdict |
-| 既存 Capability の改善 | `/skill-improve <capability-path>` | 最小パッチ + 再レビュー |
+| 既存 Capability の改善 | `/skill-improve <capability-path>` | findings を提示し、選んだものだけ最小パッチ + 再検証 |
 
-**注意**: `run-skill-create` は名前どおり**単体スキル 1 個**を作る (内部で評価・統治をオーケストレーションするが産物は単体)。「ハーネス (総体)」を組むのは `plugin-compose` / `capability-build plugin-composition <name>` であり、`run-skill-create` ではない。`plugin-compose` は既存 Capability を束ねるための `plugin-composition.yaml` を編集する入口で、個別 Capability 本体は作らない。
+**注意**: `run-skill-create` は名前どおり**単体スキル 1 個**を作る (評価は `run-build-skill` の初稿診断の receipt を使い回し、rubric governance は既定では起動しない。産物は単体)。「ハーネス (総体)」を組むのは `plugin-compose` / `capability-build plugin-composition <name>` であり、`run-skill-create` ではない。`plugin-compose` は既存 Capability を束ねるための `plugin-composition.yaml` を編集する入口で、個別 Capability 本体は作らない。
 
 **生成物の最小十分 runtime**: 生成する loop 実行系スキルは Goal・Checklist・検証契約を常に持つが、`goal_seek.engine` / `goal_seek.fork` の既定はどちらも `inline`。実在する依存グラフがある場合だけ `task-graph`、`needs_independent_context=true` の場合だけ SubAgent、独立した並列所有権がある場合だけ Agent Team を明示する。品質契約を削らず、必要のない制御往復と engine 資産の同梱だけを避ける。
 
@@ -218,7 +218,7 @@ plugin 名が `harness-creator` (総体) でも、**単体スキルを作る入�
      「現状で試す」は無編集で停止、軽微=critical/high・1周、標準=+目的影響medium・2周、
      詳細=全所見・3周、リリース=全所見改善+繰越し検証。exhaustiveは別確認。
 
-2V. 選択対象がある場合だけelegant-bounded-improvement-executorを1 worker起動し、
+2V. 選択対象がある場合だけelegant-improvement-executorを引数selected_finding_ids / max_roundsで1 worker起動し、
      validate-improvement-result.pyで選択閉集合・diff・round上限・C1〜C4を再検証。
 
      ここで出力された現物と提示操作を試す。ユーザーが「リリース」を選んだときだけ次を実行:
@@ -244,7 +244,7 @@ plugin 名が `harness-creator` (総体) でも、**単体スキルを作る入�
 
 5. /capability-review plugins/<plugin-name> plugin    # 4 条件レビュー（analyse only）
 
-6. /skill-improve <capability-path>                   # 必要な Capability だけ改善（最小パッチ）
+6. /skill-improve <capability-path>                   # findings を見て選んだものだけ改善（最小パッチ）
    改善で Capability 集合（追加/削除/改名）が変わったら Step3〜4 を再実行する。
 ```
 
@@ -269,11 +269,11 @@ Step4 だけ入口の命名が他と異なる: command ラッパを持たない 
 
 ## 構成
 
-- `skills/` — 32 skill 実体。Codex 単独 install で壊れる plugin 境界外 symlink は持たない (生成: run-* / 評価: assign-* / 参照知識: ref-* / 委譲: delegate-* / 安全ラッパ: wrap-*)
+- `skills/` — 31 skill 実体。Codex 単独 install で壊れる plugin 境界外 symlink は持たない (生成: run-* / 評価: assign-* / 参照知識: ref-* / 委譲: delegate-* / 安全ラッパ: wrap-*)
 - `agents/` — elegant-review系、初回draft評価、有界改善、build実行を責務別に配置（実数はディレクトリと`plugin-composition.yaml`を正本とし、READMEへ固定しない）
 - `commands/` — /capability-build, /capability-review, /skill-improve, /plugin-compose, /install-bundle, /marketplace-register
 - `scripts/` — feedback_contract_ssot.py (dogfooding 境界 SSOT・vendored byte 一致 lint 対象) ほか
-- `hooks/` — Claude Codeの標準path自動検出とCodex manifestの明示参照から配信されるrepo-local hook。`auto-sync-on-session-start.py` は install/enable/trust 後の SessionStart で C01 を薄く呼ぶ。既存の capability 所有 hook は引き続き所有 skill の `scripts/` へ co-locate する。
+- `hooks/` — Claude Codeの標準path自動検出とCodex manifestの明示参照から配信されるrepo-local hook。capability 所有 hook は引き続き所有 skill の `scripts/` へ co-locate する。
 - `plugin-composition.yaml` — CapabilityBundle 宣言 (リファレンス実装)
 
 Claude 公開 marketplace では非配布 (`distribution.distributable:false`)。Codex では

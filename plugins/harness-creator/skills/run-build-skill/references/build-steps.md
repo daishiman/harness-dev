@@ -419,14 +419,14 @@ prompt を生成しないことが現契約で許される build は理由と空
 
 ```text
 [GitHub Actions: update-yaml-spec.yml (週次)]
-  build-yaml-spec-cache.py (TODO: 実装予定)
+  scripts/build-yaml-spec-cache.py
     ↓
-  .claude/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md を更新
+  plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md を更新
     ↓
-  git commit & push
+  本文に変化があったときだけ 1 commit & push
 
-[run-build-skill / validate-frontmatter.py]
-  ref-yaml-spec-fetcher を Read して最新仕様を参照
+[run-build-skill Step 1]
+  cache の全文ではなく、生成する kind に要る Source 節だけを読む
     ↓
   03-yaml-frontmatter-reference.md との差分を確認
 ```
@@ -473,9 +473,6 @@ if [[ "$WITH_HOOKS" == "true" ]] || [[ -n "$HOOK_EVENTS" ]]; then
 fi
 ```
 
-TODO(human): `scripts/build-yaml-spec-cache.py` の実装は、Claude Code 公式ドキュメントの
-機械取得方法が確定した後に実施する。`llms.txt` または公式 API 経由の可否を確認すること。
-
 ### H.7 ナレッジループ注入の詳細手順
 
 SKILL.md Step 10 (`--with-knowledge` or `brief.knowledge_loop`) の実行手順。正本仕様は `Skill(ref-knowledge-loop)` (構築編+運用編)。
@@ -508,7 +505,7 @@ SKILL.md Step 10 (`--with-knowledge` or `brief.knowledge_loop`) の実行手順�
 | skill | `templates/{run,ref,assign-generator,assign-evaluator,wrap,delegate}.md` | `plugins/<plugin>/skills/<name>/SKILL.md` | `lint-skill-name.py` / `lint-skill-description.py` / `lint-skill-tree.py` / `validate-frontmatter.py` |
 | agent | `templates/agent-skeleton.md` | `plugins/<plugin>/agents/<name>.md` | `lint-agent-prompt-section.py` / `validate-frontmatter.py` |
 | hook | `templates/hook-skeleton.md` | `plugins/<plugin>/hooks/<name>.{py,md}` | `lint-script-frontmatter.py` / `validate-frontmatter.py` |
-| hook (skill-local) | 同上 | `plugins/<plugin>/skills/<skill>/hooks/<name>.{py,md}` も正式許容 (例: run-skill-update-notifier)。ただし plugin.json からの配線パスと一致させること | 同上 |
+| hook (skill-local) | 同上 | `plugins/<plugin>/skills/<skill>/hooks/<name>.{py,md}` も正式許容。ただし plugin.json からの配線パスと一致させること | 同上 |
 | command | `templates/command-skeleton.md` | `plugins/<plugin>/commands/<name>.md` | `lint-command-md.py` (未実装・実体なしのため起動しない) / `validate-frontmatter.py` |
 | plugin-composition | `templates/plugin-composition-skeleton.yaml` | `plugins/<plugin>/plugin-composition.yaml` | `lint-plugin-composition.py` + `validate-build-trace.py --bundle <plugin-composition.yaml>` (SemVer / 実在ref / endpoint / exact重複 / DAGをfail-closed) |
 | prompt | `templates/prompt-skeleton.md` のmanifest殻 + prompt-creatorの7層本文 | `plugins/<plugin>/prompts/<name>.md` | 下記のkind=prompt合成検証（本文とmanifestの検査を分離） |

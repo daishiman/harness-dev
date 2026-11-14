@@ -23,7 +23,7 @@
       - kind=command: <plugin>/<ref>.md         → FAIL
       - kind=hook:    "hook:<Event>[-<hint>]/<name>" 形式           → FAIL
   (c) hooks 宣言 ↔ .claude-plugin/plugin.json の hook 配線対応       → FAIL
-      論理名(例: elegant-review-trigger)と script 実体名は 1:1 でないため
+      論理名(例: external-intelligence-observe)と script 実体名は 1:1 でないため
       イベント単位の件数一致で照合する (宣言数 == 配線 command 数)。
   (d) contract.interface.outputs のパス実在                          → WARN
       proposals/*.md 等は governance 発火まで空が正当なため FAIL にしない

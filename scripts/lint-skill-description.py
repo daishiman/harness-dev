@@ -3,7 +3,7 @@
 # name: lint-skill-description
 # purpose: Enforce description trigger and wording rules for skills and agents.
 # inputs:
-#   - argv: optional --report, --skills-dir, or target path
+#   - argv: optional --report, --skills-dir DIR, or --skill DIR|SKILL.md
 # outputs:
 #   - stdout: OK status or report
 #   - stderr: description findings
@@ -149,33 +149,41 @@ def check(name: str, desc: str):
     return issues
 
 
-def _parse_skills_dir(argv):
-    """Extract --skills-dir VALUE or --skills-dir=VALUE from argv.
-
-    Returns a list of override directories (may be empty).
-    """
+def _parse_opt(argv, flag):
+    """Extract every FLAG VALUE or FLAG=VALUE from argv (may be empty)."""
     out = []
     i = 0
     while i < len(argv):
         a = argv[i]
-        if a == "--skills-dir" and i + 1 < len(argv):
+        if a == flag and i + 1 < len(argv):
             out.append(argv[i + 1])
             i += 2
             continue
-        if a.startswith("--skills-dir="):
+        if a.startswith(flag + "="):
             out.append(a.split("=", 1)[1])
         i += 1
     return out
 
 
+def _parse_skills_dir(argv):
+    """Extract --skills-dir VALUE or --skills-dir=VALUE from argv."""
+    return _parse_opt(argv, "--skills-dir")
+
+
 def main(argv):
     report = "--report" in argv
     override_dirs = _parse_skills_dir(argv)
+    # --skill は 1 skill だけを検査する。build は生成した skill だけを見たいが、
+    # --skills-dir では同じ plugin の既存 skill の違反まで拾って止まるため。
+    single = _parse_opt(argv, "--skill")
     targets = []
-    if override_dirs:
+    if override_dirs or single:
         for d in override_dirs:
             base = pathlib.Path(d)
             targets.extend(base.glob("*/SKILL.md"))
+        for s in single:
+            path = pathlib.Path(s)
+            targets.append(path if path.name == "SKILL.md" else path / "SKILL.md")
     else:
         owned = load_external_owned(pathlib.Path("."))
         for pattern in SKILL_GLOBS:
@@ -183,6 +191,12 @@ def main(argv):
     results = {"OK": [], "VIOLATION": []}
     for p in sorted(set(targets)):
         if p.name.lower() == "readme.md":
+            continue
+        if not p.is_file():
+            # --skill の指定誤りを OK 扱いで通さない。
+            results["VIOLATION"].append(
+                {"path": str(p), "name": p.parent.name, "description": "", "issues": ["SKILL.md not found"]}
+            )
             continue
         fm = parse_frontmatter(p)
         name = fm.get("name", p.stem)
