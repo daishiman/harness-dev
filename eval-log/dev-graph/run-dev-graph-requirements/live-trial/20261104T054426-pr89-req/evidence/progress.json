@@ -1,0 +1,43 @@
+{
+  "skill": "run-dev-graph-requirements",
+  "loop": 1,
+  "max_loops": 5,
+  "artifact_delivery_state": "handoff_complete",
+  "artifact_delivery_choice": "standard",
+  "checklist": [
+    {"item": "scope 内 node の feature/package/system-spec lineage closure が欠落0である", "status": "PASS",
+     "evidence": "R1 fork: 14 scope nodes exist, 13 members source_lineage→package task-specs exist, source_digest=155c3673…, AC01..AC09 identical to system-spec/requirements.md; guard closure 15 nodes ready"},
+    {"item": "validate-readiness-binding.py が exit 0 で violations 0件、readiness_digest.c11 と c02 が一致する", "status": "PASS",
+     "evidence": "eval-log/run-dev-graph-requirements/binding.json exit 0, status pass, violations [], c11=c02=sha256:237d61bc757937c4fbae77ed1acbdc95452c6ac5ea0fca09ef6b0dfbdfe9ae35"},
+    {"item": "guard-requirements-handoff.py の missing_sections と blocked[].remediation が全件表示され、exit 1 のとき handoff が0件である", "status": "PASS",
+     "evidence": "eval-log/run-dev-graph-requirements/guard.json exit 0, status handoff, missing_sections [] (0件全表示), blocked [] (exit 1 経路は非該当)"},
+    {"item": "全 gate PASS で binding と guard の graph.digest が一致する場合だけ、requirements と capability-build handoff が同一 snapshot digest で生成される", "status": "PASS",
+     "evidence": "graph.digest sha256:5c3e88eb932e718f4c89b71c6122df4b09f4cae40e8a06ffb23927aab31f2f45 (digest_match true); emitted atomically to .dev-graph/requirements/FEATURE-1/5c3e88eb…/"},
+    {"item": "本 skill が生成した実装 code file が0件である", "status": "PASS",
+     "evidence": "no src/, no new .py/.sh/.js/.ts outside plugins/.git; implementation_code_generated 0"}
+  ],
+  "feedback_contract": {
+    "IN1": {"status": "PASS", "verify_by": "script", "evidence": "validate-readiness-binding.py exit 0; validated_digest=source_digest=sha256:155c3673…; P01..P13 exact 13"},
+    "OUT1": {"status": "PASS", "verify_by": "live-trial", "evidence": "capability-build-handoff.json emitted for exact-13 package bound to FEATURE-1 + source digest; no implementation code"},
+    "OUT2": {"status": "not_applicable_positive_scenario", "verify_by": "test", "evidence": "no incomplete node in closure; guard withheld path not exercised in this positive scenario"}
+  },
+  "independent_verifier": {
+    "agent": "dev-graph:dev-graph-requirements-verifier",
+    "verdict": "PASS",
+    "graph_digest": "sha256:5c3e88eb932e718f4c89b71c6122df4b09f4cae40e8a06ffb23927aab31f2f45"
+  },
+  "responsibility_forks": {
+    "R1-elicit": "PASS",
+    "R2-plan": "PASS (advisory: AC→phase trace is via range citations in task specs)",
+    "R2b-readiness": "PASS (binding.json verdict ready, copied from script)",
+    "R3-handoff": "PASS (guard exit 0, digest_match, atomic emit)"
+  },
+  "handoff_artifacts": {
+    "dir": ".dev-graph/requirements/FEATURE-1/5c3e88eb932e718f4c89b71c6122df4b09f4cae40e8a06ffb23927aab31f2f45",
+    "capability-build-handoff.json": "sha256:998f9b15c0740372c47a45fd2e623972c7f55664ca6e33ea15b1391a2812818b",
+    "readiness-matrix.json": "sha256:a761b62def43c73f133c66e717e885ee5ccd5316868799fa8df4a3047c7b4998",
+    "requirements.md": "sha256:45fa09d8173e2a6518d2a574372fddcd1a145782f9a38d4242b030606324c07b"
+  },
+  "blockers": [],
+  "status": "complete"
+}

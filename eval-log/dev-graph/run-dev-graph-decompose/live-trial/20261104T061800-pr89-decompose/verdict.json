@@ -1,0 +1,179 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-decompose",
+  "args": "graph 実値 render (LT-FEATURE-001) の上に、render 結果を前回の render と比べる差分 feature と、その差分を要約して読み手に示す要約 feature を足す。差分 feature は LT-FEATURE-001 に依存し、要約 feature は差分 feature に依存する。共有の architecture は既存の ARCH-LT-001 を使う。新しい node の tracker_binding は beads。 --repo-root /private/tmp/harness-pr89-codex-20261104/cases/decompose/fx --dry-run",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 1,
+  "gate_kind": "contractual",
+  "gate_contract_evidence": [
+    "frontmatter.allowed-tools:AskUserQuestion"
+  ],
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "5a8b6cb68f8b37b24d24fe466922e8bef7a17744081e8fac5e772b76df61bda6",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "grok-fresh-evaluator-decompose-pr89-20261104"
+    },
+    "transcript_sha256": "360681f4e0c245e844206207ab6e32eaabcf8ce701beb8d320cec19a21ae77aa",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl",
+      "transcript/subagents/01a1a344-40b4-7150-85b8-074c69208268.jsonl",
+      "native-collection-validation.json",
+      "fixture-final/.dev-graph/state/graph.json",
+      "fixture-final/.dev-graph/cache/staging/graph.json",
+      "fixture-final/.dev-graph/cache/decompose-input/baseline.json",
+      "fixture-final/.dev-graph/cache/decompose-input/c02-input.json",
+      "fixture-final/.dev-graph/cache/decompose-input/c02-preview.json",
+      "fixture-final/.dev-graph/cache/decompose-input/macro-report.json",
+      "fixture-final/.dev-graph/cache/decompose-input/publication-report.json",
+      "fixture-final/.dev-graph/cache/decompose-input/existing-beads-c28-previews.json",
+      "fixture-final/.dev-graph/cache/decompose-input/feature-render-diff-c28.json",
+      "fixture-final/.dev-graph/cache/decompose-input/feature-render-diff-summary-c28.json",
+      "fixture-final/fake-bd-calls.jsonl",
+      "fixture-final/eval-log/integrity-auditor-report.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-decompose"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "2129af2e9a5e7eaffc4a8a5ebf0840454f7a05d8c1a5d2503430591783d8a627",
+  "transcript_sha256": "360681f4e0c245e844206207ab6e32eaabcf8ce701beb8d320cec19a21ae77aa",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261104T061800-pr89-decompose/out",
+          "/private/tmp/harness-pr89-codex-20261104/cases/decompose/fx"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 0,
+    "single_input_autonomous": false,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "cdc368b83b636ab965946f9e06be10680561cd41c4c44b604b07adda93d0ada6"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 310.0
+  },
+  "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-codex-scenarios.json",
+    "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3-codex-v1",
+    "required_observations": [
+      "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node",
+      "every new node is a draft preview and no feature is registered directly through a plain C02 add",
+      "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes",
+      "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node",
+        "evidence_ref": "fixture-final/.dev-graph/cache/decompose-input/macro-report.json"
+      },
+      {
+        "index": 2,
+        "observation": "every new node is a draft preview and no feature is registered directly through a plain C02 add",
+        "evidence_ref": "fixture-final/.dev-graph/cache/decompose-input/c02-preview.json"
+      },
+      {
+        "index": 3,
+        "observation": "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes",
+        "evidence_ref": "fixture-final/.dev-graph/cache/decompose-input/publication-report.json"
+      },
+      {
+        "index": 4,
+        "observation": "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0",
+        "evidence_ref": "fixture-final/.dev-graph/cache/decompose-input/baseline.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "<natural-language macro request adding two dependent features on top of LT-FEATURE-001 with tracker_binding beads> --repo-root <contained-fixture-repo> --dry-run",
+      "template_flags": [
+        "--dry-run",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--dry-run",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 5000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 310.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "36220ba09a05952a239d0e44c4ed878b7dbc35b21021325280824b5239a93611",
+      "tokens": {
+        "input_tokens": 3121543,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 13366,
+        "total_tokens": 3134909,
+        "assistant_messages": 38,
+        "transcript_files": 2,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

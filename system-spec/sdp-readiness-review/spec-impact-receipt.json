@@ -1,0 +1,165 @@
+{
+  "schema_version": "1.0",
+  "received_at": "2026-11-03T14:28:11.097478+00:00",
+  "beads_ids": [
+    "harness-86kh"
+  ],
+  "graph_node_id": "task-sdp-readiness-review",
+  "related_graph_nodes": [
+    "spec-sdp-readiness-review",
+    "arch-sdp-readiness-review",
+    "feature-sdp-readiness-review",
+    "doc-sdp-readiness-review"
+  ],
+  "branch": "devgraph/task-sdp-readiness-review",
+  "base_branch": "main",
+  "impact": "あり",
+  "judgment": "初期化前の操作許可条件、C09の内部入出力、正規lock探索先と復旧手順が変わるため仕様・設計へ反映する。",
+  "applied_changes": [
+    "最小contextではplan_rootsの欠落だけ許容しidentity/containmentを維持",
+    "lock探索をC13 LOCK_ROOT_RELに固定",
+    "有効lock下は完全contextを再要求",
+    "別ターミナルからのC10非破壊初期化を案内",
+    "C07/C09 component契約・task仕様・task graphの受入条件を同期",
+    "SDP 0.1.21の正規採番とmarketplace/fingerprint同期",
+    "未提出eval-log191件を原bytes/SHA付きで保存し旧FAILを保持"
+  ],
+  "no_impact": [
+    {
+      "area": "HTTP API・認証・DB・インフラ",
+      "reason": "同期ローカルPythonのcontext/lock判定だけを変更し、外部サービスや認証・DB schemaは変更しない。"
+    },
+    {
+      "area": "readinessの合格条件・lockデータ形式",
+      "reason": "C08の判定とC13のlock形式/cleanup実装は変更せず既存境界へ委譲する。"
+    },
+    {
+      "area": "UBMの製品コード",
+      "reason": "PR88でmainへ統合済み。今回は残存した評価証跡だけを保存し479件の既存ゲートを再実行した。"
+    },
+    {
+      "area": "旧実走の判定",
+      "reason": "原SHA/FAIL/受領書を保持し手動のdigest再束縛を行わない。現在コードへの合格認定を追加しない。"
+    }
+  ],
+  "flow": {
+    "writer": "dev-graph C02 build-graph-node.py",
+    "operations": "add preview/apply r17→18、feature Handoff update preview/apply r18→19、全5文書の検証残課題update preview/apply r19→20",
+    "graph_revision": 20,
+    "receipts": [
+      ".dev-graph/state/receipts/node-r000018-add.json",
+      ".dev-graph/state/receipts/node-r000019-update.json",
+      ".dev-graph/state/receipts/node-r000020-update.json"
+    ],
+    "pre_write_findings": 0,
+    "strict_graph": "pass, 20 nodes complete, violations 0",
+    "status": "5新規ノードはdraft/pendingのまま。confirmed/passへの昇格・exact13登録・独立評価認定はしない。"
+  },
+  "minimal_functional_gates": "pass",
+  "live_evidence_gate": "6 pass / 3 stale closure failures; merge readiness incomplete",
+  "remaining_work": [
+    "C02/C04/C14の新コードに対するlive-trialを正規フローで実行し新receiptを受領する",
+    "harness-86khの上位範囲は未完了のためin_progressを維持する"
+  ],
+  "merge_provenance_ref": "docs/sdp-readiness-review/base-merge.json",
+  "historical_manifest_ref": "docs/sdp-readiness-review/publication-manifest.json",
+  "quality_gates_ref": "system-spec/sdp-readiness-review/quality-gates.json",
+  "evidence": [
+    {
+      "path": "specs/sdp-readiness-review.md",
+      "sha256": "22db75609a86ca3f46bd2cf4be65562450e845b1cb8fdb6d087bf0e3aa374707"
+    },
+    {
+      "path": "architecture/sdp-readiness-review.md",
+      "sha256": "5ac43714de7cf1e0b9f1815fb6192f33719b22cedfc75ef7fc60fdb2823aa25f"
+    },
+    {
+      "path": "features/sdp-readiness-review.md",
+      "sha256": "cbd12406637a3e8408f2aeb109ad3479a4884161ef181801bd2fbdb8d7d2e815"
+    },
+    {
+      "path": "docs/sdp-readiness-review.md",
+      "sha256": "bef6e89a228602319fd6c108d4751a8a46c47e893737524e79a7f012abbd5819"
+    },
+    {
+      "path": "tasks/sdp-readiness-review.md",
+      "sha256": "4c935819d29c353d8e2048e820a1a7683d6d142ec42611b52657f3686e169725"
+    },
+    {
+      "path": ".dev-graph/state/graph.json",
+      "sha256": "177a2d278d5a9efaa001cccf19a05d489c3456a8ba006f13c204d5718c242099"
+    },
+    {
+      "path": ".dev-graph/state/receipts/node-r000018-add.json",
+      "sha256": "f7f5504b999f7e2d233a321170d668ab5baf8d2e9ee803ecc3f8509dc1b623e0"
+    },
+    {
+      "path": ".dev-graph/state/receipts/node-r000019-update.json",
+      "sha256": "60e9a9ff208b381ad802b4f72ab60d4f79376f22fb5c704ef6f015a4ef923393"
+    },
+    {
+      "path": ".dev-graph/state/receipts/node-r000020-update.json",
+      "sha256": "dbbaabdd72e831b28053e2c52add1aca076d7b7a35b23c7f9fb5c6922ebfd023"
+    },
+    {
+      "path": ".dev-graph/config.json",
+      "sha256": "576e8665b46bfbb7b50d47defc3dbb481e77c21734420c98cc0f52871b9097cb"
+    },
+    {
+      "path": "plugin-plans/system-dev-planner/component-inventory.json",
+      "sha256": "e79cdc575d752fd4da5a08d60fcf2e168cc7338b613e291000feb6436a40d3ec"
+    },
+    {
+      "path": "plugin-plans/system-dev-planner/task-specs/B-C07.md",
+      "sha256": "885a0f7e1b5fbabc5f1878c606bf44055d32f7d52874982117fb6084adc1644a"
+    },
+    {
+      "path": "plugin-plans/system-dev-planner/task-specs/B-C09.md",
+      "sha256": "2ae99da8c9c5a15638328d8daaa342b53ac3e00e416959e3d0a40e4659078fb2"
+    },
+    {
+      "path": "plugin-plans/system-dev-planner/task-graph.json",
+      "sha256": "17b17e591fa0356f49c81092e4cc7ce211e299f8595b6ebd3ae5ee04c9035f61"
+    },
+    {
+      "path": "plugins/system-dev-planner/hooks/guard-implementation-readiness.py",
+      "sha256": "9b5079a074b1682199faa94e67657b2b479b1604ef0aeb5921cf11510069f2d4"
+    },
+    {
+      "path": "plugins/system-dev-planner/scripts/resolve-project-context.py",
+      "sha256": "d66de9aa6d2f54a9112fd8b031351d5f61ee39fac50424f960592983c4be35db"
+    },
+    {
+      "path": "plugins/system-dev-planner/tests/test_coverage.py",
+      "sha256": "53f8b59c06f56b0a13f688030618806f38f2a4a1d1e447a3a66e193e2574a1f9"
+    },
+    {
+      "path": "plugins/system-dev-planner/README.md",
+      "sha256": "56d4fcff281de3ec86ce16fb9ce00a624eae0b58f426a1df0e2789ea08b73434"
+    },
+    {
+      "path": "plugins/system-dev-planner/CHANGELOG.md",
+      "sha256": "8ccd0a15f7daf4384901bb95083a66d7e503f02821057fb19c1e78a8dd715fd5"
+    },
+    {
+      "path": "docs/sdp-readiness-review/publication-manifest.json",
+      "sha256": "c9059e3d3ac21d6cbb30ece58c979bad7619d97383278807a03d4a4ce508cb98"
+    },
+    {
+      "path": "docs/sdp-readiness-review/base-merge.json",
+      "sha256": "bd6dccdb1c58715f2c695ec5cd50fce1d5f6c8944aa358cb6e40f7e6c9412a18"
+    },
+    {
+      "path": "docs/sdp-readiness-review/writer-inputs/add.json",
+      "sha256": "53b32000f9f1040e71991f99c1ffc651e415d52602d029e7ae3b15b187d9921f"
+    },
+    {
+      "path": "docs/sdp-readiness-review/writer-inputs/handoff.json",
+      "sha256": "42a31e846a07ab27c088a05779762aa48aa6289e056cead9192df9291926cc55"
+    },
+    {
+      "path": "docs/sdp-readiness-review/writer-inputs/results.json",
+      "sha256": "9d3f294827dc0885b3ac7a812559e27af6a4d1bb2e0676cecae791ed59b0be94"
+    }
+  ]
+}

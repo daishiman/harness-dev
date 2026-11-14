@@ -1,0 +1,786 @@
+{
+  "nodes": [
+    {
+      "id": "agent:challenge-advisor",
+      "kind": "agent",
+      "path": "agents/challenge-advisor.md"
+    },
+    {
+      "id": "agent:goal-reviewer",
+      "kind": "agent",
+      "path": "agents/goal-reviewer.md"
+    },
+    {
+      "id": "agent:info-collector",
+      "kind": "agent",
+      "path": "agents/info-collector.md"
+    },
+    {
+      "id": "agent:journal-composer",
+      "kind": "agent",
+      "path": "agents/journal-composer.md"
+    },
+    {
+      "id": "agent:knowledge-extractor",
+      "kind": "agent",
+      "path": "agents/knowledge-extractor.md"
+    },
+    {
+      "id": "agent:knowledge-relation-extractor",
+      "kind": "agent",
+      "path": "agents/knowledge-relation-extractor.md"
+    },
+    {
+      "id": "agent:output-formatter",
+      "kind": "agent",
+      "path": "agents/output-formatter.md"
+    },
+    {
+      "id": "agent:phase3-coordinator",
+      "kind": "agent",
+      "path": "agents/phase3-coordinator.md"
+    },
+    {
+      "id": "agent:youtube-transcript-normalizer",
+      "kind": "agent",
+      "path": "agents/youtube-transcript-normalizer.md"
+    },
+    {
+      "id": "command:ubm-challenge",
+      "kind": "command",
+      "path": "commands/ubm-challenge.md"
+    },
+    {
+      "id": "command:ubm-consult",
+      "kind": "command",
+      "path": "commands/ubm-consult.md"
+    },
+    {
+      "id": "command:ubm-goal-setting",
+      "kind": "command",
+      "path": "commands/ubm-goal-setting.md"
+    },
+    {
+      "id": "command:ubm-journal",
+      "kind": "command",
+      "path": "commands/ubm-journal.md"
+    },
+    {
+      "id": "command:ubm-knowledge-sync",
+      "kind": "command",
+      "path": "commands/ubm-knowledge-sync.md"
+    },
+    {
+      "id": "command:ubm-youtube-ingest",
+      "kind": "command",
+      "path": "commands/ubm-youtube-ingest.md"
+    },
+    {
+      "id": "external-script:plugins/harness-creator/scripts/notion_config.py",
+      "kind": "external-script",
+      "path": "plugins/harness-creator/scripts/notion_config.py"
+    },
+    {
+      "id": "external-script:plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py",
+      "kind": "external-script",
+      "path": "plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py"
+    },
+    {
+      "id": "external-script:plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py",
+      "kind": "external-script",
+      "path": "plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py"
+    },
+    {
+      "id": "external-script:plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py",
+      "kind": "external-script",
+      "path": "plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py"
+    },
+    {
+      "id": "external-script:scripts/feedback_contract_ssot.py",
+      "kind": "external-script",
+      "path": "scripts/feedback_contract_ssot.py"
+    },
+    {
+      "id": "external-script:scripts/lint-feedback-protocol.py",
+      "kind": "external-script",
+      "path": "scripts/lint-feedback-protocol.py"
+    },
+    {
+      "id": "external-script:scripts/notion-submit-improvement.py",
+      "kind": "external-script",
+      "path": "scripts/notion-submit-improvement.py"
+    },
+    {
+      "id": "external-script:scripts/notion-upsert-plugin.py",
+      "kind": "external-script",
+      "path": "scripts/notion-upsert-plugin.py"
+    },
+    {
+      "id": "hook:hooks.json",
+      "kind": "hook",
+      "path": "hooks/hooks.json"
+    },
+    {
+      "id": "hook:ubm-write-path-guard.py",
+      "kind": "hook",
+      "path": "hooks/ubm-write-path-guard.py"
+    },
+    {
+      "id": "script:build-capability-graph-knowledge-entry.py",
+      "kind": "script",
+      "path": "skills/run-ubm-knowledge-sync/scripts/build-capability-graph-knowledge-entry.py"
+    },
+    {
+      "id": "script:build-journal-context.py",
+      "kind": "script",
+      "path": "skills/run-ubm-journal/scripts/build-journal-context.py"
+    },
+    {
+      "id": "script:build-knowledge-usage-log.py",
+      "kind": "script",
+      "path": "scripts/build-knowledge-usage-log.py"
+    },
+    {
+      "id": "script:build-self-reflection-entry.py",
+      "kind": "script",
+      "path": "skills/run-ubm-knowledge-sync/scripts/build-self-reflection-entry.py"
+    },
+    {
+      "id": "script:check-knowledge-split.py",
+      "kind": "script",
+      "path": "skills/run-ubm-knowledge-sync/scripts/check-knowledge-split.py"
+    },
+    {
+      "id": "script:check-youtube-backfill-completeness.py",
+      "kind": "script",
+      "path": "skills/run-ubm-youtube-ingest/scripts/check-youtube-backfill-completeness.py"
+    },
+    {
+      "id": "script:consult-harness-artifact-graph.py",
+      "kind": "script",
+      "path": "scripts/consult-harness-artifact-graph.py"
+    },
+    {
+      "id": "script:detect-knowledge-updates.py",
+      "kind": "script",
+      "path": "skills/run-ubm-knowledge-sync/scripts/detect-knowledge-updates.py"
+    },
+    {
+      "id": "script:extract-capability-dependency-graph.py",
+      "kind": "script",
+      "path": "skills/run-ubm-knowledge-sync/scripts/extract-capability-dependency-graph.py"
+    },
+    {
+      "id": "script:extract-knowledge-matches.py",
+      "kind": "script",
+      "path": "scripts/extract-knowledge-matches.py"
+    },
+    {
+      "id": "script:extract-plugin-root.py",
+      "kind": "script",
+      "path": "scripts/extract-plugin-root.py"
+    },
+    {
+      "id": "script:extract-ready-set-from-checklist.py",
+      "kind": "script",
+      "path": "skills/run-ubm-knowledge-sync/scripts/extract-ready-set-from-checklist.py"
+    },
+    {
+      "id": "script:guard-staged-publication.py",
+      "kind": "script",
+      "path": "scripts/guard-staged-publication.py"
+    },
+    {
+      "id": "script:index-harness-artifact-graph.py",
+      "kind": "script",
+      "path": "scripts/index-harness-artifact-graph.py"
+    },
+    {
+      "id": "script:normalized_source_path.py",
+      "kind": "script",
+      "path": "skills/run-ubm-youtube-ingest/scripts/normalized_source_path.py"
+    },
+    {
+      "id": "script:run-youtube-sync-oneshot.py",
+      "kind": "script",
+      "path": "skills/run-ubm-youtube-ingest/scripts/run-youtube-sync-oneshot.py"
+    },
+    {
+      "id": "script:validate-challenge-output.py",
+      "kind": "script",
+      "path": "skills/run-ubm-challenge/scripts/validate-challenge-output.py"
+    },
+    {
+      "id": "script:validate-consult-session.py",
+      "kind": "script",
+      "path": "scripts/validate-consult-session.py"
+    },
+    {
+      "id": "script:validate-cross-level.py",
+      "kind": "script",
+      "path": "skills/run-ubm-goal-setting/scripts/validate-cross-level.py"
+    },
+    {
+      "id": "script:validate-design-rubric.py",
+      "kind": "script",
+      "path": "scripts/validate-design-rubric.py"
+    },
+    {
+      "id": "script:validate-goal-linkage.py",
+      "kind": "script",
+      "path": "skills/run-ubm-goal-setting/scripts/validate-goal-linkage.py"
+    },
+    {
+      "id": "script:validate-goal-output.py",
+      "kind": "script",
+      "path": "skills/run-ubm-goal-setting/scripts/validate-goal-output.py"
+    },
+    {
+      "id": "script:validate-inline-goal-seek-anchor.py",
+      "kind": "script",
+      "path": "scripts/validate-inline-goal-seek-anchor.py"
+    },
+    {
+      "id": "script:validate-inline-goal-seek-anchor.py",
+      "kind": "script",
+      "path": "skills/run-skill-feedback/scripts/validate-inline-goal-seek-anchor.py"
+    },
+    {
+      "id": "script:validate-journal-output.py",
+      "kind": "script",
+      "path": "skills/run-ubm-journal/scripts/validate-journal-output.py"
+    },
+    {
+      "id": "script:validate-knowledge-entry-source.py",
+      "kind": "script",
+      "path": "skills/run-ubm-knowledge-sync/scripts/validate-knowledge-entry-source.py"
+    },
+    {
+      "id": "script:validate-knowledge-graph.py",
+      "kind": "script",
+      "path": "scripts/validate-knowledge-graph.py"
+    },
+    {
+      "id": "script:validate-knowledge-sync-task-graph.py",
+      "kind": "script",
+      "path": "skills/run-ubm-knowledge-sync/scripts/validate-knowledge-sync-task-graph.py"
+    },
+    {
+      "id": "script:youtube_provider.py",
+      "kind": "script",
+      "path": "skills/run-ubm-youtube-ingest/scripts/youtube_provider.py"
+    },
+    {
+      "id": "skill:run-skill-feedback",
+      "kind": "skill",
+      "path": "skills/run-skill-feedback/SKILL.md"
+    },
+    {
+      "id": "skill:run-ubm-challenge",
+      "kind": "skill",
+      "path": "skills/run-ubm-challenge/SKILL.md"
+    },
+    {
+      "id": "skill:run-ubm-consult",
+      "kind": "skill",
+      "path": "skills/run-ubm-consult/SKILL.md"
+    },
+    {
+      "id": "skill:run-ubm-goal-setting",
+      "kind": "skill",
+      "path": "skills/run-ubm-goal-setting/SKILL.md"
+    },
+    {
+      "id": "skill:run-ubm-journal",
+      "kind": "skill",
+      "path": "skills/run-ubm-journal/SKILL.md"
+    },
+    {
+      "id": "skill:run-ubm-knowledge-sync",
+      "kind": "skill",
+      "path": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "id": "skill:run-ubm-youtube-ingest",
+      "kind": "skill",
+      "path": "skills/run-ubm-youtube-ingest/SKILL.md"
+    }
+  ],
+  "edges": [
+    {
+      "from": "agent:goal-reviewer",
+      "to": "script:validate-goal-output.py",
+      "type": "script-call",
+      "source_ref": "agents/goal-reviewer.md"
+    },
+    {
+      "from": "agent:info-collector",
+      "to": "script:extract-knowledge-matches.py",
+      "type": "script-call",
+      "source_ref": "agents/info-collector.md"
+    },
+    {
+      "from": "agent:journal-composer",
+      "to": "script:validate-journal-output.py",
+      "type": "script-call",
+      "source_ref": "agents/journal-composer.md"
+    },
+    {
+      "from": "agent:knowledge-extractor",
+      "to": "script:detect-knowledge-updates.py",
+      "type": "script-call",
+      "source_ref": "agents/knowledge-extractor.md"
+    },
+    {
+      "from": "agent:knowledge-relation-extractor",
+      "to": "script:extract-knowledge-matches.py",
+      "type": "script-call",
+      "source_ref": "agents/knowledge-relation-extractor.md"
+    },
+    {
+      "from": "agent:youtube-transcript-normalizer",
+      "to": "script:detect-knowledge-updates.py",
+      "type": "script-call",
+      "source_ref": "agents/youtube-transcript-normalizer.md"
+    },
+    {
+      "from": "agent:youtube-transcript-normalizer",
+      "to": "script:normalized_source_path.py",
+      "type": "script-call",
+      "source_ref": "agents/youtube-transcript-normalizer.md"
+    },
+    {
+      "from": "command:ubm-youtube-ingest",
+      "to": "script:run-youtube-sync-oneshot.py",
+      "type": "script-call",
+      "source_ref": "commands/ubm-youtube-ingest.md"
+    },
+    {
+      "from": "script:validate-design-rubric.py",
+      "to": "external-script:plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py",
+      "type": "script-call",
+      "source_ref": "scripts/validate-design-rubric.py"
+    },
+    {
+      "from": "skill:run-skill-feedback",
+      "to": "external-script:plugins/harness-creator/scripts/notion_config.py",
+      "type": "script-call",
+      "source_ref": "skills/run-skill-feedback/SKILL.md"
+    },
+    {
+      "from": "skill:run-skill-feedback",
+      "to": "external-script:plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py",
+      "type": "script-call",
+      "source_ref": "skills/run-skill-feedback/SKILL.md"
+    },
+    {
+      "from": "skill:run-skill-feedback",
+      "to": "external-script:scripts/feedback_contract_ssot.py",
+      "type": "script-call",
+      "source_ref": "skills/run-skill-feedback/SKILL.md"
+    },
+    {
+      "from": "skill:run-skill-feedback",
+      "to": "external-script:scripts/lint-feedback-protocol.py",
+      "type": "script-call",
+      "source_ref": "skills/run-skill-feedback/SKILL.md"
+    },
+    {
+      "from": "skill:run-skill-feedback",
+      "to": "external-script:scripts/notion-submit-improvement.py",
+      "type": "script-call",
+      "source_ref": "skills/run-skill-feedback/SKILL.md"
+    },
+    {
+      "from": "skill:run-skill-feedback",
+      "to": "external-script:scripts/notion-upsert-plugin.py",
+      "type": "script-call",
+      "source_ref": "skills/run-skill-feedback/SKILL.md"
+    },
+    {
+      "from": "skill:run-skill-feedback",
+      "to": "script:extract-plugin-root.py",
+      "type": "script-call",
+      "source_ref": "skills/run-skill-feedback/SKILL.md"
+    },
+    {
+      "from": "skill:run-skill-feedback",
+      "to": "script:validate-inline-goal-seek-anchor.py",
+      "type": "script-call",
+      "source_ref": "skills/run-skill-feedback/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-challenge",
+      "to": "external-script:plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-challenge/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-challenge",
+      "to": "script:build-knowledge-usage-log.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-challenge/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-challenge",
+      "to": "script:extract-knowledge-matches.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-challenge/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-challenge",
+      "to": "script:extract-plugin-root.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-challenge/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-challenge",
+      "to": "script:guard-staged-publication.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-challenge/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-challenge",
+      "to": "script:validate-challenge-output.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-challenge/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-challenge",
+      "to": "script:validate-design-rubric.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-challenge/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-challenge",
+      "to": "script:validate-inline-goal-seek-anchor.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-challenge/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-consult",
+      "to": "external-script:plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-consult/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-consult",
+      "to": "script:build-knowledge-usage-log.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-consult/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-consult",
+      "to": "script:consult-harness-artifact-graph.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-consult/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-consult",
+      "to": "script:extract-knowledge-matches.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-consult/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-consult",
+      "to": "script:validate-consult-session.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-consult/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-consult",
+      "to": "script:validate-design-rubric.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-consult/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-consult",
+      "to": "script:validate-inline-goal-seek-anchor.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-consult/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-goal-setting",
+      "to": "external-script:plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-goal-setting/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-goal-setting",
+      "to": "script:build-knowledge-usage-log.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-goal-setting/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-goal-setting",
+      "to": "script:extract-knowledge-matches.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-goal-setting/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-goal-setting",
+      "to": "script:extract-plugin-root.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-goal-setting/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-goal-setting",
+      "to": "script:guard-staged-publication.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-goal-setting/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-goal-setting",
+      "to": "script:validate-cross-level.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-goal-setting/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-goal-setting",
+      "to": "script:validate-design-rubric.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-goal-setting/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-goal-setting",
+      "to": "script:validate-goal-linkage.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-goal-setting/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-goal-setting",
+      "to": "script:validate-goal-output.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-goal-setting/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-goal-setting",
+      "to": "script:validate-inline-goal-seek-anchor.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-goal-setting/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-journal",
+      "to": "external-script:plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-journal/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-journal",
+      "to": "script:build-journal-context.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-journal/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-journal",
+      "to": "script:build-knowledge-usage-log.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-journal/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-journal",
+      "to": "script:extract-knowledge-matches.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-journal/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-journal",
+      "to": "script:extract-plugin-root.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-journal/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-journal",
+      "to": "script:guard-staged-publication.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-journal/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-journal",
+      "to": "script:validate-design-rubric.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-journal/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-journal",
+      "to": "script:validate-inline-goal-seek-anchor.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-journal/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-journal",
+      "to": "script:validate-journal-output.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-journal/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "external-script:plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:build-capability-graph-knowledge-entry.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:build-knowledge-usage-log.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:build-self-reflection-entry.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:check-knowledge-split.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:detect-knowledge-updates.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:extract-capability-dependency-graph.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:extract-knowledge-matches.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:extract-plugin-root.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:extract-ready-set-from-checklist.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:guard-staged-publication.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:validate-design-rubric.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:validate-inline-goal-seek-anchor.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:validate-knowledge-entry-source.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:validate-knowledge-graph.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-knowledge-sync",
+      "to": "script:validate-knowledge-sync-task-graph.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-knowledge-sync/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-youtube-ingest",
+      "to": "external-script:plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-youtube-ingest/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-youtube-ingest",
+      "to": "script:build-knowledge-usage-log.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-youtube-ingest/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-youtube-ingest",
+      "to": "script:check-youtube-backfill-completeness.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-youtube-ingest/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-youtube-ingest",
+      "to": "script:extract-knowledge-matches.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-youtube-ingest/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-youtube-ingest",
+      "to": "script:extract-plugin-root.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-youtube-ingest/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-youtube-ingest",
+      "to": "script:guard-staged-publication.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-youtube-ingest/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-youtube-ingest",
+      "to": "script:normalized_source_path.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-youtube-ingest/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-youtube-ingest",
+      "to": "script:run-youtube-sync-oneshot.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-youtube-ingest/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-youtube-ingest",
+      "to": "script:validate-design-rubric.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-youtube-ingest/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-youtube-ingest",
+      "to": "script:validate-inline-goal-seek-anchor.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-youtube-ingest/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-youtube-ingest",
+      "to": "script:validate-knowledge-graph.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-youtube-ingest/SKILL.md"
+    },
+    {
+      "from": "skill:run-ubm-youtube-ingest",
+      "to": "script:youtube_provider.py",
+      "type": "script-call",
+      "source_ref": "skills/run-ubm-youtube-ingest/SKILL.md"
+    }
+  ],
+  "gaps": []
+}

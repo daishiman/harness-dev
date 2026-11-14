@@ -1,0 +1,344 @@
+{
+  "artifacts": [
+    {
+      "project_id": "system-dev-planner",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "system-dev-planner",
+        "mvp",
+        "publication-review"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [],
+      "subtype_sections": {},
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "specification",
+      "slug": "sdp-readiness-review",
+      "title": "初期化前の操作と計画実行中の検査を分ける仕様",
+      "depends_on": [],
+      "related_nodes": [
+        "arch-sdp-readiness-review",
+        "feature-sdp-readiness-review"
+      ],
+      "classification": {
+        "reason": "初期化前の操作停止の修復と残存証跡の公開に対応するspecification。",
+        "decision": "auto",
+        "candidates": [
+          {
+            "artifact_kind": "specification",
+            "confidence": 0.96
+          },
+          {
+            "artifact_kind": "document",
+            "confidence": 0.04
+          }
+        ]
+      },
+      "sections": {
+        "目的と成功状態": "dev-graphだけを初期化したリポジトリでも通常操作を続けられ、計画実行中は完全な設定と仕様準備の検査を必須にする。未提出の検証証跡を、元の失敗判定と原ファイルを保ったまま公開する。",
+        "スコープ": "対象はC07ガード、C09内部resolver、C10の既存初期化経路、対応タスク仕様と案内、未提出eval-log。ローカルの権限制約削除、署名付き承認トークン、一時入力は除外して保持する。",
+        "用語と主体": "最小contextはrepository_idとcontent_roots/local_stateの境界検査を通した状態。完全contextはplan_rootsを含む従来の検査。正規lock rootはC13のLOCK_ROOT_REL。利用者が初期化し、ガードが操作前に状態を確認する。",
+        "ユースケースとユーザーフロー": "1. dev-graph init後、plan_rootsがまだ無い状態で通常のBash/Taskを使う。\n2. 計画実行時は完全contextで取得されたロックを探索してreadinessを確認する。\n3. 設定不足なら利用者が別ターミナルでC10 initを実行し、不足キーだけ補う。",
+        "機能要件": "- FR-001: 管理対象でないrepoは通過する。\n- FR-002: 管理対象ではidentity/containmentを常に検査する。\n- FR-003: lock不在ではplan_rootsの欠落だけを許す。存在する不正値は拒否する。\n- FR-004: lock探索はC13正規rootに固定し、local_state.locks変更で隠せない。\n- FR-005: 有効lockがあれば完全contextとreadinessを必須にする。",
+        "非機能要件": "ローカルPython 3.10以上、ネットワーク不要。判定0は通過、2は拒否。不正設定の黙認を防ぐ。復旧コマンドの引数はshlex.quoteで引用し、空白を含む保存先にも対応する。",
+        "UI・状態遷移": "CLIのみ。未管理→通過。管理対象→最小context検査→正規lock探索→不在なら通過、有効なら完全context検査→readiness。context不正時は拒否理由と別ターミナルからの復旧案内をstderrへ出す。",
+        "ビジネスルールと検証": "欠落と不正値を区別する。require_plan_roots=FalseはC07内部だけの引数で、C09 CLIの検査は緩めない。期限切れlockは従来のC13公開cleanupで監査記録付きで除去する。過去のFAILは新しいPASSへ書き換えない。",
+        "API契約": "HTTP APIは無い。C09内部関数にkeyword-only require_plan_roots=Trueを追加し、C07のlock探索時だけFalse。CLI引数は追加しない。",
+        "データモデル": "plan_rootsは通常はdict必須。最小contextでキー自体が欠ける場合だけNone。既存configにはC10でstaging/published/stateを不足分だけ追加する。ロックJSONの形式、graph schema、署名形式は変更しない。",
+        "認証・認可": "repository_idの再導出照合とパスのrealpath境界検査は両モードで必須。権限denyの削除を製品差分へ含めない。別repoやrepo外symlinkを許可しない。",
+        "エラー・例外・回復": "context不正、有効lock下のplan_roots欠落、不正値はexit2。init-project-layout.py --repo-rootを別ターミナルで実行して欠落キーを非破壊補完する。identity不一致と不正パスは自動修復せず確認を促す。",
+        "イベント・非同期処理": "PreToolUseのBash/Task判定は同期。常駐ジョブ、外部API、新規キューは追加しない。",
+        "可観測性": "BLOCKEDの理由と復旧コマンドをstderrへ記録する。今回のゲート実行ログ・受領書・原証跡SHAはsystem-spec/sdp-readiness-reviewとdocs/sdp-readiness-review配下に記録する。署名付きローカル承認ファイルは公開しない。",
+        "互換性・移行・リリース": "通常resolverの既定はTrueで従来契約を保持する。配布版はbuild-plugin-release.py --only system-dev-plannerで正規採番しmarketplaceと指紋を同期する。DB移行は無い。戻すときは公開コミットをrevertする。",
+        "テストと受入条件": "B-C07/B-C09のverifyコマンドを再実行する。初期化前のBash/Task通過、有効lock下の拒否とC10復旧、不正値拒否、lock探索先変更による回避拒否、既存identity/containment/TTLを確認する。C02登録後はstrict graphゲートと全ファイルSHAを確認する。",
+        "未決事項": "現行のcanonical live-trial受領書を再照合するが、新しい有料actor実走と30思考法の再走はMVP範囲外。履歴ログの未達は現行の成功と区別する。harness-86khの全体完了は過去の関連作業と分けて判断する。"
+      }
+    },
+    {
+      "project_id": "system-dev-planner",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "system-dev-planner",
+        "mvp",
+        "publication-review"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [
+        "backend"
+      ],
+      "subtype_sections": {
+        "backend": {
+          "Runtime and architecture pattern": "Python 3.10以上の同期ローカルフック。C07がC09/C13/C08の既存責務へ委譲する。",
+          "Domain and module boundaries": "C09はcontext解決、C13はlock rootとcleanup、C08はreadiness、C10は初期化。C07にパス正本を複製せずLOCK_ROOT_RELを使う。",
+          "API and service contracts": "build_context/validate_and_resolveのkeyword-only引数require_plan_rootsは既定True。FalseはC07の探索時のみ。外部HTTPは無い。",
+          "Data and transaction behavior": "通常の検査は読取のみ。期限切れlock cleanupは既存C13のatomic/監査境界。C10は既存値を上書きしない。",
+          "Async processing": "非同期処理は無い。PreToolUse内で同期判定し、完全context成功後にだけreadinessをsubprocess実行する。",
+          "Security and resilience": "identity再導出、realpath containment、不正plan_roots、canonical lock identityをfail-closedで検査。復旧は別ターミナル、引数は引用する。",
+          "Operations and verification": "B-C07/B-C09のverifyコマンド、strict graph、PEP723 lint、採番整合、allowlist diffとSHA照合を最小ゲートにする。"
+        }
+      },
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "architecture",
+      "slug": "sdp-readiness-review",
+      "title": "最小contextと正規lock探索の設計",
+      "depends_on": [],
+      "related_nodes": [
+        "spec-sdp-readiness-review"
+      ],
+      "classification": {
+        "reason": "初期化前の操作停止の修復と残存証跡の公開に対応するarchitecture。",
+        "decision": "auto",
+        "candidates": [
+          {
+            "artifact_kind": "architecture",
+            "confidence": 0.96
+          },
+          {
+            "artifact_kind": "document",
+            "confidence": 0.04
+          }
+        ]
+      },
+      "sections": {
+        "Architecture overview": "C07は最小context、C13正規lock root、完全context、C08 readinessの順に検査する。C09の通常呼出とCLIは従来の厳格性を保持する。",
+        "Context and drivers": "dev-graph initとSDP initの間で、plan_rootsが無いだけで全Bash/Taskが止まる不具合を修復する。通常操作の継続と実装前のfail-closed境界を両立する。",
+        "Goals and non-goals": "目標は初期化順序の違いによる操作停止を防ぐこと。認証方式、公開API、DB、lock形式、readinessの合格条件は追加変更しない。",
+        "System context and boundaries": "呼出元repo内のconfigと正規lockだけを読む。pluginの実体はツールの配置場所で、caller repoのデータ保存先ではない。外部サービスは使わない。",
+        "Container and component view": "|部品|責務|境界|\n|---|---|---|\n|C07|段階的な操作前検査|Bash/Taskのexit0/2|\n|C09|identityと保存先の解決|通常は完全context|\n|C13|正規lock rootとcleanup|LOCK_ROOT_REL|\n|C08|仕様の準備検査|既存の合格条件|\n|C10|不足キーだけの初期化|既存値を保持|",
+        "Cross-cutting contracts": "plan_roots欠落の許容はC07内部に限定する。内容が不正な場合は常に拒否する。コマンドを別ターミナルで実行する案内にし、対話サービス固有の!入力がhookを通らないとは断定しない。",
+        "Architecture decisions": "|判断|採用|理由|\n|---|---|---|\n|初期化前|最小contextだけ検査|通常作業を止めない|\n|探索先|C13の定数を参照|設定変更で有効lockを隠せない|\n|実行中|完全contextを再検査|進行中の設定欠落を黙認しない|",
+        "Delivery, migration and rollback": "C10の非破壊初期化で不足キーを補う。C02で仕様・設計・機能・案内・タスクを登録し、採番後に対象だけcommitする。リモートmain→ローカルmain→作業branchの取込を記録する。revertで戻し、証跡の原履歴は消さない。",
+        "Risks and verification": "変更点の主要境界は既存50テストと43サブテストに含む。追加修正後に同じゲートを再実行する。過去の失敗ログが現在の未達と混同されるリスクは保存台帳と現行受領書の区別で抑える。"
+      }
+    },
+    {
+      "project_id": "system-dev-planner",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "system-dev-planner",
+        "mvp",
+        "publication-review"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [],
+      "subtype_sections": {},
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "feature",
+      "slug": "sdp-readiness-review",
+      "title": "初期化前も通常操作を続けられる実装準備ガード",
+      "depends_on": [],
+      "related_nodes": [
+        "spec-sdp-readiness-review",
+        "doc-sdp-readiness-review"
+      ],
+      "macro": {
+        "purpose": "計画機能の初期化前に通常操作が止まる不具合を直し、計画実行中の安全な検査を保持する",
+        "goal": "有効lockが無くplan_rootsだけが欠けたrepoでは操作でき、不正設定と有効lock下の未準備は拒否される",
+        "scope_in": [
+          "C07の段階的検査",
+          "C09の最小context内部引数",
+          "正規lock root固定",
+          "復旧案内",
+          "未提出の検証証跡保存"
+        ],
+        "scope_out": [
+          "ローカル権限制約の削除",
+          "署名付き承認ファイルの公開",
+          "新規有料actor実走",
+          "認証とHTTP API"
+        ],
+        "acceptance": [
+          "B-C07/B-C09のverifyが成功する",
+          "C02で登録した5文書のreadinessがcompleteになる",
+          "strict graphと版整合が成功する",
+          "原証跡のFAILを保持し対象allowlistだけをdraft PRへ出す"
+        ],
+        "architecture_refs": [
+          "arch-sdp-readiness-review"
+        ]
+      },
+      "sections": {}
+    },
+    {
+      "project_id": "system-dev-planner",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "system-dev-planner",
+        "mvp",
+        "publication-review"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [],
+      "subtype_sections": {},
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "document",
+      "slug": "sdp-readiness-review",
+      "title": "初期化前の操作停止を直す機能と残存証跡の案内",
+      "depends_on": [],
+      "related_nodes": [
+        "feature-sdp-readiness-review",
+        "spec-sdp-readiness-review",
+        "arch-sdp-readiness-review",
+        "task-sdp-readiness-review"
+      ],
+      "classification": {
+        "reason": "初期化前の操作停止の修復と残存証跡の公開に対応するdocument。",
+        "decision": "auto",
+        "candidates": [
+          {
+            "artifact_kind": "document",
+            "confidence": 0.97
+          },
+          {
+            "artifact_kind": "task",
+            "confidence": 0.03
+          }
+        ]
+      },
+      "sections": {
+        "目的": "今回の修復と残存証跡の公開範囲を、利用者と保守担当が理解できるようにする。",
+        "対象読者": "このリポジトリで開発する人と、プラグインの保守担当。",
+        "要約": "計画用の設定がまだ無いだけで、通常の操作まで止めないようにする。計画を実行中なら、必要な設定と仕様がそろうまで止める。",
+        "本文": "中学生向け：新しい実験の準備がまだなのに、教室の普段の勉強まで全部止まる状態を直した。普段の作業は続けられ、実験を始めるときには準備を確認する。壊れた設定を見逃したり、実行中の目印を隠したりはできない。\n\n専門説明：C07でC09のrequire_plan_roots=Falseによる最小contextを解決し、C13.LOCK_ROOT_RELを探索する。有効lockがあれば既定Trueの完全contextを再解決してC08を実行する。plan_rootsの欠落以外の不正値とidentity/containment違反は常に拒否する。履歴eval-logは原bytes/SHAを保存し、現行criteria受領書と区別する。",
+        "決定事項": "originにdevが無いのでbaseはmain。PR88は取り込み済み。本公開はdevgraph に本 task の node ID を続けたブランチ。Beadsは既存の全残存公開課題harness-86khを更新する。ローカルdeny削除・署名トークン・一時入力は製品へ含めない。",
+        "運用・更新方法": "仕様変更はC02 build-graph-node.pyのpreview→revision指定applyで反映する。gateとSHAをsystem-spec/sdp-readiness-reviewへ記録し、公開後のPR URLをBeadsへ追記する。",
+        "関連資料": "[仕様](../specs/sdp-readiness-review.md)、[設計](../architecture/sdp-readiness-review.md)、[タスク](../tasks/sdp-readiness-review.md)、[受領書索引](../system-spec/sdp-readiness-review/README.md)。B-C07/B-C09が実装の受入条件。",
+        "変更履歴": "2026-11-03: 初期化前ガード修復、未提出証跡の保存と最終レビューを追加。"
+      }
+    },
+    {
+      "project_id": "system-dev-planner",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "system-dev-planner",
+        "mvp",
+        "publication-review"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [],
+      "subtype_sections": {},
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "task",
+      "slug": "sdp-readiness-review",
+      "title": "初期化前ガード修復と残存証跡を最終レビューして公開する",
+      "depends_on": [
+        "spec-sdp-readiness-review",
+        "arch-sdp-readiness-review"
+      ],
+      "related_nodes": [
+        "feature-sdp-readiness-review",
+        "doc-sdp-readiness-review"
+      ],
+      "classification": {
+        "reason": "初期化前の操作停止の修復と残存証跡の公開に対応するtask。",
+        "decision": "auto",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 0.97
+          },
+          {
+            "artifact_kind": "document",
+            "confidence": 0.03
+          }
+        ]
+      },
+      "sections": {
+        "目的": "B-C07/B-C09の変更と未提出の関連検証証跡を最終レビューし、仕様反映・最小ゲート・対象限定commit・push・main向けdraft PRまで進める。",
+        "背景": "PR88はmainへ統合済み。SDPの未コミット修正とdev-graph/UBMの原検証ログが手元に残っていた。今回の公開作業はharness-86khで追跡する。",
+        "入力と前提条件": "開始時のgit statusとdiff、C07/C09、B-C07/B-C09、未追跡eval-log。originにdevが無いのでmainをbaseとする。権限制約削除と署名付き承認ファイルはローカルに保持する。",
+        "出力と成果物": "修復コード、正規5文書、system-specの影響受領書と品質ゲート、原証跡台帳、対象限定コミットとdraft PR。",
+        "依存関係": "spec-sdp-readiness-reviewとarch-sdp-readiness-reviewに依存する。以前の目標設定実装はPR88でbaseへ取り込み済み。",
+        "実装対象": "C07、C09、既存テスト、README、C07/C09のcomponentとtask契約、SDP採番と生成メタデータ。過去のeval-logは内容を変更せず追加保存する。",
+        "Write scope と競合制約": "plugins/system-dev-planner、plugin-plans/system-dev-plannerのC07/C09契約、正規5文書、system-spec/sdp-readiness-review、docs/sdp-readiness-review、.dev-graph/configとgraph/今回receipt、当該版の生成メタデータと未提出eval-logのみ。stageは記録したallowlistで限定する。",
+        "GitHub publication": "branch devgraph に本 task の node ID を続けたブランチ、base main、draft。PRに目的・変更・検証・仕様反映・Beads ID・node ID・残課題を記載する。mainへ直接pushせず、自動マージしない。",
+        "実行手順": "1. remote mainをlocal mainへ取り込み、本branchへmergeする。\n2. 変更をレビューし、C02で5文書を登録する。\n3. B-C07/B-C09のverify、graph strict、script lint、release整合を実行する。\n4. SHA付き影響受領書と原証跡台帳を保存する。\n5. 対象限定commit/push、draft PRを作りBeadsへ記録する。",
+        "受入条件": "- B-C07/B-C09のverifyが成功する。\n- 新規5文書のreadinessがcomplete、strict graphの違反が0。\n- releaseとlintが成功する。\n- 原ログのSHAが保存台帳と一致する。\n- ローカルdeny削除と署名付き承認ファイルをstageせずdraft PRへ提出する。",
+        "検証方法": "python3 -m pytest plugins/system-dev-planner/tests/test_coverage.py plugins/system-dev-planner/tests/test_runtime.py plugins/system-dev-planner/tests/test_system_plan_lock.py -q。C09は同コマンドの先頭2ファイル。graphは--require-canonical-envelope --strict-artifact-readiness。追加で既存dev-graph criteria受領書を再検査し、原actorを再走しない。全体網羅や30思考法の再走は行わない。",
+        "リスクとロールバック": "過去FAILが新しい成功と誤解されるリスクは台帳の履歴分類で防ぐ。復旧案内の!入力依存を別ターミナルに変更した。rollbackは公開commitのrevertで行い、既存差分を消さない。",
+        "Handoff": "実装の受入はB-C07/B-C09と本タスクの最小ゲート。全残存公開の上位Beads harness-86khにはPRとゲート結果を追記し、上位の未完了項目があれば開いたままにする。新しい13フェーズ計画へ昇格しない。"
+      }
+    }
+  ],
+  "expected_graph_revision": 17
+}

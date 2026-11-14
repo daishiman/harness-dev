@@ -1,0 +1,838 @@
+{
+  "agent_id": "elegant-system-strategic-analyst",
+  "version": 1,
+  "target": {
+    "type": "skill",
+    "path": "plugins/ubm-goal-setting",
+    "reviewed_at": "2026-11-03T00:00:00+09:00"
+  },
+  "loop_count": 1,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "output-formats.md の冒頭（L9-157）に共通部品A〜Fができた。行動行・貢献の根拠・4層・前回ブロック・軌道修正・層別差分の本文がここにまとまり、他のファイルからは1行の参照になった。参照している箇所は phase3-coordinator L27/L58/L83/L150/L285、goal-reviewer L63/L158/L247、output-formatter L49、R3 L38/L310-311、R4 L47/L114。参照は1段だけで、循環も無い。",
+        "loop0 19-1 で指摘した行動行の5通りの書式は、OF L17-19 の項目名付きの1形式にそろった。テンプレートどおりに書けば named()（VGO L309-310）は常に真になり、前回と今回の行動の照合が働く。",
+        "文書から検査器へのつながりの強さが、部品ごとにばらばら。A（行動行）は VGO L1204-1226 で機械的に検査される。D（前回ブロック）は「節があれば照合する」止まり（VGO L317-319）。E（軌道修正）は見出しがあるかしか見ない（VGO L1105）。",
+        "例と手本が OF の「一貫した例」と golden-sample-weekly.md の2か所にあり、検査器を通るのは golden だけ。同じ週の例の写しが2つあり、中身が食い違っている（issue を参照）。",
+        "executor の自己申告「全テスト1170 passed」は、実行環境が無いため確かめていない。この判定は現物を読んだ結果だけに基づく。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "OF L403「- [ ] 提案書：作る　期日6/29」が OF L316「一人で完結する作業は段として立てない」と矛盾する。golden L183-184 は同じ段を別の行動に直してある"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "共通部品A〜F を参照すべき箇所に、参照の抜けは無い（上の参照先の一覧）。週報の前週ブロックが強制されない件は 24 value-proposition で計上した"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "行動行の書式は OF L17-19 の1形式だけになり、VGO named() L309-310 の前提と一致する。loop0 19-1 は解消した"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "参照の深さは、各ファイルから OF の共通部品への1段。循環参照は無い。スタブ2本（thinking-methods-toolkit.md / thinking-process.md）を現役の文書から参照している箇所は無い"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 403,
+            "section": "一貫した例（L376-408）"
+          },
+          "description": "OF L376-408 の「一貫した例」と golden-sample-weekly.md は、同じ週（6/29週）の例を2か所に持っていて、中身が食い違う。(1) OF L403「- [ ] 提案書：作る　期日6/29」は OF L316「資料作成など一人で完結する作業は段として立てない」と矛盾する。golden L183-184 では同じ段が「説明日程の打診」と「提案書の提出」に直されている。(2) 貢献0の括弧が違う。OF L392 は「0（7月勉強会からの受講申込を支える）」、golden L142 は「0（7月勉強会の受注を支える）」。(3) OF L396 の見出し「【今週の行動目標（行動管理）】」は、検査器の必須見出し「（行動管理・優先順位付き）」（VGO L1105）と一致しない。OF L414 は golden を手本として参照しているので、手本が2つある状態になっている（R7 の重複）。",
+          "recommended_intervention": "例の正本を golden-sample-weekly.md の1つにする。OF L376-408 は、golden の該当行範囲への参照と、その例で示したい要点（逆算の順、貢献0の2形、行動行の形）の箇条書きだけに置き換える。どうしても OF の中に例を残すなら、VGO で rc=0 になる完全な週報の断片にして、test の入力に加える。",
+          "root_cause": "なぜ OF の例が golden とずれたか → Phase 3 で golden は検査器にかけて直されたが、OF の例は検査器にかからない断片なので直されなかったから → 同じ例が2か所に写されていて、機械検査の対象は片方だけだったから → 共通化（R7）を規則の本文には当てたが、例と手本には当てず、例の正本を1つに決めていなかったから plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:403",
+          "loop0_ref": "new"
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "loop0 20-1 の原因（数値・人名の WARN が合格基準「何をする＋期日」と矛盾していた）は解消した。VGO L1204-1226 で残る WARN は期日だけになり、OF L20、goal-reviewer L63、phase3-coordinator L27 と一致する。",
+        "loop0 20-2 は DC L439 で解消した。",
+        "売上→成果→行動という因果の向きは、OF 共通部品C、R3 L38、DC L274-287 で同じ。",
+        "実績例（OF L738-756・L823-835）は目標例（L725）と項目名が違い、2項目を「／」で1行にまとめている。このまま写すと、1対1照合（VGO L323-335）で FAIL になる。手本どおりに書くと検査に落ちる、という因果になっている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "売上→成果→行動の向きは OF 共通部品C（L58-87）、R3 L38、DC L274-287 で一致し、逆向きの記述は無い"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "VGO L1204-1226 で数値・人名の WARN がなくなり、期日の WARN だけが残った。合格基準（OF L20）と食い違う原因は残っていない"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "OF L738-756・L823-835 の実績例が、目標例 L725 と共通部品D（OF L95「同じ項目名・順序で1対1」）に合わない"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "式の検算 C1c と計上期間 C1e（DC L507-509）は、検査器の実装と同じ因果の経路で閉じている"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "bucket": "doc",
+          "condition": "C3",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 738,
+            "section": "実績セクション（特に厳守）の記入例"
+          },
+          "description": "OF L738-756・L823-835 の実績例は、目標例（L725）と項目名が違い、「／」で2項目を1行にまとめている。共通部品D（OF L95「前回の目標と同じ項目名・順序で1対1に書く」）と照合器（VGO L323-335。key の列が一致しなければ FAIL）に照らすと、この例をそのまま写した実績は FAIL になる。手本が規則と検査に逆らっている。",
+          "recommended_intervention": "L738-756・L823-835 の実績例を、L725 の目標例と同じ項目名・同じ順序・1項目1行に書き直す。できれば目標例・実績例・差分例を1つの断片にまとめ、check_report_alignment にかける test を足す。",
+          "root_cause": "なぜ例が照合の規則と合わないか → 実績例は1対1照合の規則（共通部品D・VGO L334）と別に書かれ、規則を集約したときに見直されなかったから → Phase 3 では規則の本文を共通部品へまとめたが、その規則を使う側の例を検査器にかける工程が無かったから → 文書の中の例は機械検査の対象外で、規則と例の一致を保証する仕組みが無いから plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:738",
+          "loop0_ref": "new"
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "loop0 21-1 の強化ループ（テンプレートに【考え】行がある → 注記を自動で足す → 冗長になる）は、OF L24「注記は依頼時だけ」と golden L175 で断たれた。VGO L1216-1217 は WARN 止まりで、依頼されたときの注記を妨げない。",
+        "R6（月・週の軌道修正）の調整ループは、修正する → 記録する → 翌週の前回ブロックで照合する、の順で回る。このうち記録の行書式が機械で検査されていない（VGO L1105 は見出しがあるかだけ）。そのため、修正の痕跡（何を何に変えたか、なぜか）がループへ戻る経路が弱い。",
+        "例の写しが2つある件（19 で計上）は、片方だけが直り続けて差が広がる強化ループになっている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "【考え】の自動付与ループは OF L24・golden L175 で断たれ、VGO L1216-1217 とも矛盾しない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "共通部品E（OF L116-133）は見直し記録の行書式を2つ定めているが、VGO L1105 は【今週の見直し記録】の見出しがあるかしか見ていない"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "軌道修正の記録先は、共通部品E、週報テンプレート（OF L1090-1092）、golden L215-216 で一致する"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "見直したあとの行動行は、OF L94「チェックボックスだけ外して転記」で翌週の前回ブロックへ切れずに転記される"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "hook-ci",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py",
+            "line": 1105,
+            "section": "週報の必須見出し（今週の見直し記録）"
+          },
+          "description": "共通部品E（OF L116-133）は、軌道修正記録の行書式を2つ定めている（`- 行動の見直し：…｜変更前：…` など）。しかし VGO は【今週の見直し記録】の見出しがあるかしか見ていない（L1105）。書式から外れた自由記述や、変更前・理由の欠けた行もそのまま通る。R6 のうち「修正してよい」という許可の側は機械化されたが、「修正の痕跡を残す」側は強制されていない（残件10は真）。",
+          "recommended_intervention": "VGO に関数を1つ足す。【今週の見直し記録】の各行が、`- なし` か共通部品E の2書式のどちらかに一致することを検査し、外れたら FAIL にする。月報・期報に同じ記録欄があれば、同じ関数を使う。golden L215-216 を PASS 例として test に入れる。",
+          "root_cause": "なぜ見直し記録の書式が強制されないか → Phase 3 で見直し記録は見出しとして新しく作られ、検査器には必須見出しを1行足しただけだったから → 見出しの有無は既存の check_require_exact で済むが、行書式の検査には新しい関数が要り、差分を小さく保つために見送られたから → 新しく作った規則ごとに「文書・検査器・test」の3点をそろえる完了条件が無く、検査器の側は最小限の追随で完了扱いになったから plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:1105",
+          "loop0_ref": "new"
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "loop0 22-1（測れることと簡潔さのトレードオフ）は解消した。行動を「何をする＋期日」に絞り、期日だけを WARN で測る形で両方を満たしている（VGO L1204-1205、OF L18）。",
+        "一方、output-formats.md の中には、簡潔さと情報量のどちらを取るかの判断が節ごとに逆になっている箇所が3つ残る。実績の記号（L750 と L947/L967/L1301/L1393）、本文の具体日（L1149 と L1229）、期日の形（L356「4月中旬」）。どちらに従っても、もう一方の規則に反する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "OF L750「記号は書かない」と、L947・L967・L1301・L1393「○/△/× や状態説明は最小限」が矛盾する",
+            "OF L1149「開催日等は残す」と、L1229「本文に具体日を埋め込まない」が矛盾する",
+            "OF L356「期日4月中旬」は、共通部品A の期日トークン（OF L21 = VGO L1221 の集合）に無い"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "行動行の必須要素から誰に・トリガー・数値・人名を外したことは、OF L20 と VGO L1204-1205 で一致する。外したことで測れなくなった要素は無い（期日の WARN は残っている）"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "注記を依頼時だけにする規則（OF L24）は、phase3-coordinator L50 の「注記は強制しない」と一致する"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "期日トークンの集合は、文書（OF L21）と検査器（VGO L1221）が同じ集合を指している"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md",
+            "line": 1229,
+            "section": "月報提出用 行動目標の注釈 / 実績セクション"
+          },
+          "description": "output-formats.md の中に、正反対の指示が3組残っている。(1) L750「記号は書かない」と、L947・L967・L1301・L1393「○/△/× や状態説明は最小限」（残件3）。(2) L1149「本文の開催日等が必要なら残す」と、L1229「本文に具体日を埋め込まない」（残件2）。(3) L356「期日4月中旬」は、共通部品A の期日トークン（OF L21）に無い形。どの組も、片方に従うともう片方に反する。",
+          "recommended_intervention": "(1) 記号は「書かない」にそろえる。L947・L967・L1301・L1393 を「状態は記号を使わず、数値と完了日だけで書く（共通部品D）」に置き換える。(2) L1229 を正とし、L1149 を「開催日などは次回予定日の見出しに置く」に置き換える。提出用だけの例外にするなら、L1229 の側に条件を書く。(3) L356 を `期日4/15` のような期日トークンの形に直す。",
+          "root_cause": "なぜ OF の中に矛盾が残るか → 実績と提出用の書き方は節ごとに個別に足されてきて、共通部品A〜F の対象外だったから → Phase 3 の集約は、行動行・貢献・4層・前回・軌道修正・差分の6部品に範囲を絞ったため、実績の記号や日付の扱いは各節に散ったままになったから → 「1つの規則は1か所」を共通部品の範囲だけで当てはめ、それ以外の節の重複と矛盾を棚卸しする完了条件が無かったから plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1229",
+          "loop0_ref": "new"
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "loop0 23-1 は解消した。4層の照合が validate-cross-level L211-229 と DC L371-382 で一致している。",
+        "--yearly/--no-yearly を必須にした（SKILL L235、OF L87、goal-reviewer L247。指定が無ければ rc=2）。これで1年層の有無が明示の宣言になり、照合が抜けたまま通ることがなくなった。上位層を持つ人と持たない人の両方を、1つの入口で扱えている。",
+        "#6-8 を INFO にしたことは、DC と検査器で一致している。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "4層の照合規則は validate-cross-level L211-229 と DC L371-382 で同じ。矛盾は無い"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "1年層を持つか持たないかが --yearly/--no-yearly で必ず宣言される（SKILL L235、OF L87）。黙って抜ける経路は無い"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "--yearly/--no-yearly と rc=2 の記述が SKILL L235、OF L87、goal-reviewer L247 で同じ"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "層をまたぐ照合は、validate-goal-output の照合規則をそのまま共用していて二重に実装していない（CHANGELOG L193）"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.8
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "このスキルの価値の中心は R3（前回目標を前提に、実績と差分を出し、前回と今回をつなぐ）。loop0 24-1 では、週報が照合の対象外だった。今は check_report_alignment が週報にも働く。ただし前週の節があるときだけ（VGO L317-319 で、前回目標が空なら continue）。",
+        "週報の必須見出し（VGO L1104-1106）にも任意見出し（L1108-1109）にも、前週ブロックが無い。前週ブロックを丸ごと省いた週報も rc=0 で通る。OF L114「週報・月報・期報・1年の前回ブロック…を検査する」は、「書いてあれば検査する」という意味でしか正しくない。",
+        "初回（前回が無いとき）の扱いが2通りある。DC L599 は「差分セクションを省略」。OF L98 と DC L600 は「差分を作らず理由だけを書く」。月報は前月の見出しが必須（VGO L1112-1113）なので、DC L599 どおりに省略すると FAIL になる。週報では省略しても通る。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "DC L599「Phase 4 では差分セクションを省略」と、OF L98「差分を作らず、理由だけを書く」・DC L600 が矛盾する"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "VGO L1104-1106 の週報の必須見出しに前週ブロックが無い",
+            "VGO L317-319 は前回目標の節が空なら continue する",
+            "OF L114 は週報の前回ブロックを機械で検査すると書いている"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "節がある場合、前回ブロックの項目名・順序の照合は4層とも同じ関数で行われる。月報の提出用と管理用も対象になっている（VGO L312-335）"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "前回の行動の転記経路は共通部品A で項目名付きになった。named()（VGO L309-310）で照合が成立し、loop0 19-1 の依存切れは解消した"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "high",
+          "bucket": "hook-ci",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py",
+            "line": 1104,
+            "section": "種別別 必須セクション（週報）"
+          },
+          "description": "週報の必須見出し（VGO L1104-1106）に、前週ブロック（【前週の売上以外の成果目標】【前週の行動目標】と、それぞれの実績・差分）が無い。任意見出し（L1108-1109）にも無い。check_report_alignment は前回目標の節が空か無ければ continue する（L317-319）。そのため、前週ブロックを丸ごと省いた週報も rc=0 で通る。OF L114 は週報の前回ブロックを機械で検査すると書いているが、実際は「書いてあれば検査する」だけ。R3 は、作業の単位がいちばん細かく回数もいちばん多い週報で、機械的に強制されていない。",
+          "recommended_intervention": "まず初回の扱いを OF L98（見出しを残し、理由だけを書く）にそろえる（同じ思考法の2件目の issue）。そのうえで、VGO の週報の必須見出しに前週の目標・実績・差分（売上以外の成果・行動）を加える。初回は、見出しのすぐ下に「初回」と理由を書いた行があれば必須を満たす形にする。--no-yearly と同じく、省略を明示の宣言に変える。test は2本足す。「前週ブロックの無い週報は FAIL」と「初回の理由行だけの週報は PASS」。",
+          "root_cause": "なぜ前週ブロックの無い週報が通るか → 週報の必須見出しのリストに前週の見出しが無く、照合関数も節が無ければ continue するから → 初回（前回なし）を通すために「無ければ検査しない」を既定にし、初回を明示して宣言する仕組みを作らなかったから → 初回の扱いが DC L599（省略）と OF L98（理由だけ書く）の2つに割れていて、検査器がどちらに合わせるかを決められなかったから plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:317",
+          "loop0_ref": "24-1"
+        },
+        {
+          "severity": "medium",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md",
+            "line": 599,
+            "section": "Phase 3（run-ubm-goal-setting の親コンテキスト）エラー時対応表"
+          },
+          "description": "初回（前回データなし）の扱いが2通りある。DC L599 は「Phase 4 では差分セクションを省略」。OF L98（共通部品D）は「差分を作らず、理由だけを書く」。DC L600（1年の初回）は「差分の行に数字を置かず、比較対象が無い理由だけを書く」。月報・期報では前回の見出しが検査器の必須見出しなので（VGO L1112-1113 の「前月の売上目標」など）、DC L599 どおりに省略すると FAIL になる。週報では省略しても rc=0 になる。初回の週報で前週ブロックを省くのか、見出しを残すのかが文書の上でも決まっていない。",
+          "recommended_intervention": "DC L599 の「Phase 4 では差分セクションを省略」を、「Phase 4 では差分の行に数字を置かず、前回正本が無い理由だけを書く（output-formats.md 共通部品D）」に置き換え、L600 と書き方をそろえる。週報も同じ扱いにして、同じ思考法の1件目の issue（前週ブロックを必須にする）と組み合わせる。",
+          "root_cause": "なぜ初回の扱いが2通りあるか → DC L599 は共通部品D とは別に書かれた記述のまま残り、共通部品D を作ったときに置き換えの対象にならなかったから → Phase 3 の置き換えは、共通部品の本文を他のファイルから1行の参照に移す作業だった。DC のエラー時対応表は本文の写しではなく独自の記述なので、拾われなかったから → 初回の扱いを共通部品D の一部として明示し、それを参照すべき箇所（DC のエラー表と検査器）を逆引きする仕組みが無かったから plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:599",
+          "loop0_ref": "24-1"
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "loop0 25-1 は解消した。正本の宣言（SKILL L282-289）と R4 L47/L114 が一致している。",
+        "R5（年→3ヶ月→1ヶ月→1週間）の4層化は、入口（SKILL L235）、検査器（--yearly/--no-yearly）、共通部品C（OF L58-87）まで行き渡った。周辺の資料はまだ3層のまま。selection-focus-goal-frame.md L52 は週間・月間・期報の3列。RUNBOOK.md L179 の C16 は weekly|monthly|quarterly だけ。resource-map.yaml L9 の topic は「週報/月報/期報」。",
+        "戦略のいちばん上の層（1年）を前提にした「選択と集中」と受け入れ確認が、資料の上で抜けている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "正本の宣言 SKILL L282-289 と R4 L47/L114 は矛盾しない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "selection-focus-goal-frame.md L52、RUNBOOK.md L179、resource-map.yaml L9 に1年層が無い"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "4層の名前と順序は、SKILL L235、OF L58-87、R3 L38、DC L274-287 で同じ"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "1年層から月報・週報へ降ろす照合経路（validate-cross-level --yearly）は切れていない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md",
+            "line": 52,
+            "section": "層別の選択と集中の表"
+          },
+          "description": "R5 の4層化が周辺の資料に行き渡っていない。selection-focus-goal-frame.md L52 の表は週間・月間・期報の3列だけ（残件4は真）。RUNBOOK.md L179 の C16 受け入れ条件の種別は weekly|monthly|quarterly だけ（残件6は真）。resource-map.yaml L9 の output-formats の topic は「週報/月報/期報」で、1年が無い。入口と検査器は4層なので、1年層の選択と集中や受け入れ確認が資料の上で抜ける。",
+          "recommended_intervention": "selection-focus L52 に1年の列を足し、1年で何を選び何を捨てるかを書く。RUNBOOK L179 の種別に yearly を足し、C16 に --yearly/--no-yearly の受け入れ確認を入れる。skills/run-ubm-goal-setting/references/resource-map.yaml L9 の topic を「週報/月報/期報/1年」にする。",
+          "root_cause": "なぜ1年層が抜けたか → 4層化の対象は入口・手順・エージェント・検査器で、運用の資料と索引は対象外だったから → Phase 3 の置き換えの範囲を共通部品を参照するファイルに限ったので、層の一覧を自前で持つファイルは拾われなかったから → 層の集合（weekly/monthly/quarterly/yearly）を1か所で定めて参照する仕組みが無く、資料ごとに一覧を持っているから plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/selection-focus-goal-frame.md:52",
+          "loop0_ref": "new"
+        }
+      ],
+      "score": 0.7
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "loop0 26-1 は一部だけ解消した。共通部品B（OF L53-55）で、貢献0の括弧は2形に決まった（`0（{支える直接成果の項目名}を支える）` / `0（{M}月計上・{根拠}）`）。DC L506 もこの2形を参照している。",
+        "検査器 CONTRIB_BASIS_RX（VGO L636 `^[0-9][0-9,]*\\s*[（(]\\s*[^）)]`）は、括弧が付いていれば中身を問わず受け入れる。手本の golden L139「0（体験診断後の提案受諾を支える）」・L142「0（7月勉強会の受注を支える）」、OF L363/L373/L392 は、どれも実在する直接成果の項目名を指していない。それでも rc=0 になる。",
+        "成果グループ見出しの金額の括弧も、GROUP_AMOUNT_RX（VGO L698-699）が「（0円・8月の仕込み）」（OF L406、golden L189）や「（0円・7月後半の母集団）」（golden L186）を受け入れる。中間成果に将来の時期を書かないという規則（OF L54）が、見出しの側で破られている。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "2形の文言そのものは OF L53-55 と DC L506・L509 で同じで、互いに矛盾しない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "貢献0を裸の0で書くことは、DC L506 と VGO L636 のどちらでも FAIL になり、抜けていない"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "VGO L636・L698-699 が受け入れる形は、共通部品B（OF L53-55）と DC L506 が定める2形より広い",
+            "golden L139/L142/L186/L189 と OF L392/L406 が2形から外れている"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "貢献額を合計して売上目標と照らす検査（C4/C5）は、検査器の中で閉じている"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "bucket": "hook-ci",
+          "condition": "C3",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py",
+            "line": 636,
+            "section": "CONTRIB_BASIS_RX（逆算チェーン C1）"
+          },
+          "description": "共通部品B（OF L53-55）と DC L506 は、貢献0の括弧を2形に限っている。ところが VGO L636 の CONTRIB_BASIS_RX は、括弧が付いていれば何でも受け入れる。その結果、手本そのものが2形から外れたまま通っている。golden L139「0（体験診断後の提案受諾を支える）」、L142「0（7月勉強会の受注を支える）」、OF L392「0（7月勉強会からの受講申込を支える）」は、どれも同じ文書にある直接成果の項目名を指していない。グループ見出しも、GROUP_AMOUNT_RX（VGO L698-699）が「（0円・8月の仕込み）」（OF L406、golden L189）を受け入れる。中間成果に将来の時期を書かないという規則（OF L54）が、見出しの側で破られている。",
+          "recommended_intervention": "VGO に貢献0専用の検査を足す。`0（X を支える）` の X は、同じ文書の直接成果（貢献が0より大きいもの）の項目名のどれかと一致しなければならない。`0（N月計上・…）` は月のトークンを必須にする。それ以外の括弧は FAIL にする。グループ見出しの0円は `（0円）` だけを認める。golden L139/L142/L186/L189 と OF L363/L373/L392/L406 を、実在する直接成果の名前を指す形に書き直す。DC L506 の説明も、検査器の実装と一致させる。",
+          "root_cause": "なぜ手本が貢献0の2形を破ったまま残るか → 検査器が括弧の中身を見ないので、手本も rc=0 で通るから → 共通部品B の2形は文書で決めたが、検査器の CONTRIB_BASIS_RX（式か括弧かの二択）を2形に合わせる工程が Phase 3 に無かったから → 文書の正本をまとめる作業と、検査器を正本に合わせる作業が別の単位として扱われ、「正本→検査器→手本」の順に閉じる完了条件が無かったから plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:636",
+          "loop0_ref": "26-1"
+        }
+      ],
+      "score": 0.55
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "loop0 27-1 は解消した。軌道修正の記録先と書式が共通部品E（OF L116-133）にまとまり、週報の必須見出しにもなった（VGO L1105）。",
+        "改善の痕跡を残す側に穴がある。validate-goal-output.py と validate-cross-level.py は、どちらも version ヘッダが 0.4.0 になった（各 L4）。しかし CHANGELOG での最新の言及は、validate-goal-output 0.3.3（CHANGELOG L61）のまま。共通部品A〜F の新設、数値・人名の WARN 廃止、週報の前週照合、#6-8 の INFO 化も記載が無い。",
+        "0.9.1 が「未記入」のまま残っているのと同じ穴が、また開いている。references/version-history.md（12.0.0〜27.0.0）が CHANGELOG と同じ役割を持ち、変更履歴の正本が2つある（R7）。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "見直し記録の書式は、共通部品E、週報テンプレート OF L1090-1092、golden L215-216 で一致する"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "検査器 0.4.0（validate-goal-output.py L4、validate-cross-level.py L4）が CHANGELOG に載っていない（CHANGELOG での最新の言及は L61 の 0.3.3）"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "2本の検査器の版番号はそろっている（どちらも 0.4.0）"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "version-history.md を参照しているのは SKILL L322 と resource-map L20-22 で、参照先は実在する"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "rubric-governance",
+          "condition": "C2",
+          "condition_signal": "omission",
+          "location": {
+            "file": "plugins/ubm-goal-setting/CHANGELOG.md",
+            "line": 61,
+            "section": "検査スクリプトの版の記載（最新の言及は validate-goal-output 0.3.3）"
+          },
+          "description": "validate-goal-output.py と validate-cross-level.py は 0.4.0 に上がったが（各 L4）、CHANGELOG には記載が無い。最新の言及は L61 の validate-goal-output 0.3.3。挙動の変更（数値・人名の WARN 廃止、週報の前週照合、--yearly/--no-yearly の必須化、#6-8 の INFO 化）と共通部品A〜F の新設も記載が無い（残件11は真）。0.9.1 が「未記入」のままの前例と同じ穴で、loop の検証証跡（eval-log）と配布される版が結びつかない。さらに references/version-history.md が CHANGELOG と同じ役割を持ち、変更履歴の正本が2つある（残件8は真）。",
+          "recommended_intervention": "版上げの工程で CHANGELOG に新しい版の節を作り、検査器 0.4.0 の挙動変更と共通部品A〜F の新設を書く。0.9.1 の「未記入」も埋める。version-history.md は、CHANGELOG へまとめて参照を外すか、「スキル版の旧履歴（凍結）」と書いて追記を止める。どちらにしても、SKILL L322 と resource-map L20-22 の参照の説明をそれに合わせる。記載を保留する場合は、bead に解消条件（版上げの PR で CHANGELOG に書く）を残す。保留そのものは版上げの工程で片づけるなら妥当だが、条件が記録されていないと 0.9.1 と同じように放置される。",
+          "root_cause": "なぜ CHANGELOG に載っていないか → 検査器の版上げは executor が行い、CHANGELOG への記載は orchestrator の版上げ工程に回したから → スクリプトの version ヘッダと CHANGELOG を同時に更新させる検査が無いから → 変更履歴の正本が CHANGELOG と version-history の2つに割れていて、どちらが必須の記載先なのかがゲートとして決まっていないから plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:4",
+          "loop0_ref": "new"
+        }
+      ],
+      "score": 0.65
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "loop0 28-1 は解消した。仮説（どの成果が売上を立てるか）を立て、前回ブロックで検証し、今回の逆算へつなぐ型が、4層で共通になった（DC L274-287、R3 L38）。",
+        "残件9（data-contract §3.1.3 の1年の列で、#24/#25 を必須にした）は事実だった。DC と VGO L1144 は一致している。依頼では任意だったが、文書と検査器の一致を優先して検査器に合わせた判断は妥当なので、issue にしない。依頼との違いは CHANGELOG に書くべきで、これは 27 kaizen の issue に含めた。",
+        "golden-sample-weekly.md は前週ブロックの key が一致していて（L52-90）、検査器の手本として機能している。手本が規則に合わない件は、20 causal（実績例）と 26 why（貢献0）で計上した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "仮説と検証の型（DC L274-287）と R3 L38 の記述は矛盾しない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "1年の必須見出し #24/#25 は、DC §3.1.3 と VGO L1144 の両方にあり、抜けていない"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "DC §3.1.3 と VGO L1144 で、必須か任意かの扱いが一致している（残件9）"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "golden の前週ブロック（L52-90）と今週ブロックの間で、key がつながっている"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 0.8
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "loop0 29-1 は golden L24（プレースホルダ Xさん）で、29-2 は DC L614-616 で、それぞれ解消した。",
+        "残件7は事実だった。5行の「[統合済み]」スタブ2本（thinking-methods-toolkit.md / thinking-process.md）が残っている。現役の文書からの参照は無い。参照しているのは version-history.md L27-28 と、完了計画 plugin-plans/finish/ubm-goal-setting/component-inventory.json L1057-1063 だけ。現役の plugin-plans/ubm-goal-setting/ には参照が無い。",
+        "削除を保留した判断を評価した。finish/ は索引の対象外なので、仕組みの上では削除しても安全で、保留の根拠は弱い。一方、このリポジトリには、finish/ の参照の整合を後の Change Governance PR でまとめて直す慣行がある（lint-script-naming.py L361-364）。保留はこの慣行に沿っている。ただし解消の条件がどこにも記録されておらず、放置との区別がつかない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "スタブは「[統合済み]」と書かれ、統合先と矛盾する内容を持っていない"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "現役の文書からスタブへの参照は全部なくなっていて、参照の抜けは無い"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "Xさん（golden L24）と DC L614-616 は、loop0 の指摘どおりに直っている"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "スタブを残しているので、finish/component-inventory.json L1057-1063 の build_target は切れていない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-methods-toolkit.md",
+            "line": 1,
+            "section": "[統合済み] スタブ（thinking-process.md も同様）"
+          },
+          "description": "中身の無いスタブが2本残っている（thinking-methods-toolkit.md / thinking-process.md）。参照しているのは version-history.md L27-28 と完了計画 plugin-plans/finish/ubm-goal-setting/component-inventory.json L1057-1063 だけ。保留はリポジトリの慣行（lint-script-naming.py L361-364）に沿っているが、解消の条件と期限がどこにも記録されていない。",
+          "recommended_intervention": "bead を作り、解消の条件を記録する。条件は「Change Governance PR で、スタブ2本の削除、component-inventory.json L1057-1063 の build_target の更新、version-history L27-28 の注記の更新を同時に行う」。",
+          "root_cause": "なぜスタブが残るか → 完了計画の build_target が指していて、消すと完了計画の参照が切れるから → finish/ の参照の整合は別の PR で直す慣行があり、今回の loop の範囲外だったから → 保留した判断を追う置き場（bead）に記録していないので、慣行に沿った保留が放置と区別できないから plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-methods-toolkit.md:1",
+          "loop0_ref": "new"
+        }
+      ],
+      "score": 0.8
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "loop0 30-1 は解消した（OF L414、L142）。",
+        "共通部品A が行動行の必須要素から外した語（誰に・トリガー・数値・人名）を KJ 法でまとめ、残っている場所を探した。ほとんどは共通部品A の参照に置き換わっていた（thinking-guide L391、action-goals-best-practices L109/L262、output-formatter L49、goal-reviewer L63）。",
+        "外れ値は thinking-guide.md L406 の4-B「毎日やること（トリガー付き）」だけ。同じファイルの L391 は共通部品A を参照しているので、ファイルの中でも揺れている（残件5は真）。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "thinking-guide.md L406「トリガー付き」と、共通部品A（OF L20「トリガーは必須にしない」）・同じファイルの L391 が矛盾する"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "行動行の合格基準を共通部品A へ置き換えるべき箇所に、抜けは無い（上の参照先の一覧）"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "action-goals-best-practices L109/L262 と output-formatter L49 は、同じ合格基準で書かれている"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "thinking-guide L391 から共通部品A への参照は切れていない"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition": "C1",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-guide.md",
+            "line": 406,
+            "section": "4-B 毎日やること（トリガー付き）"
+          },
+          "description": "thinking-guide.md 4-B の「毎日やること（トリガー付き）」は、共通部品A（OF L20：合格基準は「何をする＋期日」で、誰に・トリガー・数値・人名は必須にしない）と食い違う。同じファイルの L391 は共通部品A を参照しているので、ファイルの中でも揺れている。4-B に従った読み手はトリガーを必須だと受け取り、R2（行動は何をする＋期日だけ）から外れる。",
+          "recommended_intervention": "L406 を「毎日やること（共通部品A の行動行。トリガーは任意）」に置き換えるか、「トリガー付き」の語を外す。",
+          "root_cause": "なぜ残ったか → Phase 3 で共通部品A に置き換えたのは行動行の書式を決めている箇所で、思考ガイドの見出しの語は対象外だったから → 置き換えの対象を「書式を決めている行」で探したので、見出しに付いた「トリガー付き」という修飾語は拾えなかったから → 共通部品A が外した要素（誰に・トリガー・数値・人名）を語から逆に探す検査が無いから plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/thinking-guide.md:406",
+          "loop0_ref": "new"
+        }
+      ],
+      "score": 0.75
+    }
+  ],
+  "loop0_resolution": [
+    {
+      "ref": "19-1",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:17-19; output-formats.md:1388; validate-goal-output.py:309-310"
+    },
+    {
+      "ref": "20-1",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:20; validate-goal-output.py:1204-1226; agents/goal-reviewer.md:63; agents/phase3-coordinator.md:27"
+    },
+    {
+      "ref": "20-2",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:439"
+    },
+    {
+      "ref": "21-1",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/golden-sample-weekly.md:175; output-formats.md:24"
+    },
+    {
+      "ref": "22-1",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:1204-1205; output-formats.md:18"
+    },
+    {
+      "ref": "23-1",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-cross-level.py:211-229; data-contract.md:371-382"
+    },
+    {
+      "ref": "24-1",
+      "status": "partial",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:1104-1106（週報の必須見出しに前週が無い）; validate-goal-output.py:317-319（節が無ければ continue）; data-contract.md:599 と output-formats.md:98 で初回の扱いが割れている"
+    },
+    {
+      "ref": "25-1",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/SKILL.md:282-289; prompts/R4-step4-action-goals.md:47,114"
+    },
+    {
+      "ref": "26-1",
+      "status": "partial",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:636,698-699（括弧なら何でも受け入れる）; assets/golden-sample-weekly.md:139,142,186,189; references/output-formats.md:392,406; references/data-contract.md:506"
+    },
+    {
+      "ref": "27-1",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:116-133; scripts/validate-goal-output.py:1105"
+    },
+    {
+      "ref": "28-1",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:274-287; prompts/R3-step3-goal-setting.md:38"
+    },
+    {
+      "ref": "29-1",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/golden-sample-weekly.md:24"
+    },
+    {
+      "ref": "29-2",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:614-616"
+    },
+    {
+      "ref": "30-1",
+      "status": "resolved",
+      "evidence": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:414; output-formats.md:142"
+    }
+  ],
+  "residual_verdicts": [
+    {
+      "item": 1,
+      "true": true,
+      "note": "事実。OF L403「- [ ] 提案書：作る　期日6/29」は OF L316「一人で完結する作業は段として立てない」と矛盾し、golden L183-184（説明日程の打診・提案書の提出）とも違う。例の写しが2つある件として 19 systems で計上した。"
+    },
+    {
+      "item": 2,
+      "true": true,
+      "note": "事実。OF L1149「開催日等は残す」と L1229「本文に具体日を埋め込まない」が矛盾する。22 trade-on で計上した。"
+    },
+    {
+      "item": 3,
+      "true": true,
+      "note": "事実。OF L750「記号は書かない」と L947・L967・L1301・L1393「○/△/× や状態説明は最小限」が矛盾する。22 trade-on で計上した。"
+    },
+    {
+      "item": 4,
+      "true": true,
+      "note": "事実。selection-focus-goal-frame.md L52 の表は週間・月間・期報の3列だけ。RUNBOOK L179・resource-map L9 とあわせて 25 strategic で計上した。"
+    },
+    {
+      "item": 5,
+      "true": true,
+      "note": "事実。thinking-guide.md L406「毎日やること（トリガー付き）」は共通部品A（OF L20）および同じファイルの L391 と矛盾する。30 kj で計上した。"
+    },
+    {
+      "item": 6,
+      "true": true,
+      "note": "事実。RUNBOOK.md L179 の C16 の種別は weekly|monthly|quarterly だけで、yearly が無い。25 strategic で計上した。"
+    },
+    {
+      "item": 7,
+      "true": true,
+      "note": "事実。スタブ2本は残っており、参照しているのは version-history L27-28 と plugin-plans/finish/ubm-goal-setting/component-inventory.json L1057-1063 だけ。保留の判断について：finish/ は索引の対象外なので、仕組みの上では削除しても安全で、保留の根拠は弱い。一方、finish/ の参照の整合を後の Change Governance PR でまとめて直す慣行（lint-script-naming.py L361-364）には沿っており、保留そのものは条件付きで妥当。ただし解消の条件が記録されていないため、bead に条件を残すべき（29 issue で smell として計上した）。"
+    },
+    {
+      "item": 8,
+      "true": true,
+      "note": "事実。references/version-history.md（12.0.0〜27.0.0）と CHANGELOG.md で、変更履歴の正本が2つある。27 kaizen の issue に含めた。"
+    },
+    {
+      "item": 9,
+      "true": true,
+      "note": "事実。DC §3.1.3 の1年の列で #24/#25 は必須になっていて、VGO L1144 の必須見出しと一致する。依頼（任意）より検査器との一致を優先した判断は妥当なので、issue にしない。依頼との違いは CHANGELOG に書くべき（27 kaizen の issue の版上げ時の記載に含めた）。"
+    },
+    {
+      "item": 10,
+      "true": true,
+      "note": "事実。VGO L1105 は【今週の見直し記録】の見出しがあるかだけを検査し、共通部品E の行書式は検査していない。21 causal-loop で計上した。"
+    },
+    {
+      "item": 11,
+      "true": true,
+      "note": "事実。validate-goal-output.py と validate-cross-level.py の L4 は 0.4.0 だが、CHANGELOG での最新の言及は L61 の 0.3.3 のまま。保留の判断について：版上げの工程で記載するなら、作業の分け方として保留は妥当。ただし 0.9.1 が「未記入」のまま残っている前例と同じ穴で、loop の検証証跡と版の対応が切れる危険がある。版上げ PR の完了条件、または bead に記録すべき（27 kaizen で計上した）。"
+    }
+  ]
+}

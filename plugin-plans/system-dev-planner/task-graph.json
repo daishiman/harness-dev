@@ -80,7 +80,7 @@
       "entity_ref": "C07",
       "state": "pending",
       "write_scope": "plugins/system-dev-planner/hooks/guard-implementation-readiness.py",
-      "acceptance_criterion": "plugin hooks/hooks.jsonから配線され、repo-local canonical lockがactiveな間は呼出sessionに依存せずreadinessを強制する。lock不在はexit0、malformed・canonical repository identity不一致・cleanup競合はexit2、期限切れlockはC13 public cleanup境界で監査付きcleanupする",
+      "acceptance_criterion": "plugin hooks/hooks.jsonから配線され、repo-local canonical lockがactiveな間は呼出sessionに依存せず完全contextとreadinessを強制する。identityとcontainmentが妥当でlock不在ならplan_roots欠落でもexit0。plan_rootsの不正値・malformed lock・canonical repository identity不一致・cleanup競合はexit2。local_state.locksの変更でcanonical lockを隠せない。期限切れlockはC13 public cleanup境界で監査付きcleanupし、context不正時は別ターミナルでのC10復旧を案内する",
       "execution_kind": "component-build",
       "route_ref": "C07",
       "task_spec_ref": "task-specs/B-C07.md"
@@ -104,7 +104,7 @@
       "entity_ref": "C09",
       "state": "pending",
       "write_scope": "plugins/system-dev-planner/scripts/resolve-project-context.py",
-      "acceptance_criterion": "root precedence後の候補がhost $CLAUDE_PROJECT_DIRと一致し、repository_idを再導出して、cross-repo/absolute/traversal/symlink escape/broken content linkを拒否する。broken harness linkはhost launcherが起動前検出する",
+      "acceptance_criterion": "root precedence後の候補がhost $CLAUDE_PROJECT_DIRと一致し、repository_idを再導出して、cross-repo/absolute/traversal/symlink escape/broken content linkを拒否する。CLIと通常呼出はplan_roots必須。C07のlock探索専用require_plan_roots=Falseだけは欠落をNoneで返し、存在する不正値とidentity/containment違反は同様に拒否する。broken harness linkはhost launcherが起動前検出する",
       "execution_kind": "component-build",
       "route_ref": "C09",
       "task_spec_ref": "task-specs/B-C09.md"

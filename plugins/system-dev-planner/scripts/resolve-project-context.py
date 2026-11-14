@@ -337,7 +337,16 @@ def load_config(repo_root: Path, config_rel: str) -> dict:
         raise UsageError(f"config を読めない: {config_rel} ({exc})") from exc
 
 
-def validate_and_resolve(repo_root: Path, config: dict, extra_path: str | None) -> dict:
+def validate_and_resolve(
+    repo_root: Path, config: dict, extra_path: str | None, *, require_plan_roots: bool = True
+) -> dict:
+    """identity と全 section の containment を検査する。
+
+    require_plan_roots=False は C07 guard の lock 探索専用の最小モード。plan_roots は sdp 追加
+    section (dev-graph init 単独では作られない) なので、**欠落**だけを「sdp 未初期化」として
+    None で返す。存在するのに object でない / containment 違反は従来どおり PolicyError。
+    repository_id・content_roots・local_state の検査はモードに依らず常に fail-closed。
+    """
     diagnostics: list = []
 
     stored_id = str(config.get("repository_id", ""))
@@ -353,8 +362,11 @@ def validate_and_resolve(repo_root: Path, config: dict, extra_path: str | None) 
             f"(source={id_source})。repo 移動時は明示 rebind が必要"
         )
 
-    resolved_roots: dict[str, dict] = {}
+    resolved_roots: dict[str, dict | None] = {}
     for section in ("content_roots", "local_state", "plan_roots"):
+        if section == "plan_roots" and not require_plan_roots and section not in config:
+            resolved_roots[section] = None  # sdp 未初期化 (C10 init 前)。不正値とは区別する
+            continue
         sec = config.get(section)
         if not isinstance(sec, dict):
             raise PolicyError(f"config.{section} が object でない")
@@ -382,7 +394,8 @@ def validate_and_resolve(repo_root: Path, config: dict, extra_path: str | None) 
 # --------------------------------------------------------------------------- #
 # main
 # --------------------------------------------------------------------------- #
-def build_context(argv: list[str] | None, env: dict) -> dict:
+def build_context(argv: list[str] | None, env: dict, *, require_plan_roots: bool = True) -> dict:
+    """require_plan_roots=False は C07 guard 専用 (validate_and_resolve 参照)。CLI は常に True。"""
     parser = argparse.ArgumentParser(description="Resolve caller repository context (C09)")
     parser.add_argument("--repo-root", default=None)
     parser.add_argument("--config", default=DEFAULT_CONFIG_REL)
@@ -394,7 +407,7 @@ def build_context(argv: list[str] | None, env: dict) -> dict:
 
     repo_root, root_source, evidence = resolve_repo_root(args.repo_root, env)
     config = load_config(repo_root, args.config)
-    resolved = validate_and_resolve(repo_root, config, args.path)
+    resolved = validate_and_resolve(repo_root, config, args.path, require_plan_roots=require_plan_roots)
     if bool(args.feature_id) != bool(args.feature_context):
         raise UsageError("--feature-id と --feature-context は同時指定必須")
     feature_context = (

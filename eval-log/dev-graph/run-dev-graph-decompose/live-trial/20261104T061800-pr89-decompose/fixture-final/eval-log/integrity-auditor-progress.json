@@ -1,0 +1,173 @@
+{
+  "overall": "PASS",
+  "checks": [
+    {
+      "id": "choice_before_audit",
+      "verdict": "PASS",
+      "evidence": "eval-log/artifact-delivery-choice.json"
+    },
+    {
+      "id": "macro_only",
+      "verdict": "PASS",
+      "evidence": "既存architecture/feature各1件、新規feature2件。既存13taskはmacroから除外し維持"
+    },
+    {
+      "id": "unique_ids",
+      "verdict": "PASS",
+      "evidence": "macro ID重複0、新規IDは元graphに未登録"
+    },
+    {
+      "id": "macro_dag",
+      "verdict": "PASS",
+      "evidence": "depends_onとarchitecture_refsを含めた既存+新規4-node DAG、循環/dangling 0"
+    },
+    {
+      "id": "dependency_contract",
+      "verdict": "PASS",
+      "evidence": "render → 差分 → 要約、共通ARCH-LT-001参照"
+    },
+    {
+      "id": "macro_semantics",
+      "verdict": "PASS",
+      "evidence": "比較と読み手向け要約の独立価値・観測可能なacceptance。phase/task生成責務なし"
+    },
+    {
+      "id": "draft_only",
+      "verdict": "PASS",
+      "evidence": "c02-preview.json/planned_nodes 全2件draft/pending/beads"
+    },
+    {
+      "id": "c02_contract",
+      "verdict": "PASS",
+      "evidence": "C02 add --dry-run + macro契約。plain feature addおよびapplyなし"
+    },
+    {
+      "id": "c28_feature-render-diff",
+      "verdict": "PASS",
+      "evidence": "C28 --planned-previewによる予定draftの昇格阻止。not-in-graph判定ではない"
+    },
+    {
+      "id": "c28_feature-render-diff-summary",
+      "verdict": "PASS",
+      "evidence": "C28 --planned-previewによる予定draftの昇格阻止。not-in-graph判定ではない"
+    },
+    {
+      "id": "cross_binding_propagation",
+      "verdict": "PASS",
+      "evidence": "差分→renderのbeads→noneが起点。要約へ伝播。dep-addなし"
+    },
+    {
+      "id": "existing_exact13",
+      "verdict": "PASS",
+      "evidence": "既存receiptの13 IDs/phase/parent/packageとgraph一致。履歴receipt digestは現revision3とは別世代"
+    },
+    {
+      "id": "containment",
+      "verdict": "PASS",
+      "evidence": "既存15nodeのfile_pathはrepo内実在。予定pathはC02 containment/schema gate根拠"
+    },
+    {
+      "id": "baseline_unchanged",
+      "verdict": "PASS",
+      "evidence": "baseline.jsonの17ファイルbytes不変"
+    },
+    {
+      "id": "source_schema_validation",
+      "verdict": "PASS",
+      "evidence": {
+        "original_stdin_validation": {
+          "artifact_readiness": {
+            "enforced": false,
+            "finding_count": 0,
+            "findings": [],
+            "missing_sections": [],
+            "status": "complete"
+          },
+          "graph_validation": {
+            "status": "pass",
+            "violation_count": 0
+          },
+          "implementation_readiness": "complete",
+          "missing_sections": [],
+          "node_readiness": {
+            "complete": 15,
+            "incomplete": 0,
+            "incomplete_nodes": [],
+            "not_applicable": 0,
+            "unknown": 0
+          },
+          "schema": "/private/tmp/harness-pr89-codex-20261104/providers/plugins/dev-graph/schemas/graph-node.schema.json",
+          "valid": true,
+          "violations": []
+        },
+        "planned_validation": {
+          "findings": 0,
+          "validator": "validate-graph-schema.py"
+        },
+        "limitation": "C02 planned_nodesは全node fieldを持たないため、予定完全graph digestの独立再計算はせずC02 receiptのvalidationを証拠とする"
+      }
+    },
+    {
+      "id": "external_writes_zero",
+      "verdict": "PASS",
+      "evidence": {
+        "graph": 0,
+        "content": 0,
+        "receipt": 0,
+        "beads": 0,
+        "github": 0,
+        "projects": 0
+      }
+    },
+    {
+      "id": "existing_promoted_c28",
+      "verdict": "PASS",
+      "evidence": "既存13taskへC28 --planned-preview実行、全promotion_gate pass/write_count0。状態はconfirmed/pass/readiness complete。新規draft2件はblockedでcreate対象0。"
+    },
+    {
+      "id": "all_targets_and_edges",
+      "verdict": "PASS",
+      "evidence": "publication-report.jsonは17target。既存task間12edgeは両端未起票のためcreate後のみ、今回dep-add無し。"
+    },
+    {
+      "id": "bd_calls_readonly",
+      "verdict": "PASS",
+      "evidence": {
+        "call_count": 26,
+        "allowed_argv": [
+          [
+            "version"
+          ],
+          [
+            "where",
+            "--json"
+          ]
+        ],
+        "mutation_count": 0
+      }
+    }
+  ],
+  "semantic_evaluation": {
+    "verdict": "PASS",
+    "feature-render-diff": {
+      "independent_value": "前回からの追加・削除・変更を特定する価値",
+      "binary_acceptance": "同一比較0件、種別識別、比較不能明示はいずれも観測可能",
+      "dependency_rationale": "比較対象のrender出力がLT-FEATURE-001から供給される"
+    },
+    "feature-render-diff-summary": {
+      "independent_value": "差分全件の精読なしに主要変化を理解する価値",
+      "binary_acceptance": "種別別件数一致、元差分参照、差分なし/比較不能区別は観測可能",
+      "dependency_rationale": "要約の根拠と件数は差分featureの出力に依存する"
+    },
+    "architecture_reuse": "両featureが既存ARCH-LT-001だけを参照し複製なし"
+  },
+  "outer_criteria": {
+    "OUT1": "external_pending",
+    "OUT2": "external_pending",
+    "OUT3": "external_pending",
+    "OUT4": "external_pending",
+    "OUT5": "external_pending",
+    "OUT6": "external_pending",
+    "OUT7": "external_pending"
+  }
+}

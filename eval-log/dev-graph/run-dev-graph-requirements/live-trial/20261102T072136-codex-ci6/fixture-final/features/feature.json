@@ -1,0 +1,36 @@
+{
+  "graph_node_id": "FEATURE-1",
+  "artifact_kind": "feature",
+  "purpose": "UTF-8のテキストファイルの行数を、Linux/macOSの利用者がPython標準ライブラリだけで安全に取得できるようにする。",
+  "goal": "python3 src/utf8_line_count.py PATH がAC01..AC09を満たし、CLI利用説明と検証記録を伴うローカル配布ZIPとして引き渡せる状態。",
+  "scope_in": [
+    "1ファイルpathのCLI入力",
+    "UTF-8 strictとuniversal newlineの逐次カウント",
+    "整数と改行だけの成功出力",
+    "入力/復号/usage失敗時exit 2",
+    "stdlib unittestとローカルZIP・手動利用説明"
+  ],
+  "scope_out": [
+    "stdin・複数ファイル・再帰探索",
+    "GUI・HTTP API・DB・認証",
+    "Windowsでの動作保証",
+    "pip公開・クラウドdeploy・実GitHub/Beads mutation"
+  ],
+  "acceptance": [
+    "AC01: 空UTF-8ファイルはstdoutが0と改行、exit 0。",
+    "AC02: a\\nb\\nは2行、a\\nbも末尾改行なしで2行。",
+    "AC03: 日本語の2行は文字数によらず2。UTF-8 strictで読む。",
+    "AC04: LF・CRLF・単独CRをPython universal newlineの1境界として扱う。",
+    "AC05: 存在しないpath・directory・権限拒否はstdout空、stderrに説明、exit 2、traceback無し。",
+    "AC06: 不正UTF-8はstdout空、stderrに説明、exit 2、traceback無し。",
+    "AC07: 引数が0件または2件以上ならusageをstderrへ出しexit 2、stdout空。",
+    "AC08: 入力ファイルのbytesを変更せず、外部network・DB・認証・サービスを使わない。",
+    "AC09: ファイルを行iteratorで読み、ファイル全体readで保持しない。カウンタ以外の追加メモリは1行分。"
+  ],
+  "architecture_refs": [
+    "architecture/system.md",
+    "architecture/graph.json",
+    "system-spec/index.md"
+  ],
+  "updated_at": "2026-11-02T07:22:47.231258Z"
+}

@@ -1,0 +1,1014 @@
+{
+  "schema_version": "1.0.0",
+  "feature_package_id": "feature-package/feat",
+  "parent_feature": "FEATURE-1",
+  "p01_entry_gate": {
+    "selector": "parent_feature.depends_on",
+    "operator": "all",
+    "required_statuses": [
+      "done",
+      "closed"
+    ]
+  },
+  "repo_context": {
+    "config_path": ".dev-graph/config.json",
+    "repo_identity": "local:sha256:44b569b62e470b077de3844195b01af384d1b8f4f99312ccccfe185f692b8ff4",
+    "root_resolution_source": "explicit-cli"
+  },
+  "source_lineage": {
+    "source_plugin": "system-spec-harness",
+    "source_version": "0.1.0",
+    "compile_entrypoint": "run-system-spec-compile",
+    "completeness_entrypoint": "assign-system-spec-completeness-evaluator",
+    "source_paths": [
+      "system-spec/index.md",
+      "system-spec/requirements.md",
+      "system-spec/spec-state.json",
+      "goal-spec.json",
+      "architecture/system.md"
+    ],
+    "confirmed": true
+  },
+  "tasks": [
+    {
+      "id": "SYS-P01",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "要件を固定 (UTF-8 line-count)",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p01"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "documentation",
+      "build_target_kind": "application-code",
+      "phase_ref": "P01",
+      "depends_on": [],
+      "write_scope": [
+        "docs/requirements-utf8-lines.md",
+        "evidence/utf8-lines/P01.json",
+        "evidence/utf8-lines/P01/"
+      ],
+      "deploy_unit": "utf8-line-count-local-cli",
+      "source_lineage": [
+        "system-spec/index.md",
+        "system-spec/requirements.md",
+        "goal-spec.json"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "UTF-8 CLI単一機能のP01責務を明示した入力。feature増設ではない。",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P01.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "AC01..AC09を仕様・エラー表へ写し、末尾改行なし/CRLF/不正UTF-8を曖昧にしない。",
+        "生成する証跡 evidence/utf8-lines/P01.json に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。"
+      ],
+      "verification": [
+        "python3 -B -c 'from pathlib import Path; t=Path('\"'\"'docs/requirements-utf8-lines.md'\"'\"').read_text(); assert all(('\"'\"'AC%02d'\"'\"'%i) in t for i in range(1,10))'"
+      ],
+      "rollback": "P01開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。前phaseの受理結果やsystem sourceを改変せず失敗理由を記録する。",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P01",
+        "file_path": "tasks/FEATURE-1/SYS-P01.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P01"
+      }
+    },
+    {
+      "id": "SYS-P02",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "CLI構造を設計 (UTF-8 line-count)",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p02"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "backend",
+      "build_target_kind": "application-code",
+      "phase_ref": "P02",
+      "depends_on": [
+        "SYS-P01"
+      ],
+      "write_scope": [
+        "docs/architecture-utf8-lines.md",
+        "evidence/utf8-lines/P02.json",
+        "evidence/utf8-lines/P02/"
+      ],
+      "deploy_unit": "utf8-line-count-local-cli",
+      "source_lineage": [
+        "system-spec/index.md",
+        "system-spec/requirements.md",
+        "goal-spec.json"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "UTF-8 CLI単一機能のP02責務を明示した入力。feature増設ではない。",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P02.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "A1引数解析→A2逐次読取→A3出力/失敗写像の責務を分け、ファイル非変更と1行分メモリを設計する。",
+        "生成する証跡 evidence/utf8-lines/P02.json に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。"
+      ],
+      "verification": [
+        "python3 -B -c 'from pathlib import Path; t=Path('\"'\"'docs/architecture-utf8-lines.md'\"'\"').read_text(); assert all(x in t for x in ('\"'\"'A1'\"'\"','\"'\"'A2'\"'\"','\"'\"'A3'\"'\"','\"'\"'UTF-8'\"'\"','\"'\"'AC09'\"'\"'))'"
+      ],
+      "rollback": "P02開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。前phaseの受理結果やsystem sourceを改変せず失敗理由を記録する。",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P02",
+        "file_path": "tasks/FEATURE-1/SYS-P02.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P02"
+      }
+    },
+    {
+      "id": "SYS-P03",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "設計を独立レビュー (UTF-8 line-count)",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p03"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P03",
+      "depends_on": [
+        "SYS-P02"
+      ],
+      "write_scope": [
+        "docs/design-review-utf8-lines.json",
+        "evidence/utf8-lines/P03.json",
+        "evidence/utf8-lines/P03/"
+      ],
+      "deploy_unit": "utf8-line-count-local-cli",
+      "source_lineage": [
+        "system-spec/index.md",
+        "system-spec/requirements.md",
+        "goal-spec.json"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "UTF-8 CLI単一機能のP03責務を明示した入力。feature増設ではない。",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P03.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P01/P02を独立contextで照合し、改行定義・exit 2・書込ゼロの矛盾と不足をC1..C4で評価する。",
+        "生成する証跡 evidence/utf8-lines/P03.json に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。"
+      ],
+      "verification": [
+        "python3 -B -c 'import json; v=json.load(open('\"'\"'docs/design-review-utf8-lines.json'\"'\"')); assert set(v['\"'\"'conditions'\"'\"'])=={'\"'\"'C1'\"'\"','\"'\"'C2'\"'\"','\"'\"'C3'\"'\"','\"'\"'C4'\"'\"'}; assert all(x=='\"'\"'PASS'\"'\"' for x in v['\"'\"'conditions'\"'\"'].values()); assert v['\"'\"'evidence_refs'\"'\"']'"
+      ],
+      "rollback": "P03開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。前phaseの受理結果やsystem sourceを改変せず失敗理由を記録する。",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P03",
+        "file_path": "tasks/FEATURE-1/SYS-P03.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P03"
+      }
+    },
+    {
+      "id": "SYS-P04",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "境界テストを設計 (UTF-8 line-count)",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p04"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P04",
+      "depends_on": [
+        "SYS-P03"
+      ],
+      "write_scope": [
+        "docs/test-matrix-utf8-lines.json",
+        "evidence/utf8-lines/P04.json",
+        "evidence/utf8-lines/P04/",
+        "tests/fixtures/",
+        "tests/test_utf8_line_count.py"
+      ],
+      "deploy_unit": "utf8-line-count-local-cli",
+      "source_lineage": [
+        "system-spec/index.md",
+        "system-spec/requirements.md",
+        "goal-spec.json"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "UTF-8 CLI単一機能のP04責務を明示した入力。feature増設ではない。",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P04.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "unittestに空/LF/末尾改行なし/日本語/CRLF/CR/不正UTF-8/不足過剰引数/dir/不存在を別caseとして設計し、期待stdout/stderr/exitを固定する。",
+        "生成する証跡 evidence/utf8-lines/P04.json に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。"
+      ],
+      "verification": [
+        "python3 -B -c 'import ast,json; from pathlib import Path; ast.parse(Path('\"'\"'tests/test_utf8_line_count.py'\"'\"').read_text()); m=json.load(open('\"'\"'docs/test-matrix-utf8-lines.json'\"'\"')); assert set(m)=={'\"'\"'AC%02d'\"'\"'%i for i in range(1,10)}; assert all(m.values())'"
+      ],
+      "rollback": "P04開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。前phaseの受理結果やsystem sourceを改変せず失敗理由を記録する。",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P04",
+        "file_path": "tasks/FEATURE-1/SYS-P04.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P04"
+      }
+    },
+    {
+      "id": "SYS-P05",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "逐次CLIを実装 (UTF-8 line-count)",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p05"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "backend",
+      "build_target_kind": "application-code",
+      "phase_ref": "P05",
+      "depends_on": [
+        "SYS-P04"
+      ],
+      "write_scope": [
+        "evidence/utf8-lines/P05.json",
+        "evidence/utf8-lines/P05/",
+        "src/utf8_line_count.py"
+      ],
+      "deploy_unit": "utf8-line-count-local-cli",
+      "source_lineage": [
+        "system-spec/index.md",
+        "system-spec/requirements.md",
+        "goal-spec.json"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "UTF-8 CLI単一機能のP05責務を明示した入力。feature増設ではない。",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P05.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "src/utf8_line_count.pyをstdlibのみで実装する。argparseはpath1件、open(encoding=\"utf-8\",newline=None)の行iterator、例外をexit 2へ写し入力を変更しない。",
+        "生成する証跡 evidence/utf8-lines/P05.json に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。"
+      ],
+      "verification": [
+        "mkdir -p evidence/utf8-lines/P05/tmp && TMPDIR=evidence/utf8-lines/P05/tmp PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s tests -p test_utf8_line_count.py"
+      ],
+      "rollback": "P05開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。P05コード未導入へ戻しCLI提供を保留する。",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P05",
+        "file_path": "tasks/FEATURE-1/SYS-P05.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P05"
+      }
+    },
+    {
+      "id": "SYS-P06",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "全境界テストを実行 (UTF-8 line-count)",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p06"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P06",
+      "depends_on": [
+        "SYS-P05"
+      ],
+      "write_scope": [
+        "evidence/utf8-lines/P06.json",
+        "evidence/utf8-lines/P06/"
+      ],
+      "deploy_unit": "utf8-line-count-local-cli",
+      "source_lineage": [
+        "system-spec/index.md",
+        "system-spec/requirements.md",
+        "goal-spec.json"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "UTF-8 CLI単一機能のP06責務を明示した入力。feature増設ではない。",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P06.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P04のunittestを全件実行し、失敗0・入力hash不変を証拠へ残す。未実行やskipを成功に数えない。",
+        "生成する証跡 evidence/utf8-lines/P06.json に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。"
+      ],
+      "verification": [
+        "mkdir -p evidence/utf8-lines/P06/tmp && TMPDIR=evidence/utf8-lines/P06/tmp PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s tests -p test_utf8_line_count.py"
+      ],
+      "rollback": "P06開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。前phaseの受理結果やsystem sourceを改変せず失敗理由を記録する。",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P06",
+        "file_path": "tasks/FEATURE-1/SYS-P06.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P06"
+      }
+    },
+    {
+      "id": "SYS-P07",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "利用者経路で受入確認 (UTF-8 line-count)",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p07"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P07",
+      "depends_on": [
+        "SYS-P06"
+      ],
+      "write_scope": [
+        "evidence/utf8-lines/P07.json",
+        "evidence/utf8-lines/P07/"
+      ],
+      "deploy_unit": "utf8-line-count-local-cli",
+      "source_lineage": [
+        "system-spec/index.md",
+        "system-spec/requirements.md",
+        "goal-spec.json"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "UTF-8 CLI単一機能のP07責務を明示した入力。feature増設ではない。",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P07.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "実CLI subprocessでAC01..AC08を再実行し、P06の内部テストだけで受入を代用しない。",
+        "生成する証跡 evidence/utf8-lines/P07.json に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。"
+      ],
+      "verification": [
+        "python3 -B -c 'import subprocess,sys\nfrom pathlib import Path\nroot=Path('\"'\"'evidence/utf8-lines/P07/inputs'\"'\"'); root.mkdir(parents=True,exist_ok=True)\ncases=[('\"'\"'empty'\"'\"',b'\"'\"''\"'\"',b'\"'\"'0\\n'\"'\"'),('\"'\"'lf'\"'\"',b'\"'\"'a\\nb\\n'\"'\"',b'\"'\"'2\\n'\"'\"'),('\"'\"'end'\"'\"',b'\"'\"'a\\nb'\"'\"',b'\"'\"'2\\n'\"'\"'),('\"'\"'jp'\"'\"','\"'\"'一\\n二'\"'\"'.encode(),b'\"'\"'2\\n'\"'\"'),('\"'\"'crlf'\"'\"',b'\"'\"'a\\r\\nb\\r\\n'\"'\"',b'\"'\"'2\\n'\"'\"'),('\"'\"'cr'\"'\"',b'\"'\"'a\\rb'\"'\"',b'\"'\"'2\\n'\"'\"')]\nfor name,data,want in cases:\n    path=root/name; path.write_bytes(data)\n    result=subprocess.run([sys.executable,'\"'\"'src/utf8_line_count.py'\"'\"',str(path)],capture_output=True)\n    assert result.returncode==0 and result.stdout==want and not result.stderr\n    assert path.read_bytes()==data\nbad=root/'\"'\"'invalid-utf8'\"'\"'; bad.write_bytes(b'\"'\"'\\xff'\"'\"')\nfor arguments in ([str(bad)],[str(root/'\"'\"'missing'\"'\"')],[str(root)],[],[str(root/'\"'\"'lf'\"'\"'),str(root/'\"'\"'end'\"'\"')]):\n    result=subprocess.run([sys.executable,'\"'\"'src/utf8_line_count.py'\"'\"',*arguments],capture_output=True)\n    assert result.returncode==2 and not result.stdout and result.stderr and b'\"'\"'Traceback'\"'\"' not in result.stderr\n'"
+      ],
+      "rollback": "P07開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。前phaseの受理結果やsystem sourceを改変せず失敗理由を記録する。",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P07",
+        "file_path": "tasks/FEATURE-1/SYS-P07.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P07"
+      }
+    },
+    {
+      "id": "SYS-P08",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "外部挙動を保ち整理 (UTF-8 line-count)",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p08"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "backend",
+      "build_target_kind": "application-code",
+      "phase_ref": "P08",
+      "depends_on": [
+        "SYS-P07"
+      ],
+      "write_scope": [
+        "docs/refactoring-utf8-lines.md",
+        "evidence/utf8-lines/P08.json",
+        "evidence/utf8-lines/P08/",
+        "src/utf8_line_count.py",
+        "tests/"
+      ],
+      "deploy_unit": "utf8-line-count-local-cli",
+      "source_lineage": [
+        "system-spec/index.md",
+        "system-spec/requirements.md",
+        "goal-spec.json"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "UTF-8 CLI単一機能のP08責務を明示した入力。feature増設ではない。",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P08.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "重複する失敗処理を整理する場合もCLI契約を変えず、テスト全件を再実行する。不要なframeworkや依存を導入しない。",
+        "生成する証跡 evidence/utf8-lines/P08.json に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。"
+      ],
+      "verification": [
+        "mkdir -p evidence/utf8-lines/P08/tmp && TMPDIR=evidence/utf8-lines/P08/tmp PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s tests -p test_utf8_line_count.py"
+      ],
+      "rollback": "P08開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。前phaseの受理結果やsystem sourceを改変せず失敗理由を記録する。",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P08",
+        "file_path": "tasks/FEATURE-1/SYS-P08.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P08"
+      }
+    },
+    {
+      "id": "SYS-P09",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "品質と非変更を確認 (UTF-8 line-count)",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p09"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P09",
+      "depends_on": [
+        "SYS-P08"
+      ],
+      "write_scope": [
+        "docs/quality-utf8-lines.json",
+        "evidence/utf8-lines/P09.json",
+        "evidence/utf8-lines/P09/"
+      ],
+      "deploy_unit": "utf8-line-count-local-cli",
+      "source_lineage": [
+        "system-spec/index.md",
+        "system-spec/requirements.md",
+        "goal-spec.json"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "UTF-8 CLI単一機能のP09責務を明示した入力。feature増設ではない。",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P09.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "構文・テスト・input非変更を確認し、AC09は実コードの行iteratorを独立レビューする。大きなファイル全体readを正当化しない。",
+        "生成する証跡 evidence/utf8-lines/P09.json に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。"
+      ],
+      "verification": [
+        "python3 -B -c 'import ast; from pathlib import Path; ast.parse(Path('\"'\"'src/utf8_line_count.py'\"'\"').read_text()); ast.parse(Path('\"'\"'tests/test_utf8_line_count.py'\"'\"').read_text())'",
+        "mkdir -p evidence/utf8-lines/P09/tmp && TMPDIR=evidence/utf8-lines/P09/tmp PYTHONDONTWRITEBYTECODE=1 python3 -B -m unittest discover -s tests -p test_utf8_line_count.py"
+      ],
+      "rollback": "P09開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。前phaseの受理結果やsystem sourceを改変せず失敗理由を記録する。",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P09",
+        "file_path": "tasks/FEATURE-1/SYS-P09.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P09"
+      }
+    },
+    {
+      "id": "SYS-P10",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "最終独立レビュー (UTF-8 line-count)",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p10"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "quality",
+      "build_target_kind": "application-code",
+      "phase_ref": "P10",
+      "depends_on": [
+        "SYS-P09"
+      ],
+      "write_scope": [
+        "docs/final-review-utf8-lines.json",
+        "evidence/utf8-lines/P10.json",
+        "evidence/utf8-lines/P10/"
+      ],
+      "deploy_unit": "utf8-line-count-local-cli",
+      "source_lineage": [
+        "system-spec/index.md",
+        "system-spec/requirements.md",
+        "goal-spec.json"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "UTF-8 CLI単一機能のP10責務を明示した入力。feature増設ではない。",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P10.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "全ACとP01..P09の実証跡を独立contextで確認し、未達ならP13を保留する。",
+        "生成する証跡 evidence/utf8-lines/P10.json に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。"
+      ],
+      "verification": [
+        "python3 -B -c 'import json; from pathlib import Path; v=json.load(open('\"'\"'docs/final-review-utf8-lines.json'\"'\"')); assert set(v['\"'\"'acceptance'\"'\"'])=={'\"'\"'AC%02d'\"'\"'%i for i in range(1,10)}; assert all(x=='\"'\"'PASS'\"'\"' for x in v['\"'\"'acceptance'\"'\"'].values()); assert all(Path(p).is_file() for p in v['\"'\"'evidence_refs'\"'\"'])'"
+      ],
+      "rollback": "P10開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。前phaseの受理結果やsystem sourceを改変せず失敗理由を記録する。",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P10",
+        "file_path": "tasks/FEATURE-1/SYS-P10.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P10"
+      }
+    },
+    {
+      "id": "SYS-P11",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "証跡manifestを固定 (UTF-8 line-count)",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p11"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "documentation",
+      "build_target_kind": "application-code",
+      "phase_ref": "P11",
+      "depends_on": [
+        "SYS-P10"
+      ],
+      "write_scope": [
+        "evidence/utf8-lines/P11.json",
+        "evidence/utf8-lines/P11/",
+        "evidence/utf8-lines/manifest.json"
+      ],
+      "deploy_unit": "utf8-line-count-local-cli",
+      "source_lineage": [
+        "system-spec/index.md",
+        "system-spec/requirements.md",
+        "goal-spec.json"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "UTF-8 CLI単一機能のP11責務を明示した入力。feature増設ではない。",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P11.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "P01..P10のJSON記録と参照artifactをSHA-256で束縛し、未実行/失敗を成功へ書き換えない。",
+        "生成する証跡 evidence/utf8-lines/P11.json に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。"
+      ],
+      "verification": [
+        "python3 -B -c 'import json,hashlib; from pathlib import Path; v=json.load(open('\"'\"'evidence/utf8-lines/manifest.json'\"'\"')); assert len(v['\"'\"'phase_evidence'\"'\"'])==10; assert all(hashlib.sha256(Path(x['\"'\"'path'\"'\"']).read_bytes()).hexdigest()==x['\"'\"'sha256'\"'\"'] for x in v['\"'\"'phase_evidence'\"'\"'])'"
+      ],
+      "rollback": "P11開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。前phaseの受理結果やsystem sourceを改変せず失敗理由を記録する。",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P11",
+        "file_path": "tasks/FEATURE-1/SYS-P11.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P11"
+      }
+    },
+    {
+      "id": "SYS-P12",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "利用と保守を説明 (UTF-8 line-count)",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p12"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "documentation",
+      "build_target_kind": "application-code",
+      "phase_ref": "P12",
+      "depends_on": [
+        "SYS-P11"
+      ],
+      "write_scope": [
+        "docs/README-utf8-lines.md",
+        "evidence/utf8-lines/P12.json",
+        "evidence/utf8-lines/P12/",
+        "examples/input.txt"
+      ],
+      "deploy_unit": "utf8-line-count-local-cli",
+      "source_lineage": [
+        "system-spec/index.md",
+        "system-spec/requirements.md",
+        "goal-spec.json"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "UTF-8 CLI単一機能のP12責務を明示した入力。feature増設ではない。",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P12.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "実行例、成功/失敗exit、UTF-8と改行規則、ファイル不変、ローカルrollbackをREADMEへまとめ、日本語2行の実例で確認する。",
+        "生成する証跡 evidence/utf8-lines/P12.json に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。"
+      ],
+      "verification": [
+        "python3 -B -c 'import subprocess,sys; from pathlib import Path; t=Path('\"'\"'docs/README-utf8-lines.md'\"'\"').read_text(); assert all(x in t for x in ('\"'\"'UTF-8'\"'\"','\"'\"'exit 2'\"'\"','\"'\"'AC04'\"'\"')); p=subprocess.run([sys.executable,'\"'\"'src/utf8_line_count.py'\"'\"','\"'\"'examples/input.txt'\"'\"'],capture_output=True); assert p.returncode==0 and p.stdout==b'\"'\"'2\\n'\"'\"''"
+      ],
+      "rollback": "P12開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。前phaseの受理結果やsystem sourceを改変せず失敗理由を記録する。",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P12",
+        "file_path": "tasks/FEATURE-1/SYS-P12.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P12"
+      }
+    },
+    {
+      "id": "SYS-P13",
+      "feature_package_id": "feature-package/feat",
+      "parent_feature": "FEATURE-1",
+      "title": "ローカル配布と仕様反映 (UTF-8 line-count)",
+      "owners": [
+        "team"
+      ],
+      "tags": [
+        "p13"
+      ],
+      "related_nodes": [],
+      "workstream_kind": "operations",
+      "build_target_kind": "application-code",
+      "phase_ref": "P13",
+      "depends_on": [
+        "SYS-P12"
+      ],
+      "write_scope": [
+        "architecture/system.md",
+        "dist/utf8-line-count.zip",
+        "evidence/utf8-lines/P13.json",
+        "evidence/utf8-lines/P13/",
+        "system-spec/index.md"
+      ],
+      "deploy_unit": "utf8-line-count-local-cli",
+      "source_lineage": [
+        "system-spec/index.md",
+        "system-spec/requirements.md",
+        "goal-spec.json"
+      ],
+      "classification": {
+        "confidence": 1,
+        "reason": "UTF-8 CLI単一機能のP13責務を明示した入力。feature増設ではない。",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 1,
+            "candidate_path": "tasks/FEATURE-1/SYS-P13.md"
+          }
+        ]
+      },
+      "tracker_binding_intent": "none",
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "pr_completion_policy": "linked_pr_merged_all",
+      "branch_policy": {
+        "strategy": "one-task-one-branch",
+        "worktree_lease_required": true,
+        "completion_projection": "default-branch-reconciliation",
+        "assignment_owner": "dev-graph-scheduler"
+      },
+      "acceptance": [
+        "コード/READMEをZIPへまとめ、実行結果・設計判断・改善点をsystem-specとarchitectureへ正規writebackする。公開API/リモートpushはしない。",
+        "生成する証跡 evidence/utf8-lines/P13.json に実コマンド/exit/stdout-stderr参照/実artifact SHAを保存。未実行をPASSにしない。"
+      ],
+      "verification": [
+        "python3 -m zipfile -c dist/utf8-line-count.zip src/utf8_line_count.py docs/README-utf8-lines.md",
+        "python3 -B -c 'from pathlib import Path; import zipfile; p=Path('\"'\"'dist/utf8-line-count.zip'\"'\"'); assert p.is_file(); z=zipfile.ZipFile(p); assert '\"'\"'src/utf8_line_count.py'\"'\"' in z.namelist(); assert all(x in Path('\"'\"'system-spec/index.md'\"'\"').read_text() for x in ('\"'\"'実行結果'\"'\"','\"'\"'改善点'\"'\"')); assert '\"'\"'実行結果'\"'\"' in Path('\"'\"'architecture/system.md'\"'\"').read_text()'"
+      ],
+      "rollback": "P13開始前に記録した成果物bytes/shaへ、このwrite_scopeの変更だけを戻す。前phaseの受理結果やsystem sourceを改変せず失敗理由を記録する。",
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-07-13T00:00:00Z"
+      },
+      "graph_node_registration": {
+        "graph_node_id": "SYS-P13",
+        "file_path": "tasks/FEATURE-1/SYS-P13.md",
+        "parent_feature": "FEATURE-1",
+        "feature_package_id": "feature-package/feat",
+        "phase_ref": "P13"
+      }
+    }
+  ]
+}

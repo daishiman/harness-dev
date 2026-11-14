@@ -1,0 +1,76 @@
+{
+  "artifacts": [
+    {
+      "artifact_kind": "feature",
+      "slug": "render-diff",
+      "title": "render結果の前回比較",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "priority": "medium",
+      "owners": [
+        "harness maintainers"
+      ],
+      "tracker_binding": "beads",
+      "depends_on": [
+        "LT-FEATURE-001"
+      ],
+      "macro": {
+        "purpose": "読み手が前回からの変化を特定できるようにする",
+        "goal": "今回と前回のrender結果の追加・削除・変更を再現可能な差分として取得できる",
+        "scope_in": [
+          "前回と今回のrender結果の比較",
+          "追加・削除・変更と比較対象の識別",
+          "初回・比較対象欠落の明示"
+        ],
+        "scope_out": [
+          "render生成そのもの",
+          "差分の文章要約"
+        ],
+        "acceptance": [
+          "同一結果の比較は差分0件となる",
+          "追加・削除・変更をそれぞれ識別できる",
+          "前回結果がない場合は比較不能と明示する"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    },
+    {
+      "artifact_kind": "feature",
+      "slug": "render-diff-summary",
+      "title": "render差分の読み手向け要約",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "priority": "medium",
+      "owners": [
+        "harness maintainers"
+      ],
+      "tracker_binding": "beads",
+      "depends_on": [
+        "feature-render-diff"
+      ],
+      "macro": {
+        "purpose": "読み手が差分全件を追わずに変化を理解できるようにする",
+        "goal": "比較済み差分を根拠として主要な変化と参照先を示す要約を読める",
+        "scope_in": [
+          "差分の種別と件数の要約",
+          "主要な変化と元差分への参照",
+          "差分なし・比較不能の明示"
+        ],
+        "scope_out": [
+          "差分の独自再計算",
+          "根拠にない変更の推測"
+        ],
+        "acceptance": [
+          "要約の件数が元差分の種別別件数と一致する",
+          "要約した変更から元差分を参照できる",
+          "差分なしと比較不能を区別して表示する"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    }
+  ]
+}

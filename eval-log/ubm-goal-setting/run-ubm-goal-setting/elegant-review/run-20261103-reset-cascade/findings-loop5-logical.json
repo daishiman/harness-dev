@@ -1,0 +1,707 @@
+{
+  "agent_id": "loop5-logical",
+  "version": "1",
+  "target": {
+    "plugin": "ubm-goal-setting",
+    "skill": "run-ubm-goal-setting",
+    "scope_mode": "plugin"
+  },
+  "loop_count": 5,
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "（批判的思考）loop4 #1 は解消した。plugins/ubm-goal-setting/tests/test_field_closure.py:5 は「#37（前回のやらないことが守れたか。週報・月報）と #38（北原さんの原則。月報だけ）」と書き、台帳の data-contract.md:240（週・月）と一致する。:409 の assert の文言も「期報・1年に出さないフィールドの見出しを1件も拾えていない」になった。",
+        "（批判的思考）loop4 #2 は解消した。plugins/ubm-goal-setting/tests/test_field_closure.py:414 は反復番号を書かず、「#37・#38 の見出しが期報へ漏れた取りこぼしを再現すると落ちる。」とだけ書く。",
+        "（批判的思考）G の初回の扱いについて、規則と判定する側を突き合わせた。plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:193 には iter5 で「1年だけが初回（前年の1年目標なし）のときは、直近の期報・月報の成果目標の本文にある相手から読む」が足された。1年だけが初回でも連続の判定はする、という規則である。一方で output-formats.md:1583 は、1年の初回の前年ブロックに初回マーカーを書くと定める。",
+        "（批判的思考）判定する側は、初回マーカーの文書を一律に対象外としている。plugins/ubm-goal-setting/references/agent-goal-reviewer-report-template.md:28 は「初回マーカーの文書は連続の判定を対象外と書く」。prompts/R5-step5-final-check.md:152 には選択肢「初回のため連続の判定は対象外」がある。CHANGELOG.md:26 は「goal-reviewer の項目6と R5 ターン5A は G に従う（初回は連続の判定を対象外…）」と書く。",
+        "（批判的思考）plugins/ubm-goal-setting/agents/goal-reviewer.md:62 は「G の…扱いに従う」とするが、Step 1（goal-reviewer.md:129-135）が読むのは目標ファイル・合宿・原則DB・output-formats だけで、期報・月報を読まない。そのため G:193 の1年の分岐は、レビューでは実行できない。",
+        "（批判的思考）C2〜C4 はこの思考法では PASS とした。1年の初回を聞き取る側の欠落は vertical に、1C 問5 の受け渡しの宣言は process に置き、ここでは数えない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:193 1年だけが初回のときは直近の期報・月報の成果目標の相手から読む",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1583 1年の初回は前年ブロックに初回マーカー",
+            "plugins/ubm-goal-setting/references/agent-goal-reviewer-report-template.md:28 初回マーカーの文書は対象外と書く（条件なし）",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md:152 「初回のため連続の判定は対象外」",
+            "plugins/ubm-goal-setting/CHANGELOG.md:26 「初回は連続の判定を対象外」",
+            "plugins/ubm-goal-setting/agents/goal-reviewer.md:129-135 Step 1 は期報・月報を読まない"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/tests/test_field_closure.py:406-410 (c) は期報・1年の両方の「出力しない」を検査する"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/tests/test_field_closure.py:5 #37 の層が data-contract.md:240 と一致",
+            "plugins/ubm-goal-setting/tests/test_field_closure.py:414 反復番号の食い違いが無くなった"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md:58 関係構築チェックは G を参照（参照先 output-formats.md:191-193 は実在）"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "medium",
+          "bucket": "rubric-governance",
+          "condition_signal": "contradiction",
+          "condition": "C1",
+          "location": {
+            "file": "plugins/ubm-goal-setting/references/agent-goal-reviewer-report-template.md",
+            "line": 28,
+            "section": "関係構築 6. 関係構築軸"
+          },
+          "description": "iter5 で G（output-formats.md:193）に「1年だけが初回のときは、直近の期報・月報の成果目標の本文にある相手から読む」が入り、1年だけが初回でも連続の判定をする規則になった。しかし1年の初回の文書には初回マーカーが入る（output-formats.md:1583）。判定する3か所はどれも「初回マーカー＝連続の判定は対象外」と書いている（report-template:28、R5:152 の選択肢、CHANGELOG.md:26）。goal-reviewer.md:62 は G に従うと書くが、Step 1（:129-135）で期報・月報を読まないので、G の1年の分岐を実行できない。結果として、どの利用者も一度は通る1年の初回で、G が求める連続の判定がレビューでも最終確認でも行われず、利用者には「対象外」と伝わる。",
+          "recommended_intervention": "判定する側に1年だけの初回を写す。(1) report-template:28 の括弧を「利用者の初回（前回正本が1つも無い）は連続の判定を対象外と書く。1年だけの初回は、直近の期報・月報の成果目標の相手との連続を見る（G :193）」に直す。(2) R5:152 の選択肢「初回のため連続の判定は対象外」を、利用者の初回と1年だけの初回（直近の期報・月報の成果目標の相手と連続しているか）の2つに分ける。(3) goal-reviewer.md の Step 1（:129-135）に「種別が1年で前年ブロックが初回マーカーのときは、直近の期報・月報を読む」を足す。読ませないなら、項目6に「1年だけの初回の連続はレビューで問わず、R5 で確かめる」と明記する。(4) CHANGELOG.md:26 の括弧も同じ形にそろえる。1年だけの初回も対象外にしたいなら、逆に G:193 のその1文を外す。どちらにするかは親が決める。",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "（演繹的思考）F 表 plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:161 の規則（月＝置く・無ければ WARN、期＝任意、行があれば【今(月|期)の売上目標】と同じ値）から、検査器の挙動を導いて照合した。scripts/validate-goal-output.py:315-338 は月報と期報だけを見る。月報で節が無ければ WARN（:320-322）、行が無ければ FAIL（:326-329）、値が違えば FAIL（:333-336）。矛盾は無い。",
+        "（演繹的思考）検査器の正規表現は行頭の `今月の売上目標：` を取る（validate-goal-output.py:324）。手本の output-formats.md:1456（`今月の売上目標：600000`、箇条書きにしない）と、tests/test_validate_goal_output.py:427-428 の fixture も同じ形なので、正しい出力を誤って FAIL にすることはない。呼び出しは validate-goal-output.py:1542 で、loop4 #12・#25 は解消した。",
+        "（演繹的思考）期報では到達点の注記を最重要数字に置かない（output-formats.md:1492）。scripts/validate-cross-level.py:173-175・:184-186 が期報で読む節も【今期の売上以外の成果目標】で、期報の【今期の最重要数字】を読む Spec は無い（:165-231）。loop4 #6 の確認事項は満たしている。",
+        "（演繹的思考）R2 の1年の初回の現在地を、前提から導くと食い違う。prompts/R2-step2-gap-analysis.md:43（iter5 で書き換え）は「すでに在る期報・月報の売上実績（累計売上実績）は足し上げ」とする。しかし同じ期の期報と月報は、どちらも【今期の累計売上実績】を必須で持つ（validate-goal-output.py:1459・:1471）。累計どうしを足せば、同じ売上を二重に数える。",
+        "（演繹的思考）発話の正本 R2:191 は、現在地を「今年の累計売上実績 {{period_sales_cumulative}}」の1値としている。入力 R2:56 もこの値を、Step 1（R1 ターン1E 問1、R1-step1-current-review.md:201）で聞いた1値と定めている。#23 の1年の意味づけは既知の積み残しなので、ここでは扱わない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md:43 「売上実績（累計売上実績）は足し上げ」",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md:191 現在地は今年の累計売上実績の1値",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md:56 period_sales_cumulative は Step 1 で聞いた1値",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:1459 月報も【今期の累計売上実績】を必須で持つ",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:1471 期報も【今期の累計売上実績】を必須で持つ"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:1542 check_key_number_sales_line を呼び出している"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:320-336 と output-formats.md:161 の規則が一致",
+            "plugins/ubm-goal-setting/tests/test_validate_goal_output.py:427-428 一致する例と食い違う例を固定"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-cross-level.py:173-175 期報の到達点の抽出先は【今期の売上以外の成果目標】で、output-formats.md:1492 と一致"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "contradiction",
+          "condition": "C1",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md",
+            "line": 43,
+            "section": "2.2 1年層の初回の扱い ①"
+          },
+          "description": "iter5 で R2:43 の①は「すでに在る期報・月報の売上実績（累計売上実績）は足し上げ」になった。同じ期の期報と月報はどちらも【今期の累計売上実績】を持つ（validate-goal-output.py:1459・:1471）ので、書いてあるとおりに累計を足すと同じ売上を重ねて数え、現在地が実際より大きく出る。一方、同じ R2 の発話 :191 と入力 :56 は、現在地を R1 ターン1E で聞いた今年の累計売上実績の1値としている。loop4 #27 の推奨（:43 を :191 と同じ中身にする）は、最重要数字を足さないという点では満たされたが、売上の取り方で新たな食い違いが生じた。",
+          "recommended_intervention": "R2:43 の①の括弧を次のように直す。「現在地の売上は、R1 ターン1E の問1 で確かめた今年の累計売上実績（period_sales_cumulative）の1値を使う。期報・月報の累計売上実績は同じ期の値が重なるので足さず、照合の材料にとどめる。継続コンサルの人数などの成果の実績は直近の値を使う。最重要数字は目標の値なので足さない」。あわせて、R2:109・:124・:191 と R3-step3-goal-setting.md:147 にある「積み上げ」の語も同じ意味にそろえる。",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "（帰納的思考）最重要数字の要否を、5つの写しで並べた。F 表 plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:161、DC 層別表 references/data-contract.md:290、§4.5 data-contract.md:551-556、検査器 scripts/validate-goal-output.py:1451・:1484・:312、formatter の手順 plugins/ubm-goal-setting/references/agent-output-formatter-steps.md:24 である。どれも、週＝必須、月＝置く（無ければ WARN）、期＝任意、年＝必須でそろっている。SKILL.md:273 も「期報と違い」の書き方のままで食い違わない。loop4 #4 は解消した。",
+        "（帰納的思考）必須見出しの件数を数えた。月報は validate-goal-output.py:1459-1466 で23件、期報は :1471-1478 で22件、1年は :1484-1492 で23件。data-contract.md:552-554 に書かれた件数と同じである。",
+        "（帰納的思考）#9 の書き方を集めた。data-contract.md:212「項目名：実績数値・完了日」、output-formats.md:192「`- 項目名：実績数値・完了日`」、CHANGELOG.md:26 が同じ形で、確定事項S に沿っている。loop4 #5・#15 は解消した。",
+        "（帰納的思考）名前を聞く問いは、R1-step1-current-review.md:162、interview-quick-templates.md:32・:159・:283 で同じ文になった。iqt の週報ターン1は、成果（:32）と行動（:33）に分かれている。loop4 #9・#21・#24 は解消した。",
+        "（帰納的思考）例に売上が入った。data-contract.md:302-303 は週の例に今週の売上を入れ、validate-goal-output.py:154 は期の例に「今期の売上目標：1000000」を入れ、tests/test_validate_goal_output.py:215 の fixture も売上の行を写す。loop4 #3・#19 は解消した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:161 期＝任意",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:290 期＝任意",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:556 1年は期報と違い必須"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:1471-1478 期報22件",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:553 期報22件"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:212 と output-formats.md:192 で #9 の形が同じ",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:32 と R1-step1-current-review.md:162 が同じ文"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/references/agent-output-formatter-steps.md:24 の参照先（output-formats.md の月報の注記 :1382、期報の読み替え :1492）が実在する"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": []
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "（アブダクション）loop5 で残った食い違い（critical の1年の初回の判定、vertical の聞き取り、process の受け渡し）は、一つの仮説で説明できる。iter5 で G（plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:192-193）に足した規則と、G の結論を自分の言葉で写した利用側との差である。写している利用側は、R5-step5-final-check.md:152 の固定の選択肢、agent-goal-reviewer-report-template.md:28、CHANGELOG.md:26、R3-step3-goal-setting.md:217 の括弧、R1-step1-current-review.md:75 の備考。",
+        "（アブダクション）G を1行で参照するだけの箇所（R5-step5-final-check.md:58、R3-step3-goal-setting.md:24、goal-reviewer.md:62 の前半）は食い違っていない。最も筋の通る仮説は「参照ではなく写しを持つ箇所だけがずれる」で、output-formats.md:169 が避けると宣言している「片方だけ直して他方が古いまま残る」構造と同じ型である。",
+        "（アブダクション）検査で見つからなかった理由も同じ仮説で説明できる。plugins/ubm-goal-setting/tests/test_field_closure.py:427-439 の (d) はターン見出しがあるかだけを見るので、G の分岐が利用側に写っているかは検査の外にある。これは既知の積み残し（閉包テスト (d) の限界、(d) 語の表の拡張）なので、新しい指摘にはしない。",
+        "（アブダクション）loop4 #5 の名前の置き場には、確定事項S で説明が一つに決まった。data-contract.md:212 と output-formats.md:192 の両方が「名前は書かない」で閉じており、別の説明を要する残りは無い。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:212 と output-formats.md:192 が同じ結論"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:200 に検査の範囲と KNOWN_GAPS を明記"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md:58 G を1行で参照",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:24 G を1行で参照"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/tests/test_field_closure.py:427-439 (d) はターン見出しの実在を検査（限界は既知）"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": []
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "（垂直思考）1年→期報→月報→週報の縦の流れに沿って、1年だけが初回の場合を追った。G（plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:193）は、その出所を直近の期報・月報の成果目標の本文と定める。R2 は1年の初回を別扱いにし、Step 2 を飛ばさない（R2-step2-gap-analysis.md:124・:136）。R3 も、根本原因を受け取る段では1年の初回を区別している（R3-step3-goal-setting.md:62-63・:147）。",
+        "（垂直思考）ところが、成果の候補を挙げるターンでは1年の初回を区別していない。R3-step3-goal-setting.md:217 の初回の分岐は「前回の目標が無い初回は、ターン1C で挙がった取引先・紹介元・可愛がってくれている人から」で、1年だけの初回でもターン1C を参照する。R3 の入力 #8（R3:66）は初回には null で、期報・月報の成果目標を受け取る入力も無い。",
+        "（垂直思考）R1 の側も1年だけの初回を区別しない。R1-step1-current-review.md:134 は「前回目標なし → ターン1C」で、ターン1C の冒頭（:173）は「過去の目標設定ファイルが見つかりませんでした」と言う。期報・月報がある1年だけの初回にはこの文が事実と合わず、問5（:178）で G とは違う出所の候補を集めることになる。種別が1年ならターン1E（:137）を使うが、ターン1E には候補の問いが無い。",
+        "（垂直思考）期報の最重要数字は、縦に閉じた。人数・件数の基準は1年の到達点の今期の割当（output-formats.md:1492）、到達点の注記は【今期の売上以外の成果目標】（validate-cross-level.py:173-175）、月報は期報の当月配分（output-formats.md:1382、validate-cross-level.py:206-230）である。loop4 #6・#17・#26 は解消した。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1492 と validate-cross-level.py:173-175 で到達点の置き場が一致"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:193 1年だけの初回は期報・月報から読む",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:217 初回の分岐はターン1C だけを参照",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:66 #8 は初回に null で、期報・月報を受け取る入力が無い",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md:134 前回目標なしは一律にターン1C",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md:173 「過去の目標設定ファイルが見つかりませんでした」"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1382 と validate-cross-level.py:206-230 で内訳の継承が一致"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md:124 と R3-step3-goal-setting.md:147 で根本原因の受け渡しが1年の初回を区別"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "condition": "C2",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md",
+            "line": 217,
+            "section": "ターン3C-2"
+          },
+          "description": "G:193 は、1年だけが初回のときの候補の出所を「直近の期報・月報の成果目標の本文」と定めた。しかしこの規則が、聞き取る側（R3 ターン3C-2、R3 の入力契約、R1 のターン選択）に降りていない。1年だけの初回で 3C-2 の初回の分岐をそのまま使うと、二つのどちらかになる。走っていないかもしれないターン1C を参照するか、R1:134 を経由してターン1C を走らせ、事実と合わない「過去の目標設定ファイルが見つかりませんでした」（R1:173）という前置きで候補を聞き直すかである。どちらも G の出所と違う。R2・R3 は根本原因の段では1年の初回を区別しているので、層の中で扱いがそろっていない。",
+          "recommended_intervention": "(1) R3:217 の括弧に「1年だけが初回（前年の1年目標なし）のときは、直近の期報・月報の成果目標で YES をくれた相手から挙げてください」を足す。(2) R3 の入力契約（:66-67 の近く）に、1年の初回だけ直近の期報・月報の成果目標を受け取る行を足す（出所は親が決める）。(3) R1:134 の行を「前回目標なし（種別が1年で期報・月報があるときを除く）」に直し、1年だけの初回はターン1E を使うと書く。",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "（要素分解）data-contract.md:200 の検査範囲の記述を要素に分け、検査の実装と1つずつ突き合わせた。(b) は週報・月報のテンプレートだけを見る、とある。plugins/ubm-goal-setting/tests/test_field_closure.py:365 のテスト名も週報・月報だけを対象にしている。(c) は期報・1年の読み替え規則だけを見る、とある。これは test_field_closure.py:406-410 と一致する。",
+        "（要素分解）残りの要素も一致した。期報・1年だけの7つの値は表に行を持たない（CHANGELOG.md:28 も「事業の柱など7つ」）。挽回の2変数は KNOWN_GAPS にあり、test_field_closure.py:88-91 と同じ2変数である。loop4 #7・#8 は、確定事項R の範囲（範囲を明記するだけ）で解消した。台帳化は既知の積み残しである。",
+        "（要素分解）月報の最重要数字の節を要素に分けた。注記2行（plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1453-1454）→ 売上の行（:1456、置き場の規則は :1462）→ 人数・回数・件数（:1458）の順で、確定事項Q の位置（注記2行の後、人数の前）と一致する。",
+        "（要素分解）売上の行は、validate-cross-level.py の内訳の抽出ラベル（:211 の延べ回数、:219 の実人数、:227 の件数）に当たらないので、抽出を壊さない。formatter の手順は agent-output-formatter-steps.md:24 で売上の行を写す1行を足し、期報は節を置くときだけとしている。これは output-formats.md:1492 と同じである。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:200 と plugins/ubm-goal-setting/tests/test_field_closure.py:88-91 で KNOWN_GAPS が一致"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:552-554 の件数が検査器の一覧と一致"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1462 の置き場の規則が validate-cross-level.py:211・:219・:227 の抽出ラベルと衝突しない"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/references/agent-output-formatter-steps.md:24 の参照先が実在"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": []
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "（MECE）G の成果の候補を分類すると、{前回 YES をくれた人、可愛がってくれた人、新規の人} の3つになる（plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:191）。初回の分岐（R3-step3-goal-setting.md:217 の後半、interview-quick-templates.md:66・:209・:345 の括弧）は「取引先・紹介元・可愛がってくれている人」で、可愛がってくれた人を含む。",
+        "（MECE）ところが、前回の目標がある通常の経路（R3:217 の前半、iqt :66・:209・:345 の本文）は「まず前回 YES をくれた人…から挙げ、そのあと新規の人を足して」となっている。前回の成果目標に出てこない可愛がってくれた人は、どちらの分類にも入らない。loop4 #16 は、初回の分岐でだけ直った。",
+        "（MECE）初回の場合分けは {利用者の初回（前回正本なし）、1年だけの初回、前回あり} の3つで、G:193 はこの3つを書き分けた。利用側の欠けは critical（判定する側）と vertical（聞き取る側）に置き、ここでは数えない。",
+        "（MECE）R5-step5-final-check.md:152 の3つの選択肢は、互いに排他ではない。前回 YES の人と連続した項目と、相手が確認中の項目が同じ文書にあるとき、どれか1つを選ぶ書き方では片方が抜ける（smell）。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:162-163 と :1491 で #37・#38 の層別がそろう"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:191 前回 YES をくれた人・可愛がってくれた人を先に検討",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:217 通常の経路は前回 YES と新規だけ",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:66 同上",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:209 同上",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:345 同上"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:193 初回の場合分けを書き分けた"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:5 iqt は R 側に従うと宣言"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "omission",
+          "condition": "C2",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md",
+            "line": 217,
+            "section": "ターン3C-2（通常の経路）"
+          },
+          "description": "G:191 は「前回 YES をくれた人・可愛がってくれた人」を、成果目標の候補として先に検討するとしている。iter5 で初回の分岐には可愛がってくれている人が入った。しかし前回の目標がある通常の経路（R3:217 の前半、iqt :66・:209・:345 の本文）は、前回 YES をくれた人と新規の人だけを挙げさせる。前回の成果目標に出てこないが、応援や紹介をくれている人は、2回目以降のどのターンでも候補に挙がらない。loop4 #16 は一部だけ残っている。",
+          "recommended_intervention": "R3:217 の前半の括弧を「まず前回 YES をくれた人と、応援・紹介をくれている人（可愛がってくれた人）から挙げ、そのあと新規の人を足してください」に直し、iqt :66・:209・:345 の本文も同じ語にそろえる。候補を前回 YES の人に絞るのが意図なら、逆に G:191 から「・可愛がってくれた人」を外す。確定事項P の範囲で、どちらにするかは親が決める。",
+          "auto_fixable": false
+        },
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "smell",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md",
+            "line": 152,
+            "section": "ターン5A 【関係構築】"
+          },
+          "description": "5A の括弧は「連続している／初回のため対象外／確認中の項目は外した」の3つから1つを選ぶ形になっている。前回 YES の人と連続した項目と、相手が確認中の項目が同じ文書にある場合はよくあるが、1つを選ぶ書き方では片方を言い落とす。",
+          "recommended_intervention": "括弧を項目ごとに組み合わせられる形にする。例:「成果は{{連続している項目}}が前回 YES をくれた人と連続し、{{確認中の項目}}は相手が確認中のため判定から外した」。初回のときだけ、対象外の文を単独で使う。",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "（二軸思考）ターン（R1 の 1A〜1E、iqt の各ターン）を縦軸、問いの数を横軸にして並べた。plugins/ubm-goal-setting/agents/phase3-coordinator.md:89 の CONST_001 は「1ターンの質問は1〜3問まで」で、R1 はこれを自分の正本として従うと書いている（R1-step1-current-review.md:91）。iqt も設計原則に「1ターン1〜3問」を置く（interview-quick-templates.md:13）。",
+        "（二軸思考）しかし iter5 で、R1 ターン1C は5問になり（R1:174-178）、iqt の週報ターン1は4問になった（iqt:31-34）。R1 ターン1B（R1:167-170）とターン1D（R1:182-185）の4問は、以前からある。",
+        "（二軸思考）層と成果物の表（週・月・期・年 × F 表・DC 層別表・§4.5・検査器）は、induction で確かめたとおりそろっている。#37・#38 の層も、data-contract.md:240（週・月）、F 表 output-formats.md:162-163、期報の読み替え output-formats.md:1491 で一致する。",
+        "（二軸思考）loop4 #10（data-contract.md:220 の decision_criteria で、聞く層と出す層がそろっていない）は既知の積み残しで、:220 は変わっていない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/ubm-goal-setting/agents/phase3-coordinator.md:89 CONST_001 は1ターン1〜3問",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md:91 R1 は CONST に従う",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:13 1ターン1〜3問",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md:174-178 ターン1C は5問",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:31-34 週報ターン1は4問"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:161 4層すべてに最重要数字の要否がある"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:240 と output-formats.md:162・:1491 で #37 の層が一致"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:220 decision_criteria は既知の積み残し（新しい指摘にしない）"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "doc",
+          "condition_signal": "contradiction",
+          "condition": "C1",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md",
+            "line": 178,
+            "section": "ターン1C 問5"
+          },
+          "description": "R1 は、1ターン1〜3問の制約（phase3-coordinator.md:89）を自分の正本として従うと書いている（R1:91）。iqt も同じ原則を置いている（iqt:13）。それなのに iter5 で、R1 ターン1C は4問から5問に、iqt の週報ターン1は3問から4問に増えた。ターン1B・1D の4問は以前からあるが、iter5 で制約との差がさらに広がった。親（または coordinator）が制約どおりにターンを分けると、R 側のターン見出しと対話の実際の流れがずれる。",
+          "recommended_intervention": "どちらかにそろえる。(a) ターンを分ける。ターン1C は月商・アカデミーの4問と問5（初回の候補）を別のターンにし、iqt の週報ターン1は、実績（売上・成果）と、行動・やらないことの2ターンにする。(b) 週報の所要時間5〜8分（output-formats.md:167）を守るために分けないなら、CONST_001（phase3-coordinator.md:89）に数え方を足し（例: 数値・日付の事実確認を番号で並べた一括の確認は1問と数える）、R1:91 と iqt:13 をそれに合わせる。どちらにするかは親が決める。",
+          "auto_fixable": false
+        }
+      ]
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "（プロセス思考）R1→R2→R3 の受け渡しを追った。R1 の出力契約（plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md:50-73）と備考（:75）は、ターン1C の問1〜4 の答えの行き先（アカデミー日はフィールド、月商は PastSummary）を書いている。しかし iter5 で足した問5（:178）の答えの行き先は書いていない。R3-step3-goal-setting.md:217 は、その答えを「ターン1C で挙がった…」として使う。",
+        "（プロセス思考）R1:121 は、R3 への受け渡しを `prev_other_target`, `prev_other_actual` とし、「(共通部品G の前回 YES の確認)」と添えている。確定事項S で #9 は名前を持たなくなった（data-contract.md:212）ので、1A 問2（R1:162）で確かめた名前はこのフィールドでは渡らない。G（output-formats.md:192）は名前を「Step 3 の候補に使う対話の材料」とするが、R3 の入力（R3:66-67）にも対話の材料の行は無い。",
+        "（プロセス思考）同じ親コンテキストが R1〜R5 を順に進める（R3-step3-goal-setting.md:120）ので、実際には値は失われない。ただし、受け渡しの宣言が実際の流れと合っていない。",
+        "（プロセス思考）月報の軌道修正の流れ（調整 → 冒頭の【確認された情報】に記録 → 【今月の売上目標】→ 最重要数字の売上の行）は閉じた。validate-cross-level.py:254-256 が当月の売上目標を調整できる値とし、validate-goal-output.py:330-336 が写しのずれを FAIL にするので、loop4 #25 の「片方だけ古いまま残る」流れは無くなった。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-cross-level.py:254-256 と validate-goal-output.py:330-336 で、調整と写しの照合がそろう"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md:178 初回の候補を聞く問いがある（loop4 #11 解消）"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:120 同じ親コンテキストが対話を進める"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PARTIAL",
+          "evidence": [
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md:75 備考に問5 の行き先が無い",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md:121 R3 への受け渡しが #8・#9 だけで、名前は #9 に無い",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:66-67 入力に対話の材料の行が無い",
+            "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:217 ターン1C の答えを使う"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "severity": "low",
+          "bucket": "schema",
+          "condition_signal": "dependency_break",
+          "condition": "C4",
+          "location": {
+            "file": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md",
+            "line": 121,
+            "section": "6.1 上位スキルとの接続（R3 への受け渡し）"
+          },
+          "description": "R3 ターン3C-2（R3:217）は、R1 ターン1C の問5 の答え（初回の候補の名前）と、1A 問2 で確かめた名前（G:192 の「対話の材料」）に頼っている。しかし R1 は、どちらの行き先も宣言していない。備考（R1:75）は問1〜4 の行き先だけを書き、6.1（R1:121）は「共通部品G の前回 YES の確認」を `prev_other_target`/`prev_other_actual` で渡すとしている。確定事項S で #9 に名前が入らなくなったので、この宣言は実際の流れと合っていない。R3 の入力契約（R3:66-67）にも、対話の材料の行が無い。",
+          "recommended_intervention": "(1) R1:75 の備考に「問5 の答え（初回の候補の名前）は interview_data のフィールドを持たず、対話の材料として R3 ターン3C-2 で使う（確定事項S の名前と同じ扱い）」を足す。(2) R1:121 の R3 への受け渡しを「`prev_other_target`（前回 YES の相手は成果目標の本文から読む）、`prev_other_actual`、対話の材料（1A 問2 の名前・1C 問5 の候補）」に直す。(3) R3 の入力契約（:66-67）にも、対話の材料の1行を足す。",
+          "auto_fixable": false
+        }
+      ]
+    }
+  ],
+  "loop4_resolution": [
+    {
+      "loop4_issue_no": 1,
+      "location": "plugins/ubm-goal-setting/tests/test_field_closure.py:5",
+      "resolved": true,
+      "evidence": "docstring は「#37（…週報・月報）と #38（…月報だけ）」になった。:409 の assert の文言も「期報・1年に出さないフィールドの見出し」になった。"
+    },
+    {
+      "loop4_issue_no": 2,
+      "location": "plugins/ubm-goal-setting/tests/test_field_closure.py:414",
+      "resolved": true,
+      "evidence": "反復番号を書かず、「#37・#38 の見出しが期報へ漏れた取りこぼしを再現すると落ちる。」とだけ書く。"
+    },
+    {
+      "loop4_issue_no": 3,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:303",
+      "resolved": true,
+      "evidence": "週の例に今週の売上が入った。validate-goal-output.py:154 の例にも「今期の売上目標：1000000」が入り、test_validate_goal_output.py:215 の fixture も売上の行を写す。"
+    },
+    {
+      "loop4_issue_no": 4,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:290",
+      "resolved": true,
+      "evidence": "期＝任意、月＝置く（無ければ WARN）、年＝必須になり、§4.5（:556）と validate-goal-output.py の必須一覧（:1459-1492）と一致した。"
+    },
+    {
+      "loop4_issue_no": 5,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:212",
+      "resolved": true,
+      "evidence": "要素は `項目名：実績数値・完了日` で名前は書かない（確定事項S）。output-formats.md:192 と一致する。"
+    },
+    {
+      "loop4_issue_no": 6,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1492",
+      "resolved": true,
+      "evidence": "期報の【今期の最重要数字】の規則（任意、売上の行、基準、到達点の注記は成果目標の欄）ができ、F 表 :161 に行がある。validate-cross-level.py は期報の最重要数字を読まない（:165-231）。"
+    },
+    {
+      "loop4_issue_no": 7,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:200",
+      "resolved": true,
+      "evidence": "挽回の2つの節にフィールドが無く KNOWN_GAPS にあることを §3.1 の冒頭に明記した（test_field_closure.py:88-91 と一致）。フィールドを足すのは既知の積み残し。"
+    },
+    {
+      "loop4_issue_no": 8,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:200",
+      "resolved": true,
+      "evidence": "(b)(c) の検査範囲と、期報・1年だけの7つの値が範囲外であることを明記した（確定事項R の範囲）。台帳化と (b) の拡張は既知の積み残し。"
+    },
+    {
+      "loop4_issue_no": 9,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:32",
+      "resolved": true,
+      "evidence": "週報ターン1を、成果（項目ごと・名前・確認中。:32）と行動（:33）に分けた。"
+    },
+    {
+      "loop4_issue_no": 10,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:220",
+      "resolved": false,
+      "evidence": "decision_criteria の聞く層と出す層の組み合わせは変わっていない。既知の積み残し（#17 decision_criteria の層の組み合わせ）。"
+    },
+    {
+      "loop4_issue_no": 11,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md:178",
+      "resolved": true,
+      "evidence": "ターン1C に問5 ができ、R3:217・iqt:66/:209/:345 に初回の分岐がある。iter5 で G:193 に足した1年だけの初回の分岐がまだ写っていない点は、vertical の新しい指摘に置いた。"
+    },
+    {
+      "loop4_issue_no": 12,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:305",
+      "resolved": true,
+      "evidence": "check_key_number_sales_line（:305-338）を :1542 で呼ぶ。行が無いか値が違えば FAIL、月報で節が無ければ WARN。テストは test_validate_goal_output.py:427-428 ほか。"
+    },
+    {
+      "loop4_issue_no": 13,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:193",
+      "resolved": false,
+      "evidence": "G では利用者の初回と1年だけの初回を分けた。しかし report-template:28・R5:152・CHANGELOG.md:26 は初回を一律に対象外とし、goal-reviewer は期報・月報を読まない（:129-135）。critical の指摘に置いた。"
+    },
+    {
+      "loop4_issue_no": 14,
+      "location": "plugins/ubm-goal-setting/agents/goal-reviewer.md:62",
+      "resolved": true,
+      "evidence": "括弧は候補を列挙せず、G の扱いを参照するだけになった。"
+    },
+    {
+      "loop4_issue_no": 15,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md:212",
+      "resolved": true,
+      "evidence": "名前は実績欄に書かず、対話の材料とする（G:192 と一致）。"
+    },
+    {
+      "loop4_issue_no": 16,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:217",
+      "resolved": false,
+      "evidence": "可愛がってくれた人は初回の分岐にだけ入り、通常の経路（R3:217 の前半、iqt:66/:209/:345 の本文）には入っていない。mece の指摘に置いた。"
+    },
+    {
+      "loop4_issue_no": 17,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:1492",
+      "resolved": true,
+      "evidence": "期報の最重要数字の書き方と、到達点の注記の置き場を明記した。"
+    },
+    {
+      "loop4_issue_no": 18,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md:152",
+      "resolved": true,
+      "evidence": "5A を3つから選ぶ条件付きにした。1年だけの初回との食い違いは critical に、選択肢が排他でない点は mece の smell に置いた。"
+    },
+    {
+      "loop4_issue_no": 19,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:154",
+      "resolved": true,
+      "evidence": "期の例に売上の行が入り、data-contract.md:302-303 の週の例にも今週の売上が入った。"
+    },
+    {
+      "loop4_issue_no": 20,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:217",
+      "resolved": true,
+      "evidence": "3C-2 に初回の分岐ができ、G:193・:194 は使う場面をターンの単位で書く。"
+    },
+    {
+      "loop4_issue_no": 21,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:159",
+      "resolved": true,
+      "evidence": "月報ターン2（:159）と期報ターン2（:283）に「確認中でかまいません」が入った。"
+    },
+    {
+      "loop4_issue_no": 22,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:209",
+      "resolved": true,
+      "evidence": "引用（:208）の直後に、読み方をつなぐ1文が入った。引用本文は変えていない。"
+    },
+    {
+      "loop4_issue_no": 23,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md:217",
+      "resolved": true,
+      "evidence": "R3:217 と iqt:66/:209/:345 に初回の分岐があり、G はターンの単位で書く。1年だけの初回の残りは vertical の指摘に置いた。"
+    },
+    {
+      "loop4_issue_no": 24,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md:33",
+      "resolved": true,
+      "evidence": "週報ターン1を成果（:32）と行動（:33）に分け、やらないことを :34 に送った。"
+    },
+    {
+      "loop4_issue_no": 25,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py:333",
+      "resolved": true,
+      "evidence": "値の食い違いを FAIL にする。formatter の手順（agent-output-formatter-steps.md:24）にも写す1行が入った。"
+    },
+    {
+      "loop4_issue_no": 26,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md:161",
+      "resolved": true,
+      "evidence": "F 表に最重要数字の行が入り、4層の要否と中身が1か所にまとまった。"
+    },
+    {
+      "loop4_issue_no": 27,
+      "location": "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md:43",
+      "resolved": false,
+      "evidence": "最重要数字を足さない点は直った。しかし「売上実績（累計売上実績）は足し上げ」となり、:191 の1値と食い違い、累計を二重に数える。deduction の指摘に置いた。"
+    },
+    {
+      "loop4_issue_no": 28,
+      "location": "plugins/ubm-goal-setting/tests/test_field_closure.py:427",
+      "resolved": false,
+      "evidence": "data-contract.md:200 に範囲を明記しただけで、(d) の語の表などは足していない。既知の積み残し（閉包テスト (d) の限界、(d) 語の表の拡張）。"
+    }
+  ]
+}

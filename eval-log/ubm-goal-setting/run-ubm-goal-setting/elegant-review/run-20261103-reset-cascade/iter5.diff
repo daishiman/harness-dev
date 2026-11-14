@@ -1,0 +1,392 @@
+diff -ru -x __pycache__ -x .pytest_cache /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/CHANGELOG.md plugins/ubm-goal-setting/CHANGELOG.md
+--- /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/CHANGELOG.md	2026-11-03 17:52:52
++++ plugins/ubm-goal-setting/CHANGELOG.md	2026-11-03 17:52:06
+@@ -23,9 +23,10 @@
+ - **金額を追い、成果・行動はその手段**: 根本で追うのは売上（金額）。成果目標はその売上につながる YES を人数・件数で、行動目標はその成果につながる動きを回数・件数で置く（売上→成果→行動の逆算。共通部品C）。人数・回数を売上の代わりに置く書き方や、売上を目標から外すと読める書き方を改めた。北原さんの言葉（「売上目標は追わない。人との関係を育むことが一番大事」ほか）は引用本文を変えず、目標への当てはめは共通部品G の1か所に置く。週報の【今週の最重要数字】は今週の売上の数字と、その売上につながる核心成果の人数・件数。1年の【今年の最重要数字】は売上（月間売上到達点）と継続コンサル人数を対で置き、月報の【今月の最重要数字】は当月の売上目標の金額（`今月の売上目標：{金額}` の1行）と、その売上につながる人数・回数・件数で書く（確定事項Q。4層とも「売上＋人数」の対にそろう）。
+ - **共通部品G の運用**: 【関係構築チェック】などの旧基準の3項目を、R5・面接テンプレートの【関係構築チェック】・thinking-guide・SKILL・R3・coordinator で G への1行参照に置き換え、coordinator の評価優先度は G を最上位にした。成果目標は前回 YES をくれた人から先に聞き（R3 の入力に #8・#9 を足す）、goal-reviewer の項目6は `### → （土台）` の行を除いて判定する。原則DB（`skills/run-ubm-knowledge-sync/assets/kitahara-principles-db.md`）は引用本文を変えず、適用行だけを G・A への参照と A に従う行の例に直した。
+ - **運用の明確化**: 北原さんの原則引用は、ターンテンプレートに固定した引用のほかに1対話あたり1〜2回まで。月報の日付索引は共通部品F の1行で決める（旧詳細版＝作る／簡潔版＝作らない）。差分0は `±0` と書く。期報の聞き取りから「北原さんの原則でこの3ヶ月の判断の軸に置くものは？」を外した（#38 は月報のみで、期報・1年は月報の見出しを継承しても【北原さんの原則（今月特に守ること）】と【前回のやらないことが守れたか】を出力しないと読み替え規則に明記したため）。`references/data-contract.md` の §4.5 は、月報・期報の必須見出しの件数と逐語一覧の正本を示す形にそろえた。
+-- **YES をくれた相手を名前で集める**: 前回の成果実績（#9）は YES をくれた相手の名前を含めて記録する（分からない分は `確認中`）。R1 ターン1A と iqt の週報ターン1・月報ターン2・期報ターン2 で成果を項目ごとに名前まで聞き、今回の成果目標は前回 YES をくれた人との次の判断から挙げる。G に初回（前回正本なし）と確認中の扱いを足し、goal-reviewer の項目6も同じ扱いにした（初回の候補の確認は対話の側で行い、レビューでは問わない）。
++- **前回 YES をくれた人から聞く（名前は対話の材料）**: 前回の成果実績（#9）の要素は `項目名：実績数値・完了日` のままで、YES をくれた相手の名前は書かない。名前は R1 ターン1A の問2 と iqt の週報ターン1・月報ターン2・期報ターン2 で対話で確かめ（分からない分は「確認中」）、Step 3 の候補に使う。連続の判定は前回の成果目標の本文にある相手から読む。初回は R1 ターン1C の問5 で既存の取引先・紹介元・可愛がってくれている人を確かめ、R3 ターン3C-2 と iqt の成果の問いで候補にする。1年だけが初回のときは直近の期報・月報の成果目標から読む。G に初回と確認中の扱いを置き、goal-reviewer の項目6と R5 ターン5A は G に従う（初回は連続の判定を対象外、確認中の項目は判定から外す）。iqt の週報ターン1は、成果（項目ごと・名前）と行動の実行状況を別の問いに分けた。
+ - **層間一致検査（`--peer`）は金額2値だけ**: 各層の最重要数字は「その層の売上とその内訳」で層ごとに値が違うのが正しいため、`validate-goal-output.py --peer` の比較から外し、`SKIP` 行で理由を印字する（`WEEKLY_EXEMPT_ANCHORS` は廃止）。比べるのは今期の売上目標と累計売上実績の2値。1年の到達点の継承は `validate-cross-level.py` が rc を持って照合する。
+-- **フィールドの閉包を機械で確かめる**: `data-contract.md` §3.1 の表に「集める問い」「出力する層」の2列を足し、`tests/test_field_closure.py` で、全フィールドに問いと出力層があること・週報と月報のテンプレート変数が出力層と合うこと・月報だけの見出しを期報と1年が出さないこと・参照するターン見出しが実在すること・旧基準の言い換え（類型3種。発話テンプレートの `>` 行も含む）が残っていないことを検査する。
++- **フィールドの閉包を機械で確かめる**: `data-contract.md` §3.1 の表に「集める問い」「出力する層」の2列を足し、`tests/test_field_closure.py` で、全フィールドに問いと出力層があること・週報と月報のテンプレート変数が出力層と合うこと・#37（週報・月報）と #38（月報）の見出しを期報と1年が出さないこと・参照するターン見出しが実在すること・旧基準の言い換え（類型3種。発話テンプレートの `>` 行も含む）が残っていないことを検査する。期報・1年だけの節の値（事業の柱など7つ）と売上・成果の挽回はこの表に行を持たず、検査の範囲外であることを §3.1 に明記した。
++- **最重要数字の売上の行を照合する**: 月報の【今月の最重要数字】の `今月の売上目標：{金額}` の1行に続き、期報の【今期の最重要数字】（任意）も同じ形で `今期の売上目標：{金額}` の1行と、その売上に至る人数・回数・件数を置く（基準は1年の到達点の今期の割当、1年目標が無い期は合意した今期の実行目標。到達点2件の注記は【今期の売上以外の成果目標】のまま）。`validate-goal-output.py` は、節を置いた月報・期報でこの行が【今(月|期)の売上目標】と同じ値かを照合し、行が無いか値が違えば FAIL にする（月報で節そのものが無いときは WARN）。共通部品F に最重要数字の行を足し、`data-contract.md` の層別表の月報・期報の列をこれに合わせた。1年目標が初回のときの現在地（R2）は、最重要数字（目標の値）を足さず、売上実績と成果の実績から作る。
+ - **ナレッジDBの状況列**: `kitahara-principles-db.md` の状況列3件を「売上の数字だけを追い、その売上に至る相手・人数が置かれていない」の形に直した（引用の列は変えていない）。
+ - **据え置き**: 月報の簡潔版は既定にしない。無指定は旧詳細版（【プロジェクト別タスク】必須）のまま。
+ 
+diff -ru -x __pycache__ -x .pytest_cache /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/agents/goal-reviewer.md plugins/ubm-goal-setting/agents/goal-reviewer.md
+--- /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/agents/goal-reviewer.md	2026-11-03 17:52:52
++++ plugins/ubm-goal-setting/agents/goal-reviewer.md	2026-11-03 17:48:58
+@@ -59,7 +59,7 @@
+ 
+ | # | 項目 | 合格条件 | チェック方法 |
+ |---|------|----------|------------|
+-| 6 | **関係構築軸** | 売上目標を1つ置いたうえで、成果と行動が `output-formats.md` の「共通部品G 原理原則の基準」に沿っている（成果は挑戦への YES、行動は原理原則の動き、同じ人と連続） | 管理用セクションの行動目標を、`### → （土台）` グループの行を除いて1行ずつ読み、原理原則のどの動きにも当たらない行を挙げる。同じセクションの成果目標から、新規の人だけで前回 YES をくれた人との連続が1件も無い状態を挙げる。前回ブロックが初回マーカー（`- 初回（前回正本なし）`）の文書では、連続の判定を対象外にする（G の初回の扱い。既存の取引先・紹介元を候補にする確認は対話の側で行い、文書には残らないため、レビューでは問わない）。相手が確認中の項目は連続の判定から外し、確認中と書く |
++| 6 | **関係構築軸** | 売上目標を1つ置いたうえで、成果と行動が `output-formats.md` の「共通部品G 原理原則の基準」に沿っている（成果は挑戦への YES、行動は原理原則の動き、同じ人と連続） | 管理用セクションの行動目標を、`### → （土台）` グループの行を除いて1行ずつ読み、原理原則のどの動きにも当たらない行を挙げる。同じセクションの成果目標から、新規の人だけで前回 YES をくれた人との連続が1件も無い状態を挙げる。前回ブロックが初回マーカー（`- 初回（前回正本なし）`）の文書と、相手が確認中の項目は、G の「同じ人と連続する」の扱いに従う（初回の候補の確認は対話の側で行い、文書には残らないため、レビューでは問わない） |
+ | 7 | **行動行の形** | 行動行が `output-formats.md` の「共通部品A 行動行」（何をする＋期日。人名は必須にしない）を満たす | 管理用セクションの行動目標を1行ずつ読み、期日の欠落と、項目名（「：」の前）に入った個人名を挙げる |
+ | 8 | **精神論排除** | `${PLUGIN_ROOT}/references/action-language-policy.json` の `goal_exact_phrases` の語が含まれていない | NG表現スキャン |
+ 
+diff -ru -x __pycache__ -x .pytest_cache /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/references/agent-output-formatter-steps.md plugins/ubm-goal-setting/references/agent-output-formatter-steps.md
+--- /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/references/agent-output-formatter-steps.md	2026-11-03 17:52:52
++++ plugins/ubm-goal-setting/references/agent-output-formatter-steps.md	2026-11-03 17:51:41
+@@ -21,6 +21,7 @@
+ 
+ 1. interview_dataから各セクションの値を抽出
+ 2. past_dataから前回目標・実績を `output-formats.md` の「共通部品D 前回ブロック」のとおり転記する。週報・月報の `{{prev_not_doing_check}}` は interview_data の `prev_not_doing_check`（data-contract #37）から書き、null（初回）は同節の初回マーカーにする。月報の `{{principles}}` は interview_data の `principles`（data-contract #38）から1要素1行で書く
++   - 月報・期報の【今(月|期)の最重要数字】に置く `今(月|期)の売上目標：{金額}` の1行は、【今(月|期)の売上目標】の値をそのまま写す（期報は節を置く場合だけ。`validate-goal-output.py` が一致を照合する。書き方は `output-formats.md` の月報の【今月の最重要数字】の注記と期報の読み替え規則）
+ 3. 行動目標は interview_data の `actions[]`（data-contract #14）から組み立てる。要素ごとに `- [ ] {item_name}：{what}　期日{deadline_token}` を作り、`outcome_group` ごとのグループ見出し（`### → `）の下に置く。グループと行の並び・日付索引・月報の提出用（射影）は `output-formats.md` の「共通部品A 行動行」に従う
+ 4. 数値ルール適用: 全角→半角変換、差分に+/-付与
+ 5. 行動目標が `output-formats.md` の「共通部品A 行動行」に合うか（期日があるか）最終確認
+diff -ru -x __pycache__ -x .pytest_cache /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md
+--- /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md	2026-11-03 17:52:52
++++ plugins/ubm-goal-setting/skills/run-ubm-goal-setting/assets/interview-quick-templates.md	2026-11-03 17:48:47
+@@ -29,8 +29,9 @@
+ 
+ 先週の目標について、実績はどうでしたか？
+ 1. 売上実績（数字）
+-2. 行動目標の達成状況（何件やったか）と、成果目標で YES をくれた人（名前）
+-3. 先週の日付索引の「やらない」（`｜やらない：`）は守れましたか？（守れなかったものは日付も）
++2. 成果目標は、項目ごとにどうなりましたか？ YES をくれた相手の名前も（人数でまとめた項目は、その人たちの名前を。分からない分は「確認中」でかまいません）
++3. 行動目標の達成状況（何件やったか）
++4. 先週の日付索引の「やらない」（`｜やらない：`）は守れましたか？（守れなかったものは日付も）
+ 
+ 困ったことや想定外だったことがあれば教えてください。
+ ```
+@@ -62,7 +63,7 @@
+ 
+ この売上が立つには、誰の・どの判断が必要ですか？
+ 
+-1. まず前回 YES をくれた人（前回の成果目標で応じてくれた相手）との「先方が下す判断・受諾・合意・継続」を挙げ、そのあと新規の人を足してください
++1. まず前回 YES をくれた人（前回の成果目標で応じてくれた相手）との「先方が下す判断・受諾・合意・継続」を挙げ、そのあと新規の人を足してください（前回の目標が無い初回は、すでに取引のある方・紹介してくれた方・可愛がってくれている方から挙げてください）
+ 2. それぞれに売上貢献額を割り当ててください（今週の売上に乗らないものは 0 とし、括弧の形は `output-formats.md` の「共通部品B 成果目標と売上貢献の根拠」）
+ 
+ 形式: 1項目=2行
+@@ -155,7 +156,7 @@
+ ```
+ 前回の1ヶ月（{{期間}}）について:
+ 1. 売上実績はいくらでしたか？（半角数字）
+-2. 成果目標は、項目ごとにどうなりましたか？ YES をくれた相手の名前も（人数でまとめた項目は、その人たちの名前を）
++2. 成果目標は、項目ごとにどうなりましたか？ YES をくれた相手の名前も（人数でまとめた項目は、その人たちの名前を。分からない分は「確認中」でかまいません）
+ 3. 行動目標の実績（何件やったか）
+ 4. 前月の【今月やらないこと（明確に排除するもの）】の各項目は守れましたか？（守れなかったものは日付も）
+ ```
+@@ -205,7 +206,7 @@
+ ※ 式に分解できないもの（値引き後の一括見積など）は `→ 売上貢献：300000（値引き後の一括見積）` と括弧で根拠を添えます
+ ※ 計上するのは **今月の売上に実際に立つ分だけ** です。月額5万円の顧問なら初月の `50000 × 1 = 50000` で、3ヶ月分の 150000 ではありません。先の分は `→ 売上貢献：0（8月計上・顧問の2ヶ月目以降）` として見通しに回します
+ 
+-1. まず前回 YES をくれた人（前回の成果目標で応じてくれた相手）との「先方が下す判断・受諾・合意・継続」を挙げ、そのあと新規の人を足してください
++1. まず前回 YES をくれた人（前回の成果目標で応じてくれた相手）との「先方が下す判断・受諾・合意・継続」を挙げ、そのあと新規の人を足してください（前回の目標が無い初回は、すでに取引のある方・紹介してくれた方・可愛がってくれている方から挙げてください）
+ 2. それぞれに売上貢献額を（今月の売上に乗らないものは 0 とし、括弧の形は `output-formats.md` の「共通部品B 成果目標と売上貢献の根拠」）
+ 3. 合計が今月の売上目標に届くまで出し切ってください
+ 
+@@ -279,7 +280,7 @@
+ ```
+ 前回の3ヶ月（{{期間}}）について:
+ 1. 売上実績はいくらでしたか？（半角数字）
+-2. 成果目標は、項目ごとにどうなりましたか？ YES をくれた相手の名前も（人数でまとめた項目は、その人たちの名前を）
++2. 成果目標は、項目ごとにどうなりましたか？ YES をくれた相手の名前も（人数でまとめた項目は、その人たちの名前を。分からない分は「確認中」でかまいません）
+ 3. 行動目標の実績（何件やったか）
+ 4. 3ヶ月間で一番変化があったことは？
+ ```
+@@ -341,7 +342,7 @@
+ ※ 式に分解できないもの（値引き後の一括見積など）は `→ 売上貢献：900000（値引き後の一括見積）` と括弧で根拠を添えます
+ ※ 計上するのは **今期（3ヶ月）の売上に実際に立つ分だけ** です。式の件数は「何件売れるか」であって、期間の月数ではありません。今期に立たない分は `→ 売上貢献：0（10月計上・顧問の4ヶ月目以降）` として見通しに回します
+ 
+-1. まず前回 YES をくれた人（前回の成果目標で応じてくれた相手）との「先方が下す判断・受諾・合意・継続」を挙げ、そのあと新規の人を足してください
++1. まず前回 YES をくれた人（前回の成果目標で応じてくれた相手）との「先方が下す判断・受諾・合意・継続」を挙げ、そのあと新規の人を足してください（前回の目標が無い初回は、すでに取引のある方・紹介してくれた方・可愛がってくれている方から挙げてください）
+ 2. それぞれに売上貢献額を（今期の売上に乗らないものは 0 とし、括弧の形は `output-formats.md` の「共通部品B 成果目標と売上貢献の根拠」）
+ 3. 合計が今期の売上目標に届くまで出し切ってください
+ 
+diff -ru -x __pycache__ -x .pytest_cache /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md
+--- /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md	2026-11-03 17:52:52
++++ plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R1-step1-current-review.md	2026-11-03 17:47:20
+@@ -175,6 +175,7 @@
+ > 2. 顧問参加前の月商は？
+ > 3. 直近のアカデミー参加日は？
+ > 4. 次回のアカデミー予定は？
++> 5. すでに取引のある方・紹介してくれた方・可愛がってくれている方はいますか？ 名前で教えてください（いなければ「いない」でかまいません。今回の成果目標の候補にします）
+ 
+ **ターン1D（月報・期報・新項目フル確認）**:
+ > 月次の目標設定として、現状を確認させてください（半角数字・日付で）:
+diff -ru -x __pycache__ -x .pytest_cache /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md
+--- /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md	2026-11-03 17:52:52
++++ plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R2-step2-gap-analysis.md	2026-11-03 17:47:20
+@@ -40,7 +40,7 @@
+ - **前回 YES をくれた人を確かめる**: 成果の差分 (`prev_other_diff`) を出すときに、誰が前回 YES をくれたかを確かめる (読み方は `output-formats.md` の「共通部品G 原理原則の基準」)。
+ - **差分の対象期間 (種別で 4 分岐)**: Step 1で固定した1つ前の同じ層の正本を基準に、成果・行動を目標と同じ項目順で実績・差分へ対応させる（正本 `output-formats.md` の「共通部品D 前回ブロック」）。未確認値の差分は確認中とし、今回計画から過去目標を作らない。1年 (`yearly`) は「前年」の 1年目標、期報 (`quarterly`) は「前期」、月報 (`monthly`) は「前月」、週報 (`weekly`) は「前週」。期間語は正本 (`references/data-contract.md` §1.0 の 4層の種別定義) に従い、1年層では「今年 / 前年」を使う (「今期」「今月」に置き換えない)。1年層の期間だけは暦の 1年で切るため、前年との比較も暦年どうしの比較になる (下位 3層の最終月曜起点とは別規則)。
+ - **1年層の補足照合 (1年のみ)**: 前年正本がある場合は、他の層と同じく前年の売上・成果・行動の目標と実績を対応させる。加えて到達点アンカー2件（`月間売上到達点` / `継続コンサル人数`）と現在地を比較する。アンカーだけに絞って前年の項目を落とさない。アンカーのラベル・置き場は `references/data-contract.md` §3.1.3 の4層ロールアップ契約に従う。
+-- **1年層の初回 (前年の 1年目標が存在しない) の扱い (1年のみ)**: 1年目標は 4層化で新設された層であり、**初回は比較対象となる前年の 1年目標ファイルが存在しない**。このとき本 Step をスキップせず、**前回差分は作らずに**、次の 2 つの差を `root_cause` / `bottleneck` の材料にする。① 直近の期報・月報の積み上げ (すでに在る期報・月報の売上実績と最重要数字を足し上げ、現在地として扱う) ② 挑戦宣言 (`05_Project/UBM/挑戦宣言/UBM - 挑戦宣言 - YYYY-MM-DD.md`。1年層の到達点の正本) の到達点 2 件。差分のフィールドは**初回は `null`** (`prev_sales_diff` の正本: `references/data-contract.md` #7)。到達点との差は差分欄に置かず、成果物の前回ブロックは `output-formats.md` の「共通部品D 前回ブロック」の初回マーカーにする。
++- **1年層の初回 (前年の 1年目標が存在しない) の扱い (1年のみ)**: 1年目標は 4層化で新設された層であり、**初回は比較対象となる前年の 1年目標ファイルが存在しない**。このとき本 Step をスキップせず、**前回差分は作らずに**、次の 2 つの差を `root_cause` / `bottleneck` の材料にする。① 直近の期報・月報の実績 (すでに在る期報・月報の売上実績（累計売上実績）は足し上げ、継続コンサルの人数などの成果の実績は直近の値をそのまま使い、現在地として扱う。【今(月|期)の最重要数字】はその層の目標の値（月報は `今月の売上目標：` の行を含む）なので足さない) ② 挑戦宣言 (`05_Project/UBM/挑戦宣言/UBM - 挑戦宣言 - YYYY-MM-DD.md`。1年層の到達点の正本) の到達点 2 件。差分のフィールドは**初回は `null`** (`prev_sales_diff` の正本: `references/data-contract.md` #7)。到達点との差は差分欄に置かず、成果物の前回ブロックは `output-formats.md` の「共通部品D 前回ブロック」の初回マーカーにする。
+ 
+ ### 2.3 入力契約
+ | フィールド | 型 | 必須 | 説明 |
+diff -ru -x __pycache__ -x .pytest_cache /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md
+--- /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md	2026-11-03 17:52:52
++++ plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R3-step3-goal-setting.md	2026-11-03 17:47:20
+@@ -206,6 +206,7 @@
+ **ターン3C-1（売上目標の確定・最上流）**:
+ > では、{{period}}の目標を設定しましょう。最上流の売上目標から確定します。
+ > 北原さん:「売上目標は追わない。人との関係を育むことが一番大事」
++> これは、売上を数字だけで追い立てず、人との関係を育てた結果として売上が立つという意味です。
+ > 売上目標を半角数字で1つ教えてください（根本で追うのはこの売上です。人との関係と人数・回数は、この売上に至る手段として日々管理します）。
+ > 内訳（誰から・いくら）も対話で確認しますが、ファイルには数値1つだけ記載します。
+ > 未確定なら、継続・単発の内訳と、売上目標に計上する範囲を教えてください。合意済みの範囲はそのまま使います。
+@@ -213,7 +214,7 @@
+ 
+ **ターン3C-2（売上の内訳＝相手の列挙）**:
+ > 売上目標 {{sales_target}} を、**誰から立てるか**に分解します。
+-> この {{period}} に売上が乗る可能性のある相手を、名前で挙げてください（まず前回 YES をくれた人（前回の成果目標で応じてくれた相手）から挙げ、そのあと新規の人を足してください）。
++> この {{period}} に売上が乗る可能性のある相手を、名前で挙げてください（まず前回 YES をくれた人（前回の成果目標で応じてくれた相手）から挙げ、そのあと新規の人を足してください。前回の目標が無い初回は、ターン1C で挙がった取引先・紹介元・可愛がってくれている人から挙げてください）。
+ > あわせて、それぞれ **いくらくらいを見込むか** も教えてください。
+ >
+ > ここで挙がった金額の合計が {{sales_target}} に届かない場合は、その場で一緒に埋めていきます（相手を足すか、単価・本数を見直すか）。
+diff -ru -x __pycache__ -x .pytest_cache /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md
+--- /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md	2026-11-03 17:52:52
++++ plugins/ubm-goal-setting/skills/run-ubm-goal-setting/prompts/R5-step5-final-check.md	2026-11-03 17:47:20
+@@ -149,7 +149,7 @@
+ > 全体を確認しました。
+ > 【基本チェック】全項目OK
+ > 【合宿整合性】OK（{{camp_date}}の合宿方針と一致）
+-> 【関係構築】OK（成果は前回 YES をくれた人と連続し、行動は原理原則の動きになっている）
++> 【関係構築】OK（行動は原理原則の動きになっている。成果は{{前回 YES をくれた人と連続している／初回のため連続の判定は対象外／相手が確認中の項目は連続の判定から外した}}）
+ > この内容でフォーマットに整形して保存してよいですか？
+ 
+ **ターン5B**:
+diff -ru -x __pycache__ -x .pytest_cache /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md
+--- /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md	2026-11-03 17:52:52
++++ plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/data-contract.md	2026-11-03 17:48:31
+@@ -197,7 +197,7 @@
+ 
+ ### 3.1 全37フィールド一覧（#1-38、#15 は欠番）
+ 
+-表の「集める問い」は、その値を利用者から聞くターンを書く（`R1`〜`R5` は `prompts/` の各責務プロンプトのターン、`iqt` は `assets/interview-quick-templates.md` の層別フローのターン。iqt は言い回し集で、ターン構成の正本は R 側）。聞かずに埋める値は `—（理由）` と書く（past_data＝前回正本からの転記、派生＝他のフィールドから算出）。「出力する層」は、`output-formats.md` のテンプレートに見出しか変数を持つ層を `週・月・期・年` の組合せで書き、持たないなら `—（理由）` と書く。期報は月報の、1年は期報の骨格を読み替えで継承するため、月報にあって期・年に無い項目は、期報・1年の読み替え規則に「出力しない」と書く。この2列とテンプレート・ターン見出しの対応は `tests/test_field_closure.py` が検査する。フィールドや見出しを足したら、この2列と利用側（R プロンプト・iqt・`output-formats.md`）を同じ変更で直す。
++表の「集める問い」は、その値を利用者から聞くターンを書く（`R1`〜`R5` は `prompts/` の各責務プロンプトのターン、`iqt` は `assets/interview-quick-templates.md` の層別フローのターン。iqt は言い回し集で、ターン構成の正本は R 側）。聞かずに埋める値は `—（理由）` と書く（past_data＝前回正本からの転記、派生＝他のフィールドから算出）。「出力する層」は、`output-formats.md` のテンプレートに見出しか変数を持つ層を `週・月・期・年` の組合せで書き、持たないなら `—（理由）` と書く。期報は月報の、1年は期報の骨格を読み替えで継承するため、月報にあって期・年に無い項目は、期報・1年の読み替え規則に「出力しない」と書く。この2列とテンプレート・ターン見出しの対応は `tests/test_field_closure.py` が検査する。検査の範囲は、(b) テンプレートの変数と出力する層が週報・月報のテンプレートだけ、(c) 「出力しない」の記載が期報・1年の読み替え規則だけである。期報・1年だけに在る節の値（事業の柱・補助金戦略・地域戦略・事業計画の数字・確定スケジュール・合宿の学び・SNS 共有の確認）はこの表に行を持たず、(b) の範囲外になる。前回ブロックの売上・成果の挽回（【前回の売上に対して未達を挽回するための行動】【前回の売上以外の成果に対して未達を挽回するための行動】）もフィールドが無く、同テストの `KNOWN_GAPS` に置いている。フィールドや見出しを足したら、この2列と利用側（R プロンプト・iqt・`output-formats.md`）を同じ変更で直す。
+ 
+ | # | フィールド | 型 | 説明 | 取得Step | 必須 | 備考 | 集める問い | 出力する層 |
+ |---|-----------|-----|------|---------|------|------|-----------|-----------|
+@@ -209,7 +209,7 @@
+ | 6 | prev_sales_actual | number | 前回売上実績 | Step 1 | いいえ | 初回の場合は `null` | R1 ターン1A／iqt 週報ターン1／月報ターン2／期報ターン2 | 週・月・期・年 |
+ | 7 | prev_sales_diff | string | 売上差分（+/-付き半角数字） | Step 2 | いいえ | 初回の場合は `null`。例: `+50000`, `-300000` | —（派生: #5 と #6 から Step 2 で算出。R2 ターン2A／ターン2B で提示） | 週・月・期・年 |
+ | 8 | prev_other_target | string[] | 前回成果目標 | Step 1 | いいえ | 初回は `null`。1項目1要素で、前回正本の成果目標を同じ項目名・順序・件数のまま持つ（転記の形は `output-formats.md` の「共通部品D 前回ブロック」） | —（past_data の前回正本から転記。R1 ターン1A で提示し変更を確認） | 週・月・期・年 |
+-| 9 | prev_other_actual | string[] | 前回成果実績 | Step 1 | いいえ | 初回は `null`。1項目1要素で、#8 と同じ項目名・順序・件数（不明は `確認中`）。YES をくれた相手の名前を含めて記録する（人数でまとめた項目は対話で確かめた名前、分からない分は `確認中`。`output-formats.md` の「共通部品G 原理原則の基準」の連続の判定の材料） | R1 ターン1A／iqt 週報ターン1／月報ターン2／期報ターン2 | 週・月・期・年 |
++| 9 | prev_other_actual | string[] | 前回成果実績 | Step 1 | いいえ | 初回は `null`。1項目1要素で、#8 と同じ項目名・順序・件数（不明は `確認中`）。要素は `項目名：実績数値・完了日` で、YES をくれた相手の名前は書かない（名前は R1 ターン1A の問2 で対話で確かめ、Step 3 の候補に使う材料。連続の判定は前回の成果目標の本文にある相手から読む。`output-formats.md` の「共通部品G 原理原則の基準」） | R1 ターン1A／iqt 週報ターン1／月報ターン2／期報ターン2 | 週・月・期・年 |
+ | 10 | root_cause | string | 差分の根本原因 | Step 2 | いいえ | 初回または目標達成時は `null` | R2 ターン2B／ターン2C／ターン2E-1年／iqt 週報ターン2／月報ターン3／期報ターン3 | —（専用見出し・テンプレート変数なし。挽回見出しの下の要因分析の材料） |
+ | 11 | bottleneck | string | ボトルネック箇所 | Step 2 | いいえ | 「商品作り→外交→商談→成約→フォロー」のいずれか | R2 ターン2F-1年初回（1年初回は直接聞く。他は ターン2B／ターン2C の回答から段を特定する） | —（専用見出し・テンプレート変数なし。Step 3・4 の設計材料） |
+ | 12 | sales_target | number | 今回売上目標 | Step 3 | はい | 半角数字のみ | R3 ターン3C-1／iqt 週報ターン3／月報ターン5／期報ターン6 | 週・月・期・年 |
+@@ -287,7 +287,7 @@
+ | sparring_target_state (#30) | 任意（継承） | 必須 | 必須 | 任意（1年層では要求しない） | 現在の月報/期報 | スナップショット | 対象外（スナップショット） |
+ | sparring_deliverables (#31) | 任意（継承） | 必須 | 必須 | 任意（1年層では要求しない） | 現在の月報/期報 | スナップショット | 対象外（スナップショット） |
+ | habit_check (#19) | 必須 | 対象外（`null`） | 対象外（`null`） | 対象外（`null`） | — | 週報固有 | 対象外（週報固有） |
+-| 最重要数字（出力見出し【今(週/月/期/年)の最重要数字】） | 必須 | 必須 | 必須 | 必須（到達点 #0a/#0b の置き場） | — | 層ごと（その層の売上目標と、その売上に至る人数・回数・件数） | 対象外（層ごとに値が違うのが正しい。1年の到達点 #0a/#0b の継承は `validate-cross-level.py` で照合する） |
++| 最重要数字（出力見出し【今(週/月/期/年)の最重要数字】） | 必須（今週の売上と、その売上に至る人数・件数） | 置く（テンプレートの管理用セクション。`今月の売上目標：{金額}` の1行と人数・回数・件数。`validate-cross-level.py` が読む。必須見出しの検査には含めず、無ければ WARN） | 任意（置くときは `今期の売上目標：{金額}` の1行と人数・回数・件数。出力見出しの要否は §4.5） | 必須（到達点 #0a/#0b の置き場） | — | 層ごと（その層の売上目標と、その売上に至る人数・回数・件数） | 対象外（層ごとに値が違うのが正しい。1年の到達点 #0a/#0b の継承は `validate-cross-level.py` で照合する） |
+ 
+ #### 層間一致検査（validate-goal-output.py `--peer`）の対象一覧
+ 
+@@ -300,7 +300,7 @@
+   — 週報でもこの2値は全レベル同値が正しい。
+ - **対象外**: 最重要数字。各層の【今(週/月/期/年)の最重要数字】は、**その層の売上目標と、その売上に至る
+   人数・回数・件数**であって、層をまたいで同値になる値ではない（例: 1年「月間売上到達点」に対し月「今月の売上目標：600000」、
+-  週は今週分の人数・件数）。どの組でも比較せず、分母からも落とす
++  週は今週の売上と、その売上に至る人数・件数）。どの組でも比較せず、分母からも落とす
+   （検査スクリプトは `SKIP` 行で理由を印字する）。1年の到達点（#0a/#0b）の継承は、rc を持つ
+   `validate-cross-level.py` が照合する。
+ - **対象外**: スナップショット8種（`business_partner_count` / `grid_partner_count` /
+diff -ru -x __pycache__ -x .pytest_cache /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md
+--- /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md	2026-11-03 17:52:52
++++ plugins/ubm-goal-setting/skills/run-ubm-goal-setting/references/output-formats.md	2026-11-03 17:48:31
+@@ -158,6 +158,7 @@
+ | 【プロジェクト別タスク】 | 出力しない（週の実行管理は行動目標＋日付索引の1方式） | 無指定（旧詳細版）は必須。frontmatter に `monthly_action_style: concise` を明示した簡潔版だけ任意 | 出力しない | 出力しない（あれば FAIL） |
+ | 日付索引（共通部品A） | 【今週の大きな到達ライン】 | 【今月の日別タスク】。旧詳細版＝作る／簡潔版＝作らない（依頼されたときだけ補う） | 出力しない | 出力しない |
+ | やらないことの出力先 | 独立セクションにせず、【今週の大きな到達ライン】の該当日の行末に `｜やらない：{内容}` | 【今月やらないこと（明確に排除するもの）】3項目以上 | 【今期やらないこと（明確に排除するもの）】3項目以上 | 【今年やらないこと（明確に排除するもの）】3項目以上 |
++| 【今(週/月/期/年)の最重要数字】 | 必須。`- [ ]` 形式で今週の売上と、その売上に至る人数・件数 | 管理用セクションに置く（必須見出しの検査には含めず、無ければ WARN）。`今月の売上目標：{金額}` の1行と人数・回数・件数 | 任意。置くときは `今期の売上目標：{金額}` の1行と人数・回数・件数 | 必須。到達点2件（月間売上到達点・継続コンサル人数） |
+ | 【前回のやらないことが守れたか】 | 出力する | 出力する | 出力しない | 出力しない |
+ | 【北原さんの原則（今月特に守ること）】 | 出力しない | 出力する | 出力しない | 出力しない |
+ | 成果目標の件数5件（S1）・行動目標の件数8件（S3） | 超過で FAIL | 超過で推奨超過 WARN | 同左 | 同左 |
+@@ -188,9 +189,9 @@
+ 
+ - 金額を追う。成果・行動はその手段: 根本で追うのは売上（金額）で、成果目標はその売上につながる YES を人数・件数で、行動目標はその成果につながる動きを回数・件数で置く（売上→成果→行動の逆算。共通部品C）。成果（YES）を引き出す行動は上の動きから選ぶ。北原さんの「売上目標は追わない」「売上ではなく人数で追う」（引用本文は原則DB のまま）は、売上（目的）に至る手段として人数・回数を日々管理する、と読む。売上の数字を目標・最重要数字から外さない
+ - 同じ人と連続する: 前回 YES をくれた人・可愛がってくれた人との次の挑戦を、成果目標の候補として先に検討し（並び順は共通部品A）、新規の人だけを並べない
+-  - 前回 YES をくれた人は、前回正本の成果目標の本文にある相手と同じ項目の実績から読む。相手をまとめた項目は対話で名前を確かめ、分からなければ確認中とする
+-  - 初回（前回正本なし）は、対話で既存の取引先・紹介元・可愛がってくれた人を確かめて候補にする。いなければ連続の判定は対象外とする。相手が確認中の項目は連続の判定から外し、確認中と書く
+-- 行動行（共通部品A）に「見せる」などの分類ラベルを付けず、見出しも増やさない。基準を使う場面は、前回 YES をくれた人の確認（Step 1 の R1 の前回実績と Step 2 の R2 の差分）、成果（Step 3 の R3）、行動（Step 4 の R4）、レビュー（goal-reviewer の項目6 関係構築軸）。行動の基準は `### → （土台）` グループの行には当てない（対象外）
++  - 前回 YES をくれた人は、前回正本の成果目標の本文にある相手と同じ項目の実績から読む。相手をまとめた項目は対話（R1 ターン1A の問2）で名前を確かめ、分からなければ確認中とする。名前は Step 3 の候補に使う対話の材料で、前回実績の欄（`references/data-contract.md` #9）には書かない（実績欄は `- 項目名：実績数値・完了日`）
++  - 初回（前回正本なし）は、R1 ターン1C の問5 で既存の取引先・紹介元・可愛がってくれている人を確かめ、R3 ターン3C-2 で候補にする。いなければ連続の判定は対象外とする。1年だけが初回（前年の1年目標なし）のときは、直近の期報・月報の成果目標の本文にある相手から読む。相手が確認中の項目は連続の判定から外し、確認中と書く
++- 行動行（共通部品A）に「見せる」などの分類ラベルを付けず、見出しも増やさない。基準を使う場面は、前回 YES をくれた人の確認（R1 ターン1A の問2。初回は R1 ターン1C の問5）と Step 2 の R2 の差分、成果（R3 ターン3C-2）、行動（Step 4 の R4）、レビュー（goal-reviewer の項目6 関係構築軸）。行動の基準は `### → （土台）` グループの行には当てない（対象外）
+ - 精神論の NG 語（共通部品A）と両立させる。「本気で誘う」「可愛がる」は、誘う・導く行動の件数と期日で書く
+ 
+ ---
+@@ -1378,7 +1379,7 @@
+ （以下 深掘りブロック・公式の後）
+ 
+ ## 【今月の最重要数字】
+-（※ 公式21ブロックに含まれない管理用の節。提出用セクションには置かず、見出しに `（提出）` を付けない。当月の売上目標の金額を `今月の売上目標：{金額}` の1行で置き（金額は【今月の売上目標】と同じ値）、その売上につながる人数・回数・件数を続ける（売上と人数・回数の関係は「共通部品G 原理原則の基準」）。人数・回数・件数は期報の当月配分（無料相談の延べ回数・1回目の実人数・月額継続コンサルの累積件数）を基準とし、調整時は冒頭の【確認された情報】（両群に共通のヘッダー）の見直し記録にある実行目標を現在値として持つ。`validate-cross-level.py` はこの節を読む。1年目標がある期は、見出しの直後に到達点2件の注記を置き、その後に `今月の売上目標：` の1行を置く。書き方は下の「1年目標がある期の到達点の注記（月報）」）
++（※ 公式21ブロックに含まれない管理用の節。提出用セクションには置かず、見出しに `（提出）` を付けない。当月の売上目標の金額を `今月の売上目標：{金額}` の1行で置き（金額は【今月の売上目標】と同じ値）、その売上につながる人数・回数・件数を続ける（売上と人数・回数の関係は「共通部品G 原理原則の基準」）。人数・回数・件数は期報の当月配分（無料相談の延べ回数・1回目の実人数・月額継続コンサルの累積件数）を基準とし、調整時は冒頭の【確認された情報】（両群に共通のヘッダー）の見直し記録にある実行目標を現在値として持つ。`validate-cross-level.py` はこの節を読み、`validate-goal-output.py` は `今月の売上目標：` の行と【今月の売上目標】の値が一致するかを照合する。1年目標がある期は、見出しの直後に到達点2件の注記を置き、その後に `今月の売上目標：` の1行を置く。書き方は下の「1年目標がある期の到達点の注記（月報）」）
+ {{key_number}}
+ 
+ ## 【前月の売上以外の成果目標と実績の差分】
+@@ -1488,6 +1489,7 @@
+ - **【プロジェクト別タスク】は期報では出力しない**（層ごとの要否は「共通部品F 層別差分表」）。
+ - **【今月の日別タスク】（読み替えで【今期の日別タスク】に相当）は期報では出力しない**（日別タスクはプロジェクト別タスクの日付展開のため月報のみ。期報は【確定スケジュール】で代替する）。
+ - **【前回のやらないことが守れたか】と【北原さんの原則（今月特に守ること）】は期報では出力しない**（読み替え後の名前でも出さない。#37 は週報・月報、#38 は月報のみ。`references/data-contract.md` §3.1。層ごとの要否は「共通部品F 層別差分表」）。
++- **【今期の最重要数字】は任意**（必須見出しの検査には含めない。層ごとの要否は「共通部品F 層別差分表」）。置くときは月報と同じ形で、`今期の売上目標：{金額}` の1行（金額は【今期の売上目標】と同じ値）を置き、その売上に至る人数・回数・件数を続ける。人数・回数・件数の基準は、1年目標がある期は1年の到達点の今期の割当、1年目標が無い期は合意した今期の実行目標とする。月報の注記のうち月報だけの記述（期報の当月配分を基準にする、`validate-cross-level.py` がこの節を読む）は当てはめない。到達点2件の注記はこの節ではなく【今期の売上以外の成果目標】へ置く（下の「1年目標がある期の到達点の注記（期報）」）。`validate-goal-output.py` は、この節を置いた期報で `今期の売上目標：` の行と【今期の売上目標】の値が一致するかを照合する
+ 
+ #### 規則の優先順位と不変条件（厳守）
+ 
+diff -ru -x __pycache__ -x .pytest_cache /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py
+--- /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py	2026-11-03 17:52:52
++++ plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts/validate-goal-output.py	2026-11-03 17:49:55
+@@ -150,9 +150,9 @@
+ ]
+ 
+ # 【今(週|月|期|年)の最重要数字】は、どの組でも一致検査の対象にしない。各層の最重要数字は、
+-# その層の売上（月報は `今月の売上目標：` の1行）と、その売上につながる人数・件数の内訳で、
+-# 層ごとに値が違うのが正しい（例: 期「困りごとを解決した件数：6件」に対して週「サンプル運送さんの
+-# 困りごとを書き出した件数：3件」）。旧版は月報・期報の組だけを比べていたが、月報に当月の売上を
++# その層の売上（月報・期報は `今(月|期)の売上目標：` の1行）と、その売上につながる人数・件数の内訳で、
++# 層ごとに値が違うのが正しい（例: 期「今期の売上目標：1000000」と「困りごとを解決した件数：6件」に対して
++# 週「- [ ] Bさんの提案受諾を取る（売上100000）」）。旧版は月報・期報の組だけを比べていたが、月報に当月の売上を
+ # 置いた（確定事項Q）ので、その組も正しい書き方が毎回 WARN になる。1年の到達点（#0a/#0b）の
+ # 継承は validate-cross-level.py が rc を持って照合する。比べていないことが分かるよう、peer ごとに
+ # この SKIP 行を印字し、分母には入れない。
+@@ -302,6 +302,41 @@
+     def ok(self, msg: str) -> None:
+         print(f"PASS: {msg}")
+ 
++    def check_key_number_sales_line(self) -> None:
++        """月報・期報の最重要数字にある売上の1行が、その層の売上目標と同じ値かを照合する。
++
++        最重要数字は、その層の売上と、その売上に至る人数・回数・件数を置く節で、
++        売上の行（`今月の売上目標：{金額}` / `今期の売上目標：{金額}`）は
++        【今(月|期)の売上目標】の値を写す。写し間違えると、毎日見る数字と目標の金額が
++        食い違ったまま運用されるのに、どの検査も赤くならなかった。
++        月報は節を置くのが既定（無ければ WARN）、期報は任意（無ければ何もしない）。
++        週報・1年は最重要数字の書き方が違う（週は `- [ ]` 形式、1年は到達点）ので対象外。
++        """
++        if self.kind not in ("month", "period"):
++            return
++        word = self._period_word()
++        body = _section_body(self.lines, r"^## 【" + word + r"の最重要数字】")
++        if body is None:
++            if self.kind == "month":
++                self.warn(f"【{word}の最重要数字】が無い（`{word}の売上目標：{{金額}}` の1行と、"
++                          "その売上に至る人数・回数・件数を置く）")
++            return
++        rx = re.compile(r"^\s*" + word + r"の売上目標[：:]\s*([0-9][0-9,]*)\s*円?\s*$")
++        amounts = [int(m.group(1).replace(",", "")) for m in map(rx.match, body) if m]
++        if not amounts:
++            self.fail(f"【{word}の最重要数字】に `{word}の売上目標：{{金額}}` の1行が無い"
++                      f"（金額は【{word}の売上目標】と同じ値を半角数字で）")
++            return
++        target = self._current_sales_target()
++        if target is None:
++            return  # 売上目標そのものの欠落は check_goal_section が FAIL にする
++        wrong = [a for a in amounts if a != target]
++        if wrong:
++            self.fail(f"【{word}の最重要数字】の `{word}の売上目標：{wrong[0]}` が"
++                      f"【{word}の売上目標】の {target} と違う（同じ値を写す）")
++        else:
++            self.ok(f"【{word}の最重要数字】の売上の行が【{word}の売上目標】と一致（{target}）")
++
+     def check_report_alignment(self) -> None:
+         """前期間の項目落ちと、月報の二重管理の数量・単位・期日ずれを検査する。
+ 
+@@ -1504,6 +1539,7 @@
+ 
+         self.check_goal_chain()
+         self.check_report_alignment()
++        self.check_key_number_sales_line()
+ 
+         print("")
+         print("--- 挽回の対応行・見直し記録・日付索引 ---")
+diff -ru -x __pycache__ -x .pytest_cache /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/tests/test_validate_goal_output.py plugins/ubm-goal-setting/tests/test_validate_goal_output.py
+--- /private/tmp/claude-501/-Users-dm-dev-dev------harness/3d2b1d2a-72f6-41d1-bf38-87b22d29d41f/scratchpad/pre-iter5-tree/plugins/ubm-goal-setting/tests/test_validate_goal_output.py	2026-11-03 17:52:52
++++ plugins/ubm-goal-setting/tests/test_validate_goal_output.py	2026-11-03 17:51:26
+@@ -209,7 +209,11 @@
+             parts.append("本文")
+         parts.append("")
+     if "今期の最重要数字" in anchors:
+-        parts += ["## 【今期の最重要数字】", "", anchors["今期の最重要数字"], ""]
++        # 最重要数字は売上の1行（【今期の売上目標】の写し）と、その売上に至る件数で書く。
++        # 売上目標を差し替えるテストでも写しがずれないよう、ここで同じ値から作る。
++        target = anchors.get("今期の売上目標", str(amount)).replace(",", "")
++        parts += ["## 【今期の最重要数字】", "", f"今期の売上目標：{target}",
++                  anchors["今期の最重要数字"], ""]
+     return "\n".join(parts) + "\n"
+ 
+ 
+@@ -359,6 +363,75 @@
+     assert KEY_NUMBER_SKIP in r.stdout
+     assert "層間比較: 比較2項目中 不一致0件" in r.stdout
+     assert "層間の値ズレ" not in r.stdout
++
++
++def key_number_period(sales_line: str | None) -> str:
++    """【今期の最重要数字】の売上の行だけを差し替えた期報（他は ANCHORS_OK のまま）。"""
++    text = period_text("3ヶ月の目標", ANCHORS_OK, ANCHOR_AMOUNT)
++    lines = text.split("\n")
++    i = lines.index("今期の売上目標：1000000")
++    if sales_line is None:
++        del lines[i]
++    else:
++        lines[i] = sales_line
++    return "\n".join(lines)
++
++
++def test_key_number_sales_line_matches_target(tmp_path: Path):
++    """期報の最重要数字にある売上の行が【今期の売上目標】と同じ値なら PASS（確定事項T）。"""
++    p = write(tmp_path, PERIOD_NAME, key_number_period("今期の売上目標：1,000,000円"))
++    r = run(p, "quarterly")
++    assert r.returncode == 0, r.stdout
++    assert "PASS: 【今期の最重要数字】の売上の行が【今期の売上目標】と一致（1000000）" in r.stdout
++
++
++def test_key_number_sales_line_mismatch_fails(tmp_path: Path):
++    """写し間違い（売上目標 1000000 に対して 900000）を FAIL にする。"""
++    p = write(tmp_path, PERIOD_NAME, key_number_period("今期の売上目標：900000"))
++    r = run(p, "quarterly")
++    assert r.returncode == 1, r.stdout
++    assert "`今期の売上目標：900000` が【今期の売上目標】の 1000000 と違う" in r.stdout
++
++
++def test_key_number_without_sales_line_fails(tmp_path: Path):
++    """節を置いたのに売上の行が無い（人数・件数だけ）なら FAIL にする。"""
++    p = write(tmp_path, PERIOD_NAME, key_number_period(None))
++    r = run(p, "quarterly")
++    assert r.returncode == 1, r.stdout
++    assert "【今期の最重要数字】に `今期の売上目標：{金額}` の1行が無い" in r.stdout
++
++
++def test_key_number_is_optional_in_quarterly(tmp_path: Path):
++    """期報は最重要数字を置かなくてよい（任意。照合も警告もしない）。"""
++    p = write(tmp_path, PERIOD_NAME, period_text("3ヶ月の目標", amount=ANCHOR_AMOUNT))
++    r = run(p, "quarterly")
++    assert r.returncode == 0, r.stdout
++    assert "最重要数字】が無い" not in r.stdout
++    assert "最重要数字】の売上の行" not in r.stdout
++
++
++def _validator_class():
++    import importlib.util
++    script = PLUGIN_ROOT / "skills/run-ubm-goal-setting/scripts/validate-goal-output.py"
++    spec = importlib.util.spec_from_file_location("validate_goal_output_mod", script)
++    module = importlib.util.module_from_spec(spec)
++    spec.loader.exec_module(module)
++    return module.Validator
++
++
++def test_monthly_key_number_sales_line(capsys):
++    """月報は同じ照合をし、節そのものが無いときは WARN にとどめる（確定事項Q）。"""
++    validator = _validator_class()
++    base = ["## 【今月の売上目標】", "", "600000", ""]
++    cases = [
++        (["## 【今月の最重要数字】", "", "今月の売上目標：600000", "件数：3件", ""], 0, 0),
++        (["## 【今月の最重要数字】", "", "今月の売上目標：500000", "件数：3件", ""], 1, 0),
++        ([], 0, 1),
++    ]
++    for key_number, errors, warnings in cases:
++        v = validator("\n".join(base + key_number), "x.md", "month")
++        v.check_key_number_sales_line()
++        assert (v.errors, v.warnings) == (errors, warnings), capsys.readouterr().out
+ 
+ 
+ def test_peer_missing_file_errors(tmp_path: Path):
