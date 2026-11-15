@@ -1,6 +1,6 @@
 # harness-creator 完全解剖 — 何をどう構築し、何が出来上がるのか
 
-> 対象: `plugins/harness-creator/`（version 1.4.65 / skills 31 + agents 7 + commands 6）
+> 対象: `plugins/harness-creator/`（version 1.4.66 / skills 32 + agents 7 + commands 6）
 > 目的: (A) ハーネスをどう構築しているか (B) 出来上がったハーネスがどんな要素で構成されるか — を漏れなく抽出する
 > 位置づけ: 本書は**解説文書**であり正本ではない。正本は各章末の「正本」欄に示すファイル。
 > 配置理由: plugin 配下は `lint-ssot-duplication.py` が正本の再掲を violation 判定するため、解説は `doc/` 配下に置く。
@@ -237,7 +237,7 @@ fresh agent 1 体が `original_goal` に対し **PASS | FAIL + blocker 列挙の
 | `wrap-*` | 安全ラッパ | — |
 | `lookup-*` / `dispatch-*` | 将来予約 | — |
 
-**依存方向は `run-* → assign-* → ref-*` の一方向のみ**。逆流は lint が検出する。31 個の skill 名を見るだけで責務が判別できるのはこの規約の効果。
+**依存方向は `run-* → assign-* → ref-*` の一方向のみ**。逆流は lint が検出する。32 個の skill 名を見るだけで責務が判別できるのはこの規約の効果。
 
 正本: `plugins/harness-creator/skills/ref-skill-naming-convention/references/prefix-axis-matrix.md`
 
