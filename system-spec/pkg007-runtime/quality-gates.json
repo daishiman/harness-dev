@@ -124,6 +124,48 @@
       "p1_approved": 46,
       "log": "docs/pkg007-runtime/checks/final-change-category-guard.json",
       "note": "既存ユーザー承認を46個のversion-only manifestのSHAに束縛。policy/cooldownルールは変更しない。"
+    },
+    {
+      "name": "naming-unit",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 3.392,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/scripts-root/test_root__lint_script_naming.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-naming-unit.log"
+    },
+    {
+      "name": "naming-all",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.773,
+      "argv": [
+        "python3",
+        "scripts/lint-script-naming.py",
+        "--report"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-naming-all.log"
+    },
+    {
+      "name": "approval-guard",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.42,
+      "argv": [
+        "python3",
+        "scripts/guard-change-category.py",
+        "--base",
+        "origin/main",
+        "--report"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-approval-guard.log"
     }
   ],
   "counts": {
@@ -182,5 +224,6 @@
         "docs/pkg007-runtime/review-history/public-base-20261116T034305Z/run-skill-feedback/machine-score.json"
       ]
     }
-  ]
+  ],
+  "ci_naming_followup": "docs/pkg007-runtime/checks/naming-ledger-review.json"
 }
