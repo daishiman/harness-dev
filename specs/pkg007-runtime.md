@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-11-16T03:37:44.999349Z"
-updated_at: "2026-11-16T04:12:25.429540Z"
+updated_at: "2026-11-16T04:28:59.559803Z"
 depends_on: []
 related_nodes: ["arch-pkg007-runtime", "feature-pkg007-runtime"]
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-16T04:12:25.429540Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-16T04:28:59.559803Z", "missing_sections": [], "status": "complete"}
 ---
 
 # 目的と成功状態
@@ -72,6 +72,9 @@ FR4: notion_configはmanifest祖先からowner plugin rootを解決し、明示c
 FR5: repo用lintはmanifestのbuild_validationでIN1/IN2と実行属性要件を保持し、runtimeへvendorしない。
 FR6: references/resource-map.yamlへ4資料のtopic/read_whenを宣言し、必要な資料だけを選択して読む。
 FR7: CI指摘に限定して索引metadataとPEP723等のscriptヘッダーを補完する。ヘッダー補完による通常runtime処理のASTは変更しない。
+FR8: SSOTの意図的同梱判定は、正本とcopyがともに今回の入力scope内で、VENDORED_PAIRSに登録され、双方が通常fileで経路にsymlinkがなく、実bytesが一致する場合だけ適用する。未知copy・不一致・正本scope外・台帳未登録は従来どおり検出し、schemaや閾値は変更しない。
+FR9: ヘッダーコメント差分はAST不変。その後、sys.dont_write_bytecode=Trueの1代入だけを追加してcache書込を抑止した。この1代入を除く通常業務処理のASTは同一で、通常の追加LLM呼出し・全repo走査0を維持する。
+FR10: 共通資料のHC固有参照は正本ownerを明示し、工程を固有コード番号だけで説明しない。B4/D1の引用差分を再監査してupstream pinを追従する。
 
 ## 非機能要件
 
@@ -111,11 +114,11 @@ findingはlocation/evidence/severityと参照元を持つ。原review・旧INCOM
 
 ## 互換性・移行・リリース
 
-repo正本submitと配布版の同階層importを両対応する。canonicalと既存22コピーを既存配布機構で同期した。今回共通部品を含む23pluginだけをbuild-plugin-release.pyでpatch採番し、正規metadataを生成した（harness-creator 1.4.67、dev-graph 0.1.35等）。整合検査を実行しinstallはしない。公開はtask branchからmain向けdraft PRで、merge・done昇格は別判断とする。 PR91のCI後追いでは索引metadataとヘッダーを正規生成元へ反映し、既存同期経路で配布版へ展開した。全23pluginの最新patch版一覧は docs/pkg007-runtime/checks/metadata-final-gates.json の versions を正とする。
+repo正本submitと配布版の同階層importを両対応する。canonicalと既存22コピーを既存配布機構で同期した。今回共通部品を含む23pluginだけをbuild-plugin-release.pyでpatch採番し、正規metadataを生成した（harness-creator 1.4.68、dev-graph 0.1.36等）。整合検査を実行しinstallはしない。公開はtask branchからmain向けdraft PRで、merge・done昇格は別判断とする。 PR91のCI後追いでは索引metadataとヘッダーを正規生成元へ反映し、既存同期経路で配布版へ展開した。全23pluginの最新patch版一覧は docs/pkg007-runtime/checks/ssot-final-gates.json の versions を正とする。 最新patch版はharness-creator 1.4.68、dev-graph 0.1.36、plugin-dev-planner 0.1.30。全23pluginを正規採番し、詳細は docs/pkg007-runtime/checks/ssot-final-gates.json と親の版一覧を参照する。installは行わない。
 
 ## テストと受入条件
 
-PKG007全23plugin、metadata補修後の対象回帰522件、criteria5件、frontmatter209script違反0、vendor352byte一致、対象23pluginのrelease整合、guard blocked0、新規5nodeのschema/readiness、仕様受領書のSHA・秘密検査を最小ゲートにする。前回公開tree521件に続く今回の実結果は docs/pkg007-runtime/checks/metadata-final-gates.json を正とし、初期dirty treeの無関係2testは引き続き公開へ持ち込まない。全体評価やliveは再走しない。
+最新実検証は523回帰、SSOT unit55件、厳格SSOTのschema87件・Markdown188件、UBM文書4件・briefing文書1件、upstream7件、cache static1件が成功。vendor352一致・release23・guard blocked0も確認した。全体LLM評価・liveは再走しない。 PKG007全23とcriteria5件を含む今回の最小ゲートは docs/pkg007-runtime/checks/ssot-final-gates.json を正とする。原workspaceの無関係2testは引き続き持ち込まない。新規5nodeのschema/readinessと受領書SHA/秘密検査を別途確認し、実Notion/liveなしと全体coverage未達を残す。
 
 ## 未決事項
 

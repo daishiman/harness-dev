@@ -62,6 +62,8 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from typing import Optional
 
+sys.dont_write_bytecode = True
+
 from tenant_runtime import TenantConfigError, credential_ref
 
 CONFIG_FILENAME = ".notion-config.json"

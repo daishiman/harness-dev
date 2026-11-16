@@ -5,9 +5,9 @@
   "llm_eval": {
     "verdict": "PASS",
     "score": 94,
-    "notes": "genuine independent delta review（2026-11-16、sha256 f1b297e222402e0556565165fcb0d9acf35bf9e3c0a36d9afd09a528f58dbe35）。今回の対象はplugin_rootのmanifest祖先探索とSETUP_DOC_RELの小差分。既存_hc_env_rootのown-plugin照合を保持し、env不採用時に近接manifest祖先を選ぶのでskill/scriptsに同梱したmoduleでもowner plugin設定を解決できる。manifest無しだけ旧parents[1]へfallbackし、設定/token/DB優先順位は不変。submit側の同階層import及びtenant_runtime同梱を照合。追加LLM/兄弟plugin列挙/全repo走査無し。ただしenv不採用時に局所的な上向きmanifest探索が1回増えるので、文字どおりfilesystemアクセス増加ゼロとは評価しない。全loaderの再監査はしていない。 検証根拠: 変更hunkと隣接契約・対応testを当reviewerが読んで評価した。親共有のpackage23件PASS、vendored330一致、feedback strict PASS、関連168test/PKG007 201test PASSを参照したが、当reviewer自身はsuiteを再実行していない。rendererの追加回帰7PASSは著者報告であり、当reviewerは修正hunkとtestを再通読した。追加LLMや自己文書の承認はしていない。前recordは今回run-dirのcoverage-history/meta_analystへ内容を保持してコピー済み。今回見た差分に残るblocking問題なし。"
+    "notes": "genuine independent delta review、source SHA256=6ff261964cfc93bf90d046a331204fa1e66c56e20bfeb147c07b08ffaef22cc3。実装者reset_observer/meta_analystとは別の親が差分・境界・対応testを通読。sys.dont_write_bytecode=Trueをtenant_runtime import前に追加。追加代入以外のAST/mode不変、config探索/認証の順序は変更しない。変更前sourceとbyte一致する配布先だけを同期。 親は523対象回帰、55SSOTunit、strict、資料5/pin7/cache-static1、vendor352/release23/guardblocked0を実行。旧score・既存課題を改善済みとせず維持、前評価を docs/pkg007-runtime/review-history/ci-final-delta/plugins-harness-creator-scripts-notion_config.py.json に保持。今回差分にblocking問題なし。"
   },
-  "reviewed_by": "independent-code-review-20261116-meta-analyst-pkg007",
+  "reviewed_by": "independent-delta-review-20261116-root-final",
   "checked": [
     "soundness",
     "responsibility",

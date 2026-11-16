@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-11-16T03:37:44.999349Z"
-updated_at: "2026-11-16T04:12:25.429540Z"
+updated_at: "2026-11-16T04:28:14.437839Z"
 depends_on: []
 related_nodes: ["feature-pkg007-runtime", "spec-pkg007-runtime", "arch-pkg007-runtime", "task-pkg007-runtime"]
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-16T04:12:25.429540Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-16T04:28:14.437839Z", "missing_sections": [], "status": "complete"}
 ---
 
 # 目的
@@ -73,6 +73,12 @@ CI後追いの補完（中学生向け）
 CI後追いの補完（専門向け）
 resource-map.yamlに4資料のtopic/read_whenを宣言し正規rendererとregistryで同期しました。PEP723等のヘッダー補完は通常runtime処理のASTを変えません。通常起動に全資料読込や追加LLM評価を加えず、vendorは352組のbyte一致を検証しました。
 
+追加CI修復（中学生向け）
+同じ説明書を配布のかばんへ入れた場合だけ、台帳と中身を照合して意図したコピーと認めます。知らないコピーや中身が違うものは見逃しません。資料の参照先と工程名を読みやすくし、不要なcacheファイルを書かない設定を1行追加しました。業務の動きは同じです。
+
+追加CI修復（専門向け）
+SSOTの意図的同梱判定は、正本とcopyがともに今回の入力scope内で、VENDORED_PAIRSに登録され、双方が通常fileで経路にsymlinkがなく、実bytesが一致する場合だけ適用する。未知copy・不一致・正本scope外・台帳未登録は従来どおり検出し、schemaや閾値は変更しない。 goal-seek資料の見出しはharness-creator正本のowner-qualified URLへ結び、runbookの固有工程番号は自然な工程名へ置き換えて説明を維持しました。B4はmanifest祖先解決とcache抑止の差分、D1は意味不変更の参照明確化を再監査してpinを追従しています。ヘッダーコメント差分はAST不変。その後、sys.dont_write_bytecode=Trueの1代入だけを追加してcache書込を抑止した。この1代入を除く通常業務処理のASTは同一で、通常の追加LLM呼出し・全repo走査0を維持する。
+
 ## 決定事項
 
 通常起動の追加LLM/全repo走査は0。本文・他refsは今回007の対象外。runtimeと開発lintを分離する。新しいAPI/DB/認証方式は追加しない。公開5nodeはdraft/pendingを維持する。
@@ -89,14 +95,16 @@ specs/pkg007-runtime.md、architecture/pkg007-runtime.md、features/pkg007-runti
 
 2026-11-16: harness-zb7qのユーザー承認scopeをC02で正規5文書へ反映。公開treeの521件と対象23packageの版更新を追記した。初期dirty treeの無関係2testは公開対象外。main向けdraft PRの説明を記載。
 2026-11-16 PR91 CI後追い: 命名・参照索引metadata・ヘッダーを補完し正規同期した。runtime AST不変、522回帰・5criteria・vendor352・最新patch版を今回の実結果へ更新。
+2026-11-16 最終CI追補: 意図的同梱の厳密なSSOT境界、共通2資料の引用明確化、B4/D1再監査とpin、cache抑止1代入を反映。最新523回帰・SSOT55・厳格schema87/Markdown188・vendor352とHC1.4.68/dev-graph0.1.36/planner0.1.30へ更新。
 
 ## PR用要約
 
-問題: 明示script参照の検査と共通feedbackに、人手判定とrepo配置前提が残っていた。PR91のCIで命名・索引metadata・scriptヘッダーの不足が見つかった。
-変更: 007を機械正本へ集約し、feedback runtimeを同梱、repo lintを開発役割へ分離。CI後追いでは4資料の索引metadata、ヘッダーと正規renderer/registryを補完した。ヘッダー補完で通常runtime処理のASTは変えず、通常起動に追加LLM/全repo走査を入れない。
-最新検証: 回帰522件、criteria5件、frontmatter209script違反0、vendor352一致、23package blocking0、release23とguard blocked0を確認。前回521件と今回CI後追いの結果を区別し、原workspaceの無関係2testは持ち込まない。実ログは docs/pkg007-runtime/checks/metadata-final-gates.json を参照。
-最新patch版: harness-creator 1.4.67、dev-graph 0.1.35。他23pluginの版は同JSONのversionsを正とする。installは行っていない。
-仕様影響: 対象scope・配布依存・開発lint境界と必要資料の選択を反映。API/DB/認証方式は影響なし。
+問題: 明示script参照の検査とfeedbackに人手判定・repo配置前提が残り、PR91 CIで意図的同梱docのSSOT誤検知、共通資料の引用とpinのdriftが露出した。
+変更: PKG007を機械正本へ集約しruntime同梱と開発lint分離を実施。SSOTは入力scope内の登録済み通常file・非symlink・実byte一致の場合だけ意図的copyと区別し、未知/不一致は検出を維持する。共通2資料の参照と工程名を明確化しB4/D1を再監査した。
+挙動境界: ヘッダーコメント差分はAST不変。その後、sys.dont_write_bytecode=Trueの1代入だけを追加してcache書込を抑止した。この1代入を除く通常業務処理のASTは同一で、通常の追加LLM呼出し・全repo走査0を維持する。
+最新検証: 最新実検証は523回帰、SSOT unit55件、厳格SSOTのschema87件・Markdown188件、UBM文書4件・briefing文書1件、upstream7件、cache static1件が成功。vendor352一致・release23・guard blocked0も確認した。全体LLM評価・liveは再走しない。 criteria5件とPKG007全23も成功。根拠は docs/pkg007-runtime/checks/ssot-final-gates.json。
+版更新: 最新patch版はharness-creator 1.4.68、dev-graph 0.1.36、plugin-dev-planner 0.1.30。全23pluginを正規採番し、詳細は docs/pkg007-runtime/checks/ssot-final-gates.json と親の版一覧を参照する。installは行わない。
+仕様影響: 対象scope・配布依存・開発lint・必要資料選択・SSOTの意図的copy境界を反映。API/DB/認証方式は影響なし。
 追跡: Beads harness-zb7q、task-pkg007-runtime、devgraph/task-pkg007-runtime→main draft PR91。
 
 ## 残課題

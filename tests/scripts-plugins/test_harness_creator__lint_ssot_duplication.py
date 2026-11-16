@@ -494,3 +494,62 @@ def test_main_in_process_strict_warn_exit_1(MOD, tmp_path, capsys):
     b = _write_json(tmp_path, "b.json", {"required": ["w", "x", "y", "z"]})
     assert MOD.main([str(a), str(b), "--strict"]) == 1
     assert "WARN  DUP-REQUIRED-SET" in capsys.readouterr().err
+
+
+def _vendored_registry_fixture(MOD, tmp_path, monkeypatch, *, registered=True, registry=True):
+    root = tmp_path / "repo"
+    canonical = _write_md(root, "owner/source.md", _PASSAGE_BLOCK)
+    copy = _write_md(root, "plugin/copy.md", _PASSAGE_BLOCK)
+    monkeypatch.setattr(MOD, "__file__", str(root / "plugin/scripts/lint-ssot-duplication.py"))
+    if registry:
+        table = root / "scripts/lint-vendored-ssot.py"
+        table.parent.mkdir(parents=True)
+        pairs = '[(ROOT / "owner/source.md", ROOT / "plugin/copy.md")]' if registered else '[]'
+        table.write_text(
+            "from pathlib import Path\nROOT = Path(__file__).resolve().parent.parent\n"
+            + "VENDORED_PAIRS = " + pairs + "\n"
+        )
+    return root, canonical, copy
+
+
+def test_passage_registered_byte_identical_copy_is_not_an_owner(MOD, tmp_path, monkeypatch):
+    root, canonical, copy = _vendored_registry_fixture(MOD, tmp_path, monkeypatch)
+    monkeypatch.setattr(sys, "dont_write_bytecode", False)
+    assert MOD.check_passages([canonical, copy]) == []
+    assert not (root / "scripts/__pycache__").exists()
+
+
+def test_passage_registered_byte_drift_remains_an_owner(MOD, tmp_path, monkeypatch):
+    _, canonical, copy = _vendored_registry_fixture(MOD, tmp_path, monkeypatch)
+    copy.write_text(_PASSAGE_BLOCK + "different trailing content\n")
+    assert len(MOD.check_passages([canonical, copy])) == 1
+
+
+def test_passage_unregistered_identical_copy_remains_an_owner(MOD, tmp_path, monkeypatch):
+    _, canonical, copy = _vendored_registry_fixture(MOD, tmp_path, monkeypatch, registered=False)
+    assert len(MOD.check_passages([canonical, copy])) == 1
+
+
+def test_passage_registered_copy_remains_when_canonical_is_outside_input_scope(MOD, tmp_path, monkeypatch):
+    root, _, copy = _vendored_registry_fixture(MOD, tmp_path, monkeypatch)
+    unknown = _write_md(root, "plugin/unknown.md", _PASSAGE_BLOCK)
+    assert len(MOD.check_passages([copy, unknown])) == 1
+
+
+def test_passage_without_repo_registry_keeps_previous_detection(MOD, tmp_path, monkeypatch):
+    _, canonical, copy = _vendored_registry_fixture(MOD, tmp_path, monkeypatch, registry=False)
+    assert len(MOD.check_passages([canonical, copy])) == 1
+
+
+@pytest.mark.parametrize("shape", ["file", "directory"])
+def test_passage_registered_symlink_copy_remains_an_owner(MOD, tmp_path, monkeypatch, shape):
+    root, canonical, copy = _vendored_registry_fixture(MOD, tmp_path, monkeypatch)
+    if shape == "file":
+        copy.unlink()
+        copy.symlink_to(canonical)
+    else:
+        target = _write_md(root, "actual/copy.md", _PASSAGE_BLOCK)
+        copy.unlink()
+        copy.parent.rmdir()
+        copy.parent.symlink_to(target.parent, target_is_directory=True)
+    assert len(MOD.check_passages([canonical, copy])) == 1

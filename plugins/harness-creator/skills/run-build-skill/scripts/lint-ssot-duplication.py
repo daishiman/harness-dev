@@ -5,6 +5,7 @@
 # inputs:
 #   - argv: --plugin-dir <dir> | <file>...
 #   - flags: --strict (smell も exit 1 にする)
+#   - files: repo の scripts/lint-vendored-ssot.py 台帳と登録正本（存在時のみ）
 # outputs:
 #   - stdout: OK status / 重複候補レポート
 #   - stderr: ERROR (契約矛盾) / WARN (smell) の findings
@@ -137,6 +138,47 @@ def substantial_lines(md_text: str) -> list[str]:
     return out
 
 
+def registered_vendored_passage_copies(md_files: list[Path]) -> set[Path]:
+    """repo 台帳に登録され、非 symlink・正本 byte 一致の copy だけを返す。"""
+    for root in Path(__file__).resolve().parents:
+        registry = root / "scripts/lint-vendored-ssot.py"
+        if registry.is_file():
+            break
+    else:
+        return set()  # standalone install では従来どおり検査する。
+    try:
+        namespace = {"__file__": str(registry), "__name__": "ssot_duplication_vendor_registry"}
+        exec(compile(registry.read_bytes(), str(registry), "exec"), namespace)
+        pairs = namespace["VENDORED_PAIRS"]
+    except Exception:
+        return set()  # 台帳を読めなければ除外しない。
+    if not isinstance(pairs, (list, tuple)):
+        return set()
+
+    def regular_unlinked(path: Path) -> bool:
+        current = root
+        for part in path.relative_to(root).parts:
+            current = current / part
+            if current.is_symlink():
+                return False
+        return path.is_file()
+
+    candidates = {path.absolute() for path in md_files}
+    verified: set[Path] = set()
+    for pair in pairs:
+        if not isinstance(pair, (list, tuple)) or len(pair) != 2:
+            continue
+        try:
+            canonical, copy = (Path(path).absolute() for path in pair)
+            if copy not in candidates or canonical not in candidates:
+                continue
+            if regular_unlinked(canonical) and regular_unlinked(copy) and canonical.read_bytes() == copy.read_bytes():
+                verified.add(copy)
+        except (OSError, ValueError, TypeError, RuntimeError):
+            continue
+    return verified
+
+
 def check_passages(md_files: list[Path]) -> list[str]:
     # templates/ 配下は「生成物に焼き込む唯一の実体コピー」= 伝搬例外
     # (goal-seek-paradigm.md「コンテキスト分離」節の伝搬例外)。テンプレ間の意図的重複は対象外にする。
@@ -145,6 +187,8 @@ def check_passages(md_files: list[Path]) -> list[str]:
     # 欠如ではなく再出力の必然であり、参照先にできる正本がそもそも無い。除外しないと 2 件目の
     # ドラフトが入った時点で --strict が必ず落ち、日付別ドラフトを残す提案運用と両立しない。
     md_files = [p for p in md_files if not (PASSAGE_EXCLUDE_DIRS & set(p.parts))]
+    verified_copies = registered_vendored_passage_copies(md_files)
+    md_files = [path for path in md_files if path.absolute() not in verified_copies]
     # 窓ハッシュ -> {file: 代表行}
     window_owners: dict[str, dict[Path, str]] = defaultdict(dict)
     for path in md_files:

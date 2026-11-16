@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-11-16T03:37:44.999349Z"
-updated_at: "2026-11-16T04:12:25.429540Z"
+updated_at: "2026-11-16T04:28:59.559803Z"
 depends_on: ["spec-pkg007-runtime", "arch-pkg007-runtime"]
 related_nodes: ["feature-pkg007-runtime", "doc-pkg007-runtime"]
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-16T04:12:25.429540Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-16T04:28:59.559803Z", "missing_sections": [], "status": "complete"}
 ---
 
 # 目的
@@ -69,7 +69,7 @@ spec-pkg007-runtimeとarch-pkg007-runtimeに依存する。tracker運用はBeads
 
 ## 実装対象
 
-check_pkg_007と対象テスト、APEの契約文書、catalog/36章の007、共通feedback runtimeとcanonical/vendor整合、必要な実行属性の修復。公開base由来の旧8scriptには+xだけを付与した。今回共通部品を含む23pluginだけをpatch採番し正規metadata生成・整合検査を実施した。installは行わない。 PR91 CI後追いでは命名、4参照資料のresource-map metadata、submit/validatorのPEP723等ヘッダーを正規生成元で補完し、renderer/registryを同期した。ヘッダー補完による通常runtime処理のASTは不変更。最新patch版はHC1.4.67/dev-graph0.1.35等、詳細はmetadata-final-gates.jsonのversions。
+check_pkg_007と対象テスト、APEの契約文書、catalog/36章の007、共通feedback runtimeとcanonical/vendor整合、必要な実行属性の修復。公開base由来の旧8scriptには+xだけを付与した。今回共通部品を含む23pluginだけをpatch採番し正規metadata生成・整合検査を実施した。installは行わない。 PR91 CI後追いでは命名、4参照資料のresource-map metadata、submit/validatorのPEP723等ヘッダーを正規生成元で補完し、renderer/registryを同期した。ヘッダー補完による通常runtime処理のASTは不変更。最新patch版はHC1.4.68/dev-graph0.1.36等、詳細はssot-final-gates.jsonのversions。 最終CIでは意図的同梱のSSOT判定を入力scope/台帳/通常file/非symlink/実byte一致に限定し、共通2資料の引用と工程名、B4/D1 pinを修復した。ヘッダーコメント差分はAST不変。その後、sys.dont_write_bytecode=Trueの1代入だけを追加してcache書込を抑止した。この1代入を除く通常業務処理のASTは同一で、通常の追加LLM呼出し・全repo走査0を維持する。 最新patch版はharness-creator 1.4.68、dev-graph 0.1.36、plugin-dev-planner 0.1.30。全23pluginを正規採番し、詳細は docs/pkg007-runtime/checks/ssot-final-gates.json と親の版一覧を参照する。installは行わない。
 
 ## Write scope と競合制約
 
@@ -89,7 +89,7 @@ devgraph/task-pkg007-runtimeからmain向けdraft PR。目的・変更・検証�
 
 ## 受入条件
 
-metadata補修後の回帰522件・criteria5件・frontmatter209script違反0・vendor352一致・PKG23blocking0・release23・guard blocked0、および新規5nodeのschema/readinessと受領書SHA/秘密検査が成功する。索引は必要資料だけの選択に使い、通常runtime処理ASTと追加LLM/全repo走査0を維持する。実Notion/liveなしと既存coverage未達を残し、他案件や秘密をcommitへ含めない。
+最新実検証は523回帰、SSOT unit55件、厳格SSOTのschema87件・Markdown188件、UBM文書4件・briefing文書1件、upstream7件、cache static1件が成功。vendor352一致・release23・guard blocked0も確認した。全体LLM評価・liveは再走しない。 criteria5・PKG007全23、新規5nodeのschema/readinessと受領書SHA/秘密検査も満たす。SSOTの意図的同梱判定は、正本とcopyがともに今回の入力scope内で、VENDORED_PAIRSに登録され、双方が通常fileで経路にsymlinkがなく、実bytesが一致する場合だけ適用する。未知copy・不一致・正本scope外・台帳未登録は従来どおり検出し、schemaや閾値は変更しない。 ヘッダーコメント差分はAST不変。その後、sys.dont_write_bytecode=Trueの1代入だけを追加してcache書込を抑止した。この1代入を除く通常業務処理のASTは同一で、通常の追加LLM呼出し・全repo走査0を維持する。 実Notion/live未実行と既存全体coverage未達を残し、原workspaceや他案件を変更しない。
 
 ## 検証方法
 
@@ -101,5 +101,5 @@ PKG007 PASSを本文/他refsや実API成功まで保証するものと誤認し�
 
 ## Handoff
 
-文書statusはdraft、評価pendingを保持する。今回23packageの版更新・整合検査を含む最小ゲートを満たしたdraft提出までを成果とする。実Notion API/live再走、install、merge/done認定は別の明示判断へ渡す。Beads更新と公開操作は公開担当が行う。 PR91 CI後追いの限定補修はmetadata-final-gates.jsonの実結果（522回帰、vendor352、最新23patch版）へ結ぶ。全LLM評価・liveを再走せず、quality/仕様影響受領書は公開担当が更新する。
+文書はdraft/pendingを維持する。最終結果はssot-final-gates.jsonと親の品質台帳へ結び、今回の5docs更新はC02 r24→25の1回だけとする。最新patch版はharness-creator 1.4.68、dev-graph 0.1.36、plugin-dev-planner 0.1.30。全23pluginを正規採番し、詳細は docs/pkg007-runtime/checks/ssot-final-gates.json と親の版一覧を参照する。installは行わない。 ヘッダーAST不変と後続cache抑止1代入を区別し、通常業務処理同一を説明する。install・merge/done認定・追加LLM全体評価/liveは行わない。
 

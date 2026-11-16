@@ -209,3 +209,28 @@ def test_skill_identification_uses_host_inventory_without_repo_scan():
     assert 'glob="plugins/*/skills/*/SKILL.md"' not in skill
     assert "grep -r --include=\"SKILL.md\"" not in skill
     assert "cat plugins/<plugin>/skills/<skill_name>/SKILL.md" not in skill
+
+
+def test_standalone_submit_dry_run_does_not_write_sibling_bytecode(tmp_path):
+    import os
+    import subprocess
+
+    runtime = tmp_path / "runtime"
+    runtime.mkdir()
+    for source in (
+        SCRIPT,
+        ROOT / "plugins/harness-creator/scripts/notion_config.py",
+        ROOT / "scripts/tenant_runtime.py",
+    ):
+        (runtime / source.name).write_bytes(source.read_bytes())
+    env = {key: value for key, value in os.environ.items()
+           if key not in {"PYTHONDONTWRITEBYTECODE", "PYTHONPYCACHEPREFIX"}}
+    proc = subprocess.run(
+        [sys.executable, str(runtime / SCRIPT.name), "--plugin", "demo", "--title", "title",
+         "--type", "バグ", "--desire", "fix it", "--dry-run"],
+        cwd=tmp_path, env=env, capture_output=True, text=True, timeout=10,
+    )
+    assert proc.returncode == 0, proc.stderr
+    assert json.loads(proc.stdout)["dry_run"] is True
+    assert list(runtime.rglob("__pycache__")) == []
+    assert list(runtime.rglob("*.pyc")) == []

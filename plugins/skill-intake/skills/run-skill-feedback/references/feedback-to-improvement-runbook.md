@@ -67,7 +67,7 @@ Stage 0-1 は `run-skill-feedback/SKILL.md` と `references/feedback-loop-deploy
    ]
    ```
 
-3. improvement-handoff に正規化する (E3 emitter = PB-C09)。`--origin-request-*` で起点 Notion 要望を provenance に刻む。
+3. harness-creator の改善ハンドオフ生成工程で improvement-handoff に正規化する。`--origin-request-*` で起点 Notion 要望を provenance に刻む。
    ```bash
    python3 plugins/harness-creator/scripts/emit-improvement-handoff.py \
      --source-kind manual \
@@ -81,14 +81,14 @@ Stage 0-1 は `run-skill-feedback/SKILL.md` と `references/feedback-loop-deploy
      -o improvement-handoff.json
    ```
 
-4. planner に渡して改善計画を再生成する (E3 consumer = PB-C01)。`--out-dir` は handoff の `plan_dir` と同じ値を指定する。
+4. plugin-dev-planner の改善計画入力工程へ渡して計画を再生成する。`--out-dir` は handoff の `plan_dir` と同じ値を指定する。
    ```bash
    /plugin-dev-plan "<対象 plugin の改善>" \
      --mode update \
      --out-dir plugin-plans/<対象 plugin slug> \
      --improvement-handoff improvement-handoff.json
    ```
-   provenance 検証の primary gate は planner skill が `--mode update` 時に実行する **inline 検証ブロック**で、そこが `check-intake-consumption.py` / `check-provenance-chain.py` を `--marker-dir <PLAN_DIR>` 付きで走らせ、pass marker (`<PLAN_DIR>/.gate/<gate>.pass`・goal-spec digest pin) を**自己生成**しつつ chain 断裂なし (PB-C05) を検証する。**人間が事前に marker を手作りする必要はない**。`enforce-provenance-chain` hook (PB-C11) は、この inline gate を bypass した dispatch を止める **defense-in-depth backstop** で、既存 marker の存在と digest 一致を確認する (matcher `Bash|Task` の被覆範囲に限る)。
+   provenance 検証の primary gate は planner skill が `--mode update` 時に実行する **inline 検証ブロック**で、そこが `check-intake-consumption.py` / `check-provenance-chain.py` を `--marker-dir <PLAN_DIR>` 付きで走らせ、pass marker (`<PLAN_DIR>/.gate/<gate>.pass`・goal-spec digest pin) を**自己生成**しつつ上流の出典から成果物までの chain に断裂がないことを検証する。**人間が事前に marker を手作りする必要はない**。`enforce-provenance-chain` hook は、この inline gate を bypass した dispatch を止める **出典連鎖の補助ガード**で、既存 marker の存在と digest 一致を確認する (matcher `Bash|Task` の被覆範囲に限る)。
 
 ## Stage 4-5 — 計画→構築 (既存契約)
 
@@ -117,6 +117,6 @@ Stage 0-1 は `run-skill-feedback/SKILL.md` と `references/feedback-loop-deploy
 - `references/pipeline-boundary-contract.md` — E3 境界契約 (改善→plan) の正本
 - `plugins/harness-creator/skills/run-skill-feedback/SKILL.md` — Stage 0-1 (収集)
 - `plugins/harness-creator/skills/run-build-skill/references/feedback-loop-deployment.md` — Stage 0 (配備)
-- `plugins/harness-creator/scripts/emit-improvement-handoff.py` — Stage 3 emitter (PB-C09)
+- `plugins/harness-creator/scripts/emit-improvement-handoff.py` — Stage 3 の改善ハンドオフ生成器
 - `plugins/plugin-dev-planner/skills/run-plugin-dev-plan/schemas/improvement-handoff.schema.json` — handoff スキーマ (provenance.origin_request)
 - `doc/notion-schema/improvement-request.schema.json` — Notion 改善要望 DB スキーマ

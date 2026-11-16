@@ -42,6 +42,8 @@ Usage:
 import argparse, json, os, subprocess, sys, tempfile
 from pathlib import Path
 
+sys.dont_write_bytecode = True
+
 SCRIPT_DIR = Path(__file__).resolve().parent
 # 配布 skill は同階層の loader を使い、repo 正本だけが plugin 側へ解決する。
 CONFIG_DIR = SCRIPT_DIR if (SCRIPT_DIR / "notion_config.py").is_file() else (

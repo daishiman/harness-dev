@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-11-16T03:37:44.999349Z"
-updated_at: "2026-11-16T04:12:25.429540Z"
+updated_at: "2026-11-16T04:28:59.559803Z"
 depends_on: []
 related_nodes: ["spec-pkg007-runtime"]
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-16T04:12:25.429540Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-16T04:28:59.559803Z", "missing_sections": [], "status": "complete"}
 ---
 
 # Architecture overview
@@ -69,7 +69,7 @@ check_pkg_007→YAML宣言/候補解決/属性検査。skill/scripts→submit・
 
 ## Cross-cutting contracts
 
-scopeはcatalogと36章で統一し、手順本文に007の規則を複製しない。runtime資産はbyte一致、helperも明示script_refsなら属性要求を維持する。secretと旧判定の手動書換は禁止する。 CI補修は索引metadataとヘッダーに限定し、ヘッダー補完で通常runtime処理のASTは変えない。必要資料だけを読み、通常起動に全資料読込や追加LLMを要求しない。
+scopeはcatalogと36章で統一し、手順本文に007の規則を複製しない。runtime資産はbyte一致、helperも明示script_refsなら属性要求を維持する。secretと旧判定の手動書換は禁止する。 CI補修は索引metadataとヘッダーに限定し、ヘッダー補完で通常runtime処理のASTは変えない。必要資料だけを読み、通常起動に全資料読込や追加LLMを要求しない。 SSOTの意図的同梱判定は、正本とcopyがともに今回の入力scope内で、VENDORED_PAIRSに登録され、双方が通常fileで経路にsymlinkがなく、実bytesが一致する場合だけ適用する。未知copy・不一致・正本scope外・台帳未登録は従来どおり検出し、schemaや閾値は変更しない。 ヘッダーコメント差分はAST不変。その後、sys.dont_write_bytecode=Trueの1代入だけを追加してcache書込を抑止した。この1代入を除く通常業務処理のASTは同一で、通常の追加LLM呼出し・全repo走査0を維持する。 共通資料の見出し参照はowner-qualified正本URLへ結び、出典連鎖の工程を自然文で保持する。
 
 ## Subtype architecture
 
@@ -120,9 +120,9 @@ ADR4: 通常起動には追加検査0とする。
 
 ## Delivery, migration and rollback
 
-既存canonical→22コピー同期で展開し、今回共通部品を含む23pluginをbuild-plugin-release.pyでpatch採番・正規metadata生成した（harness-creator 1.4.67、dev-graph 0.1.35等）。release整合を検証しinstallはしない。公開はdevgraph/task-pkg007-runtimeからmain向けdraft PR。rollbackは対象commitのrevertを使い、原workspaceや他者差分を消さない。 CI後追いの正規renderer同期とregistry更新後はvendor352一致。最新23版はmetadata-final-gates.jsonのversionsで照合する。
+既存canonical→22コピー同期で展開し、今回共通部品を含む23pluginをbuild-plugin-release.pyでpatch採番・正規metadata生成した（harness-creator 1.4.68、dev-graph 0.1.36等）。release整合を検証しinstallはしない。公開はdevgraph/task-pkg007-runtimeからmain向けdraft PR。rollbackは対象commitのrevertを使い、原workspaceや他者差分を消さない。 CI後追いの正規renderer同期とregistry更新後はvendor352一致。最新23版はssot-final-gates.jsonのversionsで照合する。 最新patch版はharness-creator 1.4.68、dev-graph 0.1.36、plugin-dev-planner 0.1.30。全23pluginを正規採番し、詳細は docs/pkg007-runtime/checks/ssot-final-gates.json と親の版一覧を参照する。installは行わない。 2資料の正本と登録済み46doc pairsをbyte同期し、B4/D1引用を再監査してpinを更新した。
 
 ## Risks and verification
 
-本文/他refsの実在までPKG007 PASSが保証すると誤解するリスクはscope明記で防ぐ。metadata補修後の実検証は522回帰・5criteria・209scriptヘッダー違反0、vendor352一致、23package blocking0とrelease整合、guard blocked0。ヘッダー補完のruntime AST不変を既存証拠で確認した。Notion/live未実行と既存coverage未達は残す。
+最新実検証は523回帰、SSOT unit55件、厳格SSOTのschema87件・Markdown188件、UBM文書4件・briefing文書1件、upstream7件、cache static1件が成功。vendor352一致・release23・guard blocked0も確認した。全体LLM評価・liveは再走しない。 SSOTの意図的同梱判定は、正本とcopyがともに今回の入力scope内で、VENDORED_PAIRSに登録され、双方が通常fileで経路にsymlinkがなく、実bytesが一致する場合だけ適用する。未知copy・不一致・正本scope外・台帳未登録は従来どおり検出し、schemaや閾値は変更しない。 ヘッダーコメント差分はAST不変。その後、sys.dont_write_bytecode=Trueの1代入だけを追加してcache書込を抑止した。この1代入を除く通常業務処理のASTは同一で、通常の追加LLM呼出し・全repo走査0を維持する。 本文/他refsの実在、Notion/live受入れ、既存全体coverage達成まで保証するものではない。個別plugin processで成功した結果を採用し、同一processのconftest衝突原ログは保持する。
 
