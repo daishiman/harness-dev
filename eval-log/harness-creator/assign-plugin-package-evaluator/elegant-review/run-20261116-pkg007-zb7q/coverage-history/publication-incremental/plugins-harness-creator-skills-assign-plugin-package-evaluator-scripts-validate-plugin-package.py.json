@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 94,
+    "notes": "genuine independent delta review（2026-11-16、sha256 88516515999f8eb57ac99bbd3cbff3fbae59570b3b436a76ad953f8daf6650f9）。今回の対象はPKG007追加hunkと隣接のAST helper/PKG006/CLI slug（これらは同contextの前段で独立確認済み）。_pkg007_script_refsのYAML型・重複key・block/flow/comment、依存不足exit2、check_pkg_007のfirst lexists・後方救済禁止・resolve(strict=True)後containment・明示helper非免除・stat+x・実体key集約・missing宣言元locationを通読。正規slugとfindings/package-contract schemaの一致も確認。testsの対応境界を読んだ。新007は対象pluginのskills/*/SKILL.mdとroot scriptsのみを走査し、兄弟plugin探索やLLM呼出を追加しない。以前の字面helper・token部分一致・symlink閉包・slug問題は前段レビューで修正確認済み。既存のfoo-003受理・headerの記述粒度・入れ子pytestcache fixture等は今回の変更範囲外で再採点していない。 検証根拠: 変更hunkと隣接契約・対応testを当reviewerが読んで評価した。親共有のpackage23件PASS、vendored330一致、feedback strict PASS、関連168test/PKG007 201test PASSを参照したが、当reviewer自身はsuiteを再実行していない。rendererの追加回帰7PASSは著者報告であり、当reviewerは修正hunkとtestを再通読した。追加LLMや自己文書の承認はしていない。前recordは今回run-dirのcoverage-history/meta_analystへ内容を保持してコピー済み。今回見た差分に残るblocking問題なし。"
+  },
+  "reviewed_by": "independent-code-review-20261116-meta-analyst-pkg007",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

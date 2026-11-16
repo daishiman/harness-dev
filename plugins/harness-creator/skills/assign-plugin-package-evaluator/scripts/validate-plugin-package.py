@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 # /// script
+# requires-python = ">=3.9"
+# dependencies = ["PyYAML>=6.0"]
+# ///
 # name: validate-plugin-package
 # purpose: 1 つの plugin を PKG-002〜008 と PKG-014 で検査し、findings JSON を出す（読むだけで書かない。--output だけ書く）
 # inputs:
@@ -13,15 +16,19 @@
 # contexts: [C, E]
 # network: false
 # write-scope: --output に渡したファイルだけ
-# dependencies: []
+# dependencies: [PyYAML>=6.0]
 # requires-python: ">=3.9"
-# ///
 """PKG-002〜008 / PKG-014 sub-check 実装。
 
 正本仕様: doc/ClaudeCodeスキルの設計書/36-plugin-package-harness-contract.md
 findings schema: ../schemas/findings.schema.json
 
+PKG-007 の YAML 宣言検査は PyYAML>=6.0 を使う。単独実行は uv run で依存を解決できる。
+python3 で直接実行する場合は PyYAML を事前にインストールする。依存不足・読取不能は exit 2。
+不正な YAML・script_refs の型違反は PKG-007 finding (exit 1) として返す。
+
 使い方:
+  uv run validate-plugin-package.py --check pkg-007 --plugin-dir <plugin-dir>
   python3 validate-plugin-package.py --check pkg-002 --plugin harness-creator
   python3 validate-plugin-package.py --check all --plugin harness-creator
 
@@ -37,6 +44,7 @@ run_id は findings.schema.json の pattern (pkg-validate-<plugin>-<YYYYMMDD>-<3
 
 from __future__ import annotations
 import argparse
+import ast
 import hashlib
 import json
 import os
@@ -137,11 +145,11 @@ def _str_list(value: object) -> list[str]:
 
 
 def is_import_only_support_module(path: Path) -> bool:
-    """Return whether a file is an import-only support module.
+    """宣言だけの .py を除外する。未知の実行文・構文不正は除外しない。
 
-    The 500-line split convention creates ``.py`` helpers in hooks/ and
-    scripts/. PKG-006/007 must not mistake those helpers for entry points,
-    while still rejecting missing declarations for executable files.
+    単純/注釈付き代入は宣言として扱うが AugAssign は実行文とする。
+    optional import と TYPE_CHECKING は許可した宣言だけを含む場合に限る。
+    関数・class の内部までは entry point 判定の対象にしない。
     """
     if path.suffix != ".py":
         return False
@@ -150,7 +158,37 @@ def is_import_only_support_module(path: Path) -> bool:
     text = path.read_text(encoding="utf-8", errors="ignore")
     if text.startswith("#!"):
         return False
-    return not any(line.startswith("if __name__") for line in text.splitlines())
+    try:
+        body = ast.parse(text).body
+    except (SyntaxError, ValueError):
+        return False
+
+    def declarations(nodes: list[ast.stmt], *, allow_pass: bool = False) -> bool:
+        for node in nodes:
+            if isinstance(node, (ast.Import, ast.ImportFrom, ast.FunctionDef,
+                                 ast.AsyncFunctionDef, ast.ClassDef, ast.Assign, ast.AnnAssign)):
+                continue
+            if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
+                continue
+            if allow_pass and isinstance(node, ast.Pass):
+                continue
+            if isinstance(node, ast.If) and (
+                isinstance(node.test, ast.Name) and node.test.id == "TYPE_CHECKING"
+                or isinstance(node.test, ast.Attribute) and node.test.attr == "TYPE_CHECKING"
+                and isinstance(node.test.value, ast.Name) and node.test.value.id == "typing"
+            ):
+                if declarations(node.body, allow_pass=True) and declarations(node.orelse, allow_pass=True):
+                    continue
+            if isinstance(node, ast.Try) and node.handlers and all(
+                isinstance(handler.type, ast.Name) and handler.type.id == "ImportError"
+                and declarations(handler.body, allow_pass=True) for handler in node.handlers
+            ) and all(isinstance(item, (ast.Import, ast.ImportFrom)) for item in node.body) and not node.finalbody:
+                if declarations(node.orelse, allow_pass=True):
+                    continue
+            return False
+        return True
+
+    return declarations(body)
 
 
 def _parse_completeness_exemptions(fm: dict) -> dict[str, str]:
@@ -532,12 +570,24 @@ def check_pkg_006(plugin_dir: Path) -> list[dict]:
     hooks_dir = plugin_dir / "hooks"
     settings_dir = plugin_dir / "settings"
     actual_hooks = (
-        {p for p in hooks_dir.glob("*") if p.is_file() and p.suffix in {".py", ".sh"}}
+        {p for p in hooks_dir.glob("*") if (p.is_file() or p.is_symlink()) and p.suffix in {".py", ".sh"}}
         if hooks_dir.is_dir() else set()
     )
     registered: set[str] = set()
     # (登録元, 登録された文字列, plugin 内で解決した path)
     referenced: list[tuple[str, str, Path]] = []
+
+    def malformed(source: str) -> None:
+        findings.append(make_finding(
+            "PKG-006", len(findings) + 1, source,
+            "hooks の構造または command が不正",
+            suggested_fix="hooks を event ごとの配列と、その中の hooks 配列で構成する"))
+
+    def inside_plugin(path: Path) -> bool:
+        try:
+            return path.resolve().is_relative_to(plugin_dir.resolve())
+        except (OSError, RuntimeError):
+            return False
 
     def register_hook_name(value: str) -> None:
         registered.add(Path(value).name)
@@ -547,42 +597,69 @@ def check_pkg_006(plugin_dir: Path) -> list[dict]:
         target = plugin_dir / value if "/" in value else hooks_dir / value
         referenced.append((source, value, target))
 
-    def register_hook_commands(source: str, hooks: object) -> None:
+    def register_hook_commands(source: str, hooks: object, location: Path) -> None:
         """Claude/Codex hook map に含まれる command entrypoint を登録する。"""
         if not isinstance(hooks, dict):
+            malformed(str(location))
             return
         for event_hooks in hooks.values():
+            if not isinstance(event_hooks, list):
+                malformed(str(location))
+                continue
             for entry in event_hooks if isinstance(event_hooks, list) else []:
                 if not isinstance(entry, dict):
+                    malformed(str(location))
                     continue
-                inner = entry.get("hooks", [])
+                # settings の旧形式 {command: ...} も受理する。
+                inner = entry.get("hooks", [entry] if "command" in entry else [])
+                if not isinstance(inner, list):
+                    malformed(str(location))
+                    continue
                 for hook in inner if isinstance(inner, list) else []:
+                    if not isinstance(hook, dict):
+                        malformed(str(location))
+                        continue
                     command = hook.get("command") if isinstance(hook, dict) else None
+                    if "command" in hook and not isinstance(command, str):
+                        malformed(str(location))
+                        continue
                     if not isinstance(command, str) or not command:
                         continue
                     try:
                         tokens = shlex.split(command)
                     except ValueError:
-                        tokens = command.split()
+                        malformed(str(location))
+                        continue
                     for token in tokens:
                         if "/hooks/" not in token:
                             continue
-                        register_hook_name(token)
                         prefix, rest = token.split("/hooks/", 1)
-                        if rest and ("PLUGIN_ROOT" in prefix or prefix in {"", "."}):
+                        if rest and prefix in {"", ".", "${CLAUDE_PLUGIN_ROOT}", "$CLAUDE_PLUGIN_ROOT", "${PLUGIN_ROOT}", "$PLUGIN_ROOT"}:
+                            register_hook_name(token)
                             referenced.append((source, token, hooks_dir / rest))
 
     read_hook_files: set[Path] = set()
 
     def register_hook_file(label: str, hook_file: Path) -> None:
         """hooks file 1 つの command を登録する。同じ file を 2 回読まない。"""
-        resolved = hook_file.resolve()
+        try:
+            resolved = hook_file.resolve()
+        except (OSError, RuntimeError):
+            findings.append(make_finding(
+                "PKG-006", len(findings) + 1, str(hook_file),
+                f"hooks file の実体を解決できない: {label}"))
+            return
         if resolved in read_hook_files:
             return
         read_hook_files.add(resolved)
+        if not inside_plugin(resolved):
+            findings.append(make_finding(
+                "PKG-006", len(findings) + 1, str(hook_file),
+                f"hooks file の実体が plugin の中に無い: {label}"))
+            return
         try:
             hook_data = _load_json_object(hook_file)
-        except OSError:
+        except (OSError, UnicodeError):
             hook_data = None
         if hook_data is None:
             findings.append(make_finding(
@@ -590,11 +667,11 @@ def check_pkg_006(plugin_dir: Path) -> list[dict]:
                 f"hooks file を JSON の object として読めない: {label}",
                 suggested_fix="hooks file を {\"hooks\": {<event>: [...]}} の JSON object に直す"))
             return
-        register_hook_commands(label, hook_data.get("hooks", {}))
+        register_hook_commands(label, hook_data.get("hooks", {}), hook_file)
 
     # plugin.json に hooks キーが無くても、Claude Code は hooks/hooks.json を読む
     default_hook_file = hooks_dir / "hooks.json"
-    if default_hook_file.is_file():
+    if default_hook_file.is_file() or default_hook_file.is_symlink():
         register_hook_file("hooks/hooks.json", default_hook_file)
 
     plugin_json = plugin_dir / ".claude-plugin" / "plugin.json"
@@ -602,15 +679,14 @@ def check_pkg_006(plugin_dir: Path) -> list[dict]:
         data = _load_json_object(plugin_json) or {}
         hooks = data.get("hooks", {})
         if isinstance(hooks, dict):
-            register_hook_commands("plugin.json hooks", hooks)
-        resolved_root = plugin_dir.resolve()
+            register_hook_commands("plugin.json hooks", hooks, plugin_json)
+        elif not isinstance(hooks, str) and not (
+            isinstance(hooks, list) and all(isinstance(item, str) for item in hooks)
+        ):
+            malformed(str(plugin_json))
         for hook_ref in [hooks] if isinstance(hooks, str) else _str_list(hooks):
-            hook_file = (plugin_dir / hook_ref).resolve()
-            try:
-                hook_file.relative_to(resolved_root)
-            except ValueError:
-                hook_file = Path()
-            if hook_file.is_file():
+            hook_file = plugin_dir / hook_ref
+            if inside_plugin(hook_file) and hook_file.is_file():
                 register_hook_file(hook_ref, hook_file)
             else:
                 findings.append(make_finding(
@@ -636,15 +712,19 @@ def check_pkg_006(plugin_dir: Path) -> list[dict]:
             if data is None:
                 continue
             hooks = data.get("hooks", {})
+            # 旧 settings 形式の basename command だけを追加登録する。
             if isinstance(hooks, dict):
                 for event_hooks in hooks.values():
                     for h in event_hooks if isinstance(event_hooks, list) else []:
                         cmd = h.get("command") if isinstance(h, dict) else None
-                        if isinstance(cmd, str) and cmd:
+                        if isinstance(cmd, str) and cmd and "/" not in cmd and len(cmd.split()) == 1:
                             register_hook_name(cmd)
-                register_hook_commands(f"settings/{cfg.name}", hooks)
+            register_hook_commands(f"settings/{cfg.name}", hooks, cfg)
     idx = len(findings) + 1
     for hook in sorted(actual_hooks):
+        referenced.append(("hooks/", hook.name, hook))
+        if not inside_plugin(hook) or not hook.is_file():
+            continue
         if is_import_only_support_module(hook):
             continue
         if hook.name not in registered:
@@ -653,14 +733,13 @@ def check_pkg_006(plugin_dir: Path) -> list[dict]:
                 "hook ファイル実体は存在するが plugin hook 契約に未登録",
                 suggested_fix=f"hooks/hooks.json または package contract に {hook.name} を追加"))
             idx += 1
-    plugin_root = os.path.normpath(plugin_dir)
     seen: set[str] = set()
     for source, value, target in referenced:
         normalized = os.path.normpath(target)
         if normalized in seen:
             continue
         seen.add(normalized)
-        inside = normalized == plugin_root or normalized.startswith(plugin_root + os.sep)
+        inside = inside_plugin(Path(normalized))
         if inside and Path(normalized).is_file():
             continue
         findings.append(make_finding(
@@ -671,33 +750,127 @@ def check_pkg_006(plugin_dir: Path) -> list[dict]:
     return findings
 
 
+def _pkg007_script_refs(skill_md: Path) -> tuple[list[str], str | None]:
+    """YAML 宣言を検証する。注釈は YAML comment としてのみ受理する。"""
+    try:
+        import yaml
+    except ImportError as exc:
+        raise ValueError("PKG-007 requires PyYAML>=6.0 (uv run または依存を事前install)") from exc
+
+    class UniqueSafeLoader(yaml.SafeLoader):
+        pass
+
+    def unique_mapping(loader, node, deep=False):
+        result = {}
+        for key_node, value_node in node.value:
+            key = loader.construct_object(key_node, deep=deep)
+            try:
+                duplicate = key in result
+            except TypeError as exc:
+                raise yaml.constructor.ConstructorError(None, None, "invalid mapping key", key_node.start_mark) from exc
+            if duplicate:
+                raise yaml.constructor.ConstructorError(None, None, f"duplicate YAML key: {key!r}", key_node.start_mark)
+            result[key] = loader.construct_object(value_node, deep=deep)
+        return result
+
+    UniqueSafeLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, unique_mapping)
+    text = skill_md.read_text(encoding="utf-8")
+    block = _frontmatter_block(text)
+    if block is None:
+        return [], "frontmatter が無い、または閉じられていない"
+    try:
+        fm = yaml.load(block, Loader=UniqueSafeLoader)
+    except yaml.YAMLError as exc:
+        return [], f"frontmatter YAML が不正: {exc}"
+    if not isinstance(fm, dict):
+        return [], "frontmatter は mapping でなければならない"
+    if "script_refs" not in fm:
+        return [], None
+    refs = fm["script_refs"]
+    if not isinstance(refs, list) or any(not isinstance(ref, str) or not ref.strip() for ref in refs):
+        return [], "script_refs は非空文字列の配列でなければならない（空配列は可）"
+    return refs, None
+
+
 def check_pkg_007(plugin_dir: Path) -> list[dict]:
+    """明示 script_refs と従来の root scripts 検査の和集合。"""
     findings: list[dict] = []
+    root = plugin_dir.resolve()
+    # 実体ごとに集約する。missing は宣言元 SKILL.md に finding を置く。
+    candidates: dict[str, dict] = {}
+
+    def add_candidate(path: Path, source: Path | None, ref: str) -> None:
+        errors: list[str] = []
+        try:
+            real = path.resolve(strict=True)
+        except (FileNotFoundError, NotADirectoryError, RuntimeError) as exc:
+            real = path.absolute()
+            errors.append(f"実体が無い、または解決不能: {ref} ({type(exc).__name__})")
+        key = str(real)
+        item = candidates.setdefault(key, {
+            "path": path, "real": real, "sources": [], "errors": [], "explicit": False,
+        })
+        item["errors"].extend(errors)
+        if source is not None:
+            item["explicit"] = True
+            item["sources"].append(f"{source}: {ref}")
+            if errors:
+                item["missing_source"] = source
+
+    for skill_md in sorted((plugin_dir / "skills").glob("*/SKILL.md")):
+        try:
+            skill_real = skill_md.resolve(strict=True)
+        except (FileNotFoundError, NotADirectoryError, RuntimeError) as exc:
+            refs, error = [], f"SKILL.md の実体を解決できない: {exc}"
+        else:
+            if not skill_real.is_relative_to(root):
+                refs, error = [], "plugin の外を指す SKILL.md"
+            else:
+                # 読取不能・非UTF-8・依存不足は main が exit 2 にする。
+                refs, error = _pkg007_script_refs(skill_md)
+        if error:
+            findings.append(make_finding("PKG-007", len(findings) + 1, str(skill_md), error))
+            continue
+        for ref in refs:
+            choices = [skill_md.parent / ref, plugin_dir / ref]
+            # lexists の最初を採用する。broken/external 第一候補から後方救済しない。
+            selected = next((path for path in choices if os.path.lexists(path)), choices[0])
+            add_candidate(selected, skill_md, ref)
+
     scripts_dir = plugin_dir / "scripts"
-    if not scripts_dir.exists():
-        return findings
-    idx = 1
-    for sc in scripts_dir.glob("*"):
-        if not sc.is_file():
-            continue
-        if sc.suffix not in {".py", ".sh"}:
-            continue
-        if is_import_only_support_module(sc):
-            continue
-        text_head = sc.read_text(errors="ignore")[:200] if sc.suffix in {".py", ".sh"} else ""
-        if sc.suffix in {".py", ".sh"} and not text_head.startswith("#!"):
+    if scripts_dir.is_dir():
+        for path in sorted(scripts_dir.glob("*")):
+            if path.suffix in {".py", ".sh"} and (path.is_file() or path.is_symlink()):
+                add_candidate(path, None, str(path))
+
+    for key in sorted(candidates):
+        item = candidates[key]
+        path, real = item["path"], item["real"]
+        errors = item["errors"]
+        if not errors:
+            if not real.is_relative_to(root):
+                errors.append("script の実体が plugin の中に無い（PKG-009 の例外宣言では免除しない）")
+            elif not real.is_file():
+                errors.append("script の実体が通常ファイルでない")
+            elif not item["explicit"] and is_import_only_support_module(real):
+                continue
+            else:
+                with real.open("rb") as stream:
+                    has_shebang = stream.read(2) == b"#!"
+                if not has_shebang:
+                    errors.append("shebang 欠落")
+                if not real.stat().st_mode & 0o111:
+                    errors.append("実行可能ビットなし (+x)")
+        if errors:
+            evidence = "; ".join(dict.fromkeys(errors))
+            if item["sources"]:
+                evidence += " / 参照元: " + "; ".join(dict.fromkeys(item["sources"]))
+            location = str(item.get("missing_source", real))
+            fixable = errors == ["実行可能ビットなし (+x)"]
             findings.append(make_finding(
-                "PKG-007", idx, str(sc),
-                "shebang 欠落",
-                suggested_fix="#!/usr/bin/env python3 または #!/usr/bin/env bash を先頭に追加"))
-            idx += 1
-        if text_head.startswith("#!") and not os.access(sc, os.X_OK):
-            findings.append(make_finding(
-                "PKG-007", idx, str(sc),
-                "実行可能ビットなし (+x)",
-                suggested_fix=f"chmod +x {sc}",
-                auto_fixable=True))
-            idx += 1
+                "PKG-007", len(findings) + 1, location, evidence,
+                suggested_fix=f"chmod +x {real}" if fixable else "",
+                auto_fixable=fixable))
     return findings
 
 
@@ -894,6 +1067,10 @@ def main() -> int:
     ap.add_argument("--plugins-root", help="兄弟 plugin を含む root。未指定時は $CLAUDE_PLUGIN_ROOT の親または dev fallback")
     ap.add_argument("--output", default="-")
     args = ap.parse_args()
+
+    if args.plugin is not None and not re.fullmatch(r"[a-z][a-z0-9-]*[a-z0-9]", args.plugin):
+        print(f"error: invalid --plugin slug: {args.plugin!r}", file=sys.stderr)
+        return 2
 
     plugin_dir = _resolve_plugin_dir(args.plugin, args.plugin_dir, args.plugins_root)
     if plugin_dir is None:

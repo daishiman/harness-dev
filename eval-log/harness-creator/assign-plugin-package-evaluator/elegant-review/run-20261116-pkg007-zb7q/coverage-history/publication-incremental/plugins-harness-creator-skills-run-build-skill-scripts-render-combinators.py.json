@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/render-combinators.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine independent delta review（2026-11-16、sha256 0aaee857f718009f30f532881e5378f89c60b1288e5bf75a65a9afd282e93558）。今回の対象はexplicit --refresh-feedback-loop、parse_args、main配線、apply_feedback_loopのrefresh及びsymlink preflight hunk。既定の既存実体no-opを保持し、refreshは明示配布時のみ、managed file更新・extra保持・cache除外を実施。初稿のdirs_exist_ok=Trueが外向き既存symlink経由でplugin外を上書きするhigh問題を、製品関数をASTから抽出したtemp probeで実測し著者へ報告した。最終版はskills祖先symlinkをmkdir前に拒否、refresh時dest subtreeのfile/dir symlinkをコピー前に拒否するため当該経路は閉じた。修正コードとfile/directory/skills-parent回帰3例を独立通読。rglob追加は明示refreshのみ、通常skill実行や既定no-opのscan/LLM呼出増加無し。既存の非原子的コピー・旧見出し・error整形・materialize順序等は変更対象外として未解消のまま履歴参照。 検証根拠: 変更hunkと隣接契約・対応testを当reviewerが読んで評価した。親共有のpackage23件PASS、vendored330一致、feedback strict PASS、関連168test/PKG007 201test PASSを参照したが、当reviewer自身はsuiteを再実行していない。rendererの追加回帰7PASSは著者報告であり、当reviewerは修正hunkとtestを再通読した。追加LLMや自己文書の承認はしていない。前recordは今回run-dirのcoverage-history/meta_analystへ内容を保持してコピー済み。今回見た差分に残るblocking問題なし。"
+  },
+  "reviewed_by": "independent-code-review-20261116-meta-analyst-pkg007",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

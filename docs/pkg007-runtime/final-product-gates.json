@@ -1,0 +1,76 @@
+{
+  "mvp": true,
+  "gates": [
+    {
+      "name": "targeted-regression-10files",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 8.705,
+      "argv": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/scripts-plugins/test_harness_creator__validate_plugin_package.py",
+        "tests/scripts-plugins/test_harness_creator__render_combinators.py",
+        "tests/scripts-plugins/test_harness_creator__render_combinators_r4.py",
+        "tests/scripts-root/test_root__lint_vendored_ssot.py",
+        "tests/scripts-root/test_scripts__lint_feedback_protocol.py",
+        "tests/test_render_combinators_feedback_contract.py",
+        "tests/test_feedback_runtime_bundle.py",
+        "tests/scripts-root/test_scripts__notion_submit_improvement.py",
+        "tests/scripts-plugins/test_harness_creator__notion_config_r4.py",
+        "tests/scripts-plugins/test_skill_intake__notion_config.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-targeted-regression-10files.log"
+    },
+    {
+      "name": "pkg007-all23",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 4.393,
+      "argv": [
+        "python3",
+        "scripts/validate-plugin-packages.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-pkg007-all23.log"
+    },
+    {
+      "name": "feedback-strict",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.183,
+      "argv": [
+        "python3",
+        "scripts/lint-feedback-protocol.py",
+        "--strict"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-feedback-strict.log"
+    },
+    {
+      "name": "vendored-ssot",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.096,
+      "argv": [
+        "python3",
+        "scripts/lint-vendored-ssot.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-vendored-ssot.log"
+    },
+    {
+      "name": "release-parity",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.605,
+      "argv": [
+        "python3",
+        "scripts/build-plugin-release.py",
+        "--check"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-release-parity.log"
+    }
+  ]
+}

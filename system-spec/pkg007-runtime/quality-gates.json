@@ -1,0 +1,178 @@
+{
+  "schema_version": "1.0",
+  "ran_at": "2026-11-16T03:47:34.563489+00:00",
+  "beads_ids": [
+    "harness-zb7q"
+  ],
+  "graph_node_id": "task-pkg007-runtime",
+  "mvp": true,
+  "status": "pass-required-minimal-gates",
+  "publication": "draft-ready-not-merged",
+  "gates": [
+    {
+      "name": "targeted-regression-10files",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 8.705,
+      "argv": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/scripts-plugins/test_harness_creator__validate_plugin_package.py",
+        "tests/scripts-plugins/test_harness_creator__render_combinators.py",
+        "tests/scripts-plugins/test_harness_creator__render_combinators_r4.py",
+        "tests/scripts-root/test_root__lint_vendored_ssot.py",
+        "tests/scripts-root/test_scripts__lint_feedback_protocol.py",
+        "tests/test_render_combinators_feedback_contract.py",
+        "tests/test_feedback_runtime_bundle.py",
+        "tests/scripts-root/test_scripts__notion_submit_improvement.py",
+        "tests/scripts-plugins/test_harness_creator__notion_config_r4.py",
+        "tests/scripts-plugins/test_skill_intake__notion_config.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-targeted-regression-10files.log"
+    },
+    {
+      "name": "pkg007-all23",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 4.393,
+      "argv": [
+        "python3",
+        "scripts/validate-plugin-packages.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-pkg007-all23.log"
+    },
+    {
+      "name": "feedback-strict",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.183,
+      "argv": [
+        "python3",
+        "scripts/lint-feedback-protocol.py",
+        "--strict"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-feedback-strict.log"
+    },
+    {
+      "name": "vendored-ssot",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.096,
+      "argv": [
+        "python3",
+        "scripts/lint-vendored-ssot.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-vendored-ssot.log"
+    },
+    {
+      "name": "release-parity",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.605,
+      "argv": [
+        "python3",
+        "scripts/build-plugin-release.py",
+        "--check"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-release-parity.log"
+    },
+    {
+      "name": "c02-new-5nodes",
+      "result": "pass",
+      "graph_revision": 23,
+      "registered_count": 5,
+      "receipts": [
+        ".dev-graph/state/receipts/node-r000021-add.json",
+        ".dev-graph/state/receipts/node-r000022-update.json",
+        ".dev-graph/state/receipts/node-r000023-update.json"
+      ],
+      "readiness": "5 complete",
+      "status_boundary": "draft/pending maintained"
+    },
+    {
+      "name": "strict-graph",
+      "result": "pass",
+      "exit_code": 0,
+      "argv": [
+        "python3",
+        "-B",
+        "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "--graph",
+        ".dev-graph/state/graph.json",
+        "--repo-root",
+        ".",
+        "--require-canonical-envelope",
+        "--strict-artifact-readiness"
+      ],
+      "log": "docs/pkg007-runtime/strict-graph.json",
+      "violations": 0
+    },
+    {
+      "name": "receipt-sha-and-secrets",
+      "result": "pass",
+      "log": "system-spec/pkg007-runtime/checks/receipt-sha-secrets.json",
+      "method": "receipt evidence SHA、node最新writer receipt照合、既知token/鍵prefix検査"
+    }
+  ],
+  "counts": {
+    "targeted_regression_files": 10,
+    "targeted_tests_passed": 521,
+    "excluded_unrelated_tests_from_source_dirty_tree": 2,
+    "pkg007_plugins": 23,
+    "vendored_pairs": 330,
+    "patched_plugins": 23
+  },
+  "not_run": [
+    "実Notion API投入",
+    "live再走",
+    "install",
+    "LLM全体再評価・30思考法再走",
+    "既存全体coverageの達成検査"
+  ],
+  "remaining": [
+    "実Notion API/liveの運用受入れは今回行っていない",
+    "既存全体coverageは未達",
+    "install・merge・done認定は別判断"
+  ],
+  "notes": "対象共通部品を含む23pluginだけpatch採番・正規metadata生成とrelease整合を実施。harness-creator 1.4.66、dev-graph 0.1.34等。通常起動に追加LLM/全repo走査を入れない。",
+  "generated_formatting_exception": {
+    "classification": "nonblocking-mvp-generated-format",
+    "finding": "git diff --cached --check がC02新規5文書のblank line at EOFのみを検出",
+    "reason": "公開base版C02は _section_text で入力末尾LFを除き、_block(add)と_body_lines(update)で非空section末尾へ区切り空行を必ず付与する。APIに最終LF数の指定やtrim optionがないため、入力変更だけでは1LFへできない。",
+    "source": [
+      "plugins/dev-graph/scripts/build-graph-node.py:242",
+      "plugins/dev-graph/scripts/build-graph-node.py:293",
+      "plugins/dev-graph/scripts/build-graph-node.py:878"
+    ],
+    "files": [
+      "specs/pkg007-runtime.md",
+      "architecture/pkg007-runtime.md",
+      "features/pkg007-runtime.md",
+      "docs/pkg007-runtime.md",
+      "tasks/pkg007-runtime.md"
+    ],
+    "trailing_lf_bytes": {
+      "specs/pkg007-runtime.md": 2,
+      "architecture/pkg007-runtime.md": 2,
+      "features/pkg007-runtime.md": 2,
+      "docs/pkg007-runtime.md": 2,
+      "tasks/pkg007-runtime.md": 2
+    },
+    "decision": "正規writer出力と実receipt SHAを保持する。手編集や無関係なwriter修正は追加せず、今回MVPでは生成書式の非blocking例外とする。",
+    "effect": "仕様内容・readiness・runtime挙動への影響なし。"
+  },
+  "non_blocking_notes": [
+    {
+      "kind": "raw-machine-score-output",
+      "reason": "機械採点の原stdoutを保持するため末尾空行を変更しない。JSONとしての内容と採点結果に影響なし。",
+      "paths": [
+        "docs/pkg007-runtime/review-history/public-base-20261116T034305Z/assign-plugin-package-evaluator/machine-score.json",
+        "docs/pkg007-runtime/review-history/public-base-20261116T034305Z/run-skill-feedback/machine-score.json"
+      ]
+    }
+  ]
+}

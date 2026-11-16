@@ -1,0 +1,244 @@
+{
+  "schema_version": "1.0",
+  "received_at": "2026-11-16T03:47:34.563489+00:00",
+  "beads_ids": [
+    "harness-zb7q"
+  ],
+  "graph_node_id": "task-pkg007-runtime",
+  "related_graph_nodes": [
+    "spec-pkg007-runtime",
+    "arch-pkg007-runtime",
+    "feature-pkg007-runtime",
+    "doc-pkg007-runtime"
+  ],
+  "branch": "devgraph/task-pkg007-runtime",
+  "base_branch": "main",
+  "impact": "あり",
+  "judgment": "PKG007の対象を明示script_refsと既存root検査へ統一し、共通feedbackの配布依存とrepo用lintの実行場所を分離するため、仕様・設計・機能・説明・公開taskへ反映する。",
+  "applied_changes": [
+    "catalog/36章の対象scopeと機械正本を正規specへ反映",
+    "runtime閉包のskill内同梱とmanifest祖先root解決をarchへ反映",
+    "repo lintのbuild役割移管とIN1/IN2・実行属性要件維持を反映",
+    "通常起動の追加LLM/全repo走査0とMVPゲートを反映",
+    "中学生向けと専門向け説明・PR用要約・既存未達をdocsへ反映",
+    "今回共通部品を含む23pluginのpatch採番・正規metadata生成と整合検査、公開tree521testをC02 updateで反映"
+  ],
+  "no_impact": [
+    {
+      "area": "HTTP API",
+      "reason": "既存Notion API呼出し契約を保ち、ローカル検査と配置だけを変更する。"
+    },
+    {
+      "area": "DB schema",
+      "reason": "既存2schemaをbytecopyするだけでDB構造を変更しない。"
+    },
+    {
+      "area": "認証・承認方式",
+      "reason": "既存token解決順とguard receipt flowを保持し、新方式を導入しない。"
+    },
+    {
+      "area": "旧review/live evidenceの判定",
+      "reason": "旧FAIL/INCOMPLETEを保持し、過去SHAを手で付け替えない。"
+    }
+  ],
+  "flow": {
+    "writer": "dev-graph C02 build-graph-node.py（公開worktreeのbase版）",
+    "operations": "add preview/apply r20→21、5文書結果反映update r21→22、最終実ログの所要時間表記調整update r22→23",
+    "graph_revision": 23,
+    "receipts": [
+      ".dev-graph/state/receipts/node-r000021-add.json",
+      ".dev-graph/state/receipts/node-r000022-update.json",
+      ".dev-graph/state/receipts/node-r000023-update.json"
+    ],
+    "pre_write_findings": 0,
+    "strict_graph": "pass, 25node structural readiness complete, violations 0",
+    "status": "今回5nodeはdraft/pending。exact13、confirmed/pass/done昇格をしない。"
+  },
+  "quality_gates_ref": "system-spec/pkg007-runtime/quality-gates.json",
+  "publication_state": "draft-ready-not-merged",
+  "remaining_work": [
+    "実Notion API/liveの運用受入れは今回行っていない",
+    "既存全体coverageは未達",
+    "install・merge・done認定は別判断"
+  ],
+  "evidence": [
+    {
+      "path": "specs/pkg007-runtime.md",
+      "sha256": "f887e6d189811b307da56ccaec93e4ec060743005c7a9137fd68cadf340ecce3"
+    },
+    {
+      "path": "architecture/pkg007-runtime.md",
+      "sha256": "c217411521f402d5aff1040128abe0865b19b20007921ebfe0005322d40a3487"
+    },
+    {
+      "path": "features/pkg007-runtime.md",
+      "sha256": "3143e000ca9fd953fa0058a8b3a454addfc489c211951cbd6e44e343b09d5069"
+    },
+    {
+      "path": "docs/pkg007-runtime.md",
+      "sha256": "3d09ad2cf7d68fdbb5b998ef150331e0f3521b668e2cec45123254afd61c9f5c"
+    },
+    {
+      "path": "tasks/pkg007-runtime.md",
+      "sha256": "fd2f8d6c5086f45c9c34bfb0f3e56a8f1ce40fe9babe192ceb65cf8b18ca4a1f"
+    },
+    {
+      "path": ".dev-graph/state/graph.json",
+      "sha256": "e53a76aa9575ee859b94349c33f8dc4c3e66566ad9aa76bd71c3b149244f22cb"
+    },
+    {
+      "path": ".dev-graph/config.json",
+      "sha256": "576e8665b46bfbb7b50d47defc3dbb481e77c21734420c98cc0f52871b9097cb"
+    },
+    {
+      "path": ".dev-graph/state/receipts/node-r000021-add.json",
+      "sha256": "e23220733c08eacd441bf3c20c24a66ea83fc3f015bb16b3c27a9bf1a2eb0936"
+    },
+    {
+      "path": ".dev-graph/state/receipts/node-r000022-update.json",
+      "sha256": "02b63854d1c3741161ac91aa15e7cb405a5b77e31adebe918e550d7bb1db6456"
+    },
+    {
+      "path": ".dev-graph/state/receipts/node-r000023-update.json",
+      "sha256": "fc3a72e5b20150b1fb07fa7569c15153b0e921f20ea90ad24932a718f02ef754"
+    },
+    {
+      "path": "docs/pkg007-runtime/writer-inputs/add.json",
+      "sha256": "8dc689fa7b47a9cde36e144e19898bb25d1fd2ef1bd1ba58d5eeab474303654e"
+    },
+    {
+      "path": "docs/pkg007-runtime/writer-inputs/results.json",
+      "sha256": "08adf9866accb32da8d6ec3a8aecc64942648eef547acd62c1fbc57565395175"
+    },
+    {
+      "path": "docs/pkg007-runtime/writer-inputs/log-reconciliation.json",
+      "sha256": "b0ea96687ffb6360217458be8ab7952c98480f8042c5ad5523f2bef47590c1ad"
+    },
+    {
+      "path": "docs/pkg007-runtime/node-add-preview.json",
+      "sha256": "23ad7384f5edce13475dc4ca05138fc9e5979a4c7ea943de48f70502bca59b5a"
+    },
+    {
+      "path": "docs/pkg007-runtime/node-add-result.json",
+      "sha256": "45045b89e1ad608e12431f35bb561a486740aaa54455608cf2cd595534329bed"
+    },
+    {
+      "path": "docs/pkg007-runtime/node-results-preview.json",
+      "sha256": "9bfc11ca8b93c0ab6fb2f77e5cc00943e59df24add4181738d0f81a5976afcf0"
+    },
+    {
+      "path": "docs/pkg007-runtime/node-results-result.json",
+      "sha256": "dae6f8422eece3784e8f14b5f0995a89736e85ad5c0df2cdd92d55663ba9441a"
+    },
+    {
+      "path": "docs/pkg007-runtime/node-log-preview.json",
+      "sha256": "f2cb66607be59b88dca46991c5bd9df54a3b33b989ae6180ce40aa13e8abcd70"
+    },
+    {
+      "path": "docs/pkg007-runtime/node-log-result.json",
+      "sha256": "319665898d789f79bc75c555cd9e9d0ad473b4dd64284c36ef9a5067f80c5ee3"
+    },
+    {
+      "path": "docs/pkg007-runtime/strict-graph.json",
+      "sha256": "1f1c292957c5d0720b8b950c227e2a11c219ea576786ecfcb52e809bb9ae306d"
+    },
+    {
+      "path": "docs/pkg007-runtime/base-merge.json",
+      "sha256": "340ab9f9d3e7a2c97cc559a10e71206b17e3527bd0731d3f5701e302a792f0f7"
+    },
+    {
+      "path": "docs/pkg007-runtime/final-product-gates.json",
+      "sha256": "6834871714ccfe9485ccd4d5f0fb823fce2c2be58aeb83b194baf61bf5a11a7b"
+    },
+    {
+      "path": "system-spec/pkg007-runtime/quality-gates.json",
+      "sha256": "72c4d4794c9751be4b123240073c5294fff1edfc85ae4073684ddf9c2a7dcd72"
+    },
+    {
+      "path": "plugins/dev-graph/scripts/build-graph-node.py",
+      "sha256": "0f0da1af8be77afeeace4a53dd983971c84cf87d4d4fd140aad480968e8a5803"
+    },
+    {
+      "path": "plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py",
+      "sha256": "1366fb0cb7bb608bb4685d0aeeee6a11b96a130329645fe81c30f050e549fc79"
+    },
+    {
+      "path": "plugins/harness-creator/skills/assign-plugin-package-evaluator/SKILL.md",
+      "sha256": "acbd5ab1c12f03d6e20cd8b3e8b477e8cde839fef5b18291ae08564ae6e51078"
+    },
+    {
+      "path": "plugins/harness-creator/skills/ref-pkg-contract/references/pkg-id-catalog.yaml",
+      "sha256": "63e99737582060efab61a96f93add4890ef44787841080c48b80bec2856ffcfe"
+    },
+    {
+      "path": "doc/ClaudeCodeスキルの設計書/36-plugin-package-harness-contract.md",
+      "sha256": "34dc1189dba891643a49e895ee9e62067403474888f3f62770cba17a84032e13"
+    },
+    {
+      "path": "plugins/harness-creator/skills/run-skill-feedback/SKILL.md",
+      "sha256": "ab85533fe283d85ec58a85e73e0a719ffb0f46e26ca973e578a32ffcd30e60e7"
+    },
+    {
+      "path": "plugins/harness-creator/skills/run-skill-feedback/workflow-manifest.json",
+      "sha256": "68cd59adbcc473d2140cf9729238c88b72e8718e46a73df082f87f36186de17e"
+    },
+    {
+      "path": "scripts/notion-submit-improvement.py",
+      "sha256": "cc749b001582809f9e7db18052eedceab730b79c2eb255a5a0a0d682526087f4"
+    },
+    {
+      "path": "plugins/harness-creator/scripts/notion_config.py",
+      "sha256": "f1b297e222402e0556565165fcb0d9acf35bf9e3c0a36d9afd09a528f58dbe35"
+    },
+    {
+      "path": "docs/pkg007-runtime/checks/final-targeted-regression-10files.log",
+      "sha256": "890dc3c7dbf0832b6e903b402919e013133e0fcf1150e2c8c685a24f8aa067c9"
+    },
+    {
+      "path": "docs/pkg007-runtime/checks/final-pkg007-all23.log",
+      "sha256": "e623136a0ccabfafcf74e12421ac7658fdd41353b633204680b01db8c8d9e4fb"
+    },
+    {
+      "path": "docs/pkg007-runtime/checks/final-feedback-strict.log",
+      "sha256": "267873f1baac384c2174498b6c4a2261e9df3129f10d911e1e976aa17ea90100"
+    },
+    {
+      "path": "docs/pkg007-runtime/checks/final-vendored-ssot.log",
+      "sha256": "5003a0177ab6cfbe32b6cf02439d44a0111e6cd34bb432912dee68e758f42d81"
+    },
+    {
+      "path": "docs/pkg007-runtime/checks/final-release-parity.log",
+      "sha256": "f392962c75aa31cc88bfaf80dfe503639800d20a9d352cc0dfca5b1d74cd1293"
+    }
+  ],
+  "minimal_functional_gates": "pass",
+  "merge_provenance_ref": "docs/pkg007-runtime/base-merge.json",
+  "writer_bindings": {
+    "spec-pkg007-runtime": {
+      "receipt": ".dev-graph/state/receipts/node-r000022-update.json",
+      "path": "specs/pkg007-runtime.md",
+      "sha256": "f887e6d189811b307da56ccaec93e4ec060743005c7a9137fd68cadf340ecce3"
+    },
+    "arch-pkg007-runtime": {
+      "receipt": ".dev-graph/state/receipts/node-r000022-update.json",
+      "path": "architecture/pkg007-runtime.md",
+      "sha256": "c217411521f402d5aff1040128abe0865b19b20007921ebfe0005322d40a3487"
+    },
+    "feature-pkg007-runtime": {
+      "receipt": ".dev-graph/state/receipts/node-r000022-update.json",
+      "path": "features/pkg007-runtime.md",
+      "sha256": "3143e000ca9fd953fa0058a8b3a454addfc489c211951cbd6e44e343b09d5069"
+    },
+    "doc-pkg007-runtime": {
+      "receipt": ".dev-graph/state/receipts/node-r000023-update.json",
+      "path": "docs/pkg007-runtime.md",
+      "sha256": "3d09ad2cf7d68fdbb5b998ef150331e0f3521b668e2cec45123254afd61c9f5c"
+    },
+    "task-pkg007-runtime": {
+      "receipt": ".dev-graph/state/receipts/node-r000022-update.json",
+      "path": "tasks/pkg007-runtime.md",
+      "sha256": "fd2f8d6c5086f45c9c34bfb0f3e56a8f1ce40fe9babe192ceb65cf8b18ca4a1f"
+    }
+  },
+  "formatting_policy_ref": "system-spec/pkg007-runtime/quality-gates.json#generated_formatting_exception"
+}

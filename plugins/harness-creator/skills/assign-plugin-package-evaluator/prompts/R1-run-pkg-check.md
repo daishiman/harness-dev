@@ -31,7 +31,7 @@
 ### 1.2 倫理ガード
 
 - proposer ≠ approver（23章）: 本 worker は判定者であり改善実行はしない
-- context: fork 強制（呼出元 context を継承しない）
+- context: fork 強制（`target_plugin` / `pkg_ids` / `options` の構造化入力のみを渡し、親 context の判断履歴は持ち込まない）
 
 ## Layer 2: ドメイン層 (本質ロジック)
 
@@ -44,7 +44,7 @@
 
 - `package_mode=skill-only` の場合、PKG-003/005/006/007/008/014 を即 `not_applicable` 確定（exec しない）
 - fail が出ても止めず、指定された全 PKG ID の status を確定する（script に途中停止の option は無い）
-- script の判定に加え、SKILL.md「評価者が読んで判定する条件」の表（PKG-003 の hook・permission 衝突、PKG-007 の `script_refs` 実在と `+x`、PKG-008 の INV-1〜12 と Layer3 衝突）を読んで判定し、違反は当該 PKG ID の findings に足して `status: fail` にする
+- script の判定に加え、SKILL.md「評価者が読んで判定する条件」の表を判定し、違反は当該 PKG ID の findings に足して `status: fail` にする。PKG-007 の実行規則の正本は `validate-plugin-package.py` の `check_pkg_007`
 - 入力 `pkg_ids` 省略時は中核 8 件を全件実行
 
 ### 2.3 入力契約
@@ -125,15 +125,11 @@
 - [ ] `unsupported_pkg_id` を受理せず exit 2 を返している
 - [ ] target 配下に書込み副作用が発生していない
 
-### 5.4 実行方式 (固定手順を持たないゴールシークループ)
+### 5.4 実行方式 (単発評価)
 
-- 方針: 固定手順を列挙しない。§5.2 ゴール定義と §5.3 完了チェックリストを唯一の指針とし、入力状況に応じて必要な手順を都度設計・実行・自己評価する
-- ループ:
-  1. §5.3 の未充足項目を特定する
-  2. 未充足を解消する手順を立案（入力検証 / plugin.json 読込 / not_applicable 確定 / `validate-plugin-package.py --check <id>` sub-process 起動 / 集約 / eval-log 保存 等から必要なものを選択）
-  3. 立案手順を実行し `pkg_checks` と `verdict` を更新
-  4. §5.3 で自己評価し全項目充足まで反復（上限: Layer 4 信頼度・最大反復）
-- 逸脱時: ループ上限到達 / sub-process 連続失敗時は §4.1 に従い exit code を設定し、Layer 4 エスカレーション経路へ
+- 方針: 一度の採点で完結し、改善・再採点のループは回さない。§5.2 ゴール定義と §5.3 完了チェックリストで採点の網羅性を確かめる
+- 実行: 入力に応じて各対象 PKG ID の機械検査と評価者判定を実行し、findings の集約、verdict の集計、schema 検証、指定時の eval-log 保存を行う
+- 失敗時: 入力エラーは §4.1 に従い exit 2 で止める。sub-process 異常で終了した検査のみ `skip_reason` を記録し、残りの対象を採点する
 
 ## Layer 6: オーケストレーション層
 
@@ -156,7 +152,7 @@
 
 ### 7.2 言語
 
-- 本文: 日本語、findings の `message` フィールドは日本語、key / status enum は英語
+- 本文: 日本語、findings の `evidence` / `suggested_fix` フィールドは日本語、key / status enum は英語
 
 ---
 
@@ -164,4 +160,4 @@
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-入力 `{{target_plugin}}` / `{{pkg_ids}}` / `{{options}}` を受け、Layer 5.2 ゴール定義と §5.3 完了チェックリストを停止条件とし、§5.4 ゴールシークループに従い手順を動的生成・実行する。最終的に Layer 2.4 の findings JSON のみを stdout に出力する。前置き・後書き・思考過程出力は禁止。exit code は §4.1 に従う。
+入力 `{{target_plugin}}` / `{{pkg_ids}}` / `{{options}}` を受け、§5.4 の単発評価を実行し、Layer 5.2 ゴール定義と §5.3 完了チェックリストで採点の網羅性を確かめる。最終的に Layer 2.4 の findings JSON のみを stdout に出力する。前置き・後書き・思考過程出力は禁止。exit code は §4.1 に従う。

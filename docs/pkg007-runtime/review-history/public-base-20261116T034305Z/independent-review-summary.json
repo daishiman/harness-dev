@@ -1,0 +1,149 @@
+{
+  "reviewer": "reset-observer-publication-independent",
+  "scope": "2 canonical SKILLの選択変更と公開base差分のみのincremental静的内容レビュー",
+  "reviewed_at": "2026-11-16T03:44:06.958025Z",
+  "targets": {
+    "assign-plugin-package-evaluator": {
+      "target": {
+        "plugin": "harness-creator",
+        "skill": "assign-plugin-package-evaluator",
+        "skill_md_sha256": "acbd5ab1c12f03d6e20cd8b3e8b477e8cde839fef5b18291ae08564ae6e51078"
+      },
+      "document_hashes_before": {
+        "SKILL.md": "acbd5ab1c12f03d6e20cd8b3e8b477e8cde839fef5b18291ae08564ae6e51078",
+        "prompts/R1-run-pkg-check.md": "5e99541bb28cf5451e3ef2ad5e7f6cfb585987a1955357b104d6d9a86564d44e",
+        "references/evaluator-contract.md": "d18752f8eb1a6054652339c6eb8bce1546b8a0cd8a08d038651b32f0256b15b8"
+      },
+      "document_hashes_after": {
+        "SKILL.md": "acbd5ab1c12f03d6e20cd8b3e8b477e8cde839fef5b18291ae08564ae6e51078",
+        "prompts/R1-run-pkg-check.md": "5e99541bb28cf5451e3ef2ad5e7f6cfb585987a1955357b104d6d9a86564d44e",
+        "references/evaluator-contract.md": "d18752f8eb1a6054652339c6eb8bce1546b8a0cd8a08d038651b32f0256b15b8"
+      },
+      "hashes_match": true,
+      "C1_C4": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": "単発評価とR1の単発実行が一致し、PKG007は機械検査へ移管済みで人手表との二重規則がない。"
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": "明示script_refs＋root直下という対象集合、YAML文字列path宣言、exit2とfindings出力の境界が記される。"
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": "helperとPKG007の詳細を関数正本へ寄せ、promptのevidence/suggested_fix表記とfindings出力が一致する。"
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": "本文/他refsとPKG009は別責務であり、PKG007の配布内実在を外部参照例外で免除する規則はない。"
+        }
+      },
+      "rubric_score": 100,
+      "rubric_threshold": 80,
+      "verdict": "PASS",
+      "incremental_read_scopes": [
+        "SKILL.md",
+        "prompts/R1-run-pkg-check.md",
+        "references/evaluator-contract.md"
+      ],
+      "validation": "公開treeの_check_verdictで両方PASS"
+    },
+    "run-skill-feedback": {
+      "target": {
+        "plugin": "harness-creator",
+        "skill": "run-skill-feedback",
+        "skill_md_sha256": "ab85533fe283d85ec58a85e73e0a719ffb0f46e26ca973e578a32ffcd30e60e7"
+      },
+      "document_hashes_before": {
+        "SKILL.md": "ab85533fe283d85ec58a85e73e0a719ffb0f46e26ca973e578a32ffcd30e60e7",
+        "workflow-manifest.json": "68cd59adbcc473d2140cf9729238c88b72e8718e46a73df082f87f36186de17e",
+        "references/notion-per-repo-setup.md": "c4c71bd4468135be836864fa17508ce76e9615e0d5dd2d28886a0fc89016b66c",
+        "references/notion-submit-contract.md": "6c082ef617828bf9da9d9b5ec943f15c838c2752fd798bc5c3112e2d66b4a461",
+        "schemas/skill-list.schema.json": "8052b585f4741a4632508f53a2c5c5e74711d9e61d500187228c9984fe193646",
+        "schemas/improvement-request.schema.json": "d9a0384b55c59d83e3f8ccbe9e127a723a0bda1ff5d3c71f62172363a9f9c35d"
+      },
+      "document_hashes_after": {
+        "SKILL.md": "ab85533fe283d85ec58a85e73e0a719ffb0f46e26ca973e578a32ffcd30e60e7",
+        "workflow-manifest.json": "68cd59adbcc473d2140cf9729238c88b72e8718e46a73df082f87f36186de17e",
+        "references/notion-per-repo-setup.md": "c4c71bd4468135be836864fa17508ce76e9615e0d5dd2d28886a0fc89016b66c",
+        "references/notion-submit-contract.md": "6c082ef617828bf9da9d9b5ec943f15c838c2752fd798bc5c3112e2d66b4a461",
+        "schemas/skill-list.schema.json": "8052b585f4741a4632508f53a2c5c5e74711d9e61d500187228c9984fe193646",
+        "schemas/improvement-request.schema.json": "d9a0384b55c59d83e3f8ccbe9e127a723a0bda1ff5d3c71f62172363a9f9c35d"
+      },
+      "hashes_match": true,
+      "C1_C4": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": "公開baseのartifact_delivery state_machineと本文のaccept-as-is/light/standard/detailedが一致する。既存診断後loopを通常起動の新しい検査loopへ変えていない。"
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": "同梱runtime resourcesとbuild_validationの分離、設定資料、未登録/API失敗時の停止契約を保持する。"
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": "host候補から確定対象だけ読むschema/bodyは同一bytesで保持され、artifact deliveryの宣言もmanifestと一致する。"
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": "設定loader/submit/schemaは旧独立review対象と同一bytes。guardは既存root resolverと明示依存を保持し未導入時停止する。"
+        }
+      },
+      "rubric_score": 100,
+      "rubric_threshold": 80,
+      "verdict": "PASS",
+      "incremental_read_scopes": [
+        "SKILL.md",
+        "workflow-manifest.json",
+        "references/notion-per-repo-setup.md",
+        "references/notion-submit-contract.md",
+        "schemas/skill-list.schema.json",
+        "schemas/improvement-request.schema.json"
+      ],
+      "validation": "公開treeの_check_verdictで両方PASS"
+    }
+  },
+  "baseline_notes": [
+    "PKG009の既存説明drift（evaluator-contractの直接呼出とB manifestのwrapper呼出）は今回外の非blocking注記。親へ通知済みで変更しない。"
+  ],
+  "tooling": {
+    "print_target_supported": false,
+    "write_rubric_verdict_supported": false,
+    "target_method": "公開SKILL.mdのread_bytes SHA256を直接採取し公開schemaのtargetを新規生成",
+    "rubric_method": "公開base scorerの実出力＋未自動判定BD004の独立judgmentを公開base protocolの2verdictへ分離投影。旧PASS recordのSHA付替えなし。"
+  },
+  "limits": [
+    "全30思考法再走なし",
+    "live実走・実API送信なし",
+    "coverageはmeta担当",
+    "自作rootlintの再承認なし",
+    "元treeのraw eval-logコピーなし"
+  ],
+  "byte_reuse": {
+    "scripts/lint-feedback-protocol.py": {
+      "public_sha": "f2160178251e95d28b9e1c3672eadda54c6bbe2b80e8a3ad636c0fe63d2f1839",
+      "original_sha": "f2160178251e95d28b9e1c3672eadda54c6bbe2b80e8a3ad636c0fe63d2f1839",
+      "identical": true
+    },
+    "plugins/harness-creator/skills/run-skill-feedback/scripts/notion-submit-improvement.py": {
+      "public_sha": "cc749b001582809f9e7db18052eedceab730b79c2eb255a5a0a0d682526087f4",
+      "original_sha": "cc749b001582809f9e7db18052eedceab730b79c2eb255a5a0a0d682526087f4",
+      "identical": true
+    },
+    "plugins/harness-creator/skills/run-skill-feedback/scripts/notion_config.py": {
+      "public_sha": "f1b297e222402e0556565165fcb0d9acf35bf9e3c0a36d9afd09a528f58dbe35",
+      "original_sha": "f1b297e222402e0556565165fcb0d9acf35bf9e3c0a36d9afd09a528f58dbe35",
+      "identical": true
+    },
+    "plugins/harness-creator/skills/run-skill-feedback/schemas/skill-list.schema.json": {
+      "public_sha": "8052b585f4741a4632508f53a2c5c5e74711d9e61d500187228c9984fe193646",
+      "original_sha": "8052b585f4741a4632508f53a2c5c5e74711d9e61d500187228c9984fe193646",
+      "identical": true
+    },
+    "plugins/harness-creator/skills/run-skill-feedback/schemas/improvement-request.schema.json": {
+      "public_sha": "d9a0384b55c59d83e3f8ccbe9e127a723a0bda1ff5d3c71f62172363a9f9c35d",
+      "original_sha": "d9a0384b55c59d83e3f8ccbe9e127a723a0bda1ff5d3c71f62172363a9f9c35d",
+      "identical": true
+    }
+  }
+}

@@ -21,11 +21,13 @@ Usage:
 import argparse, json, os, subprocess, sys, tempfile
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "plugins" / "harness-creator" / "scripts"))
+SCRIPT_DIR = Path(__file__).resolve().parent
+# 配布 skill は同階層の loader を使い、repo 正本だけが plugin 側へ解決する。
+CONFIG_DIR = SCRIPT_DIR if (SCRIPT_DIR / "notion_config.py").is_file() else (
+    SCRIPT_DIR.parent / "plugins" / "harness-creator" / "scripts"
+)
+sys.path.insert(0, str(CONFIG_DIR))
 import notion_config  # noqa: E402
-
-SCHEMA_DIR = ROOT / "doc" / "notion-schema"
 
 REQ_TYPES = ["バグ","機能追加","プロンプト改善","ドキュメント","挙動変更"]
 PRIORITY  = ["高","中","低"]

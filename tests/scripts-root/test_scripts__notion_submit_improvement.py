@@ -200,10 +200,12 @@ def test_token_resolution_has_no_cli_path_documented():
     assert "CLI > env > `.notion-config.json`" not in skill
 
 
-def test_skill_scan_instruction_uses_declared_tools():
+def test_skill_identification_uses_host_inventory_without_repo_scan():
     skill = SKILL.read_text(encoding="utf-8")
 
-    assert 'glob="plugins/*/skills/*/SKILL.md"' in skill
-    assert "Read: `plugins/<plugin>/skills/<skill_name>/SKILL.md`" in skill
+    assert "host が提示するスキル名・description と実在する SKILL.md の絶対 path" in skill
+    assert "repo 全体・全 plugin の走査はしない" in skill
+    assert "Read: host が示した対象 SKILL.md の実在する絶対 path" in skill
+    assert 'glob="plugins/*/skills/*/SKILL.md"' not in skill
     assert "grep -r --include=\"SKILL.md\"" not in skill
     assert "cat plugins/<plugin>/skills/<skill_name>/SKILL.md" not in skill

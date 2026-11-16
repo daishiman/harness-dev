@@ -97,8 +97,8 @@ PKG ID は閉じた列挙であり、本表に存在しない ID は **存在し
 | PKG-003 | package 単位の名前空間衝突検査 | 同一 marketplace 内で `skill-name` / `agent-name` / `hook-name` / `permission-name` の衝突なし。34a §4 と名前空間定義を共有 | `scripts/validate-plugin-package.py` `--check pkg-003` | `bundle` |
 | PKG-004 | SKILL.md frontmatter 完備 | 03 章 frontmatter 必須キー、`responsibility_refs` / `schema_refs` / `manifest` を含む | `scripts/validate-frontmatter.py --skills-dir plugins/<plugin>/skills` | `bundle` `skill-only` |
 | PKG-005 | Agent definition 整合 | `plugins/<plugin>/agents/*.md` の name と SKILL.md `subagent_refs` が一致 | `scripts/validate-plugin-package.py` `--check pkg-005` | `bundle` |
-| PKG-006 | Hook registration 整合 | `plugins/<plugin>/hooks/*.{json,sh}` が settings 断片の `hooks` 配列で全て参照されている。逆方向に未登録 hook ファイルがない | `scripts/validate-plugin-package.py` `--check pkg-006` | `bundle` |
-| PKG-007 | script 存在 + 実行可能 | SKILL.md / agent / hook から参照される `scripts/*` が plugin root 配下に存在し、shebang を持ち、`+x` ビットが立っている | `scripts/validate-plugin-package.py` `--check pkg-007` | `bundle` |
+| PKG-006 | Hook registration 整合 | `plugins/<plugin>/hooks/*.{py,sh}` が settings 断片の `hooks` 配列で全て参照されている。逆方向に未登録 hook ファイルがない | `scripts/validate-plugin-package.py` `--check pkg-006` | `bundle` |
+| PKG-007 | script 存在 + 実行可能 | 対象は SKILL.md の明示 `script_refs` と plugin root 直下の `scripts/*.{py,sh}`。plugin 内に実在し、shebang と `+x` ビットを持つ。本文・他の `*_refs` は対象外（PKG-009 等の別責務）。実行規則の正本は `validate-plugin-package.py` の `check_pkg_007` | `scripts/validate-plugin-package.py` `--check pkg-007` | `bundle` |
 | PKG-008 | settings 断片 lint | `plugins/<plugin>/settings/*.json` が 34a 章 INV-1〜12 を満たし、Layer3 派生で衝突を発生させない | `scripts/validate-plugin-package.py` `--check pkg-008` | `bundle` |
 | PKG-009 | 外部参照ゼロ | plugin 内の全ファイルが plugin root 外を参照しない（34 章 公式制約 e） | `scripts/lint-external-refs.py --plugin <name>` | `bundle` |
 

@@ -1,0 +1,30 @@
+{
+  "artifact": "plugins/skill-governance-migration/skills/run-skill-feedback/scripts/extract-plugin-root.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 98,
+    "notes": "公開treeでのproof reuse（機械投影、新LLM採点なし）。source artifact=plugins/harness-creator/scripts/extract-plugin-root.py; source SHA256=4dbdbf4948d71439d4f96b6ffb8b105a15055443d4c2be01fc8905579d81d841; source record SHA256=cbbe5dac51f392af6ab48fe39e887da6fa873055425da5ec701b33384b5bc702; copy SHA256=4dbdbf4948d71439d4f96b6ffb8b105a15055443d4c2be01fc8905579d81d841。source/copy bytes完全一致を公開treeで今回確認。owner sourceの真正評価1回を再利用し、copyを再読・再採点していない。同階層runtime4本の存在も確認。残存課題・評価範囲はsource recordに従う。"
+  },
+  "reviewed_by": "proof-reuse-projection-20261116-meta-analyst-publication",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ],
+  "provenance": {
+    "method": "byte-identity-proof-reuse",
+    "source_artifact": "plugins/harness-creator/scripts/extract-plugin-root.py",
+    "source_sha256": "4dbdbf4948d71439d4f96b6ffb8b105a15055443d4c2be01fc8905579d81d841",
+    "source_record": "eval-log/coverage/scripts/plugins-harness-creator-scripts-extract-plugin-root.py.json",
+    "source_record_sha256": "cbbe5dac51f392af6ab48fe39e887da6fa873055425da5ec701b33384b5bc702",
+    "copy_artifact": "plugins/skill-governance-migration/skills/run-skill-feedback/scripts/extract-plugin-root.py",
+    "copy_sha256": "4dbdbf4948d71439d4f96b6ffb8b105a15055443d4c2be01fc8905579d81d841",
+    "byte_identity_verified": true,
+    "review_reuse_reason": "公開treeのowner canonical sourceの真正評価と現在bytesを照合し、同tree内配布copyのbyte完全一致及び同階層runtime依存4本の存在を機械確認。copy個別の新LLM採点は実施していない。",
+    "source_reviewer": "coverage-reviewer-pr85-20261010i-s3"
+  }
+}

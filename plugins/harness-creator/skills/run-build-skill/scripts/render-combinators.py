@@ -568,11 +568,18 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
         help="量産先 plugin ディレクトリに skills/run-skill-feedback を実体コピーで配備 (default-ON 想定、--no-feedback-loop で opt-out)",
     )
     parser.add_argument(
+        "--refresh-feedback-loop",
+        action="store_true",
+        help="--deploy-feedback-loop の既存配布コピーを正本で更新する（開発・配布時のみ）",
+    )
+    parser.add_argument(
         "--no-feedback-loop",
         action="store_true",
         help="--deploy-feedback-loop を無効化 (feedback-loop 配備の opt-out)",
     )
     args = parser.parse_args(argv)
+    if args.refresh_feedback_loop and not args.deploy_feedback_loop:
+        parser.error("--refresh-feedback-loop には --deploy-feedback-loop が必要")
     if args.kind is None and args.materialize_task_graph_engine is None:
         parser.error("--kind または --materialize-task-graph-engine が必要")
     if args.materialize_task_graph_engine is not None and args.brief is None:
@@ -1020,11 +1027,12 @@ def _feedback_loop_source() -> Path:
     raise OSError("run-skill-feedback source not found")
 
 
-def apply_feedback_loop(target_plugin_dir: Path) -> Path:
+def apply_feedback_loop(target_plugin_dir: Path, *, refresh: bool = False) -> Path:
     """量産先 plugin ディレクトリに skills/run-skill-feedback を実体コピーで配備する。
 
     marketplace install では plugin 境界を越える symlink が dangling し得るため、配布先には
-    自己完結する実体ディレクトリを置く。冪等: 既に実体があれば no-op。既存 symlink は
+    自己完結する実体ディレクトリを置く。既定では既存実体は no-op。refresh は明示した
+    開発・配布時だけ正本を上書き同期し、配布先固有の追加ファイルは削除しない。既存 symlink は
     dangling 回帰を避けるため置換する。
     """
     target_plugin_dir = target_plugin_dir.resolve()
@@ -1032,13 +1040,23 @@ def apply_feedback_loop(target_plugin_dir: Path) -> Path:
     if _FC.is_feedback_deploy_exempt(target_plugin_dir.name):
         return target_plugin_dir / "skills" / "run-skill-feedback"
     skills_dir = target_plugin_dir / "skills"
+    if skills_dir.is_symlink():
+        raise OSError(f"refusing feedback deployment through symlink: {skills_dir}")
     skills_dir.mkdir(parents=True, exist_ok=True)
     dest = skills_dir / "run-skill-feedback"
-    if dest.exists() and not dest.is_symlink():
+    if dest.exists() and not dest.is_symlink() and not refresh:
         return dest
+    if refresh and dest.is_dir() and not dest.is_symlink():
+        # コピーを始める前に全て確認する。一部を更新した後で外向きlinkに気付くのを避ける。
+        for existing in dest.rglob("*"):
+            if existing.is_symlink():
+                raise OSError(f"refusing feedback refresh through symlink: {existing}")
     if dest.is_symlink():
         dest.unlink()
-    shutil.copytree(_feedback_loop_source(), dest, symlinks=False)
+    shutil.copytree(
+        _feedback_loop_source(), dest, symlinks=False, dirs_exist_ok=refresh,
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "*.pyo", ".pytest_cache", ".DS_Store"),
+    )
     return dest
 
 
@@ -1156,7 +1174,8 @@ def main(argv: list[str]) -> int:
     # 副作用アクション: feedback-loop 配備のみのモード (SKILL.md 合成は skip 可能)。
     if args.deploy_feedback_loop and not args.no_feedback_loop:
         try:
-            link = apply_feedback_loop(args.deploy_feedback_loop)
+            link = (apply_feedback_loop(args.deploy_feedback_loop, refresh=True)
+                    if args.refresh_feedback_loop else apply_feedback_loop(args.deploy_feedback_loop))
             if args.trace:
                 print(f"deployed feedback-loop: {link}", file=sys.stderr)
         except OSError as exc:

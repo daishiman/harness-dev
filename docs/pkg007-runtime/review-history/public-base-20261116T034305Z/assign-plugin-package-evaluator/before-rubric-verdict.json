@@ -1,0 +1,46 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "assign-plugin-package-evaluator",
+    "skill_md_sha256": "4223a15837e5b3400560be61b43909ea1a5f4958ecfdf89d01424b8a9b54b57c",
+    "skill_dir_digest": "b02da22c3670c0fcb24b93f149f58b2eea75ac7093d744c8919d72f4b085bd06",
+    "reviewed_skill_md_sha256": "4223a15837e5b3400560be61b43909ea1a5f4958ecfdf89d01424b8a9b54b57c"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 2,
+    "inconsistency": 2,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "independent focused combined review (Claude subagent, pr85 re-review k)",
+  "reviewed_at": "2026-11-16T03:12:34Z",
+  "iterations": 3,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "positive_feedback": [
+      "機械判定できるscript_refsの実行規則をcheck_pkg_007へ集約し、catalogが対象範囲、意味判断表が機械化できない残条件を担当する。"
+    ],
+    "negative_feedback": [
+      "[low / inconsistency / scripts/validate-plugin-package.py:550-556 と SKILL.md:100] PKG-006 は、command の token の prefix に \"PLUGIN_ROOT\" を含むかだけを見て、最初の \"/hooks/\" より後ろを hooks/ を基準に解決する。再現（work-pkg/fx1）: `python3 ${CLAUDE_PLUGIN_ROOT}/../evil/hooks/guard.py` を登録し、hooks/guard.py を置く（prefixesc）。plugin の外を指すのに pass・rc0 になる。`${CLAUDE_PLUGIN_ROOT}/scripts/hooks/x.py`（実体あり。subhooks）は、「実体が plugin の中に無い」という偽の fail になる。L100 の「`${CLAUDE_PLUGIN_ROOT}/hooks/…` か `./hooks/…` を指すもの」とも範囲が合わない。repo の 13 plugin の hooks.json にある command 37 件は、すべて `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/<file>` の平らな形なので、今は影響が無い。直し方: prefix を既知の root token（`${CLAUDE_PLUGIN_ROOT}`・`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`・空・`.`）との完全一致に限る。ほかは plugin root から解決して範囲を確かめる。L100 も同じ範囲に書きそろえる。",
+      "[low / omission / scripts/validate-plugin-package.py:578-580, :558-576, :904] 読めない hooks file の扱いがそろっていない。hooks/hooks.json が壊れた symlink かディレクトリのときは、is_file で黙って読み飛ばす（fixture hjsymlink・hjdir。fail は hooks/ の script が未登録になる分だけ）。hooks が object でない `{\"hooks\":\"oops\"}`（hjshape）も黙って読み飛ばす。非 UTF-8 の hooks.json（hjbad3）は exit 2 になり、`{bad` は PKG-006 の fail になる。L100 の「hooks file が JSON の object として読めない」と、作者の主張（hooks/hooks.json を常に読む）に合わせるなら、存在するのに読めない hooks.json は PKG-006 の finding にする。",
+      "[low / inconsistency / prompts/R1-run-pkg-check.md:103 と scripts/validate-plugin-package.py:56-65] R1 は「target_plugin の `../` を含む値は exit 2」と書く。しかし `_resolve_plugin_dir` は `--plugin ../plugins/clean` を受け、rc0 で検査を走らせる（fx1 で再現）。script は読むだけなので害は小さい。直し方: --plugin を plugin 名の regex（aggregate の _PLUGIN と同じ）で弾く。",
+      "[low / omission / SKILL.md:7, :86, :115] j 回目から続いている。評価者の表（L107-115）で見つけた違反を findings に足し、verdict を数え直し、schema で検証する手段が script に無い。--check は単一の ID か all しか受けず、--extra-findings のような option も無い。allowed-tools に Write は無く、python3 で JSON を手で書き換えることになる。直し方: 追加の findings を取り込んで数え直す option か、findings JSON を検証する小さな script を足す。"
+    ],
+    "iteration": 3,
+    "iteration_limit": 3,
+    "hook_trigger": "manual:20261010-pr85-rereview-k",
+    "next_action": "none"
+  },
+  "notes": "render-findings-score が機械採点 (score 100/threshold 80, sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9, scored 19/20) と LLM 判定 1 件 (BD-004) から生成した。 独立reviewer /root/system_analystがAPEの実装者と分離してpending BD-004のみを判断。2026-11-16に利用者が明示scope＋配布修復を承認した限定変更に対する新しい1回の評価。旧INCOMPLETEはrunのindependent-review-historyへ原本byteで保存し、旧targetのSHA付替えは行わない。rubricのscore/high違反/threshold/target/loop fieldsはrender-findings-score.pyが生成する。"
+}

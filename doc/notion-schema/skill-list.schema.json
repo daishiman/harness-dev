@@ -71,7 +71,7 @@
     ],
     "identification_step": {
       "__doc__": "ユーザーはプラグイン名・スキル名を知らない前提。collect フェーズより前に必ず実行し、目的逆算で対象を同定する。",
-      "trigger_condition": "常に実行（plugin 引数が渡された場合も存在確認のために必ず通す）",
+      "trigger_condition": "常に対象を確認する。利用者が示した目的・対象は聞き直さず、足りない項目だけ確認する",
       "steps": [
         {
           "step": 1,
@@ -81,7 +81,7 @@
         {
           "step": 2,
           "action": "scan_skills",
-          "how": "find plugins -name SKILL.md を実行し、全スキルの name と description フィールドを抽出してリストを構築する"
+          "how": "host が提示する登録済みスキルの name / description と実在する SKILL.md の path を使う。現在の作業や指定済み対象から候補を絞り、repo 全体や全 plugin の走査はしない"
         },
         {
           "step": 3,
@@ -94,7 +94,7 @@
           "how": "確定したスキルの SKILL.md を Read し、Purpose & Output Contract を把握。『現在の仕様: 〜〜です。この仕様についての要望ですか？』とユーザーに提示して文脈を共有する"
         }
       ],
-      "fallback": "4ステップで候補が絞れない場合は全スキル一覧を要約して選択してもらう。対象プラグインが確定できなければ投入を中断し、追加の目的ヒアリングへ戻す"
+      "fallback": "候補が絞れなければ利用した機能や目的を追加で確認する。host の候補から対象を確定できなければ投入を中断し、不明な名前で登録しない"
     },
     "intake_fields": [
       {"name": "対象スキル名",           "required": false, "hint": "identification_step で自動設定。ユーザーが直接知っている場合は引数で渡してもよい"},

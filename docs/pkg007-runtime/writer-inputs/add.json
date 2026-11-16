@@ -1,0 +1,351 @@
+{
+  "artifacts": [
+    {
+      "project_id": "harness-creator",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "pkg007",
+        "mvp",
+        "publication-review"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [],
+      "subtype_sections": {},
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "specification",
+      "slug": "pkg007-runtime",
+      "title": "明示script参照の配布検査と共通feedback単独配布の仕様",
+      "depends_on": [],
+      "related_nodes": [
+        "arch-pkg007-runtime",
+        "feature-pkg007-runtime"
+      ],
+      "classification": {
+        "reason": "harness-zb7qで承認されたPKG007の対象scope・配布依存・開発lint分離を記録するspecification。",
+        "decision": "auto",
+        "candidates": [
+          {
+            "artifact_kind": "specification",
+            "confidence": 0.97
+          },
+          {
+            "artifact_kind": "document",
+            "confidence": 0.03
+          }
+        ]
+      },
+      "sections": {
+        "目的と成功状態": "宣言した実行scriptがplugin内で実在し実行属性を持つことを開発時に確認し、共通run-skill-feedbackがrepo cloneなしでも必要なruntime資産を解決できる状態にする。通常起動へ追加のLLM評価やrepo全体走査を入れない。",
+        "スコープ": "対象はPKG007の明示script_refsと従来のplugin root直下scripts、共通feedbackの実行時依存閉包、配布コピー同期、repo用lintの開発役割への分離、対応する仕様と最小ゲート。本文や他の*_refs、全体coverageの達成、新exact13計画、release、自動mergeは対象外。",
+        "用語と主体": "script_refsはSKILL.md frontmatterの明示pathリスト。owner pluginはmanifestを持つ祖先。canonicalは唯一の編集元、vendorはbyte一致の配布コピー。開発担当が配布検査し、利用者は必要な項目だけを確認してfeedbackを投入する。",
+        "ユースケースとユーザーフロー": "開発担当が変更後のPKG007を実行して欠落や属性違反を直す。配布時はcanonical runtimeを既存コピーへ同期する。利用者はhostの登録済み候補から対象を絞り、引数を必要時にdry-runし、承認wrapper経由で投入する。通常の投入で全pluginを走査しない。",
+        "機能要件": "FR1: catalogと36章で対象を明示script_refsとroot scriptsへ揃え、実行規則はcheck_pkg_007を正本とする。\nFR2: YAML型・重複key・候補の先勝ち・realpath containment・shebang/+x・実体単位集約を機械検証する。\nFR3: 4追加runtimeと既存anchor、2schema、必要時参照文書をskill内へ閉じる。\nFR4: notion_configはmanifest祖先からowner plugin rootを解決し、明示config優先を維持する。\nFR5: repo用lintはmanifestのbuild_validationでIN1/IN2と実行属性要件を保持し、runtimeへvendorしない。",
+        "非機能要件": "通常起動の追加LLM呼出し0、追加repo全走査0。検証は変更範囲の決定論的な最小ゲートを使う。PyYAML依存はPKG007 validatorに明示し、通常feedback投入へ追加しない。tokenをargv・ログ・公開成果物へ載せない。",
+        "UI・状態遷移": "PKG007はexit0=pass、exit1=findingあり、exit2=入力・I/O・依存エラー。feedbackは引数dry-run、承認preview、承認、実行の既存状態を保持する。guardを解決できなければ外部mutation前に停止する。",
+        "ビジネスルールと検証": "候補はskill directory→plugin rootの順で最初の実在候補を採用し、不正な第一候補を後方候補で救済しない。PKG009の外部参照例外はPKG007の配布内解決を免除しない。明示script_refsのhelperにもshebang/+xを求める。rootの未参照import-only helperは既存AST判定を維持する。",
+        "API契約": "HTTP APIや公開サービスAPIの追加・変更はない。既存Notion APIの投入処理とguard APIは維持し、ローカルPython scriptの配置・参照・検査契約だけを更新する。",
+        "データモデル": "DB schemaの変更はない。Notionの2schemaは既存正本のbyte一致コピー。workflow-manifestのbuild_validationにrepo lintのrole/scope/path/argv/criteria/attributesを宣言する。findings schemaは変更しない。",
+        "認証・認可": "認証方式・token解決順・承認wrapperは変更しない。config pathは明示NOTION_CONFIG_PATHを優先し、owner pluginのmanifest祖先をfallbackの基点とする。秘密値や実tenant設定を配布しない。",
+        "エラー・例外・回復": "YAML宣言違反、欠落・外部解決・属性違反はfindingへ記録する。依存不足や読取不能はexit2で止める。明示config不在時は別configへ黙ってfallbackしない。guard不在時はinstall案内だけを返し外部操作しない。",
+        "イベント・非同期処理": "新規hook、常駐process、queue、非同期処理は追加しない。package検査とrepo lintは開発・配布時にだけ実行する。",
+        "可観測性": "findingはlocation/evidence/severityと参照元を持つ。原review・旧INCOMPLETEを保持し、今回の独立判定・最小ゲート・仕様影響判断・writer receipt・SHAを保存する。",
+        "互換性・移行・リリース": "repo正本submitと配布版の同階層importを両対応する。canonicalと既存22コピーは既存配布機構で同期する。公開はtask branchからmain向けdraft PR。merge・release・done昇格はこの文書登録で実行しない。",
+        "テストと受入条件": "PKG007全23plugin、対象10ファイル523test相当、feedback strict/vendor、5新規nodeのschema/readiness、仕様受領書のSHA・秘密検査を最小ゲートにする。テスト件数と結果は新worktreeの実ログを正とし、旧ログを成功へ書き換えない。",
+        "未決事項": "実Notion API投入とlive再走は行わない。既存全体coverageの未達は残る。既存package/releaseゲートのMVP扱いは公開担当が根拠付きで別途記録する。"
+      }
+    },
+    {
+      "project_id": "harness-creator",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "pkg007",
+        "mvp",
+        "publication-review"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [
+        "backend"
+      ],
+      "subtype_sections": {
+        "backend": {
+          "Runtime and architecture pattern": "ローカルPythonの開発時validatorと、配布skill内の同期feedback runtimeを分離する。通常の起動で開発lintやLLM評価を増やさない。",
+          "Domain and module boundaries": "catalogは対象scope、check_pkg_007は実行規則、SKILL/R1は呼出しと残る意味判断。feedbackのsubmit/config/tenant/root resolver/anchorはskill内へ置き、repo lintはbuild_validationに残す。",
+          "API and service contracts": "外部APIは変更しない。repo submitは従来plugin loaderへのfallbackを保持し、配布版は同階層loaderを使う。config resolverの公開関数契約を保つ。",
+          "Data and transaction behavior": "validatorは対象を読み取りfindingsを出す。vendorはcanonical bytecopyで同期しSSOT lintで差分を検出する。C02は5文書→graph→immutable receiptを単一transactionで登録する。",
+          "Async processing": "新規の非同期処理はない。既存guard receipt flowのみが外部mutationを許可する。",
+          "Security and resilience": "realpath containment、先勝ち候補、不正第一候補の救済禁止、明示configのfail-closedを維持する。隔離テストでsocketと外部processを遮断しKeychain/Notion通信を防ぐ。",
+          "Operations and verification": "PKG007と対象回帰、feedbackstrict/vendor、graph新規5nodeと受領書SHA検査を最小確認にする。全system-spec再ヒアリングや新actor実走を追加しない。"
+        }
+      },
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "architecture",
+      "slug": "pkg007-runtime",
+      "title": "検査正本と自己完結runtimeを分ける設計",
+      "depends_on": [],
+      "related_nodes": [
+        "spec-pkg007-runtime"
+      ],
+      "classification": {
+        "reason": "harness-zb7qで承認されたPKG007の対象scope・配布依存・開発lint分離を記録するarchitecture。",
+        "decision": "auto",
+        "candidates": [
+          {
+            "artifact_kind": "architecture",
+            "confidence": 0.97
+          },
+          {
+            "artifact_kind": "document",
+            "confidence": 0.03
+          }
+        ]
+      },
+      "sections": {
+        "Architecture overview": "宣言・機械検査・配布runtime・開発lintの4境界を分離し、それぞれ既存の正本へ委譲する。",
+        "Context and drivers": "旧PKG007の人手判定は注釈・候補順・集約単位に曖昧さがあり、feedbackにはrepo配置前提の依存があった。簡単実行・短時間・低トークン条件で今回範囲だけを修復する。",
+        "Goals and non-goals": "実行参照の決定論検査とfeedbackの配布内解決を実現する。全参照の網羅化、API/DB/認証変更、全体coverage達成、新exact13、live/releaseは行わない。",
+        "System context and boundaries": "開発時はrepoのvalidator/lintが実行される。利用時はhostが示すSKILL_ROOTとowner plugin manifest、明示設定、登録済みguard pluginだけを使う。",
+        "Container and component view": "check_pkg_007→YAML宣言/候補解決/属性検査。skill/scripts→submit・notion_config・tenant_runtime・extract-plugin-root・anchor。skill/schemas→既存2schema。manifest build_validation→repo lint。",
+        "Cross-cutting contracts": "scopeはcatalogと36章で統一し、手順本文に007の規則を複製しない。runtime資産はbyte一致、helperも明示script_refsなら属性要求を維持する。secretと旧判定の手動書換は禁止する。",
+        "Architecture decisions": "ADR1: 明示script_refs＋従来root検査を対象にし、本文・他refsへ拡張しない。\nADR2: runtime closureをskill内へ閉じて既存配布を利用する。\nADR3: repo lintは開発役割へ移し、IN1/IN2と属性要件を保持する。\nADR4: 通常起動には追加検査0とする。",
+        "Delivery, migration and rollback": "既存canonical→22コピー同期で展開する。公開はdevgraph/task-pkg007-runtimeからmain向けdraft PR。rollbackは対象commitのrevertを使い、原workspaceや他者差分を消さない。",
+        "Risks and verification": "本文/他refsの実在までPKG007 PASSが保証すると誤解するリスクはscope明記で防ぐ。Notion/live未実行と既存coverage未達を残課題として明記し、MVPゲートと区別する。"
+      }
+    },
+    {
+      "project_id": "harness-creator",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "pkg007",
+        "mvp",
+        "publication-review"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [],
+      "subtype_sections": {},
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "feature",
+      "slug": "pkg007-runtime",
+      "title": "明示scriptの配布検査と共通feedback runtime",
+      "depends_on": [],
+      "related_nodes": [
+        "spec-pkg007-runtime",
+        "doc-pkg007-runtime"
+      ],
+      "macro": {
+        "purpose": "配布したpluginの実行参照を開発時に確かめ、共通feedbackをrepo配置へ依存せず利用できるようにする",
+        "goal": "PKG007の対象と実行規則が一意になり、feedbackのruntime資産が配布内で解決し、通常起動の追加LLM/全repo走査が0である",
+        "scope_in": [
+          "明示script_refs＋既存root検査",
+          "runtime4本＋anchor＋2schemaと必要refsの同梱",
+          "repo lintのbuild役割移管",
+          "22配布コピー同期",
+          "仕様5文書・SHA受領書・対象限定draft PR"
+        ],
+        "scope_out": [
+          "HTTP API/DB/認証方式の変更",
+          "本文/他refsの網羅検査",
+          "全体coverage達成",
+          "新exact13計画",
+          "実Notion API/live再走",
+          "release/自動merge"
+        ],
+        "acceptance": [
+          "PKG007全23pluginと対象回帰の最小ゲートが成功する",
+          "feedbackstrict/vendorが成功する",
+          "C02登録5nodeがdraft/pendingかつreadiness completeになる",
+          "仕様受領書のSHAと実writer receiptが一致し秘密を含まない",
+          "未実行のlive/Notionと既存coverage未達をdraft PRへ明記する"
+        ],
+        "architecture_refs": [
+          "arch-pkg007-runtime"
+        ]
+      },
+      "sections": {
+        "Handoff": "今回の最終レビュー→仕様反映→対象限定commit/push/draft PRはharness-zb7qで追跡する。追加exact13やconfirmed/pass/doneへの昇格を伴わない。実ログと品質ゲートの判断はsystem-spec/pkg007-runtimeへ保存する。"
+      }
+    },
+    {
+      "project_id": "harness-creator",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "pkg007",
+        "mvp",
+        "publication-review"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [],
+      "subtype_sections": {},
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "document",
+      "slug": "pkg007-runtime",
+      "title": "PKG007と共通feedbackの変更を理解する",
+      "depends_on": [],
+      "related_nodes": [
+        "feature-pkg007-runtime",
+        "spec-pkg007-runtime",
+        "arch-pkg007-runtime",
+        "task-pkg007-runtime"
+      ],
+      "classification": {
+        "reason": "harness-zb7qで承認されたPKG007の対象scope・配布依存・開発lint分離を記録するdocument。",
+        "decision": "auto",
+        "candidates": [
+          {
+            "artifact_kind": "document",
+            "confidence": 0.97
+          },
+          {
+            "artifact_kind": "task",
+            "confidence": 0.03
+          }
+        ]
+      },
+      "sections": {
+        "目的": "利用者が変わる点と変わらない点、開発担当が確認する根拠を一つの文書で把握できるようにする。",
+        "対象読者": "中学生にも読める利用者向け説明と、pluginの保守・レビュー担当向け説明を併記する。設定値やtokenの提出を利用者へ求めない。",
+        "要約": "持ち物表に書いた道具が、配布するかばんの中に本当に入っていて使えるかを開発時に確かめる。共通feedbackの道具も同じかばんにまとめ、利用するたびの検査やAIの呼出しは増やさない。",
+        "本文": "中学生向け\nscript_refsは『使う道具の持ち物表』、pluginは配布するかばんです。これまでは表を人が読んで確かめる部分や、開発者の机にしかない道具がありました。今回、表に書いた道具がかばんの中にあり、使える状態かを機械で確認します。要望を送るfeedbackの道具も同梱します。使うたびに全部を検査する仕組みは増やしません。\n\n専門向け\nPKG007のscopeは明示script_refsとplugin root直下scripts。catalog/36章とcheck_pkg_007を正本にし、SKILL/R1の実行規則再定義を除去します。YAML型・重複key、skill→pluginの先勝ち、realpath containment、実体単位集約、shebang/+xを検査します。feedbackはruntime4本＋既存anchor＋2schemaをskill内へ閉じ、同階層importとmanifest祖先rootを使います。repo lintはbuild_validationへ移し、IN1/IN2と属性要件を維持します。",
+        "決定事項": "通常起動の追加LLM/全repo走査は0。本文・他refsは今回007の対象外。runtimeと開発lintを分離する。新しいAPI/DB/認証方式は追加しない。公開5nodeはdraft/pendingを維持する。",
+        "運用・更新方法": "canonicalへ変更し既存配布機構でコピーを同期する。配布前に最小ゲートとbyte一致を確認する。Notion設定やtokenは公開せず、通常利用時に同梱資料を全読込しない。",
+        "関連資料": "specs/pkg007-runtime.md、architecture/pkg007-runtime.md、features/pkg007-runtime.md、tasks/pkg007-runtime.md、system-spec/pkg007-runtime/spec-impact-receipt.json、同quality-gates.json。実writer receiptは仕様影響受領書から辿る。",
+        "変更履歴": "2026-11-16: harness-zb7qのユーザー承認scopeを反映し、C02で5文書を登録。main向けdraft PRへ提出するための説明を追加。",
+        "PR用要約": "問題: 明示script参照の検査と共通feedbackに、人手判定とrepo配置前提が残っていた。\n変更: 007を機械正本へ集約し、feedback runtimeを同梱、repo lintを開発役割へ分離した。通常起動に追加LLM/全repo走査を入れない。\n検証: PKG007全23・対象回帰・feedbackstrict/vendor・新規5nodeのschema/readiness・SHA/秘密検査を最小ゲートとする。公開worktreeの実結果はquality-gates.jsonを参照。\n仕様影響: 対象scopeと配布依存/開発lint境界を反映。API/DB/認証方式は影響なし。\n追跡: Beads harness-zb7q、task-pkg007-runtime、devgraph/task-pkg007-runtime→main draft。",
+        "残課題": "実Notion API投入とlive再走は行っていない。既存全体coverageは未達のままであり、今回の最小ゲート成功を全体品質達成へ読み替えない。既存package/releaseゲートのMVP扱いは公開担当の記録に従う。"
+      }
+    },
+    {
+      "project_id": "harness-creator",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "pkg007",
+        "mvp",
+        "publication-review"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [],
+      "subtype_sections": {},
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "task",
+      "slug": "pkg007-runtime",
+      "title": "PKG007修復を最終レビューし仕様反映してdraft公開する",
+      "depends_on": [
+        "spec-pkg007-runtime",
+        "arch-pkg007-runtime"
+      ],
+      "related_nodes": [
+        "feature-pkg007-runtime",
+        "doc-pkg007-runtime"
+      ],
+      "classification": {
+        "reason": "harness-zb7qで承認されたPKG007の対象scope・配布依存・開発lint分離を記録するtask。",
+        "decision": "auto",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 0.97
+          },
+          {
+            "artifact_kind": "document",
+            "confidence": 0.03
+          }
+        ]
+      },
+      "sections": {
+        "目的": "harness-zb7qの変更だけを最終レビュー→仕様反映→対象限定commit/push→main向けdraft PRへ提出する。",
+        "背景": "PKG007の人手規則と配布依存を修復し、ユーザーが簡単実行・短時間・低トークンを条件にscope修正とfeedback単独配布修復を承認した。原workspaceの他案件や既存差分を混ぜず公開する。",
+        "入力と前提条件": "origin/mainをlocal mainへ取り込み公開branchへmerge済み。remoteにdevはなくdefaultはmain。公開worktreeはpkg007-final-review、branchはdevgraph/task-pkg007-runtime。原証拠と旧INCOMPLETEは保持する。",
+        "出力と成果物": "今回製品差分、C02正規5文書と実writer receipt、system-spec/pkg007-runtimeの仕様影響受領書/品質ゲート、対象限定commitとdraft PR。",
+        "依存関係": "spec-pkg007-runtimeとarch-pkg007-runtimeに依存する。tracker運用はBeads harness-zb7qにまとめ、新exact13 packageやconfirmed/pass昇格は行わない。",
+        "実装対象": "check_pkg_007と対象テスト、APEの契約文書、catalog/36章の007、共通feedback runtimeとcanonical/vendor整合、必要な実行属性の修復。配布版の採番/releaseは公開担当がMVP範囲を判断する。",
+        "Write scope と競合制約": "製品移植は公開担当、正規docs/specs/architecture/features/tasks/system-spec/pkg007-runtimeと今回のgraph/receiptは文書担当。元workspaceは変更しない。他者差分を戻さず、stageは今回allowlistへ限定する。",
+        "GitHub publication": "devgraph/task-pkg007-runtimeからmain向けdraft PR。目的・変更・検証・仕様影響・harness-zb7q・task-pkg007-runtime・残課題を本文へ記載する。mainへ直接pushせず自動mergeしない。",
+        "実行手順": "1. 製品差分を対象限定で移植し最終レビューする。\n2. 公開base版C02で5文書をpreviewしrevision指定applyする。\n3. 今回の最小ゲートと受領書SHA/秘密検査を実行する。\n4. 対象allowlistをcommit/pushしdraft PRへ出す。\n5. 結果をBeadsへ記録しmerge前doneへ昇格しない。",
+        "受入条件": "PKG007全23、対象10ファイル523test相当、feedbackstrict/vendor、新規5nodeのschema/readiness、受領書SHA/秘密検査が成功する。実Notion/liveなしと既存coverage未達を明記し、他案件や秘密をcommitへ含めない。",
+        "検証方法": "対象回帰と配布整合の決定論検査だけを使う。graphは新規5nodeのschema/readinessを確認し、既存nodeを再評価しない。全30分析・LLM全体再評価・live再走・全coverageは追加しない。コマンド/実結果/ログはquality-gates.jsonを正とする。",
+        "リスクとロールバック": "PKG007 PASSを本文/他refsや実API成功まで保証するものと誤認しない。旧FAIL/INCOMPLETEを上書きしない。戻す場合は今回公開commitのrevertを用い、他者差分や元workspaceを消さない。",
+        "Handoff": "文書statusはdraft、評価pendingを保持する。今回の対象ゲートを満たしたdraft提出までを成果とし、merge/release/done認定は別の明示判断へ渡す。Beads更新と公開操作は公開担当が行う。"
+      }
+    }
+  ],
+  "expected_graph_revision": 20
+}

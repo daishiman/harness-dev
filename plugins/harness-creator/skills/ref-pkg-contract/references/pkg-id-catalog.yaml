@@ -53,7 +53,7 @@ pkg_ids:
     package_modes: [bundle]
     severity: P0
     script: "scripts/validate-plugin-package.py --check pkg-006"
-    description: "hooks/*.{json,sh} が settings 断片の hooks 配列で全て参照、逆方向の未登録なし"
+    description: "hooks/*.{py,sh} が settings 断片の hooks 配列で全て参照、逆方向の未登録なし"
 
   PKG-007:
     name: "script 存在 + 実行可能"
@@ -61,7 +61,7 @@ pkg_ids:
     package_modes: [bundle]
     severity: P0
     script: "scripts/validate-plugin-package.py --check pkg-007"
-    description: "参照される scripts/* が plugin root 配下、shebang あり、+x ビット"
+    description: "対象は SKILL.md の明示 script_refs と plugin root 直下の scripts/*.{py,sh}。plugin 内に実在し shebang と +x ビットを持つ。本文・他の *_refs は対象外。実行規則の正本は validate-plugin-package.py の check_pkg_007"
 
   PKG-008:
     name: "settings 断片 lint"

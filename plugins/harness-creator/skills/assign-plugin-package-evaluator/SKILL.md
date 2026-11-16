@@ -87,7 +87,7 @@ evaluator は一度の採点で完結する read-only 工程。ループは回�
 
 ## PKG-002〜008 / PKG-014 sub-check 詳細
 
-catalog（`ref-pkg-contract` の `pkg-id-catalog.yaml`）が各 PKG ID に約束する条件のうち、script が機械判定するのは「script が機械判定する条件」の表の分だけ。「評価者が読んで判定する条件」の表は script では判定しないので、評価者が読んで判定する。後者を読まずに script の pass だけで PKG ID を pass にしない。
+catalog（`ref-pkg-contract` の `pkg-id-catalog.yaml`）が各 PKG ID の対象範囲を定める。script が機械判定する条件は下表のとおり。「評価者が読んで判定する条件」の表に載る PKG ID は、評価者の追加判定も必要であり、script の pass だけで pass にしない。
 
 ### script が機械判定する条件
 
@@ -97,8 +97,8 @@ catalog（`ref-pkg-contract` の `pkg-id-catalog.yaml`）が各 PKG ID に約束
 | PKG-003 | `check_pkg_003` | 同じ plugins root の別 plugin と skill 名・agent 名が重なる。symlink で配った skill・agent は数えない。`run-skill-feedback` の配布コピーは中身が一致すれば衝突にしない（一致の判定では `__pycache__`・`.pyc`/`.pyo`・`.DS_Store` を除く） |
 | PKG-004 | `check_pkg_004` | 自前 skill（symlink でない）の frontmatter が読めない、または `name`/`description`/`kind` が欠落か空値。`responsibility_refs`/`schema_refs`/`manifest` の欠落か空値は P1（`manifest` は理由付きの `completeness_exempt` で代えられる） |
 | PKG-005 | `check_pkg_005` | `agents/*.md` の frontmatter `name` が無いか、ファイル名（拡張子を除く）と違う。自前 skill の `subagent_refs`（block 形式でも flow 形式 `[a, b]` でもよい。`agents/x.md` と書けば `x`）が指す `agents/<name>.md` が無い |
-| PKG-006 | `check_pkg_006` | `hooks/` 直下の `*.py`/`*.sh` がどこにも登録されていない（名前は拡張子まで含めて完全一致で比べる。`guard` の登録は `guard.py` を満たさない）。逆に、`hooks/hooks.json`（`plugin.json` に `hooks` キーが無くても Claude Code が読む既定の場所）、`plugin.json` の `hooks`（object ならその中身、文字列か文字列の配列なら指す hooks file の中身）、package contract と `plugin.json` の `entry_points.hooks`、`settings/*.json` の hook command のうち `${CLAUDE_PLUGIN_ROOT}/hooks/…` か `./hooks/…` を指すものに実体が無い、または plugin の外を指す。`plugin.json` の `hooks` が指す file が plugin の中に無い。hooks file が JSON の object として読めない |
-| PKG-007 | `check_pkg_007` | plugin root 直下の `scripts/` にある `*.py`/`*.sh` に shebang が無い、または shebang があるのに `+x` が無い |
+| PKG-006 | `check_pkg_006` | `hooks/` 直下の `*.py`/`*.sh` がどこにも登録されていない（名前は拡張子まで含めて完全一致で比べる。`guard` の登録は `guard.py` を満たさない。helper とみなした `.py` は数えない。helper 判定の正本は `validate-plugin-package.py` の `is_import_only_support_module`）。逆に、`hooks/hooks.json`（`plugin.json` に `hooks` キーが無くても Claude Code が読む既定の場所）、`plugin.json` の `hooks`（object ならその中身、文字列か文字列の配列なら指す hooks file の中身）、package contract と `plugin.json` の `entry_points.hooks`、`settings/*.json` の hook command のうち `${CLAUDE_PLUGIN_ROOT}/hooks/…` か `./hooks/…` を指すものに実体が無い、または plugin の外を指す。`plugin.json` の `hooks` が指す file が plugin の中に無い。hooks file が JSON の object として読めない |
+| PKG-007 | `check_pkg_007` | catalog が定める対象の実在・配布内への解決・実行属性を検査する。`script_refs` は通常の YAML の文字列 path リスト。実行規則の正本はこの関数 |
 | PKG-008 | `check_pkg_008` | `settings/*.json` が JSON として読めない、最上位が object でない、`$schema` が無い（P1） |
 | PKG-014 | `check_pkg_014` | `kind` / combinator 宣言と goal-seek / feedback runtime 設定・本文配線が不一致 |
 
@@ -109,7 +109,7 @@ catalog（`ref-pkg-contract` の `pkg-id-catalog.yaml`）が各 PKG ID に約束
 | PKG ID | 判定すること | script で判定しない理由 |
 |---|---|---|
 | PKG-003 | hook 名・permission 名が同じ marketplace の別 plugin と衝突しない | 何を同じ名前とみなすか（event と matcher の組・permission の pattern の包含）を機械的に決められない |
-| PKG-007 | SKILL.md の `script_refs` が指す script が plugin の中に実在し、shebang と `+x` がある。`skills/*/scripts/` の script も同じ | `script_refs` には repo root 起点の vendored 参照や注釈付きの値が混じり、機械判定すると正しい参照まで fail にする |
+| PKG-006 | `hooks/` 直下で helper とみなして数えなかった `.py` が、本当に import されるだけである。機械判定が許容する代入・関数/class 定義に含まれる処理も読み、entry point なら登録の要る hook として扱う | `is_import_only_support_module` は AST の文の種類を判定し、代入右辺・decorator・関数/class 内部の実行意図までは判定しない |
 | PKG-008 | 34a 章 INV-1〜12 を満たし、Layer3（user・project 設定）とのマージで衝突しない | 不変条件の多くは他の設定層との組み合わせで決まり、settings 断片だけでは判定できない |
 
 この表の条件で違反を見つけたら、その PKG ID の `findings` に `location`・`evidence`・`severity` を付けて足し、`status` を `fail` にする。
