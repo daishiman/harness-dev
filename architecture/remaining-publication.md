@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-11-16T05:00:55.517262Z"
-updated_at: "2026-11-16T05:00:55.517262Z"
+updated_at: "2026-11-16T05:28:08.821327Z"
 depends_on: []
 related_nodes: ["spec-remaining-publication"]
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-16T05:00:55.517262Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-16T05:28:08.821327Z", "missing_sections": [], "status": "complete"}
 ---
 
 # Architecture overview
@@ -132,4 +132,6 @@ ADR5: テスト件数・版は親quality台帳の実結果へ委譲し、C02の�
 ## Risks and verification
 
 sourceの古い参照/版によるmain退行、public/private混在、旧PASSの現在版への偽装、unit成功からhost完了の誤推定を防ぐ。分類漏れ・SHA不一致・secret検出は停止し、MVPで見ない既存未達は残課題へ明示する。
+
+CIのplugin-testsは、過去の実走受領commit本文へ証跡を照合するためcommit履歴を必要とする。checkoutはfetch-depth: 0とfilter: blob:noneで履歴を保持し、blob本文は必要時に取得して一括取得を避ける。履歴不足を証跡やvalidatorの不備として扱わず、証跡・判定閾値は変更しない。
 

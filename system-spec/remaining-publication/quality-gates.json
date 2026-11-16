@@ -147,7 +147,7 @@
     "installed": false
   },
   "graph": {
-    "revision": 27,
+    "revision": 28,
     "new_nodes": 5,
     "existing_nodes_unchanged": 25,
     "total_nodes": 30,
@@ -203,5 +203,26 @@
     "source_is_ancestor": true,
     "main_is_ancestor": true,
     "content_tree_unchanged_by_history_join": true
+  },
+  "ci_history_fix": {
+    "detected_at": "2026-11-16T05:29:41.515718+00:00",
+    "failed_run": "https://github.com/daishiman/harness-dev/actions/runs/43808845156",
+    "failed_tests": [
+      "C14 decompose native source validation",
+      "C15 schedule native source validation"
+    ],
+    "cause": "plugin-testsのfetch-depth2により受領commitを見つけられず、同じ本物のnative実走証跡が現本文との照合だけで失敗した。",
+    "fix": "当該checkoutをfetch-depth0/filterblob:noneへ変更。履歴を保ち、過去の全blobの一括downloadを避ける。",
+    "upstream_action_definition": "https://github.com/actions/checkout/blob/v4/action.yml",
+    "evidence_unchanged": true,
+    "validator_and_threshold_unchanged": true,
+    "native_targets_passed": 4,
+    "workflow_regression_passed": 6,
+    "availability_proof": "docs/remaining-publication/checks/ci-history-availability.json",
+    "logs": [
+      "docs/remaining-publication/checks/ci-native-target-tests.log",
+      "docs/remaining-publication/checks/ci-checkout-tests.log"
+    ],
+    "remote_ci_status": "新headへのpush後に確認。完了結果はPR/Beadsへ記録する。"
   }
 }

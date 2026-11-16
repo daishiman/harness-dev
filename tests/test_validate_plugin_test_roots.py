@@ -151,3 +151,16 @@ def test_workflow_runs_governance_and_plugin_tests_in_parallel_then_aggregates()
         step.get("run", "") for step in jobs["plugin-tests"]["steps"]
     ]
     assert any("validate-plugin-test-roots.py --workers 4" in run for run in plugin_runs)
+
+
+def test_plugin_test_checkout_can_verify_historical_native_evidence():
+    workflow_path = ROOT / ".github" / "workflows" / "harness-creator-kit-ci.yml"
+    workflow = yaml.safe_load(workflow_path.read_text(encoding="utf-8"))
+    checkout = next(
+        step for step in workflow["jobs"]["plugin-tests"]["steps"]
+        if step.get("uses", "").startswith("actions/checkout@")
+    )
+
+    # 受領 commit は HEAD の2世代より古い。本文は検証時に必要な分だけ取得する。
+    assert checkout["with"]["fetch-depth"] == 0
+    assert checkout["with"]["filter"] == "blob:none"

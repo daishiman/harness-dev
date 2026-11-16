@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-11-16T05:00:55.517262Z"
-updated_at: "2026-11-16T05:00:55.517262Z"
+updated_at: "2026-11-16T05:28:08.821327Z"
 depends_on: ["spec-remaining-publication", "arch-remaining-publication"]
 related_nodes: ["feature-remaining-publication", "doc-remaining-publication"]
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-16T05:00:55.517262Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-16T05:28:08.821327Z", "missing_sections": [], "status": "complete"}
 ---
 
 # 目的
@@ -102,6 +102,8 @@ devgraph/ と tasks/remaining-publication.md の frontmatter.graph_node_id を�
 ## 検証方法
 
 最小ゲートのコマンド・実結果・test件数・対象版は親が管理するsystem-spec/remaining-publication/quality-gates.jsonを正とする。全体LLM再評価、live再走、全coverage達成認定は追加しない。 公開manifestで2284項目の欠落・重複・理由・対応先を確認し、privacy派生物/旧verdictと証拠SHAを検証する。C02は新規5nodeのschema/readinessを検査し、既存25nodeの内容不変を比較する。原runtime承認記録や実secretをテスト入力へ混ぜない。
+
+CIのplugin-testsは過去の実走受領commit本文の照合を前提とするため、checkoutをfetch-depth: 0とfilter: blob:noneにして履歴を保持しblob本文は必要時に取得する。過去commitの未取得はcheckout環境の不足として診断し、証跡不在や挙動FAILと混同しない。証跡・validator・閾値を緩めず、修復後の対象CI成功を確認してから公開の品質ゲート結果へ記録する。
 
 ## リスクとロールバック
 

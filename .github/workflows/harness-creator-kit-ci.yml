@@ -17,9 +17,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # changed-path priority が shallow-root で全fileを変更扱いしないよう
-          # HEAD と first parent の tree を取得する。優先度取得失敗時も全testは走る。
-          fetch-depth: 2
+          # native 実走証跡は、受領 commit の本文と照合するため過去の履歴が必要。
+          # blob は必要時に取得し、過去の全ファイル本文の一括ダウンロードを避ける。
+          fetch-depth: 0
+          filter: blob:none
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
