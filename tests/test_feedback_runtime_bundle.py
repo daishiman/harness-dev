@@ -201,3 +201,17 @@ raise SystemExit(resolver.main(["skill-governance-adapters", "--from", sys.argv[
     )
     assert result.returncode == 0, result.stderr
     assert Path(result.stdout.strip()) == guard.resolve()
+
+
+def test_feedback_resource_map_covers_references_and_is_vendored():
+    import yaml
+
+    canonical_map = CANONICAL / "references/resource-map.yaml"
+    data = yaml.safe_load(canonical_map.read_text())
+    resources = data["resources"]
+    filenames = [entry["file"] for entry in resources]
+    assert len(filenames) == len(set(filenames))
+    assert set(filenames) == {path.name for path in (CANONICAL / "references").glob("*.md")}
+    assert all(entry["topic"].strip() and entry["read_when"].strip() for entry in resources)
+    for skill in ROOT.glob("plugins/*/skills/run-skill-feedback"):
+        assert (skill / "references/resource-map.yaml").read_bytes() == canonical_map.read_bytes()

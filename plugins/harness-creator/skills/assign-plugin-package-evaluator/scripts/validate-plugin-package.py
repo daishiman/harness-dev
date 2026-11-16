@@ -2,7 +2,8 @@
 # /// script
 # requires-python = ">=3.9"
 # dependencies = ["PyYAML>=6.0"]
-# ///
+# [tool.harness]
+# metadata = '''
 # name: validate-plugin-package
 # purpose: 1 つの plugin を PKG-002〜008 と PKG-014 で検査し、findings JSON を出す（読むだけで書かない。--output だけ書く）
 # inputs:
@@ -18,6 +19,8 @@
 # write-scope: --output に渡したファイルだけ
 # dependencies: [PyYAML>=6.0]
 # requires-python: ">=3.9"
+# '''
+# ///
 """PKG-002〜008 / PKG-014 sub-check 実装。
 
 正本仕様: doc/ClaudeCodeスキルの設計書/36-plugin-package-harness-contract.md

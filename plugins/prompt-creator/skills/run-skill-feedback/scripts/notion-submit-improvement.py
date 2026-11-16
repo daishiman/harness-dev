@@ -1,4 +1,25 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.9"
+# dependencies = []
+# [tool.harness]
+# metadata = '''
+# name: notion-submit-improvement
+# purpose: 登録済みプラグインへ N:1 relation を張り、Notion 改善要望 DB に 1 ページを投入する。--dry-run は引数表示だけで外部通信しない
+# inputs:
+#   - argv: --plugin --title --type --desire（必須）、--skill-name --background --priority --importance --pr-url（任意）、--dry-run
+#   - files: notion_config が解決する .notion-config.json または notion-config.fixed.json（認証値は CLI 引数で受けない）
+#   - env: notion_config 経由の NOTION_CONFIG_PATH、NOTION_DB_SKILL_LIST、NOTION_DB_IMPROVEMENT_REQUEST、明示許可時のみ NOTION_TOKEN
+# outputs:
+#   - stdout: --dry-run の引数 JSON、成功時 [CREATED] と page_id、失敗時の原因案内（token は出さない）
+#   - exit: 0=完了または明示 SKIP、2=設定不足または未登録、3=API 到達・認可・作成失敗
+# contexts: [C, E]
+# network: true
+# write-scope: Notion 改善要望 DB の新規ページ、および POST body の一時 JSON ファイル（例外時も削除）
+# dependencies: [notion_config.py, tenant_runtime.py, curl（system CLI）]
+# requires-python: ">=3.9"
+# '''
+# ///
 """Notion 改善要望 DB へ要望を1件投入する汎用ユーティリティ。
 
 harness-creator の run-skill-feedback (利用者が「こう直してほしい」と言ったとき発火) から呼ばれる。

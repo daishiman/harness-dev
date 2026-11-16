@@ -166,6 +166,7 @@ FEEDBACK_REL = (
     "references/goal-seek-paradigm.md",
     "references/feedback-to-improvement-runbook.md",
     "references/notion-per-repo-setup.md",
+    "references/resource-map.yaml",
 )
 
 
@@ -218,7 +219,7 @@ def test_symlinked_feedback_deploy_keeps_its_pairs(tmp_path, capsys, shape):
     mod.VENDORED_PAIRS = [(c, v) for c, v in mod.VENDORED_PAIRS if "run-skill-feedback" in v.parts]
     assert {str(v.relative_to(root)) for _, v in mod.VENDORED_PAIRS} == {
         f"plugins/{p}/skills/run-skill-feedback/{rel}"
-        for p, rels in (("harness-creator", FEEDBACK_REL[3:-1]), ("p", FEEDBACK_REL))
+        for p, rels in (("harness-creator", FEEDBACK_REL[3:-2]), ("p", FEEDBACK_REL))
         for rel in rels
     }
     assert mod.main() == 1
@@ -253,7 +254,7 @@ def test_feedback_runtime_assets_are_checked_for_every_deployment():
     registered = {v for _, v in MOD.VENDORED_PAIRS}
     for deployment in deployments - {canonical}:
         assert all(deployment / rel in registered for rel in FEEDBACK_REL)
-    assert all(canonical / rel in registered for rel in FEEDBACK_REL[3:-1])
+    assert all(canonical / rel in registered for rel in FEEDBACK_REL[3:-2])
 
 
 def test_cli_real_repo_exit_zero():

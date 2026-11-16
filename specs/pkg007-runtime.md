@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-11-16T03:37:44.999349Z"
-updated_at: "2026-11-16T03:45:51.306227Z"
+updated_at: "2026-11-16T04:12:25.429540Z"
 depends_on: []
 related_nodes: ["arch-pkg007-runtime", "feature-pkg007-runtime"]
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-16T03:45:51.306227Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-16T04:12:25.429540Z", "missing_sections": [], "status": "complete"}
 ---
 
 # 目的と成功状態
@@ -70,6 +70,8 @@ FR2: YAML型・重複key・候補の先勝ち・realpath containment・shebang/+
 FR3: 4追加runtimeと既存anchor、2schema、必要時参照文書をskill内へ閉じる。
 FR4: notion_configはmanifest祖先からowner plugin rootを解決し、明示config優先を維持する。
 FR5: repo用lintはmanifestのbuild_validationでIN1/IN2と実行属性要件を保持し、runtimeへvendorしない。
+FR6: references/resource-map.yamlへ4資料のtopic/read_whenを宣言し、必要な資料だけを選択して読む。
+FR7: CI指摘に限定して索引metadataとPEP723等のscriptヘッダーを補完する。ヘッダー補完による通常runtime処理のASTは変更しない。
 
 ## 非機能要件
 
@@ -109,11 +111,11 @@ findingはlocation/evidence/severityと参照元を持つ。原review・旧INCOM
 
 ## 互換性・移行・リリース
 
-repo正本submitと配布版の同階層importを両対応する。canonicalと既存22コピーを既存配布機構で同期した。今回共通部品を含む23pluginだけをbuild-plugin-release.pyでpatch採番し、正規metadataを生成した（harness-creator 1.4.66、dev-graph 0.1.34等）。整合検査を実行しinstallはしない。公開はtask branchからmain向けdraft PRで、merge・done昇格は別判断とする。
+repo正本submitと配布版の同階層importを両対応する。canonicalと既存22コピーを既存配布機構で同期した。今回共通部品を含む23pluginだけをbuild-plugin-release.pyでpatch採番し、正規metadataを生成した（harness-creator 1.4.67、dev-graph 0.1.35等）。整合検査を実行しinstallはしない。公開はtask branchからmain向けdraft PRで、merge・done昇格は別判断とする。 PR91のCI後追いでは索引metadataとヘッダーを正規生成元へ反映し、既存同期経路で配布版へ展開した。全23pluginの最新patch版一覧は docs/pkg007-runtime/checks/metadata-final-gates.json の versions を正とする。
 
 ## テストと受入条件
 
-PKG007全23plugin、公開treeの対象10ファイル521test、feedback strict/vendor330一致、対象23pluginのrelease整合、新規5nodeのschema/readiness、仕様受領書のSHA・秘密検査を最小ゲートにする。初期dirty treeの無関係2testを持ち込まないため、元作業treeの523件から公開treeでは521件になった。結果は公開worktreeの実ログを正とする。
+PKG007全23plugin、metadata補修後の対象回帰522件、criteria5件、frontmatter209script違反0、vendor352byte一致、対象23pluginのrelease整合、guard blocked0、新規5nodeのschema/readiness、仕様受領書のSHA・秘密検査を最小ゲートにする。前回公開tree521件に続く今回の実結果は docs/pkg007-runtime/checks/metadata-final-gates.json を正とし、初期dirty treeの無関係2testは引き続き公開へ持ち込まない。全体評価やliveは再走しない。
 
 ## 未決事項
 

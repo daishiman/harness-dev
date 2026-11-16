@@ -20,7 +20,7 @@ evaluation_status: "pending"
 confirmation_evidence: {"evaluated_digest": null, "evaluator": null, "evidence_ref": null}
 source_lineage: {"imported_at": null, "origin_kind": "manual", "source_digest": null, "source_path": null, "source_plugin": null, "source_version": null}
 created_at: "2026-11-16T03:37:44.999349Z"
-updated_at: "2026-11-16T03:46:29.683618Z"
+updated_at: "2026-11-16T04:12:25.429540Z"
 depends_on: []
 related_nodes: ["feature-pkg007-runtime", "spec-pkg007-runtime", "arch-pkg007-runtime", "task-pkg007-runtime"]
 resource_scope: []
@@ -44,7 +44,7 @@ github_project_linkages: []
 pull_request_linkages: []
 execution_contexts: []
 completion_evidence: {"completed_at": null, "evidence_refs": [], "policy": "manual", "reconciled_at": null, "source": null, "status": "not_applicable"}
-implementation_readiness: {"checked_at": "2026-11-16T03:46:29.683618Z", "missing_sections": [], "status": "complete"}
+implementation_readiness: {"checked_at": "2026-11-16T04:12:25.429540Z", "missing_sections": [], "status": "complete"}
 ---
 
 # 目的
@@ -67,13 +67,19 @@ script_refsは『使う道具の持ち物表』、pluginは配布するかばん
 専門向け
 PKG007のscopeは明示script_refsとplugin root直下scripts。catalog/36章とcheck_pkg_007を正本にし、SKILL/R1の実行規則再定義を除去します。YAML型・重複key、skill→pluginの先勝ち、realpath containment、実体単位集約、shebang/+xを検査します。feedbackはruntime4本＋既存anchor＋2schemaをskill内へ閉じ、同階層importとmanifest祖先rootを使います。repo lintはbuild_validationへ移し、IN1/IN2と属性要件を維持します。
 
+CI後追いの補完（中学生向け）
+4つの説明資料に目次を付け、必要なページだけを開けるようにしました。道具の説明ラベルもそろえましたが、道具が実際に行う処理は変えていません。
+
+CI後追いの補完（専門向け）
+resource-map.yamlに4資料のtopic/read_whenを宣言し正規rendererとregistryで同期しました。PEP723等のヘッダー補完は通常runtime処理のASTを変えません。通常起動に全資料読込や追加LLM評価を加えず、vendorは352組のbyte一致を検証しました。
+
 ## 決定事項
 
 通常起動の追加LLM/全repo走査は0。本文・他refsは今回007の対象外。runtimeと開発lintを分離する。新しいAPI/DB/認証方式は追加しない。公開5nodeはdraft/pendingを維持する。
 
 ## 運用・更新方法
 
-canonicalへ変更し既存配布機構でコピーを同期する。配布前に最小ゲートとbyte一致を確認する。Notion設定やtokenは公開せず、通常利用時に同梱資料を全読込しない。
+canonicalへ変更し既存配布機構でコピーを同期する。配布前に最小ゲートとbyte一致を確認する。Notion設定やtokenは公開せず、通常利用時に同梱資料を全読込しない。 4資料の選択はresource-map.yamlのtopic/read_whenを使い、該当する資料だけを必要時に読む。metadata補修は正規生成元へ反映し、renderer/registryの同期とvendor352一致で確認する。
 
 ## 関連資料
 
@@ -82,15 +88,16 @@ specs/pkg007-runtime.md、architecture/pkg007-runtime.md、features/pkg007-runti
 ## 変更履歴
 
 2026-11-16: harness-zb7qのユーザー承認scopeをC02で正規5文書へ反映。公開treeの521件と対象23packageの版更新を追記した。初期dirty treeの無関係2testは公開対象外。main向けdraft PRの説明を記載。
+2026-11-16 PR91 CI後追い: 命名・参照索引metadata・ヘッダーを補完し正規同期した。runtime AST不変、522回帰・5criteria・vendor352・最新patch版を今回の実結果へ更新。
 
 ## PR用要約
 
-問題: 明示script参照の検査と共通feedbackに、人手判定とrepo配置前提が残っていた。
-変更: 007を機械正本へ集約し、feedback runtimeを同梱、repo lintを開発役割へ分離した。通常起動に追加LLM/全repo走査を入れない。
-検証: 公開treeの対象10ファイル521件が成功。元作業treeの523件に含まれた無関係2testは公開へ持ち込まない。PKG007全23、feedbackstrict/vendor330一致、23packageのrelease整合、新規5nodeのschema/readiness、SHA/秘密検査を最小ゲートとする。実ログはquality-gates.jsonを参照。
-版更新: 今回共通部品を含む23pluginだけをpatch採番し正規metadata生成・整合検査した（harness-creator 1.4.66、dev-graph 0.1.34等）。installは行っていない。
-仕様影響: 対象scopeと配布依存/開発lint境界を反映。API/DB/認証方式は影響なし。
-追跡: Beads harness-zb7q、task-pkg007-runtime、devgraph/task-pkg007-runtime→main draft。
+問題: 明示script参照の検査と共通feedbackに、人手判定とrepo配置前提が残っていた。PR91のCIで命名・索引metadata・scriptヘッダーの不足が見つかった。
+変更: 007を機械正本へ集約し、feedback runtimeを同梱、repo lintを開発役割へ分離。CI後追いでは4資料の索引metadata、ヘッダーと正規renderer/registryを補完した。ヘッダー補完で通常runtime処理のASTは変えず、通常起動に追加LLM/全repo走査を入れない。
+最新検証: 回帰522件、criteria5件、frontmatter209script違反0、vendor352一致、23package blocking0、release23とguard blocked0を確認。前回521件と今回CI後追いの結果を区別し、原workspaceの無関係2testは持ち込まない。実ログは docs/pkg007-runtime/checks/metadata-final-gates.json を参照。
+最新patch版: harness-creator 1.4.67、dev-graph 0.1.35。他23pluginの版は同JSONのversionsを正とする。installは行っていない。
+仕様影響: 対象scope・配布依存・開発lint境界と必要資料の選択を反映。API/DB/認証方式は影響なし。
+追跡: Beads harness-zb7q、task-pkg007-runtime、devgraph/task-pkg007-runtime→main draft PR91。
 
 ## 残課題
 

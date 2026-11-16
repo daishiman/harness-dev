@@ -92,6 +92,7 @@ VENDORED_PAIRS = [
             "references/notion-submit-contract.md",
             *FEEDBACK_RUNTIME_SOURCES,
             "references/notion-per-repo-setup.md",
+            "references/resource-map.yaml",
         )
     ],
     # Tenant selection and credential-reference derivation are shared by every

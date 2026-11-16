@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.5 - 2026-11-16
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## 0.9.4 - 2026-11-16
 
 - build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。

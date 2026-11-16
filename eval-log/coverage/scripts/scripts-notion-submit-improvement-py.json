@@ -5,9 +5,9 @@
   "llm_eval": {
     "verdict": "PASS",
     "score": 90,
-    "notes": "genuine independent delta review（2026-11-16、sha256 cc749b001582809f9e7db18052eedceab730b79c2eb255a5a0a0d682526087f4）。今回の対象はSCRIPT_DIR/CONFIG_DIRとimport先選択の小差分。配布skill内では同階層notion_configを優先し、repo正本だけがplugins/harness-creator/scriptsへfallbackする。sys.pathへの挿入は従来同様で、削除したROOT/SCHEMA_DIRに残る使用がないことを隣接codeで確認。同階層loaderとtenant_runtimeがvendored asset台帳へ登録されているため単独配布で兄弟pluginを必要としない。token/DB解決経路やNotion API実行の既存意味を変更しない。LLM/兄弟repo走査の追加無し。前recordのtempfile cleanup/API応答shapeの課題は今回未変更。 検証根拠: 変更hunkと隣接契約・対応testを当reviewerが読んで評価した。親共有のpackage23件PASS、vendored330一致、feedback strict PASS、関連168test/PKG007 201test PASSを参照したが、当reviewer自身はsuiteを再実行していない。rendererの追加回帰7PASSは著者報告であり、当reviewerは修正hunkとtestを再通読した。追加LLMや自己文書の承認はしていない。前recordは今回run-dirのcoverage-history/meta_analystへ内容を保持してコピー済み。今回見た差分に残るblocking問題なし。"
+    "notes": "genuine independent delta review、source SHA256=4c0337214d3a2fe1a89f7e7b221f273f4858c3bd758089db04a4dfd4af97c97d。rootが当該変更著者reset_observer/meta_analystとは別に差分・隣接実装・対応testを通読。PEP723 TOMLのtool.harness metadataに入出力/ネットワーク/一時ファイル書込を宣言。curl、config/tenant依存、dry-runとexit契約を実関数と照合。コメントのみでHEADとの実行AST/mode一致。 522回帰、criteria5、frontmatter209、vendor352、23package、releaseを親が実行しPASS。旧scoreと既存課題を維持、過去評価は docs/pkg007-runtime/review-history/ci-metadata/scripts-notion-submit-improvement-py.json に保存。metadata補修差分にblocking問題なし。"
   },
-  "reviewed_by": "independent-code-review-20261116-meta-analyst-pkg007",
+  "reviewed_by": "independent-delta-review-20261116-root-ci-metadata",
   "checked": [
     "soundness",
     "responsibility",

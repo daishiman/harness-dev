@@ -5,9 +5,9 @@
   "llm_eval": {
     "verdict": "PASS",
     "score": 90,
-    "notes": "公開treeでのproof reuse（機械投影、新LLM採点なし）。source artifact=scripts/notion-submit-improvement.py; source SHA256=cc749b001582809f9e7db18052eedceab730b79c2eb255a5a0a0d682526087f4; source record SHA256=8b80822c97c6fba56a3b54af531f1e21704e41d7dbc2b3cb3c0f64c956e69f43; copy SHA256=cc749b001582809f9e7db18052eedceab730b79c2eb255a5a0a0d682526087f4。source/copy bytes完全一致を公開treeで今回確認。owner sourceの真正評価1回を再利用し、copyを再読・再採点していない。同階層runtime4本の存在も確認。残存課題・評価範囲はsource recordに従う。"
+    "notes": "機械的byte証拠再利用（新LLM採点なし）。source=scripts/notion-submit-improvement.py sourceSHA=4c0337214d3a2fe1a89f7e7b221f273f4858c3bd758089db04a4dfd4af97c97d sourceRecordSHA=cfe03215b72a68b1466863a98448ff4cd043b6a7b44528d5c59f3167f69b4a98 copySHA=4c0337214d3a2fe1a89f7e7b221f273f4858c3bd758089db04a4dfd4af97c97d。親の独立metadata差分review済みsourceと23copyのbyte一致を照合。処理AST不変。旧proofは docs/pkg007-runtime/review-history/ci-metadata/plugins-plugin-dev-planner-skills-run-skill-feedback-scripts-notion-submit-improvement.py.json に保全、既存score/課題維持。"
   },
-  "reviewed_by": "proof-reuse-projection-20261116-meta-analyst-publication",
+  "reviewed_by": "byte-proof-reuse-20261116-root-ci-metadata",
   "checked": [
     "soundness",
     "responsibility",
@@ -18,13 +18,13 @@
   "provenance": {
     "method": "byte-identity-proof-reuse",
     "source_artifact": "scripts/notion-submit-improvement.py",
-    "source_sha256": "cc749b001582809f9e7db18052eedceab730b79c2eb255a5a0a0d682526087f4",
+    "source_sha256": "4c0337214d3a2fe1a89f7e7b221f273f4858c3bd758089db04a4dfd4af97c97d",
     "source_record": "eval-log/coverage/scripts/scripts-notion-submit-improvement-py.json",
-    "source_record_sha256": "8b80822c97c6fba56a3b54af531f1e21704e41d7dbc2b3cb3c0f64c956e69f43",
+    "source_record_sha256": "cfe03215b72a68b1466863a98448ff4cd043b6a7b44528d5c59f3167f69b4a98",
     "copy_artifact": "plugins/plugin-dev-planner/skills/run-skill-feedback/scripts/notion-submit-improvement.py",
-    "copy_sha256": "cc749b001582809f9e7db18052eedceab730b79c2eb255a5a0a0d682526087f4",
+    "copy_sha256": "4c0337214d3a2fe1a89f7e7b221f273f4858c3bd758089db04a4dfd4af97c97d",
     "byte_identity_verified": true,
     "review_reuse_reason": "公開treeのowner canonical sourceの真正評価と現在bytesを照合し、同tree内配布copyのbyte完全一致及び同階層runtime依存4本の存在を機械確認。copy個別の新LLM採点は実施していない。",
-    "source_reviewer": "independent-code-review-20261116-meta-analyst-pkg007"
+    "source_reviewer": "independent-delta-review-20261116-root-ci-metadata"
   }
 }

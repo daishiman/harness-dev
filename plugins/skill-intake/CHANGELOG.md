@@ -2,6 +2,10 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`skill-intake` plugin の変更履歴を記録する。skill-creator 設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## [0.1.27] - 2026-11-16
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## [0.1.26] - 2026-11-16
 
 - build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
