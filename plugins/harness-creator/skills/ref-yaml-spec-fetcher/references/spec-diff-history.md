@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-11-16T04:42:26Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -30,17 +30,26 @@
+ commands reference
+ .
+ Custom commands have been merged into skills.
+-A file at
++Your existing
++.claude/commands/
++files keep working. Claude can invoke them without you typing the command. Edit a command to stop Claude from invoking it on its own, or convert a command that needs more than one file to a skill:
++Stop Claude from invoking a command on its own
++: add
++disable-model-invocation: true
++to the command file’s
++frontmatter
++Add
++supporting files
++such as scripts
++: convert the command to a skill. For example, move
+ .claude/commands/deploy.md
+-and a skill at
++to
+ .claude/skills/deploy/SKILL.md
+-both create
++. The
++folder name becomes the command
++, so you still type
+ /deploy
+-and work the same way. Your existing
+-.claude/commands/
+-files keep working. Skills add optional features: a directory for supporting files, frontmatter to
+-control whether you or Claude invokes them
+-, and the ability for Claude to load them automatically when relevant.
++.
+ Claude Code skills follow the
+ Agent Skills
+ open standard, which works across multiple AI tools. Claude Code extends the standard with additional features like
+@@ -52,7 +61,6 @@
+ . See
+ Using skill frontmatter outside Claude Code
+ for which frontmatter fields are part of the standard and which are Claude Code extensions.
+-​
+ Bundled skills
+ Claude Code includes a set of bundled skills, such as
+ /doctor
+@@ -67,11 +75,9 @@
+ , and
+ /claude-api
+ . Bundled skills are prompt-based: they give Claude detailed instructions and let it orchestrate the work using its tools. Most built-in commands instead execute fixed logic directly.
+-You invoke a bundled skill the same way as any other skill, by typing
++You invoke a bundled skill by typing
+ /
+-followed by the skill name. Claude invokes some bundled skills automatically when relevant; others, including
+-/verify
+-, run only when you invoke them, which keeps you in control of when these longer-running checks spend time and tokens.
++followed by the skill name. Claude invokes some bundled skills automatically when relevant.
+ Most bundled skills are available in every session. A few depend on a specific feature:
+ /workflow-authoring
+ , for example, is available only when
+@@ -96,7 +102,6 @@
+ , marked
+ Skill
+ in the Purpose column.
+-​
+ Check your setup with
+ /doctor
+ Run
+@@ -148,7 +153,6 @@
+ for outdated or conflicting instructions instead of running the checkup. The
+ prompt-audit
+ subcommand requires Claude Code v2.1.283 or later.
+-​
+ Run and verify your app
+ Three bundled skills work together to launch your app and confirm changes against the running app instead of tests alone:
+ Skill
+@@ -188,7 +192,6 @@
+ /verify
+ .
+ Claude edits the recorded file only when it steered a run wrong, such as a command that failed or a missing step, so you can commit the file without per-session diffs.
+-​
+... (3877 more lines)
+```
+
 ## 2026-11-09T04:36:57Z
 
 実仕様ページに変更を検知。

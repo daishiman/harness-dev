@@ -1,6 +1,6 @@
 # YAML Spec Cache
 
-last_fetched: 2026-11-09T04:36:54Z
+last_fetched: 2026-11-16T04:42:23Z
 fetcher: scripts/build-yaml-spec-cache.py
 
 ## Source (skills): https://docs.claude.com/en/docs/claude-code/skills
@@ -31,17 +31,26 @@ and
 commands reference
 .
 Custom commands have been merged into skills.
-A file at
-.claude/commands/deploy.md
-and a skill at
-.claude/skills/deploy/SKILL.md
-both create
-/deploy
-and work the same way. Your existing
+Your existing
 .claude/commands/
-files keep working. Skills add optional features: a directory for supporting files, frontmatter to
-control whether you or Claude invokes them
-, and the ability for Claude to load them automatically when relevant.
+files keep working. Claude can invoke them without you typing the command. Edit a command to stop Claude from invoking it on its own, or convert a command that needs more than one file to a skill:
+Stop Claude from invoking a command on its own
+: add
+disable-model-invocation: true
+to the command file’s
+frontmatter
+Add
+supporting files
+such as scripts
+: convert the command to a skill. For example, move
+.claude/commands/deploy.md
+to
+.claude/skills/deploy/SKILL.md
+. The
+folder name becomes the command
+, so you still type
+/deploy
+.
 Claude Code skills follow the
 Agent Skills
 open standard, which works across multiple AI tools. Claude Code extends the standard with additional features like
@@ -53,7 +62,6 @@ dynamic context injection
 . See
 Using skill frontmatter outside Claude Code
 for which frontmatter fields are part of the standard and which are Claude Code extensions.
-​
 Bundled skills
 Claude Code includes a set of bundled skills, such as
 /doctor
@@ -68,11 +76,9 @@ Claude Code includes a set of bundled skills, such as
 , and
 /claude-api
 . Bundled skills are prompt-based: they give Claude detailed instructions and let it orchestrate the work using its tools. Most built-in commands instead execute fixed logic directly.
-You invoke a bundled skill the same way as any other skill, by typing
+You invoke a bundled skill by typing
 /
-followed by the skill name. Claude invokes some bundled skills automatically when relevant; others, including
-/verify
-, run only when you invoke them, which keeps you in control of when these longer-running checks spend time and tokens.
+followed by the skill name. Claude invokes some bundled skills automatically when relevant.
 Most bundled skills are available in every session. A few depend on a specific feature:
 /workflow-authoring
 , for example, is available only when
@@ -97,7 +103,6 @@ commands reference
 , marked
 Skill
 in the Purpose column.
-​
 Check your setup with
 /doctor
 Run
@@ -149,7 +154,6 @@ files, skills, and other configuration
 for outdated or conflicting instructions instead of running the checkup. The
 prompt-audit
 subcommand requires Claude Code v2.1.283 or later.
-​
 Run and verify your app
 Three bundled skills work together to launch your app and confirm changes against the running app instead of tests alone:
 Skill
@@ -189,7 +193,6 @@ at the repo root, or in the touched package directory in a monorepo, so later ru
 /verify
 .
 Claude edits the recorded file only when it steered a run wrong, such as a command that failed or a missing step, so you can commit the file without per-session diffs.
-​
 Run your checks before each commit
 When a session starts with a skill named
 verify
@@ -218,7 +221,6 @@ Git instructions
 : you haven’t turned off
 includeGitInstructions
 . Turning it off removes this instruction together with the rest of the built-in commit and PR instructions.
-​
 Work on Claude API projects
 The bundled
 /claude-api
@@ -277,6 +279,9 @@ v2.1.221 or later
 cost-optimize
 Profile where your project’s Claude API spend goes and propose savings from options such as prompt caching, trimming unneeded input and output tokens, batch processing, effort, and model choice, one change at a time
 v2.1.247 or later
+latency-optimize
+Find where the time goes in your existing Claude API code and propose changes that reduce how long people wait
+v2.1.319 or later
 build-eval
 Build an eval set for your Claude-powered app
 v2.1.259 or later
@@ -288,9 +293,7 @@ Find the edits your integration makes to earlier turns, its system prompt, or it
 preserved thinking
 blocks, measure how much reasoning each one drops, and propose fixes one at a time, re-measuring after each change
 v2.1.282 or later
-​
 Getting started
-​
 Create your first skill
 This example creates a skill that summarizes the uncommitted changes in your git repository and flags anything risky. It pulls the live diff into the prompt before Claude reads it, so the response is grounded in your actual working tree rather than what Claude can guess from open files. Claude loads the skill automatically when you ask about your changes, or you can invoke it directly with
 /summarize-changes
@@ -342,7 +345,6 @@ Or invoke it directly
 with the skill name:
 /summarize-changes
 Either way, Claude should respond with a short summary of your edit and a list of risks.
-​
 Choose where skills load
 Where you save a skill decides which sessions load it. Save it under your home directory to get it in every project, commit it to a repository to share it with everyone who works there, or distribute it through a plugin or managed settings to reach a whole team.
 Location
@@ -443,7 +445,6 @@ with its own agents, hooks, and MCP servers. In a project’s
 , this requires accepting the workspace trust dialog first, and in either location it requires that your administrator hasn’t
 blocked skills-directory plugins
 .
-​
 Load skills in monorepos and subdirectories
 Claude Code loads project skills from
 .claude/skills/
@@ -484,7 +485,6 @@ apps/web/
 .
 /apps/web:deploy
 runs the nested skill on its own. Its description names the directory it applies to.
-​
 Load skills from a directory outside the project
 When you add a directory with
 --add-dir
@@ -532,7 +532,6 @@ Additional directories grant file access, not configuration
 for the full table of what an added directory loads, including
 CLAUDE.md
 and plugin settings.
-​
 Run a same-named skill from an added directory
 An added directory’s skill gets a prefix when its folder name clashes with an enterprise, personal, or project skill, or one in a directory added earlier. To run it, type
 /<prefix>:<skill-name>
@@ -553,7 +552,6 @@ runs your project’s skill
 /cli:verify
 runs the skill from
 ../cli
-​
 Resolve skills that share a name
 When two skills share a directory or file name, where each one came from decides which one
 /name
@@ -618,7 +616,6 @@ Any of the above and the short name of a skill
 synced from your claude.ai account
 The other skill or command. The synced skill is then listed and runs only under its full name. See
 When a synced skill name matches another command
-​
 Use skills in Cowork and cloud sessions
 Cowork
 sessions and
@@ -653,7 +650,6 @@ Desktop scheduled tasks
 run locally on your machine, so they do load
 ~/.claude/skills/
 .
-​
 Skills synced from claude.ai
 This section applies to you if you use Cowork or cloud sessions, or sign in to Claude Code in your terminal with a claude.ai account. In those sessions, Claude Code loads the skills enabled for your claude.ai account, with no setup on your part, as
 Where synced skills load
@@ -665,7 +661,6 @@ xlsx
 Claude Code downloads a synced skill from your account rather than reading a file you wrote on the machine where the session runs, so it applies rules to synced skills that don’t apply to the skills you store in the
 skills locations
 .
-​
 Where synced skills load
 In a Cowork or cloud session, Claude Code loads the skills enabled for your claude.ai account, and
 Skills in Cowork and cloud sessions
@@ -742,7 +737,6 @@ If your organization turns Skills off on claude.ai, Claude Code removes the down
 , where you can recover the files until the
 retention sweep
 deletes them. Once your organization turns Skills back on, Claude Code downloads the skills you enabled at the next sync.
-​
 When a synced skill name matches another command
 You can invoke a synced skill by its short name,
 /<name>
@@ -805,7 +799,6 @@ keeps running your local skill.
 A name that differs only by a look-alike letter from another alphabet counts as a different name, and the
 claude.ai sync
 label is how you tell the two apart. These checks and labels require Claude Code v2.1.228 or later.
-​
 Names reserved for synced skills
 Claude Code reserves the name
 anthropic-skills
@@ -833,7 +826,6 @@ anthropic-skills
 : it connects and its tools work, but
 its prompts don’t appear as commands
 . Rename the server in your MCP configuration to list them.
-​
 How Claude Code handles the frontmatter of a synced skill
 Claude Code applies two rules to a synced skill’s frontmatter:
 The frontmatter applies in every kind of session, so an
@@ -846,7 +838,6 @@ allowManagedPermissionRulesOnly
 doesn’t apply
 .
 Claude Code sanitizes the display text the skill supplies, such as its description. It removes control characters, and in text that reaches Claude, such as the description, it also escapes angle brackets so the text can’t imitate Claude Code’s internal formatting. This sanitization requires Claude Code v2.1.228 or later.
-​
 How Claude Code handles the body of a synced skill
 What Claude Code does with a synced skill’s body depends on where the session runs:
 In a cloud session, the body keeps the behavior a local skill has, because the session runs in an isolated container.
@@ -856,23 +847,22 @@ command line with the
 disableSkillShellExecution
 placeholder
 , as it does for every skill you supply there.
-In any other session on your machine, Claude Code doesn’t run
+In a terminal or VS Code session, Claude Code doesn’t run
 !
 commands
 , doesn’t attach the files that
 @
-references name the way it does for a local skill, and doesn’t substitute the
+references name, and doesn’t substitute the
 ${CLAUDE_PROJECT_DIR}
 and
 ${CLAUDE_SESSION_ID}
-placeholders, so the
+placeholders. The
 @
 references and both placeholders reach Claude as literal text. A
 !
-command line reaches Claude as literal text too, or as that placeholder when
+command line reaches Claude as literal text too, or as the
 disableSkillShellExecution
-is on. This handling requires Claude Code v2.1.228 or later.
-​
+placeholder when that setting is on. This handling requires Claude Code v2.1.228 or later.
 Edit a skill during a session
 Claude Code watches skill directories for file changes, except in
 bare mode
@@ -892,11 +882,9 @@ to pick up the skills you put there. Claude Code isn’t watching that directory
 again after each later change there.
 Live change detection covers
 SKILL.md
-text only. For a skill folder that is also a
+text. For a skill folder that is also a
 plugin
 , changes to
-hooks/
-,
 .mcp.json
 ,
 agents/
@@ -904,8 +892,13 @@ agents/
 output-styles/
 need
 /reload-plugins
-to take effect.
-​
+to take effect. Changes to
+hooks/
+need it too, except a
+mod
+’s module file when it
+reloads on its own
+.
 Remove a skill
 How you remove a skill depends on where it came from:
 Personal or project skill
@@ -961,12 +954,10 @@ in its frontmatter, or
 in
 skillOverrides
 when you don’t want to edit the file.
-​
 Configure skills
 Skills are configured through YAML frontmatter at the top of
 SKILL.md
 and the markdown content that follows.
-​
 Types of skill content
 Skill files can contain any instructions, but thinking about how you want to invoke them helps guide what to include:
 Reference content
@@ -1021,7 +1012,6 @@ stays in context across turns
 , so every line is a recurring token cost. State what to do rather than narrating how or why, and apply the same conciseness test you would for
 CLAUDE.md content
 .
-​
 Frontmatter reference
 Configure a skill with YAML
 frontmatter
@@ -1277,7 +1267,6 @@ Agent Skills
 spec; see
 Using skill frontmatter outside Claude Code
 . Accepts a string of up to 500 characters. Claude Code accepts the field but doesn’t act on it.
-​
 Using skill frontmatter outside Claude Code
 Claude Code accepts every field in the table above. Outside Claude Code, you can use only the fields in the
 Agent Skills
@@ -1317,7 +1306,6 @@ Skills API requirements
 define everything else those paths validate. Claude Code-only body features, such as
 dynamic context injection
 , don’t function in claude.ai chat or through the API. Claude Code accepts all six fields, so frontmatter that follows the spec loads in Claude Code without changes.
-​
 How a skill gets its command name
 The command you type to invoke a skill comes from where the skill file lives and, for skill directories and plugin skills, from the frontmatter
 name
@@ -1462,7 +1450,6 @@ name
 supplies the whole final segment. Without a
 name
 field, Claude Code falls back to the plugin’s directory name.
-​
 Characters a skill name can’t hold
 If a skill or custom command is missing from the
 /
@@ -1509,7 +1496,6 @@ name:
 edit, restart the session, unless the file is in a directory Claude Code
 watches for changes
 .
-​
 Available string substitutions
 Skills support string substitution for dynamic values in the skill content:
 Variable
@@ -1575,12 +1561,7 @@ plugin environment variables
 ${CLAUDE_PLUGIN_DATA}
 The plugin’s
 persistent data directory
-, which survives plugin updates. Substituted only in plugin skills. Use this to reference installed dependencies, generated files, or caches that must outlive an update.
-Claude Code substitutes
-${CLAUDE_SKILL_DIR}
-and
-${CLAUDE_PROJECT_DIR}
-in two places: the sk
+, which survives plugin updates. Substituted only in plugin skills. Use this to reference installed dependenci
 
 ## Source (settings): https://docs.claude.com/en/docs/claude-code/settings
 
@@ -1620,7 +1601,6 @@ cloud session
 runs on a different machine and reads only some of them; see
 Settings in cloud sessions
 .
-​
 Settings files and who they affect
 Claude Code reads settings from four files, and an organization can also deliver managed settings from the claude.ai console. Each source has a scope: the set of people and projects a setting saved in it applies to, whether that’s only you, everyone in a project, or everyone in your organization.
 Scope
@@ -1658,7 +1638,6 @@ folder in your home directory, and a bare
 is the
 .claude
 folder inside your project.
-​
 Compare the scope of each settings file
 Suppose you have three projects on your machine,
 website/
@@ -1693,7 +1672,6 @@ managed-settings.json
 file, an MDM policy, or
 server-managed settings
 from the claude.ai console: every project on every machine your organization deploys it to, or that you sign in to with your organization account. Only server-managed settings reach the cloud session
-​
 Find or create your settings files
 Installing Claude Code doesn’t create any settings file. If your machine or project already has one, it came from one of these sources:
 Managed
@@ -1734,11 +1712,10 @@ global config keys
 that
 /config
 writes for you.
-​
 Share settings with your team
 Commit
 .claude/settings.json
-so everyone who clones the repository gets the same permissions, hooks, and plugins. Each teammate can still override it for themselves in their own
+so everyone who clones the repository gets the same permissions, hooks, and plugin settings. Each teammate can still override it for themselves in their own
 .claude/settings.local.json
 , so personal exceptions don’t need a commit. For a complete team file, see
 a team’s shared settings
@@ -1748,7 +1725,6 @@ trusts the folder
 , and a few keys never take effect from a repository file;
 Troubleshoot a setting that doesn’t apply
 covers both.
-​
 Keep personal settings out of a repository
 To change a setting for yourself in one project without changing it for your teammates, save it in
 .claude/settings.local.json
@@ -1790,7 +1766,6 @@ workspace trust
 step it requires for the committed file. If the file is tracked by git, the trust step applies to it too; see
 When your local settings file needs trust
 .
-​
 Where Claude Code keeps the local file in a git repository
 When Claude asks permission to run a Bash command and you choose “Yes, and don’t ask again”, Claude Code saves that approval as an
 allow
@@ -1827,7 +1802,6 @@ move the session with
 , Claude Code reads both project files from the new directory instead, placing the local file by the same rules. Reading them from the directory you moved to requires Claude Code v2.1.246 or later. For a worktree session that you start from the desktop app, see
 What worktrees share with the main checkout
 .
-​
 Check what your organization enforces
 If your organization manages Claude Code, some settings are decided for you and nothing you put in your own files changes them. To see which, run
 /status
@@ -1863,7 +1837,6 @@ Deploy managed settings
 covers delivery and how to confirm a policy is in force. For the warning the managed settings editor in the claude.ai admin console can show, see
 Configure server-managed settings
 .
-​
 Change a setting
 You can change a setting from the
 /config
@@ -1874,7 +1847,6 @@ files
 or the
 --append-system-prompt
 flag.
-​
 Use the /config menu
 Run
 /config
@@ -1902,7 +1874,6 @@ VS Code
 chat panel and the
 desktop app
 don’t open it; change settings there by editing a settings file or through those apps’ own settings.
-​
 Edit a settings file
 Open the settings file for the scope you want in your editor and add or change a key. Settings files are strict JSON: a
 //
@@ -1954,7 +1925,6 @@ line shows and how a broken file is reported.
 For a complete personal file, team file, and organization file, each shown with a comment on every key it sets, see the
 example settings files
 .
-​
 Change a setting for one session
 To try a value without saving it, set it when you start Claude Code. The value applies to that session and your settings files stay as they were. You have three ways to do it:
 --settings
@@ -2004,7 +1974,6 @@ For example, to start one session on Opus without changing your default:
 claude
 --settings
 '{"model": "claude-opus-5-5"}'
-​
 When edits take effect
 Claude Code watches your settings files and reloads them when they change, so it applies most edits to the running session without a restart, including edits to
 permissions
@@ -2015,10 +1984,10 @@ apiKeyHelper
 . Claude Code also loads a settings file you create mid-session if its folder existed when the session started. For the project’s
 .claude/
 folder, it loads the file even when you create the folder in the same session.
-The reload covers user, project, local, and managed settings, and Claude Code runs the
+The reload covers user, project, local, and managed settings. Claude Code runs the
 ConfigChange
 hook
-for each settings-file change it detects, not for managed settings that arrive from MDM or the claude.ai console. Managed settings that arrive through MDM or from the claude.ai console reach a running session on a schedule rather than on save; the
+for direct edits to settings files, not for managed settings that arrive from MDM or the claude.ai console. Managed settings that arrive through MDM or from the claude.ai console reach a running session on a schedule rather than on save; the
 delivery table
 gives it per source.
 Claude Code reads some keys only once, at session start, so an edit to one of them doesn’t reach the running session. Admin-side keys that also wait for a restart, such as
@@ -2040,7 +2009,6 @@ to change effort mid-session
 If you remove
 permissions.blockReadsOutsideWorkingDirectories
 mid-session, the file tools keep the block in the running session. To lift it, remove the key from every settings file that sets it, then restart each running session.
-​
 Confirm what loaded
 Run
 /status
@@ -2066,7 +2034,6 @@ Config
 tab isn’t a view of your
 settings.json
 contents.
-​
 Fix a broken settings file
 If you mistype JSON or set a key to a value Claude Code doesn’t accept, Claude Code tells you at the start of an interactive session. What it shows depends on how much of the file is affected:
 Settings Error
@@ -2084,7 +2051,7 @@ Configuration error
 ~/.claude.json
 can’t be parsed. A
 claude -p
-run exits, and your file is unchanged. See
+run exits. See
 Configuration error in ~/.claude.json
 to restore an earlier copy. Claude Code copies the broken file to
 ~/.claude/backups/.claude.json.corrupted.<timestamp>
@@ -2103,7 +2070,6 @@ a managed settings document can’t be parsed
 run that ignores a setting, run
 claude doctor
 from your terminal to see what it dropped.
-​
 Settings precedence
 When the same key appears in more than one place, Claude Code uses the value from the highest level that sets it. The stack below shows the levels, highest on top; a key at a higher level overrides the same key anywhere below it.
 In order, highest precedence first:
@@ -2165,7 +2131,6 @@ block inside a settings file is an ordinary key and follows the levels above.
 For a few security-sensitive keys, Claude Code honors a stricter value from a lower level over a managed value;
 Exceptions to managed settings precedence
 lists them.
-​
 Lists merge instead of overriding
 When you set the same list key, such as
 permissions.allow
@@ -2188,7 +2153,6 @@ effortLevel
 . The
 modelSettings
 entry states which file’s value applies to a model.
-​
 Precedence examples
 While Claude works, Claude Code shows a one-line tip under the spinner, such as “Use /config to change your default permission mode (including Plan Mode)”. Suppose you want those tips off, so you set
 spinnerTipsEnabled
@@ -2197,7 +2161,6 @@ false
 in
 ~/.claude/settings.json
 . Each scenario below is something that can turn them back on, and what you can do about it.
-​
 Team settings override personal settings
 Your team’s
 .claude/settings.json
@@ -2209,7 +2172,6 @@ You can get your value back: add
 to
 .claude/settings.local.json
 in that project. Project local sits above shared project, so your sessions there stop showing tips and your teammates’ sessions don’t change.
-​
 Organization settings override everything
 Your organization’s managed settings set it to
 true
@@ -2219,7 +2181,6 @@ true
 You can’t get your value back. Run
 /status
 to see which managed source applies, and ask your administrator if the policy should change.
-​
 The command line overrides your files for one session
 You started the session with
 claude --settings '{"spinnerTipsEnabled": true}'
@@ -2229,7 +2190,6 @@ false
 You get your value back on the next session;
 --settings
 lasts one session and doesn’t write to any file.
-​
 A flag or environment variable sets the same thing
 Some keys have a command line flag or an environment variable that overrides the settings value regardless of which file set it:
 ANTHROPIC_MODEL
@@ -2243,14 +2203,12 @@ settings reference
 and the variable’s row on the
 environment variables reference
 for which one Claude Code uses.
-​
 Troubleshoot a setting that doesn’t apply
 When you set a key and Claude Code doesn’t behave as if you had, start with
 /status
 to see which files it loaded, then find your symptom below.
 Debug your configuration
 covers the wider checks, including a clean-configuration test.
-​
 A value you set is ignored
 Something else is setting the same key, the file can’t set that value, or the file didn’t load:
 A higher level sets it.
@@ -2295,7 +2253,6 @@ The file is broken.
 Invalid JSON or a rejected value makes Claude Code skip the file or the entry; see
 Fix a broken settings file
 .
-​
 A change you made in Claude Code is lost in new sessions
 When you save a choice for new sessions from inside Claude Code, such as a default model with
 /model
@@ -2311,7 +2268,6 @@ model
 key,
 A new session starts on a different model than you picked
 lists more causes.
-​
 A managed change hasn’t reached you
 Managed sources reach a running session on the schedule in the
 delivery table
@@ -2320,7 +2276,6 @@ delivery table
 then names a different source than the one your administrator changed, a higher-priority source applies;
 How Claude Code combines managed sources
 gives the order.
-​
 A committed key doesn’t reach teammates
 Two things keep a key in
 .claude/settings.json
@@ -2364,7 +2319,6 @@ deny
 and
 ask
 rules apply right away.
-​
 Permission rules combine differently than you expected
 You chose “Yes, and don’t ask again” on a permission prompt but still get prompted for the same tool.
 That choice saved an
@@ -2382,7 +2336,6 @@ permissions.allow
 across scopes, unless your organization sets
 allowManagedPermissionRulesOnly
 .
-​
 Exceptions to managed settings precedence
 For a few keys whose values restrict a session, Claude Code honors a restrictive value from a scope that otherwise couldn’t override managed settings. Find the key in this table to see which value it honors and from where.
 Key
@@ -2420,6 +2373,15 @@ from any scope
 Honored even when a managed source sets
 false
 . Requires Claude Code v2.1.314 or later
+permissions.denyInsteadOfPrompting
+true
+from
+~/.claude/settings.json
+or
+--settings
+Honored even when a managed source sets
+false
+. Requires Claude Code v2.1.319 or later
 autoMode.classifyAllShell
 true
 from
@@ -2524,7 +2486,6 @@ ANTHROPIC_DEFAULT_*_MODEL
 family. Claude Code keeps a managed
 availableModels
 allowlist in force unless the app supplies its own.
-​
 Settings in cloud sessions
 A
 cloud session
@@ -2591,7 +2552,6 @@ What carries over from your setup
 lists the rest:
 CLAUDE.md
 , skills, MCP servers, plugins, and credentials.
-​
 What’s next
 All settings
 : every key, with where you set it and an example
@@ -2611,7 +2571,7 @@ CLAUDE.md
 Was this page helpful?
 Yes
 No
-{"docsConfig":{"theme":"mint","$schema":"https://mintlify.com/docs.json","name":"Claude Code Docs","description":"Official documentation for Claude Code, Anthropic's agentic coding tool available in the terminal, IDE, desktop app, and browser. Covers installation, configuration, skills, subagents, hooks, MCP, the Agent SDK, and reference material.","colors":{"primary":"#0E0E0E","light":"#D4A27F","dark":"#0E0E0E"},"logo":{"light":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/light.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=78fd01ff4f4340295a4f66e2ea54903c","dark":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/dark.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=1298a0c3b3a1da603b190d0de0e31712"},"favicon":"https://mintcdn.com/claude-code/T2WlxklWBkR5Y1mJ/favicon.ico?fit=max\u0026auto=format\u0026n=T2WlxklWBkR5Y1mJ\u0026q=85\u0026s=346a85952ae08d5ee90e3c34d4423930","appearance":{"default":"system"},"background":{"color":{"light":"#FDFDF7","dark":"#09090B"}},"navbar":{"links":[{"href":"https://platform.claude.com/","label":"Claude Developer Platform"}],"primary":{"type":"button","label":"Open Claude Code","href":"https://claude.ai/code"}},"footer":{"socials":{"x":"https://x.com/AnthropicAI","linkedin":"https://www.linkedin.com/company/anthropicresearch"},"links":[{"header":"Company","items":[{"label":"Anthropic","href":"https://www.anthropic.com/company"},{"label":"Careers","href":"https://www.anthropic.com/careers"},{"label":"Economic Futures","href":"https://www.anthropic.com/economic-futures"},{"label":"Research","href":"https://www.anthropic.com/research"},{"label":"News","href":"https://www.anthropic.com/news"},{"label":"Trust center","href":"https://trust.anthropic.com/"},{"label":"Transparency","href":"https://www.anthropic.com/transparency"}]},{"header":"Help and security","items":[{"label":"Availability","href":"https://www.anthropic.com/supported-countries"},{"label":"Status","href":"https://status.anthropic.com/"},{"label":"Support center","href":"https://support.claude.com/"}]},{"header":"Learn","items":[{"label":"Courses","href":"https://academy.claude.com/"},{"label":"MCP connectors","href":"https://claude.com/partners/mcp"},{"label":"Customer stories","href":"https://www.claude.com/customers"},{"label":"Engineering blog","href":"https://www.anthropic.com/engineering"},{"label":"Events","href":"https://www.anthropic.com/events"},{"label":"Powered by Claude","href":"https://claude.com/partners/powered-by-claude"},{"label":"Service partners","href":"https://claude.com/partners/services"},{"label":"Startups program","href":"https://claude.com/programs/startups"}]},{"header":"Terms and policies","items":[{"label":"Privacy choices","href":"https://www.anthropic.com/legal/privacy"},{"label":"Privacy policy","href":"https://www.anthropic.com/legal/privacy"},{"label":"Disclosure policy","href":"https://www.anthropic.com/responsible-disclosure-policy"},{"label":"Usage policy","href":"https://www.anthropic.com/legal/aup"},{"label":"Commercial terms","href":"https://www.anthropic.com/legal/commercial-terms"},{"label":"Consumer terms","href":"https://www.anthropic.com/legal/consumer-terms"}]}]},"seo":{"metatags":{"canonical":"https://code.claude.com/docs"}},"fonts":{"family":"Anthropic Sans"},"contextual":{"options":["copy","view","claude"],"display":"header"},"styling":{"latex":true},"navigation":{"languages":[{"language":"en","href":"en/overview"},{"language":"fr","href":"fr/overview"},{"language":"de","href":"de/overview"},{"language":"it","href":"it/overview"},{"language":"jp","href":"ja/overview"},{"language":"es","href":"es/overview"},{"language":"ko","href":"ko/overview"},{"language":"zh-CN","href":"zh-CN/overview"},{"language":"zh-TW","href":"zh-TW/overview"},{"language":"ru","href":"ru/overview"},{"language":"id","href":"id/overview"},{"language":"pt-BR","href":"pt/overview"}]}},"deployment":{"deploymentMetadataValue":{"subdomain":"claude-code","hasAudioNarration":false,"actualSubdomain":"claude-code","customDomains":["code.claude.com"],"gitSource":{"type":"github","owner":"anthropics","repo":"claude-code-docs","deployBranch":"main","contentDirectory":"","isPrivate":true,"mountPath":"","label":""},"feedback":{"thumbs":true},"entitlements":{"AI_CHAT":{"status":"ENABLED"},"REMOVE_BRANDING":{"status":"ENABLED"},"CONTEXTUAL_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"CODE_SNIPPET_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"WEB_MCP":{"status":"ENABLED"},"NARRATION":{"status":"ENABLED"}},"buildId":"6af0c6c06412adac01293366","clientVersion":"0.0.4088","searchFilterCounts":[{"language":"en","tag":"Agent SDK","count":60},{"language":"en","tag":"Plugins","count":56},{"language":"de","tag":"Neuigkeiten","count":50},{"language":"en","tag":"What's New","count":50},{"language":"es","tag":"Novedades","count":50},{"language":"fr","tag":"Nouveautés","count":50},{"language":"it","tag":"Novità","count":50},{"language":"ko","tag":"새로운 기능","count":50},{"language":"pt-BR","tag":"Novidades","count":50},{"language":"ru","tag":"Что нового","count":50},{"language":"zh-TW","tag":"最新消息","count":50},{"language":"de","tag":"Erste Schritte","count":49},{"language":"es","tag":"Primeros pasos","count":49},{"language":"fr","tag":"Premiers pas","count":49},{"language":"id","tag":"Memulai","count":49},{"language":"it","tag":"Per iniziare","count":49},{"language":"jp","tag":"はじめに","count":49},{"language":"ko","tag":"시작하기","count":49},{"language":"pt-BR","tag":"Primeiros passos","count":49},{"language":"ru","tag":"Начало работы","count":49},{"language":"zh-TW","tag":"快速入門","count":49},{"language":"en","tag":"Getting started","count":48},{"language":"zh-CN","tag":"快速入门","count":46},{"language":"en","tag":"Overview","count":41},{"language":"de","tag":"Agent SDK","count":36},{"language":"en","tag":"Setup and access","count":36},{"language":"es","tag":"Agent SDK","count":36},{"language":"id","tag":"Agent SDK","count":36},{"language":"it","tag":"Agent SDK","count":36},{"language":"jp","tag":"Agent SDK","count":36},{"language":"pt-BR","tag":"Agent SDK","count":36},{"language":"ru","tag":"Agent SDK","count":36},{"language":"zh-CN","tag":"Agent SDK","count":36},{"language":"zh-TW","tag":"Agent SDK","count":36},{"language":"de","tag":"Administration","count":34},{"language":"en","tag":"Administration","count":34},{"language":"es","tag":"Administración","count":34},{"language":"fr","tag":"Administration","count":34},{"language":"id","tag":"Administrasi","count":34},{"language":"it","tag":"Amministrazione","count":34},{"language":"jp","tag":"管理","count":34},{"language":"ko","tag":"관리","count":34},{"language":"pt-BR","tag":"Administração","count":34},{"language":"ru","tag":"Администрирование","count":34},{"language":"zh-CN","tag":"管理","count":34},{"language":"zh-TW","tag":"管理","count":34},{"language":"de","tag":"Plugins","count":32},{"language":"es","tag":"Plugins","count":32},{"language":"fr","tag":"SDK Agent","count":32},{"language":"fr","tag":"Plugins","count":32},{"language":"id","tag":"Plugin","count":32},{"language":"it","tag":"Plugin","count":32},{"language":"jp","tag":"プラグイン","count":32},{"language":"ko","tag":"Agent SDK","count":32},{"language":"ko","tag":"플러그인","count":32},{"language":"pt-BR","tag":"Plugins","count":32},{"language":"ru","tag":"Плагины","count":32},{"language":"zh-CN","tag":"插件","count":32},{"language":"zh-TW","tag":"外掛","count":32},{"language":"en","tag":"Reference","count":28},{"language":"es","tag":"Configuración","count":28},{"language":"jp","tag":"設定","count":28},{"language":"zh-TW","tag":"設定","count":28},{"language":"de","tag":"Konfiguration","count":25},{"language":"en","tag":"Configuration","count":25},{"language":"fr","tag":"Configuration","count":25},{"language":"id","tag":"Konfigurasi","count":25},{"language":"id","tag":"Apa yang Baru","count":25},{"language":"id","tag":"Yang Baru","count":25},{"language":"it","tag":"Configurazione","count":25},{"language":"jp","tag":"新機能","count":25},{"language":"jp","tag":"最新情報","count":25},{"language":"ko","tag":"구성","count":25},{"language":"pt-BR","tag":"Configuração","count":25},{"language":"ru","tag":"Конфигурация","count":25},{"language":"zh-CN","tag":"配置","count":25},{"language":"zh-CN","tag":"新功能","count":25},{"language":"zh-CN","tag":"最新动态","count":25},{"language":"en","tag":"Settings","count":24},{"language":"de","tag":"Mit Claude Code entwickeln","count":22},{"language":"es","tag":"Crea con Claude Code","count":22},{"language":"fr","tag":"Développer avec Claude Code","count":22},{"language":"id","tag":"Membangun dengan Claude Code","count":22},{"language":"it","tag":"Crea con Claude Code","count":22},{"language":"jp","tag":"Claude Code で構築","count":22},{"language":"ko","tag":"Claude Code로 만들기","count":22},{"language":"pt-BR","tag":"Desenvolva com Claude Code","count":22},{"language":"ru","tag":"Разработка с Claude Code","count":22},{"language":"zh-CN","tag":"使用 Claude Code 构建","count":22},{"language":"zh-TW","tag":"使用 Claude Code 打造","count":22},{"language":"de","tag":"Referenz","count":20},{"language":"es","tag":"Referencia","count":20},{"language":"fr","tag":"Référence","count":20},{"language":"id","tag":"Referensi","count":20},{"language":"it","tag":"Riferimento","count":20},{"language":"jp","tag":"リファレンス","count":20},{"language":"ko","tag":"레퍼런스","count":20},{"language":"pt-BR","tag":"Referência","count":20},{"language":"ru","tag":"Справочник","count":20},{"language":"zh-CN","tag":"参考","count":20},{"language":"de","tag":"Plattformen und Integrationen","count":19},{"language":"es","tag":"Plataformas e integraciones","count":19},{"language":"fr","tag":"Plateformes et intégrations","count":19},{"language":"id","tag":"Platform dan integrasi","count":19},{"language":"it","tag":"Piattaforme e integrazioni","count":19},{"language":"jp","tag":"プラットフォームと連携","count":19},{"language":"ko","tag":"플랫폼 및 통합","count":19},{"language":"pt-BR","tag":"Plataformas e integrações","count":19},{"language":"ru","tag":"Платформы и интеграции","count":19},{"language":"zh-CN","tag":"平台与集成","count":19},{"language":"zh-TW","tag":"平台與整合","count":19},{"language":"de","tag":"Code-Review und Pull Requests","count":14},{"language":"es","tag":"Revisión de código y pull requests","count":14},{"language":"fr","tag":"Revue de code et pull requests","count":14},{"language":"it","tag":"Code review e pull request","count":14},{"language":"ko","tag":"코드 리뷰 및 풀 리퀘스트","count":14},{"language":"pt-BR","tag":"Revisão de código e pull requests","count":14},{"language":"ru","tag":"Код-ревью и pull request","count":14},{"language":"zh-TW","tag":"程式碼審查與 pull request","count":14},{"language":"zh-TW","tag":"部署","count":11}]},"assistantConfig":{"enableAskAiButton":false,"enableStarterQuestions":false,"enableAskAiSearchBar":true},"basePath":"/docs","hasChatPermissions":true,"hasWebMcpPermissions":true,"toggles":[{"name":"kill-isr","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-bash","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"chat-bucketing-batched","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-mintlify-slack","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-integrations-settings","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"rbac-expansion","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-pr-grouping","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-prefix","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"analytics-v7","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"user-flows-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"no-publish-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-onboarding","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"llms-txt-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving-live","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"stripTemperatureMiddleware","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"support-platform-pylon-zendesk","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"instant-rollback","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications-server","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-fable","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fixed-ai-action-pricing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automation-resolve-merge-conflict","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"scoped-publishing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"mintql","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"page-level-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"editor-version-history-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"billing-page-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"full-page-search","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workspace-projects","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-v5","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fork-pr-previews","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"revalidation-jwt","enabled":true,"variant":{"name":
+{"docsConfig":{"theme":"mint","$schema":"https://mintlify.com/docs.json","name":"Claude Code Docs","description":"Official documentation for Claude Code, Anthropic's agentic coding tool available in the terminal, IDE, desktop app, and browser. Covers installation, configuration, skills, subagents, hooks, MCP, the Agent SDK, and reference material.","colors":{"primary":"#0E0E0E","light":"#D4A27F","dark":"#0E0E0E"},"logo":{"light":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/light.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=78fd01ff4f4340295a4f66e2ea54903c","dark":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/dark.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=1298a0c3b3a1da603b190d0de0e31712"},"favicon":"https://mintcdn.com/claude-code/T2WlxklWBkR5Y1mJ/favicon.ico?fit=max\u0026auto=format\u0026n=T2WlxklWBkR5Y1mJ\u0026q=85\u0026s=346a85952ae08d5ee90e3c34d4423930","appearance":{"default":"system"},"background":{"color":{"light":"#FDFDF7","dark":"#09090B"}},"navbar":{"links":[{"href":"https://platform.claude.com/","label":"Claude Developer Platform"}],"primary":{"type":"button","label":"Open Claude Code","href":"https://claude.ai/code"}},"footer":{"socials":{"x":"https://x.com/AnthropicAI","linkedin":"https://www.linkedin.com/company/anthropicresearch"},"links":[{"header":"Company","items":[{"label":"Anthropic","href":"https://www.anthropic.com/company"},{"label":"Careers","href":"https://www.anthropic.com/careers"},{"label":"Economic Futures","href":"https://www.anthropic.com/economic-futures"},{"label":"Research","href":"https://www.anthropic.com/research"},{"label":"News","href":"https://www.anthropic.com/news"},{"label":"Trust center","href":"https://trust.anthropic.com/"},{"label":"Transparency","href":"https://www.anthropic.com/transparency"}]},{"header":"Help and security","items":[{"label":"Availability","href":"https://www.anthropic.com/supported-countries"},{"label":"Status","href":"https://status.anthropic.com/"},{"label":"Support center","href":"https://support.claude.com/"}]},{"header":"Learn","items":[{"label":"Courses","href":"https://academy.claude.com/"},{"label":"MCP connectors","href":"https://claude.com/partners/mcp"},{"label":"Customer stories","href":"https://www.claude.com/customers"},{"label":"Engineering blog","href":"https://www.anthropic.com/engineering"},{"label":"Events","href":"https://www.anthropic.com/events"},{"label":"Powered by Claude","href":"https://claude.com/partners/powered-by-claude"},{"label":"Service partners","href":"https://claude.com/partners/services"},{"label":"Startups program","href":"https://claude.com/programs/startups"}]},{"header":"Terms and policies","items":[{"label":"Privacy choices","href":"https://www.anthropic.com/legal/privacy"},{"label":"Privacy policy","href":"https://www.anthropic.com/legal/privacy"},{"label":"Disclosure policy","href":"https://www.anthropic.com/responsible-disclosure-policy"},{"label":"Usage policy","href":"https://www.anthropic.com/legal/aup"},{"label":"Commercial terms","href":"https://www.anthropic.com/legal/commercial-terms"},{"label":"Consumer terms","href":"https://www.anthropic.com/legal/consumer-terms"}]}]},"seo":{"metatags":{"canonical":"https://code.claude.com/docs"}},"fonts":{"family":"Anthropic Sans"},"contextual":{"options":["copy","view","claude"],"display":"header"},"styling":{"latex":true},"navigation":{"languages":[{"language":"en","href":"en/overview"},{"language":"fr","href":"fr/overview"},{"language":"de","href":"de/overview"},{"language":"it","href":"it/overview"},{"language":"jp","href":"ja/overview"},{"language":"es","href":"es/overview"},{"language":"ko","href":"ko/overview"},{"language":"zh-CN","href":"zh-CN/overview"},{"language":"zh-TW","href":"zh-TW/overview"},{"language":"ru","href":"ru/overview"},{"language":"id","href":"id/overview"},{"language":"pt-BR","href":"pt/overview"}]}},"deployment":{"deploymentMetadataValue":{"subdomain":"claude-code","hasAudioNarration":false,"actualSubdomain":"claude-code","customDomains":["code.claude.com"],"gitSource":{"type":"github","owner":"anthropics","repo":"claude-code-docs","deployBranch":"main","contentDirectory":"","isPrivate":true,"mountPath":"","label":""},"feedback":{"thumbs":true},"entitlements":{"AI_CHAT":{"status":"ENABLED"},"REMOVE_BRANDING":{"status":"ENABLED"},"CONTEXTUAL_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"CODE_SNIPPET_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"WEB_MCP":{"status":"ENABLED"},"NARRATION":{"status":"ENABLED"}},"buildId":"6af8b0fc4f86660c4a257522","clientVersion":"0.0.4143","searchFilterCounts":[{"language":"en","tag":"Agent SDK","count":60},{"language":"en","tag":"Plugins","count":56},{"language":"de","tag":"Erste Schritte","count":49},{"language":"es","tag":"Primeros pasos","count":49},{"language":"fr","tag":"Premiers pas","count":49},{"language":"id","tag":"Memulai","count":49},{"language":"it","tag":"Per iniziare","count":49},{"language":"jp","tag":"はじめに","count":49},{"language":"ko","tag":"시작하기","count":49},{"language":"pt-BR","tag":"Primeiros passos","count":49},{"language":"ru","tag":"Начало работы","count":49},{"language":"zh-TW","tag":"快速入門","count":49},{"language":"en","tag":"Getting started","count":48},{"language":"zh-CN","tag":"快速入门","count":46},{"language":"en","tag":"Overview","count":41},{"language":"en","tag":"Setup and access","count":37},{"language":"de","tag":"Agent SDK","count":36},{"language":"es","tag":"Agent SDK","count":36},{"language":"id","tag":"Agent SDK","count":36},{"language":"it","tag":"Agent SDK","count":36},{"language":"jp","tag":"Agent SDK","count":36},{"language":"pt-BR","tag":"Agent SDK","count":36},{"language":"ru","tag":"Agent SDK","count":36},{"language":"zh-CN","tag":"Agent SDK","count":36},{"language":"zh-TW","tag":"Agent SDK","count":36},{"language":"de","tag":"Administration","count":35},{"language":"en","tag":"Administration","count":35},{"language":"es","tag":"Administración","count":35},{"language":"fr","tag":"Administration","count":35},{"language":"id","tag":"Administrasi","count":35},{"language":"it","tag":"Amministrazione","count":35},{"language":"jp","tag":"管理","count":35},{"language":"ko","tag":"관리","count":35},{"language":"pt-BR","tag":"Administração","count":35},{"language":"ru","tag":"Администрирование","count":35},{"language":"zh-CN","tag":"管理","count":35},{"language":"zh-TW","tag":"管理","count":35},{"language":"de","tag":"Plugins","count":32},{"language":"es","tag":"Plugins","count":32},{"language":"fr","tag":"SDK Agent","count":32},{"language":"fr","tag":"Plugins","count":32},{"language":"id","tag":"Plugin","count":32},{"language":"it","tag":"Plugin","count":32},{"language":"jp","tag":"プラグイン","count":32},{"language":"ko","tag":"Agent SDK","count":32},{"language":"ko","tag":"플러그인","count":32},{"language":"pt-BR","tag":"Plugins","count":32},{"language":"ru","tag":"Плагины","count":32},{"language":"zh-CN","tag":"插件","count":32},{"language":"zh-TW","tag":"外掛","count":32},{"language":"es","tag":"Configuración","count":29},{"language":"jp","tag":"設定","count":29},{"language":"zh-TW","tag":"設定","count":29},{"language":"en","tag":"Reference","count":28},{"language":"de","tag":"Konfiguration","count":26},{"language":"en","tag":"Configuration","count":26},{"language":"fr","tag":"Configuration","count":26},{"language":"id","tag":"Konfigurasi","count":26},{"language":"it","tag":"Configurazione","count":26},{"language":"ko","tag":"구성","count":26},{"language":"pt-BR","tag":"Configuração","count":26},{"language":"ru","tag":"Конфигурация","count":26},{"language":"zh-CN","tag":"配置","count":26},{"language":"en","tag":"Settings","count":25},{"language":"en","tag":"Agents and parallel work","count":23},{"language":"de","tag":"Mit Claude Code entwickeln","count":22},{"language":"es","tag":"Crea con Claude Code","count":22},{"language":"fr","tag":"Développer avec Claude Code","count":22},{"language":"id","tag":"Membangun dengan Claude Code","count":22},{"language":"it","tag":"Crea con Claude Code","count":22},{"language":"jp","tag":"Claude Code で構築","count":22},{"language":"ko","tag":"Claude Code로 만들기","count":22},{"language":"pt-BR","tag":"Desenvolva com Claude Code","count":22},{"language":"ru","tag":"Разработка с Claude Code","count":22},{"language":"zh-CN","tag":"使用 Claude Code 构建","count":22},{"language":"zh-TW","tag":"使用 Claude Code 打造","count":22},{"language":"de","tag":"Referenz","count":20},{"language":"es","tag":"Referencia","count":20},{"language":"fr","tag":"Référence","count":20},{"language":"id","tag":"Referensi","count":20},{"language":"it","tag":"Riferimento","count":20},{"language":"jp","tag":"リファレンス","count":20},{"language":"ko","tag":"레퍼런스","count":20},{"language":"pt-BR","tag":"Referência","count":20},{"language":"ru","tag":"Справочник","count":20},{"language":"zh-CN","tag":"参考","count":20},{"language":"de","tag":"Plattformen und Integrationen","count":19},{"language":"es","tag":"Plataformas e integraciones","count":19},{"language":"fr","tag":"Plateformes et intégrations","count":19},{"language":"id","tag":"Platform dan integrasi","count":19},{"language":"it","tag":"Piattaforme e integrazioni","count":19},{"language":"jp","tag":"プラットフォームと連携","count":19},{"language":"ko","tag":"플랫폼 및 통합","count":19},{"language":"pt-BR","tag":"Plataformas e integrações","count":19},{"language":"ru","tag":"Платформы и интеграции","count":19},{"language":"zh-CN","tag":"平台与集成","count":19},{"language":"zh-TW","tag":"平台與整合","count":19},{"language":"de","tag":"Code-Review und Pull Requests","count":14},{"language":"es","tag":"Revisión de código y pull requests","count":14},{"language":"fr","tag":"Revue de code et pull requests","count":14},{"language":"id","tag":"Code review dan pull request","count":14},{"language":"it","tag":"Code review e pull request","count":14},{"language":"jp","tag":"コードレビューとプルリクエスト","count":14},{"language":"ko","tag":"코드 리뷰 및 풀 리퀘스트","count":14},{"language":"pt-BR","tag":"Revisão de código e pull requests","count":14},{"language":"ru","tag":"Код-ревью и pull request","count":14},{"language":"zh-CN","tag":"代码审查与 Pull Request","count":14},{"language":"zh-TW","tag":"程式碼審查與 pull request","count":14},{"language":"de","tag":"Bereitstellung","count":12},{"language":"es","tag":"Despliegue","count":12},{"language":"fr","tag":"Déploiement","count":12},{"language":"id","tag":"Deployment","count":12},{"language":"it","tag":"Distribuzione","count":12},{"language":"jp","tag":"デプロイ","count":12},{"language":"ko","tag":"배포","count":12},{"language":"pt-BR","tag":"Implantação","count":12},{"language":"ru","tag":"Развёртывание","count":12},{"language":"zh-CN","tag":"部署","count":12},{"language":"zh-TW","tag":"部署","count":12},{"language":"zh-TW","tag":"參考","count":11}]},"assistantConfig":{"enableAskAiButton":false,"enableStarterQuestions":false,"enableAskAiSearchBar":true},"basePath":"/docs","hasChatPermissions":true,"hasWebMcpPermissions":true,"toggles":[{"name":"kill-isr","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-rbac-roles","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-bash","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"chat-bucketing-batched","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-mintlify-slack","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-integrations-settings","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"rbac-expansion","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-pr-grouping","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-prefix","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"analytics-v7","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"user-flows-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"no-publish-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-onboarding","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving-live","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"stripTemperatureMiddleware","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"support-platform-pylon-zendesk","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"instant-rollback","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications-server","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-fable","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fixed-ai-action-pricing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automation-resolve-merge-conflict","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"scoped-publishing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"mintql","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"page-level-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"editor-version-history-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"billing-page-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"full-page-search","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workspace-projects","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-v5","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fork-pr-previews","enabled":true,"
 
 ## Source (subagents): https://docs.claude.com/en/docs/claude-code/sub-agents
 
@@ -2653,7 +2613,6 @@ warning at startup with the total token count
 . Trim the
 description
 fields of your subagents, and move detail into each subagent’s system prompt, which only loads when that subagent runs.
-​
 Built-in subagents
 Claude Code includes built-in subagents that Claude automatically uses when appropriate. Each inherits the parent conversation’s permission rules; most run with a restricted tool set.
 Explore and Plan start without your CLAUDE.md files and the git status snapshot to keep research fast and inexpensive. Other built-in and
@@ -2669,7 +2628,9 @@ General-purpose
 Other
 A fast, read-only agent optimized for searching and analyzing codebases.
 Model
-: the main conversation’s model. When the main conversation runs Fable, Explore’s model depends on how you connect:
+: the
+parent conversation’s
+model. When the parent conversation runs Fable, Explore runs on Opus or stays on Fable, based on how you connect.
 With a Claude subscription, an Anthropic Console account, or an
 LLM gateway
 reached through
@@ -2682,7 +2643,7 @@ On Amazon Bedrock, Google Cloud’s Agent Platform, Microsoft Foundry,
 Claude Platform on AWS
 , or a
 Claude apps gateway
-, Explore stays on the main conversation’s model.
+, Explore stays on Fable.
 Tools
 : read-only tools; Write and Edit are denied
 Purpose
@@ -2710,7 +2671,9 @@ A research agent used during
 plan mode
 to gather context before presenting a plan.
 Model
-: inherits from the main conversation, unless you set
+: inherits from the
+parent conversation
+, unless you set
 CLAUDE_CODE_SUBAGENT_MODEL
 and
 force it onto every subagent
@@ -2721,13 +2684,8 @@ Purpose
 When you’re in plan mode and Claude needs to understand your codebase, it delegates research to the Plan subagent so that exploration output stays in a separate context window while the main conversation remains read-only.
 A capable agent for complex, multi-step tasks that require both exploration and action.
 Model
-: the
-CLAUDE_CODE_SUBAGENT_MODEL
-model if you set one and nothing assigns a model another way, otherwise the main conversation’s model;
-Choose a model
-states the full order, and
-Run every subagent on one model
-shows how to make the variable override those sources
+: the parent conversation’s model by default, following the
+model order
 Tools
 : every tool
 available to subagents
@@ -2790,7 +2748,6 @@ when the session has no
 general-purpose
 subagent to fall back on.
 Beyond these built-in subagents, you can create your own with custom prompts, tool restrictions, permission modes, hooks, and skills. The following sections show how to get started and customize subagents.
-​
 Quickstart: create your first subagent
 Subagents are Markdown files with YAML frontmatter. To create one, ask Claude to write it for you, or
 write the file yourself
@@ -2868,10 +2825,8 @@ Running
 tab that lists live subagents and a
 Library
 tab for creating, editing, and deleting them.
-​
 Configure subagents
 A subagent’s file location determines who it’s available to, and its frontmatter determines what it can do. This section covers where subagent files live and every field they support.
-​
 Choose the subagent scope
 Store subagent files in different locations depending on scope. When multiple subagents share the same name, Claude Code uses the one from the higher-priority location.
 Location
@@ -3105,7 +3060,6 @@ agent team
 teammate: name the subagent type when you ask Claude to spawn the teammate, and Claude Code applies parts of that definition to it.
 Use subagent definitions for teammates
 says which scopes and which parts apply in each display mode.
-​
 Write subagent files
 Subagent files use YAML frontmatter for configuration, followed by the system prompt in Markdown:
 Claude Code watches
@@ -3178,7 +3132,6 @@ isolation: worktree
 ; see
 How Claude Code enforces isolation
 .
-​
 Frontmatter reference
 Configure a subagent with YAML
 frontmatter
@@ -3439,7 +3392,6 @@ cacheTtl
 :
 1h
 ---
-​
 Subagent files Claude Code skips
 Claude Code skips a file in a project, user, or managed
 agents
@@ -3492,13 +3444,12 @@ the directory you name
 , and doesn’t flag a file whose frontmatter parses but has no
 name
 . Requires Claude Code v2.1.233 or later.
-​
 Choose a model
-The
+By default, a subagent you define runs on the same model as the conversation that starts it. To choose its model yourself, set the
 model
-field controls which model the subagent uses:
+field in its definition to one of these values:
 Model alias
-: use one of the available aliases:
+:
 sonnet
 ,
 opus
@@ -3507,129 +3458,79 @@ haiku
 , or
 fable
 Full model ID
-: use a full model ID such as
+: a value the
+--model
+flag accepts, such as
 claude-opus-5-5
 or
 claude-sonnet-5
-. Accepts the same values as the
---model
-flag
 inherit
-: use the same model as the main conversation
-When Claude invokes a subagent, it can also pass a
-model
-parameter for that specific invocation. On an Agent tool call, that parameter takes a model alias:
-sonnet
-,
-opus
-,
-haiku
-, or
-fable
-. Claude can’t pass a full model ID or
-inherit
-on that call. Claude Code resolves the subagent’s model in this order:
+: the main conversation’s model, or the spawning subagent’s model for a
+nested subagent
+When more than one source sets a model, Claude Code uses the first in this order:
 The per-invocation
 model
-parameter
-The subagent definition’s
-model
-frontmatter, where
+parameter, which Claude can pass when it starts the subagent. On an Agent tool call, the parameter takes a model alias, not a full model ID or
 inherit
-selects the main conversation’s model
+.
+The
+model
+field in the subagent’s definition, including
+inherit
 The
 CLAUDE_CODE_SUBAGENT_MODEL
-environment variable, when you set it to a model alias or model ID
-The main conversation’s model
-If an installed
+environment variable
+The main conversation’s model, or the spawning subagent’s model for a nested subagent
+If Claude passed an alias, the subagent keeps that alias when it
+resumes or receives a follow-up message
+. If an installed
 mod
 sets a model in its
 agent.spawn
 hook, Claude Code uses that model in place of the per-invocation parameter.
-In two cases, a family alias such as
-opus
-in the per-invocation parameter or the frontmatter resolves to the main conversation’s model instead of the
-version the alias points to
-:
-The main conversation’s model belongs to that family
-: the subagent runs on the main conversation’s exact model, including any
-[1m]
-suffix, so it gets the same
-extended context
-window as the main conversation.
-Claude Code can’t tell the main conversation’s model family, on
-a provider other than the Anthropic API
-: this can happen with an
-application inference profile ARN
-on Amazon Bedrock that Claude Code hasn’t resolved to a backing model. This case covers only the
-opus
-alias, and doesn’t apply when you set
-ANTHROPIC_DEFAULT_OPUS_MODEL
-, since
-opus
-then resolves to the model you set.
-An alias in
-CLAUDE_CODE_SUBAGENT_MODEL
-always resolves to the version the alias points to, even when it names the main conversation’s family. Setting the variable to
-inherit
-is the same as leaving it unset.
 Setting
 CLAUDE_CODE_SUBAGENT_MODEL
 by itself doesn’t change the model the built-in Explore and Plan subagents run on. To change it, see
 Run every subagent on one model
 .
-Before v2.1.251,
-CLAUDE_CODE_SUBAGENT_MODEL
-came first in this order and overrode both the per-invocation parameter and the frontmatter, including
+Which model a nested subagent runs on
+By default, a
+nested subagent
+you define runs on the model of its parent, the subagent that spawned it. To run the nested subagent on another model, set its
+model
+field to that model.
+For example, suppose your main conversation runs on Opus and starts a reviewer subagent on Haiku. By default, these subagents run on Haiku, not Opus, when the reviewer spawns them:
+A subagent with
 model: inherit
+or no
+model
+field
+The built-in Explore, Plan, and general-purpose subagents
+A
+fork
+In plan mode, these subagents run on Opus if you set your session’s model to
+opusplan
+, or on Sonnet if you set it to
+haiku
 .
-Claude Code checks the per-invocation parameter, frontmatter, and environment variable values against your organization’s
-availableModels
-allowlist. For a blocked value, it substitutes another model:
-When the blocked value is a family alias such as
-opus
-, Claude Code runs the subagent on the newest version of that family the allowlist permits, following the same
-substitution rules and provider scope
-as
-/model
-. Before v2.1.222, Claude Code ran the subagent on the inherited model for a blocked family alias as well.
-For any other blocked value, on providers where that substitution doesn’t operate, or when the allowlist permits no version of the family, Claude Code runs the subagent on the inherited model instead. If you set
-CLAUDE_CODE_SUBAGENT_MODEL
-, Claude Code tries that model first, under these same rules.
-In interactive sessions, Claude Code shows a warning naming the requested model and the model the subagent runs on, for either substitution.
+Check a subagent’s model
 To check which model a subagent is running on, run
 /tasks
 . Claude Code names the model on the subagent’s row, and adds the
 effort level
 set for that subagent, if any. Requires Claude Code v2.1.242 or later.
-A per-invocation
-model
-parameter also applies when the subagent is
-resumed or sent a follow-up message
-, so the subagent stays on that model.
-As of v2.1.198, subagents also inherit the main conversation’s
-extended thinking
-configuration: if thinking is on in your session, it’s on for the subagent, and if it’s off, it stays off. There is no per-subagent thinking setting. Before v2.1.198, subagents ran with extended thinking disabled regardless of the main conversation’s setting.
-​
 Run every subagent on one model
-CLAUDE_CODE_SUBAGENT_MODEL
-is a default, so a subagent’s definition or a model Claude passes still takes precedence over it. To apply one model to every subagent,
+To apply one model to every subagent,
 teammate
 , and
 workflow agent
-, also set
+, set
+CLAUDE_CODE_SUBAGENT_MODEL
+to that model and
 CLAUDE_CODE_SUBAGENT_MODEL_FORCE
 to
 1
 . Requires Claude Code v2.1.257 or later.
-If you set both variables, subagents run on the model in
-CLAUDE_CODE_SUBAGENT_MODEL
-.
-If you set only
-CLAUDE_CODE_SUBAGENT_MODEL_FORCE
-, subagents run on the main conversation’s model, except that the built-in Explore subagent runs on the
-model listed for it under Built-in subagents
-.
 For example, to run every subagent on Haiku, set both variables in the
 env
 block of a
@@ -3656,14 +3557,59 @@ is
 on
 , Claude Code ignores the
 model
-field in subagent definitions, and Claude can’t pass a model when it starts a subagent. These subagents still run on the main conversation’s model:
+field in subagent definitions, and Claude can’t pass a model when it starts a subagent. The following subagents still run on their parent conversation’s model:
 A
 fork
 A
 skill that runs in a subagent
 with
 model: inherit
-​
+If you set only
+CLAUDE_CODE_SUBAGENT_MODEL_FORCE
+, subagents run on the main conversation’s model, except that the built-in Explore subagent runs on the
+model listed for it under Built-in subagents
+.
+Which version a model alias selects
+By default, a subagent with a model alias runs on the
+version the alias points to
+. With a family alias such as
+opus
+in the
+model
+field or per-invocation parameter, the subagent runs on its parent conversation’s model in two cases:
+Same family
+: for example, if your main conversation runs on
+claude-opus-4-7
+, a subagent with
+model: opus
+runs on that version too. To run another version, set a full model ID in the
+model
+field.
+Unknown family
+: Claude Code can’t tell the parent model’s family, such as with an Amazon Bedrock ARN it
+can’t look up
+. This case applies only to the
+opus
+alias on
+a provider other than the Anthropic API
+. To choose the Opus version, set
+ANTHROPIC_DEFAULT_OPUS_MODEL
+.
+When an allowlist blocks a subagent model
+If your organization’s
+availableModels
+allowlist blocks the model set for a subagent, the subagent runs on the first of these that applies:
+For a blocked family alias, the newest permitted version in that family, on
+providers that support this substitution
+The model in
+CLAUDE_CODE_SUBAGENT_MODEL
+, if you set it, under these same rules
+The main conversation’s model, or the spawning subagent’s model for a nested subagent
+For a top-level subagent in an interactive session, a warning names the requested model and its replacement. To run a particular model, change the blocked value to one the allowlist permits.
+Extended thinking in subagents
+Subagents inherit your main conversation’s
+extended thinking
+configuration. There is no per-subagent thinking setting.
 Choose an effort level
 To run a subagent at its own
 effort level
@@ -3679,7 +3625,6 @@ resumed
 . The
 CLAUDE_CODE_EFFORT_LEVEL
 environment variable takes precedence over both. The per-invocation parameter requires Claude Code v2.1.292 or later.
-​
 When a subagent has no
 effort
 field or parameter
@@ -3692,20 +3637,19 @@ that level doesn’t apply
 . To choose its level, set the
 effort
 field.
-​
 Control subagent capabilities
 You can control what subagents can do through tool access, permission modes, and conditional rules.
-​
 Available tools
 Subagents inherit the
 built-in tools
-and MCP tools available in the main conversation, narrowed by two filters: the first removes a short list of tools from every subagent, and the second reduces the built-in tool set for subagents that run in the
+and MCP tools available in the main conversation, narrowed by two filters. The first removes a short list of tools from every subagent. The second reduces the built-in tool set for subagents that run in the
 background
-, which is the default. On macOS, Linux, and WSL, a subagent can also receive the Glob and Grep tools when the main conversation doesn’t have them, as described under
+, which is the default.
+On macOS, Linux, and WSL, a subagent can also receive the Glob and Grep tools when the main conversation doesn’t have them, as described under
 Glob tool behavior
 .
 Forks
-skip both filters and receive the main conversation’s exact tool pool. The first filter removes these tools, even when listed in the
+skip both filters and receive their parent conversation’s exact tool pool. The first filter removes these tools, even when listed in the
 tools
 field:
 Agent
@@ -3806,7 +3750,6 @@ session without the Task tools
 , Claude Code doesn’t provide the task tools to subagents either, even when the subagent runs a different model. An in-process teammate follows your session the same way. To find out whether a split-pane teammate has the task tools, see
 Task tool availability
 .
-​
 Restrict which tools a subagent can use
 To restrict tools, use the
 tools
@@ -3934,7 +3877,6 @@ reports
 server’s tools, list them one by one instead, such as
 mcp__reports__run_query
 .
-​
 Restrict which subagents can be spawned
 When an agent runs as the main thread with
 claude --agent
@@ -3986,7 +3928,6 @@ tools
 lets that subagent spawn subagents of its own while the
 depth limit
 allows it, but any type list inside the parentheses is ignored.
-​
 Scope MCP servers to a subagent
 Use the
 mcpServers
@@ -4076,7 +4017,6 @@ doesn’t filter servers you pass inline via
 or the SDK
 agents
 option, since those are explicit caller input.
-​
 Trust required for inline MCP servers
 Claude Code loads an
 inline MCP server
@@ -4114,7 +4054,6 @@ An inline server in an agent file from
 or the SDK
 agents
 option, or in one that managed settings supplies
-​
 Permission modes
 Set
 permissionMode
@@ -4135,6 +4074,11 @@ permissionMode
 you set. Under auto mode, the classifier evaluates the subagent’s tool calls with the main conversation’s block and allow rules. When the subagent finishes, the classifier also reviews its work and its final report before the report is delivered, as
 How auto mode handles subagents
 describes.
+If a subagent asks for permission while the main conversation is in
+bypassPermissions
+, check whether its tool call is one of the
+actions no mode auto-approves
+.
 When the main conversation is in
 plan
 mode, the subagent stays in plan mode whichever
@@ -4199,7 +4143,6 @@ Skip permission prompts
 . A subagent runs in this mode only when the main conversation does
 plan
 Plan mode (read-only exploration)
-​
 Preload skills into subagents
 Use the
 skills
@@ -4239,7 +4182,6 @@ skills
 in a subagent, the subagent controls the system prompt and loads skill content. With
 context: fork
 in a skill, the skill content is injected into the agent you specify. In both cases the subagent starts without your conversation history.
-​
 Enable persistent memory
 The
 memory
@@ -4297,7 +4239,6 @@ Update your agent memory as you discover codepaths, patterns, library
 locations, and key architectural decisions. This builds up institutional
 knowledge across conversations. Write concise notes about what you found
 and where.
-​
 Conditional rules with hooks
 For more dynamic control over tool usage, use
 PreToolUse
@@ -4337,7 +4278,51 @@ command
 ---
 Claude Code
 passes hook input as JSON
-via stdin to hook commands. The validation script reads thi
+via stdin to hook commands. The validation script reads this JSON, extracts the Bash command, and
+exits with code 2
+to block write operations:
+#!/bin/bash
+# ./scripts/validate-readonly-query.sh
+INPUT
+=
+$(
+cat
+)
+COMMAND
+=
+$(
+echo
+"
+$INPUT
+"
+|
+jq
+-r
+'.tool_input.command // empty'
+)
+# Block SQL write operations (case-insensitive)
+if
+echo
+"
+$COMMAND
+"
+|
+grep
+-iE
+'\b(INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|TRUNCATE)\b'
+>
+/dev/null
+;
+then
+echo
+"Blocked: Only SELECT queries are allowed"
+>&2
+exit
+2
+fi
+exit
+0
+On macOS and Linux, make the script executable, or t
 
 ## Source (hooks): https://docs.claude.com/en/docs/claude-code/hooks
 
@@ -4362,7 +4347,6 @@ mod
 , and those function hooks are covered in
 React to events
 rather than here. The hooks on this page keep working alongside mods.
-​
 Hook lifecycle
 Claude Code runs hooks at specific points during a session. When an event fires and a matcher matches, Claude Code passes JSON context about the event to your hook handler. For command hooks, input arrives on stdin. For HTTP hooks, it arrives as the POST request body. Your handler can then inspect the input, take action, and optionally return a decision.
 Events fall into three cadences:
@@ -4486,11 +4470,12 @@ ElicitationResult
 After a user responds to an MCP elicitation, before the response is sent back to the server
 SessionEnd
 When a session terminates
-​
 How a hook resolves
 To see how the event, the matcher, and the handler fit together, consider this
 PreToolUse
-hook that blocks destructive shell commands.
+hook that blocks
+rm -rf
+commands.
 macOS/Linux
 Windows (PowerShell)
 The
@@ -4820,7 +4805,6 @@ Configuration
 section below documents the full schema, and each
 hook event
 section documents what input your command receives and what output it can return.
-​
 Configuration
 Hooks are defined in JSON settings files. The configuration has three levels of nesting:
 Choose a
@@ -4845,7 +4829,6 @@ matcher group
 for the filter, and
 hook handler
 for the shell command, HTTP endpoint, MCP tool, prompt, or agent that runs. “Hook” on its own refers to the general feature.
-​
 Hook locations
 Where you define a hook determines its scope:
 Location
@@ -4913,10 +4896,8 @@ enabledPlugins
 are exempt
 Claude Code also narrows your
 statusLine
-,
+and
 fileSuggestion
-, and
-subagentStatusLine
 settings to managed settings
 Claude Code also disables plugins with a
 command
@@ -4952,7 +4933,6 @@ allowedHttpHookUrls
 : when defined at any settings level, Claude Code runs an HTTP hook handler only if its URL matches the merged allowlist
 httpHookAllowedEnvVars
 : when defined, Claude Code interpolates only the environment variables on that list into hook headers
-​
 Matcher patterns
 The
 matcher
@@ -5299,7 +5279,6 @@ git *
 and
 "Edit(*.ts)"
 runs only for TypeScript files.
-​
 Match MCP tools
 MCP
 server tools appear as regular tools in tool events (
@@ -5406,7 +5385,6 @@ This example logs all memory server operations and validates write operations fr
 ]
 }
 }
-​
 Match Monitor commands
 A
 PreToolUse
@@ -5471,7 +5449,6 @@ Bash(tail *)
 . The hook doesn’t run if its
 if
 names Monitor
-​
 Hook handler fields
 Each object in the inner
 hooks
@@ -5524,7 +5501,6 @@ $CLAUDE_CODE_BRIDGE_SESSION_ID
 to the
 Remote Control
 session ID while the local session has an active Remote Control connection.
-​
 Common fields
 These fields apply to all hook types:
 Field
@@ -5626,7 +5602,6 @@ src
 at any depth, write
 "Edit(**/src/**)"
 .
-​
 How
 if
 patterns match Bash commands
@@ -5673,12 +5648,11 @@ patterns that specify more than the command name run the hook anyway on
 $()
 , backticks, or
 $VAR
-When Claude Code can’t determine which commands the Bash input runs, it runs your hook regardless of the pattern. Because the
+When Claude Code can’t split the Bash input into subcommands, it runs your hook regardless of the pattern. Because the
 if
 filter is best-effort, use the
 permission system
 rather than a hook to enforce a hard allow or deny.
-​
 Command hook fields
 In addition to the
 common fields
@@ -5889,7 +5863,6 @@ args
 . Absolute paths with spaces, such as
 C:\Program Files\nodejs\node.exe
 , are a single valid executable and don’t trigger the warning.
-​
 HTTP hook fields
 In addition to the
 common fields
@@ -5914,13 +5887,15 @@ no
 List of environment variable names that may be interpolated into header values. References to unlisted variables are replaced with empty strings. Required for any env var interpolation to work
 onFailure
 no
-What happens to the action when the hook fails:
+Whether the action that triggered the hook goes ahead when the hook fails:
 "continue"
-, the default, or
+or
 "block"
 . See
 Block the action when a hook fails
-. Requires Claude Code v2.1.295 or later
+for
+"block"
+and for leaving the field unset. Requires Claude Code v2.1.295 or later
 Claude Code sends the hook’s
 JSON input
 as the POST request body with
@@ -5977,7 +5952,6 @@ environment variable:
 ]
 }
 }
-​
 MCP tool hook fields
 In addition to the
 common fields
@@ -6057,6 +6031,23 @@ parsing rule under exit code 0
 . If the tool returns
 isError: true
 , the hook produces a non-blocking error and execution continues.
+If a hook error contains one of these messages, Claude Code couldn’t read the tool’s answer, so the hook gave no verdict:
+MCP tool "security_scan" on server "my_server" gave no answer that could be read, because a message from the server was too large, so this hook gave no verdict. If this keeps happening, the tool must send a smaller answer.
+MCP tool "security_scan" on server "my_server" answered without its text, which happens when a result is too large, so this hook gave no verdict. If this keeps happening, the tool must send a smaller answer.
+On
+PreToolUse
+, Claude Code refuses the tool call the hook was checking. On other events such as
+UserPromptSubmit
+,
+PostToolUse
+, and
+Stop
+, the error is non-blocking.
+If the error keeps appearing, return less data from the tool, or change the hook’s
+tool
+or
+input
+so the answer is smaller.
 When the server is still connecting
 On events where a hook can block or change the result, such as
 PreToolUse
@@ -6105,7 +6096,6 @@ type: "command"
 hook on
 SessionStart
 instead.
-​
 Prompt and agent hook fields
 In addition to the
 common fields
@@ -6125,7 +6115,6 @@ model
 no
 Model to use for evaluation. Defaults to the model Claude Code uses for
 background functionality
-​
 Reference scripts by path
 Use these placeholders to reference hook scripts relative to the project or plugin root, regardless of the working directory when the hook runs:
 ${CLAUDE_PROJECT_DIR}
@@ -6255,7 +6244,6 @@ This example runs a formatting script bundled with the plugin:
 See the
 plugin components reference
 for details on creating plugin hooks.
-​
 Hooks in skills and agents
 In addition to settings files and plugins, hooks can be defined directly in
 skills
@@ -6300,7 +6288,7 @@ type
 command
 command
 :
-"./scripts/security-check.sh"
+'"${CLAUDE_PROJECT_DIR}"/scripts/security-check.sh'
 ---
 Subagents use the same format in their YAML frontmatter.
 Frontmatter hooks in a project skill follow the same
@@ -6317,7 +6305,6 @@ What runs before you trust a folder
 compares this with the settings-file rule, and the subagents page lists
 which scopes are exempt
 .
-​
 Limits on skill hooks
 When a skill’s frontmatter hooks don’t fire after you or Claude invoke the skill, run
 /hooks
@@ -6371,7 +6358,6 @@ Fix
 If neither case is yours, check for
 frontmatter that didn’t parse
 .
-​
 The
 /hooks
 menu
@@ -6382,7 +6368,6 @@ Select a hook to see the full text of what it runs and where it’s defined, suc
 To browse all hook events, including ones with no hooks configured, select
 All events
 at the end of the list.
-​
 Disable or remove hooks
 To remove a hook defined in a settings file, delete its entry from that file.
 To temporarily disable all hooks without removing them, set
@@ -6408,7 +6393,6 @@ set at the managed settings level can disable managed hooks. For the full reach 
 disableAllHooks
 .
 Direct edits to hooks in settings files are normally picked up automatically by the file watcher.
-​
 Hook input and output
 Command hooks receive JSON data via stdin and communicate results through exit codes, stdout, and stderr. HTTP hooks receive the same JSON as the POST request body and communicate results through the HTTP response body. This section covers fields and behavior common to all events. Each event’s section under
 Hook events
@@ -6425,7 +6409,6 @@ event’s section
 says so. To trigger a desktop notification, set a window title, or ring the bell, return
 terminalSequence
 instead.
-​
 Common input fields
 Hook events receive these fields as JSON, in addition to event-specific fields documented in each
 hook event
@@ -6637,7 +6620,6 @@ tool_use_id
 fields are event-specific. Each
 hook event
 section documents the additional fields for that event.
-​
 Exit code output
 When your hook’s run finishes, Claude Code uses its exit code to decide whether to continue with the action that triggered it, such as a tool call or a prompt:
 Success
@@ -6664,28 +6646,7 @@ PreToolUse
 notice in the transcript.
 What your hook prints to stdout can change the outcome. For example, when a
 PreToolUse
-hook exits 1 but prints JSON that passes validation, that JSON can still decide what happens. To find your hook’s outcome on an event such as
-PreToolUse
-, match what it printed to stdout in the first column with its exit code along the top:
-Stdout
-Exit 0
-Exit 2
-Any other exit code
-JSON object that passes
-schema validation
-Success. The fields apply
-Blocking error. Claude Code still reads the fields, but they can’t override the block
-Success. Claude Code ignores the exit code, and the fields alone decide. For hooks
-whose failure blocks the action
-, the run counts as a failure instead
-JSON that
-can’t be parsed
-or fails schema validation
-Non-blocking error. The notice carries the parse or validation message
-Blocking error. Your stderr is the reason
-Non-blocking error. The notice carries the parse or validation message
-Plain text
-, 
+hoo
 
 ## Source (permissions): https://docs.claude.com/en/docs/claude-code/permissions
 
@@ -6698,7 +6659,6 @@ Skip to main content
 Assistant
 Responses are generated using AI and may contain mistakes.
 Claude Code supports fine-grained permissions so that you can specify exactly what the agent is allowed to do and what it can’t. You can check permission settings into version control to share them with every developer in your organization, and each developer can customize their own.
-​
 Permission system
 Claude Code uses a tiered permission system to balance power and safety. The table shows, for each tool type, whether Manual mode asks before the action runs. The other
 permission modes
@@ -6758,7 +6718,6 @@ Exec wrappers and
 find
 actions
 .
-​
 Add a comment when you answer a permission prompt
 You can attach a note to Claude when you approve or deny a single action. On most permission prompts, including Bash, PowerShell, file, and MCP tool prompts, move to
 Yes
@@ -6785,7 +6744,6 @@ No
 : Claude Code sends your comment to Claude as the reason for the denial, and Claude continues working. If you select
 No
 without a comment on a prompt from the main conversation, Claude Code stops the turn.
-​
 Manage permissions
 You can view and manage Claude Code’s tool permissions with
 /permissions
@@ -6795,7 +6753,7 @@ file each rule comes from. You can open the dialog while Claude is working: when
 Allow
 rules let Claude Code use the specified tool without manual approval.
 Ask
-rules prompt for confirmation whenever Claude Code tries to use the specified tool.
+rules prompt for confirmation when Claude tries to use the specified tool.
 Deny
 rules prevent Claude Code from using the specified tool.
 Rules are evaluated in order: deny, then ask, then allow. The first match in that order determines the outcome, and rule specificity doesn’t change the order.
@@ -6830,7 +6788,6 @@ auto mode classifier rules
 . Select the
 Auto mode
 tab to view them.
-​
 Permission modes
 Claude Code supports several permission modes that control how it approves tool calls. See
 Permission modes
@@ -6912,14 +6869,19 @@ settings file
 . These are most useful in
 managed settings
 where they can’t be overridden.
-​
+To deny calls that would wait on a permission prompt, so an unattended session keeps working, set
+permissions.denyInsteadOfPrompting
+to
+true
+in your user or managed settings.
+dontAsk
+is a permission mode of its own, while this key works with the permission mode you’re in.
 Permission rule syntax
 Permission rules follow the format
 Tool
 or
 Tool(specifier)
 . Parentheses inside the specifier are literal, so a command or path that contains them needs no escaping.
-​
 Match all uses of a tool
 To match all uses of a tool, use only the tool name without parentheses:
 Rule
@@ -6947,7 +6909,6 @@ startup warning
 says so. Use the canonical names listed in the
 tools reference
 .
-​
 Use specifiers for fine-grained control
 Add a specifier in parentheses to match specific tool uses:
 Rule
@@ -6961,7 +6922,6 @@ Matches reading the
 file in the current directory
 WebFetch(domain:example.com)
 Matches fetch requests to example.com
-​
 Match by input parameter
 Deny and ask rules can match a top-level input parameter on any built-in tool with
 Tool(param:value)
@@ -7040,7 +7000,6 @@ Read(./path)
 , or
 WebFetch(domain:host)
 instead.
-​
 Wildcard patterns
 A
 *
@@ -7200,7 +7159,6 @@ The permission dialog writes the space-separated form when you select “Yes, an
 form is only recognized at the end of a pattern. In a pattern like
 Bash(git:* push)
 , the colon is treated as a literal character and won’t match git commands.
-​
 Tool name wildcards
 Deny and ask rules also accept glob patterns in the tool-name position. The pattern must match the full tool name:
 "*"
@@ -7244,9 +7202,7 @@ or
 are exempt from the check, and so are the names of tools Claude Code has removed, such as
 TaskOutput
 .
-​
 Tool-specific permission rules
-​
 Bash
 Bash rules match the whole command text, with
 *
@@ -7257,7 +7213,6 @@ shows which commands each rule shape matches and where to put the
 . The rest of this section covers how Claude Code matches compound commands and wrappers, which wrappers and
 find
 actions a prefix rule can’t approve, what a rule doesn’t match, read-only commands, and redirections.
-​
 Compound commands
 Claude Code is aware of shell operators, so a rule like
 Bash(safe-cmd *)
@@ -7309,7 +7264,6 @@ invocations are recognized regardless of what precedes the
 . Subcommands like
 cd
 into a directory outside your working directories generate their own Read rule for that path. Up to 5 rules may be saved for a single compound command.
-​
 Wrappers
 Before matching Bash rules, Claude Code strips a fixed set of wrappers, so a rule like
 Bash(npm test *)
@@ -7377,7 +7331,6 @@ devbox run rm -rf .
 . To approve work inside an environment runner, write a specific rule that includes both the runner and the inner command, such as
 Bash(devbox run npm test)
 . Add one rule per inner command you want to allow.
-​
 Exec wrappers and
 find
 actions
@@ -7423,7 +7376,6 @@ PreToolUse hook
 that returns
 "allow"
 for it.
-​
 What a Bash rule doesn’t match
 A Bash rule matches the command text Claude writes, after Claude Code splits
 compound commands
@@ -7452,15 +7404,12 @@ git push origin main
 git -C . push origin main
 ,
 git -c push.default=current push origin main
-,
-git 'push' origin main
 Your other rules and the permission mode decide the commands in the last column.
 For filesystem and network enforcement that doesn’t depend on the command text, use
 sandboxing
 . To inspect the full command text with your own logic before it runs, use a
 PreToolUse hook
 .
-​
 Read-only commands
 Claude Code recognizes a built-in set of Bash commands as read-only and runs them without a permission prompt in every mode, except as
 permissions.blockReadsOutsideWorkingDirectories
@@ -7569,6 +7518,21 @@ ps -ef
 run without a prompt. The check on dashed forms such as
 ps aux -e
 requires Claude Code v2.1.290 or later.
+which
+with flags beyond lookup and display
+:
+which
+prompts when it passes a flag such as
+-i
+/
+--read-alias
+or
+--read-functions
+.
+which node
+and
+which -a node
+run without a prompt.
 Network paths on Windows
 : a command whose arguments include a network (UNC) path, such as
 \\server\share\file
@@ -7648,7 +7612,6 @@ curl
 ,
 wget
 , or other tools to reach any URL.
-​
 Redirections
 When a command redirects output or input, Claude Code checks the redirect target against your file rules as if Claude wrote or read that file directly:
 Output redirects
@@ -7699,7 +7662,6 @@ Bash(tee *)
 doesn’t cover a destination outside the working directories. Claude Code checks
 tee
 targets in v2.1.269 and later.
-​
 PowerShell
 PowerShell permission rules use the same shape as
 Bash rules
@@ -7747,7 +7709,6 @@ Claude Code parses the PowerShell AST and checks each command in a compound comm
 and
 ||
 split a compound command into subcommands. Every subcommand must be allowed for the compound command to run without a prompt, for example by matching an allow rule.
-​
 Read and Edit
 To block Claude’s file tools from reading a file or directory, add a
 Read
@@ -7762,7 +7723,6 @@ has a paste-ready example. If your project has a
 file, it has no effect, so move its entries into
 Read
 deny rules.
-​
 What
 Read
 and
@@ -7816,7 +7776,6 @@ grep -r pattern .
 run from the directory that holds the file, or to arbitrary subprocesses that read or write files indirectly, like a Python or Node script that opens files itself. For OS-level enforcement that blocks all processes from accessing a path,
 enable the sandbox
 .
-​
 Write(path)
 ,
 Glob(path)
@@ -7861,7 +7820,6 @@ prompts when Claude calls Grep or Glob on a matching path, but not when a search
 To match every use of one of these tools regardless of path,
 write only the tool name
 .
-​
 How path patterns match
 Read and Edit rules both use
 gitignore
@@ -8055,7 +8013,6 @@ In gitignore patterns,
 matches within a single path segment and can appear at any position in the pattern, while
 **
 matches across directories.
-​
 Special characters and
 !
 negation
@@ -8125,7 +8082,6 @@ secrets/public
 along with the rest of
 secrets
 .
-​
 Symlinks
 When a file path Claude requests goes through a symlink, the permission check covers two paths: the one Claude requested and the file it resolves to. This applies to symbolic links on macOS, Linux, and Windows, and to directory junctions on Windows.
 How rules match a symlinked path
@@ -8219,7 +8175,6 @@ refuse the operation
 When a tool then opens the approved file, it
 confirms that the path still resolves to the location the permission check approved
 .
-​
 Network paths
 When Claude’s file-reading tools, such as Read, Grep, and Glob, read from a network path, the read gets its own permission check. A network path is one that can reach another computer: on Windows, a UNC path such as
 \\server\share\file
@@ -8270,7 +8225,6 @@ or
 , and read the files from there, as
 Working directory is a network path
 describes
-​
 WebFetch
 WebFetch rules use a
 domain:
@@ -8326,7 +8280,6 @@ and cross a dot. This keeps a trailing wildcard from matching domains an attacke
 Wildcards in
 WebFetch
 rules require Claude Code v2.1.172 or later to match fetches.
-​
 Allow or deny every fetch
 A bare
 WebFetch
@@ -8403,7 +8356,6 @@ auto mode
 , Claude instead names the host in the command’s
 per-command allowed domains
 for the classifier to review.
-​
 MCP
 To match every tool from an MCP server, write
 mcp__<server>__*
@@ -8424,6 +8376,15 @@ puppeteer_navigate
 tool provided by the
 puppeteer
 server
+Write allow rules for MCP tools without a
+specifier
+, which a
+permission update
+calls
+ruleContent
+. If you add one to allow only some of a tool’s calls, the rule doesn’t match any call. To block some calls instead, see
+Match by input parameter
+.
 For
 <server>
 , write the server’s name the way it appears in that server’s tool names. These examples show the rule to write for a name with special characters, a server from a plugin, and a name that contains
@@ -8511,7 +8472,6 @@ Bash
 allow rule to
 mcp__workspace__bash
 .
-​
 Agent (subagents)
 Use
 Agent(AgentName)
@@ -8527,36 +8487,7 @@ matches a custom subagent named
 my-custom-agent
 Add these rules to the
 deny
-array in your settings or use the
---disallowedTools
-CLI flag to disable specific agents. To disable the Explore agent:
-{
-"permissions"
-: {
-"deny"
-: [
-"Agent(Explore)"
-]
-}
-}
-​
-Cd
-Cd
-rules control which directories the
-/cd
-command
-can move the session to.
-Cd
-is not a model-invocable tool: Claude can’t call it, and the rules apply only when you run
-/cd
-yourself.
-A bare
-Cd
-deny rule disables
-/cd
-entirely. A
-Cd(<path-pattern>)
-deny rule blocks matching targets. Deny rules check every spelling of the target, including each symlink hop it resolves through, so a rule written for one path also blocks targets that resolve to it
+array in your settin
 
 ## Source (agent-teams): https://docs.claude.com/en/docs/claude-code/agent-teams
 
@@ -8572,7 +8503,7 @@ Agent teams are experimental and disabled by default. Enable them by setting
 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
 in your
 settings.json
-or environment. Without that variable, no team is set up at session start, no team directories are written, and Claude does not spawn or propose teammates. Agent teams have
+or environment. Agent teams have
 known limitations
 around session resumption, task coordination, and shutdown behavior.
 Agent teams let you coordinate multiple Claude Code instances working together. One session acts as the team lead, coordinating work, assigning tasks, and synthesizing results. Teammates work independently, each in its own context window, and communicate directly with each other. You can also talk to any teammate directly without going through the lead.
@@ -8581,7 +8512,6 @@ Subagents
 work within a single session, and with
 cross-session messaging
 Claude can pass findings between the sessions you run yourself.
-​
 When to use agent teams
 Agent teams are most effective for tasks where parallel exploration adds real value. See
 use case examples
@@ -8597,7 +8527,6 @@ Cross-layer coordination
 Agent teams add coordination overhead and use significantly more tokens than a single session. They work best when teammates can operate independently. For sequential tasks, same-file edits, or work with many dependencies, a single session or
 subagents
 are more effective.
-​
 Compare with subagents
 Both agent teams and
 subagents
@@ -8627,7 +8556,6 @@ Token cost
 Lower: results summarized back to main context
 Higher: each teammate is a separate Claude instance
 Use subagents when you need quick, focused workers that report back. Use agent teams when teammates need to share findings, challenge each other, and coordinate on their own.
-​
 Enable agent teams
 Agent teams are disabled by default. Enable them by setting the
 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS
@@ -8659,7 +8587,6 @@ with the
 flag, including Agent SDK sessions, Claude doesn’t spawn teammates, and a subagent that Claude names runs as an ordinary
 subagent
 even with agent teams enabled.
-​
 Start your first agent team
 After enabling agent teams, describe the task and the teammates you want in natural language. Claude spawns them and coordinates work based on your prompt.
 This example works well because the three roles are independent and can explore the problem without waiting on each other:
@@ -8688,10 +8615,8 @@ when five are idle. Select it and press Enter to expand the collapsed rows, or p
 If you want each teammate in its own split pane, see
 Choose a display mode
 .
-​
 Control your agent team
 Tell the lead what you want in natural language. It handles team coordination, task assignment, and delegation based on your instructions.
-​
 Choose a display mode
 Agent teams support two display modes:
 In-process
@@ -8704,54 +8629,17 @@ tmux -CC
 in iTerm2 is the suggested entrypoint into
 tmux
 .
-The default is
-"in-process"
-. Set
-"auto"
-to enable split panes when you’re already running inside a tmux session, or when your terminal is iTerm2 with the
-it2
-CLI installed, falling back to in-process otherwise. The
-"tmux"
-setting enables split-pane mode and auto-detects whether to use tmux or iTerm2 based on your terminal.
-Set
-"iterm2"
-to use iTerm2 native split panes explicitly. This mode requires the
-it2
-CLI
-and shows an error with the install command if
-it2
-is missing. The setup prompt that offers to install
-it2
-or switch to tmux appears under
-"auto"
-or
-"tmux"
-when your terminal is iTerm2 and tmux is available as a fallback.
-To override the default, set
-teammateMode
-in
-~/.claude/settings.json
-:
-{
-"teammateMode"
-:
-"auto"
-}
-To set the mode for a single session, pass it as a flag:
-claude
---teammate-mode
-auto
-The
---teammate-mode
-flag is experimental and doesn’t appear in
-claude --help
-.
+With agent teams
+enabled
+, follow these steps to give each teammate its own pane:
+1
+Install tmux or set up iTerm2
 Split-pane mode requires either
 tmux
 or iTerm2 with the
 it2
 CLI
-. To install manually:
+. Set up the one you’ll run Claude Code in:
 tmux
 : install through your system’s package manager. See the
 tmux wiki
@@ -8761,9 +8649,64 @@ iTerm2
 it2
 CLI
 , then enable the Python API in
-iTerm2 → Settings → General → Magic → Enable Python API
+iTerm2 > Settings > General > Magic > Enable Python API
 .
-​
+2
+Turn on split panes
+Teammates run in-process until you change the
+teammateMode
+setting.
+Set it to
+"auto"
+in
+~/.claude/settings.json
+:
+{
+"teammateMode"
+:
+"auto"
+}
+With
+"auto"
+, teammates open in split panes when you run Claude Code inside tmux or iTerm2, and run in-process in other terminals.
+3
+Start Claude Code and spawn teammates
+Run
+claude
+inside tmux or in iTerm2, then ask Claude to spawn teammates.
+If a setup prompt for
+it2
+appears in iTerm2, select
+Install it2 now
+to open the panes in your iTerm2 window.
+If you run Claude Code outside tmux and iTerm2, or the panes don’t open in your iTerm2 window, change
+teammateMode
+again:
+Outside tmux and iTerm2
+: with tmux installed, set
+teammateMode
+to
+"tmux"
+. The panes open in a separate tmux session. To watch them, copy the command from the
+View teammates
+line at the Claude Code prompt and run that command in a second terminal.
+Panes don’t open in your iTerm2 window
+: set
+teammateMode
+to
+"iterm2"
+to use iTerm2’s own panes. Teammates then start only when you run Claude Code in iTerm2 with
+it2
+set up.
+To set the mode for a single session, pass it as a flag:
+claude
+--teammate-mode
+auto
+The
+--teammate-mode
+flag is experimental and doesn’t appear in
+claude --help
+.
 Specify teammates and models
 Claude decides the number of teammates to spawn based on your task, or you can specify exactly what you want:
 Spawn 4 teammates to refactor these modules in parallel. Use Sonnet for
@@ -8816,7 +8759,6 @@ effort level
 . In split-pane mode this applies from v2.1.186; earlier versions did not pass the lead’s session effort to split-pane teammates. For a teammate on another model, see
 Effort level of subagents and teammates
 .
-​
 Have teammates plan before implementing
 For complex or risky tasks, you can have teammates plan before implementing. A teammate that Claude spawns while the lead is in
 plan mode
@@ -8828,7 +8770,6 @@ permission mode
 If you put a running in-process teammate in plan mode by pressing
 Shift+Tab
 while viewing its session, the lead reviews that run’s plan instead of Claude Code approving it. You aren’t asked to approve it; the lead approves it or sends it back for revision.
-​
 Talk to teammates directly
 Each teammate is a full, independent Claude Code session. You can message any teammate directly to give additional instructions, ask follow-up questions, or redirect their approach.
 In-process mode
@@ -8851,7 +8792,6 @@ and
 /fast
 set the lead’s model and fast mode, not the teammate’s, so they don’t run from this view. A notice tells you why.
 A teammate’s model and fast mode are fixed when it spawns.
-​
 Assign and claim tasks
 The shared task list coordinates work across the team. The lead creates tasks and teammates work through them. Tasks have three states: pending, in progress, and completed. A task can also depend on other tasks and shows as blocked in the task list until they’re completed. Teammates don’t self-claim a blocked task, but you or the lead can still assign it.
 Agents
@@ -8863,7 +8803,6 @@ Lead assigns
 Self-claim
 : after finishing a task, a teammate picks up the next unassigned, unblocked task on its own
 Task claiming uses file locking to prevent race conditions when multiple teammates try to claim the same task simultaneously.
-​
 Shut down teammates
 To gracefully end a teammate’s session, refer to it by name. For example, with a teammate named researcher:
 Ask the researcher teammate to shut down
@@ -8871,7 +8810,6 @@ The lead sends a shutdown request. The teammate can approve, exiting gracefully,
 The team’s shared directories are cleaned up automatically when the session ends, so there’s no separate cleanup step. See
 Architecture
 for which directories are removed and which stay on disk.
-​
 Enforce quality gates with hooks
 Use
 hooks
@@ -8882,12 +8820,10 @@ TaskCreated
 : runs when a task is being created. Exit with code 2 to prevent creation and send feedback.
 TaskCompleted
 : runs when a task is being marked complete. Exit with code 2 to prevent completion and send feedback.
-​
 How agent teams work
 This section covers the architecture and mechanics behind agent teams. If you want to start using them, see
 Control your agent team
 above.
-​
 How Claude starts agent teams
 To start a team, ask Claude for teammates. Claude launches a teammate when it calls the
 Agent tool
@@ -8901,7 +8837,6 @@ on the call itself. Claude Code doesn’t ask you to confirm the launch.
 Claude also names ordinary subagents on its own so it can message them later. Those calls follow the same rule, so teams can form even when you didn’t ask for one. If you want subagents instead,
 turn agent teams off
 .
-​
 Architecture
 An agent team consists of:
 Component
@@ -8953,7 +8888,6 @@ subagent definition
 There is no project-level equivalent of the team config. A file like
 .claude/teams/teams.json
 in your project directory is not recognized as configuration; Claude treats it as an ordinary file.
-​
 Use subagent definitions for teammates
 When spawning a teammate in either display mode, you can reference a
 subagent
@@ -9031,7 +8965,6 @@ trusted the folder the agent file is in
 . Trusting a parent folder doesn’t count. Until then, the teammate comes back with none of the definition’s tools or instructions, keeping only the tools Claude Code adds to every in-process teammate. See
 the teammate’s agent definition was not restored
 for the notice text.
-​
 Permissions
 To cycle a running teammate’s permission mode, press
 Shift+Tab
@@ -9088,7 +9021,6 @@ in your shell. The rules apply to the lead and each split-pane teammate for that
 Teammate permission prompts appear in the lead session, so approve them there yourself. You don’t need to approve
 a teammate’s plan
 .
-​
 Messages between agents
 When one agent sends another a message over
 SendMessage
@@ -9100,7 +9032,6 @@ auto mode
 , the classifier applies two checks to messages between agents:
 It treats an approval claim relayed from another agent as untrusted input rather than confirmation from you.
 It reviews each message before Claude Code delivers it, whether a plain message or a structured protocol message such as a shutdown request or plan approval response. A message it blocks never reaches the recipient.
-​
 Context and communication
 Each teammate has its own context window. When spawned, a teammate loads the same project context as a regular session: CLAUDE.md, MCP servers, and skills. If you start the lead with
 --setting-sources
@@ -9120,7 +9051,6 @@ can see task status and claim available work.
 Teammate messaging
 : send a message to one specific teammate by name. To reach everyone, send one message per recipient.
 The lead assigns every teammate a name when it spawns them, and any teammate can message any other by that name. To get predictable names you can reference in later prompts, tell the lead what to call each teammate in your spawn instruction.
-​
 Token usage
 Agent teams use significantly more tokens than a single session. Each teammate has its own context window, and token usage scales with the number of active teammates. For research, review, and new feature work, the extra tokens are usually worthwhile. For routine tasks, a single session is more cost-effective. See
 agent team token costs
@@ -9132,10 +9062,8 @@ subagentPromptCacheTtl
 to
 1h
 . The API bills 1-hour cache writes at a higher rate.
-​
 Use case examples
 These examples show how agent teams handle tasks where parallel exploration adds value.
-​
 Run a parallel code review
 A single reviewer tends to gravitate toward one type of issue at a time. Splitting review criteria into independent domains means security, performance, and test coverage all get thorough attention simultaneously. The prompt assigns each teammate a distinct lens so they don’t overlap:
 Spawn three teammates to review PR #142:
@@ -9144,7 +9072,6 @@ Spawn three teammates to review PR #142:
 - One validating test coverage
 Have them each review and report findings.
 Each reviewer works from the same PR but applies a different filter. The lead synthesizes findings across all three after they finish.
-​
 Investigate with competing hypotheses
 When the root cause is unclear, a single agent tends to find one plausible explanation and stop looking. The prompt fights this by making teammates explicitly adversarial: each one’s job is not only to investigate its own theory but to challenge the others’.
 Users report the app exits after one message instead of staying connected.
@@ -9153,9 +9080,7 @@ each other to try to disprove each other's theories, like a scientific
 debate. Update the findings doc with whatever consensus emerges.
 The debate structure is the key mechanism here. Sequential investigation suffers from anchoring: once one theory is explored, subsequent investigation is biased toward it.
 With multiple independent investigators actively trying to disprove each other, the theory that survives is much more likely to be the actual root cause.
-​
 Best practices
-​
 Give teammates enough context
 Teammates load project context automatically, including CLAUDE.md, MCP servers, and skills, but they don’t inherit the lead’s conversation history. See
 Context and communication
@@ -9164,7 +9089,6 @@ Spawn a security reviewer teammate with the prompt: "Review the authentication m
 at src/auth/ for security vulnerabilities. Focus on token handling, session
 management, and input validation. The app uses JWT tokens stored in
 httpOnly cookies. Report any issues with severity ratings."
-​
 Choose an appropriate team size
 There’s no hard limit on the number of teammates, but practical constraints apply:
 Token costs scale linearly
@@ -9177,7 +9101,6 @@ Diminishing returns
 : beyond a certain point, additional teammates don’t speed up work proportionally
 Start with 3-5 teammates for most workflows. This balances parallel work with manageable coordination. If you have 15 independent tasks, 3 teammates is a good starting point.
 Scale up only when the work benefits from having teammates work simultaneously. Three focused teammates often outperform five scattered ones.
-​
 Size tasks appropriately
 Too small
 : coordination overhead exceeds the benefit
@@ -9186,22 +9109,16 @@ Too large
 Just right
 : self-contained units that produce a clear deliverable, such as a function, a test file, or a review
 The lead breaks work into tasks and assigns them to teammates automatically. If it isn’t creating enough tasks, ask it to split the work into smaller pieces. Having 5-6 tasks per teammate keeps everyone productive and lets the lead reassign work if someone gets stuck.
-​
 Wait for teammates to finish
 Sometimes the lead starts implementing tasks itself instead of waiting for teammates. If you notice this:
 Wait for your teammates to complete their tasks before proceeding
-​
 Start with research and review
 If you’re new to agent teams, start with tasks that have clear boundaries and don’t require writing code: reviewing a PR, researching a library, or investigating a bug. These tasks show the value of parallel exploration without the coordination challenges that come with parallel implementation.
-​
 Avoid file conflicts
 Two teammates editing the same file leads to overwrites. Break the work so each teammate owns a different set of files.
-​
 Monitor and steer
 Check in on teammates’ progress, redirect approaches that aren’t working, and synthesize findings as they come in. Letting a team run unattended for too long increases the risk of wasted effort.
-​
 Troubleshooting
-​
 Teammates not appearing
 If teammates aren’t appearing after you ask Claude to spawn them:
 In in-process mode, teammates appear in the agent panel below the prompt input. Use the up and down arrow keys to select one, then press Enter to view it.
@@ -9215,7 +9132,6 @@ tmux
 For iTerm2, verify the
 it2
 CLI is installed and the Python API is enabled in iTerm2 preferences.
-​
 Claude spawns teammates instead of subagents
 While agent teams are enabled, a subagent that Claude names in the lead’s session launches as a teammate. Claude
 can name subagents on its own
@@ -9260,19 +9176,16 @@ After the change, Claude may still name subagents, and the name keeps working as
 SendMessage
 address
 . Claude receives each subagent’s result when it completes.
-​
 Too many permission prompts
 Teammate permission requests bubble up to the lead, which can create friction. Pre-approve common operations in your
 permission settings
 before spawning teammates to reduce interruptions.
-​
 Agents stopping early
 Teammates may stop after encountering errors instead of recovering. Check their output by selecting the teammate in the agent panel and pressing Enter in in-process mode, or by clicking the pane in split mode, then either:
 Give them additional instructions directly
 Spawn a replacement teammate to continue the work
 A message from the lead or another teammate wakes an in-process teammate that is waiting to retry a failed API request, so it retries immediately instead of waiting for the full retry delay.
 The lead can stop early too, deciding the team is finished before all tasks are actually complete. If that happens, tell it to keep going.
-​
 Orphaned tmux sessions
 If a tmux session persists after the Claude Code session ends, it may not have been fully cleaned up. List sessions and end the one created by the team:
 tmux
@@ -9284,7 +9197,6 @@ kill-session
 session-nam
 e
 >
-​
 Limitations
 Agent teams are experimental. Current limitations to be aware of:
 No session resumption with in-process teammates
@@ -9316,8 +9228,7 @@ No per-teammate permission modes at spawn
 Permissions
 .
 Split panes require tmux or iTerm2
-: the default in-process mode works in any terminal. Split-pane mode isn’t supported in VS Code’s integrated terminal, Windows Terminal, or Ghostty.
-​
+: the default in-process mode works in any terminal.
 Next steps
 Explore related approaches for parallel work and delegation:
 Lightweight delegation
@@ -9335,7 +9246,7 @@ let you run multiple Claude Code sessions yourself without automated team coordi
 Was this page helpful?
 Yes
 No
-{"docsConfig":{"theme":"mint","$schema":"https://mintlify.com/docs.json","name":"Claude Code Docs","description":"Official documentation for Claude Code, Anthropic's agentic coding tool available in the terminal, IDE, desktop app, and browser. Covers installation, configuration, skills, subagents, hooks, MCP, the Agent SDK, and reference material.","colors":{"primary":"#0E0E0E","light":"#D4A27F","dark":"#0E0E0E"},"logo":{"light":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/light.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=78fd01ff4f4340295a4f66e2ea54903c","dark":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/dark.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=1298a0c3b3a1da603b190d0de0e31712"},"favicon":"https://mintcdn.com/claude-code/T2WlxklWBkR5Y1mJ/favicon.ico?fit=max\u0026auto=format\u0026n=T2WlxklWBkR5Y1mJ\u0026q=85\u0026s=346a85952ae08d5ee90e3c34d4423930","appearance":{"default":"system"},"background":{"color":{"light":"#FDFDF7","dark":"#09090B"}},"navbar":{"links":[{"href":"https://platform.claude.com/","label":"Claude Developer Platform"}],"primary":{"type":"button","label":"Open Claude Code","href":"https://claude.ai/code"}},"footer":{"socials":{"x":"https://x.com/AnthropicAI","linkedin":"https://www.linkedin.com/company/anthropicresearch"},"links":[{"header":"Company","items":[{"label":"Anthropic","href":"https://www.anthropic.com/company"},{"label":"Careers","href":"https://www.anthropic.com/careers"},{"label":"Economic Futures","href":"https://www.anthropic.com/economic-futures"},{"label":"Research","href":"https://www.anthropic.com/research"},{"label":"News","href":"https://www.anthropic.com/news"},{"label":"Trust center","href":"https://trust.anthropic.com/"},{"label":"Transparency","href":"https://www.anthropic.com/transparency"}]},{"header":"Help and security","items":[{"label":"Availability","href":"https://www.anthropic.com/supported-countries"},{"label":"Status","href":"https://status.anthropic.com/"},{"label":"Support center","href":"https://support.claude.com/"}]},{"header":"Learn","items":[{"label":"Courses","href":"https://academy.claude.com/"},{"label":"MCP connectors","href":"https://claude.com/partners/mcp"},{"label":"Customer stories","href":"https://www.claude.com/customers"},{"label":"Engineering blog","href":"https://www.anthropic.com/engineering"},{"label":"Events","href":"https://www.anthropic.com/events"},{"label":"Powered by Claude","href":"https://claude.com/partners/powered-by-claude"},{"label":"Service partners","href":"https://claude.com/partners/services"},{"label":"Startups program","href":"https://claude.com/programs/startups"}]},{"header":"Terms and policies","items":[{"label":"Privacy choices","href":"https://www.anthropic.com/legal/privacy"},{"label":"Privacy policy","href":"https://www.anthropic.com/legal/privacy"},{"label":"Disclosure policy","href":"https://www.anthropic.com/responsible-disclosure-policy"},{"label":"Usage policy","href":"https://www.anthropic.com/legal/aup"},{"label":"Commercial terms","href":"https://www.anthropic.com/legal/commercial-terms"},{"label":"Consumer terms","href":"https://www.anthropic.com/legal/consumer-terms"}]}]},"seo":{"metatags":{"canonical":"https://code.claude.com/docs"}},"fonts":{"family":"Anthropic Sans"},"contextual":{"options":["copy","view","claude"],"display":"header"},"styling":{"latex":true},"navigation":{"languages":[{"language":"en","href":"en/overview"},{"language":"fr","href":"fr/overview"},{"language":"de","href":"de/overview"},{"language":"it","href":"it/overview"},{"language":"jp","href":"ja/overview"},{"language":"es","href":"es/overview"},{"language":"ko","href":"ko/overview"},{"language":"zh-CN","href":"zh-CN/overview"},{"language":"zh-TW","href":"zh-TW/overview"},{"language":"ru","href":"ru/overview"},{"language":"id","href":"id/overview"},{"language":"pt-BR","href":"pt/overview"}]}},"deployment":{"deploymentMetadataValue":{"subdomain":"claude-code","hasAudioNarration":false,"actualSubdomain":"claude-code","customDomains":["code.claude.com"],"gitSource":{"type":"github","owner":"anthropics","repo":"claude-code-docs","deployBranch":"main","contentDirectory":"","isPrivate":true,"mountPath":"","label":""},"feedback":{"thumbs":true},"entitlements":{"AI_CHAT":{"status":"ENABLED"},"REMOVE_BRANDING":{"status":"ENABLED"},"CONTEXTUAL_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"CODE_SNIPPET_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"WEB_MCP":{"status":"ENABLED"},"NARRATION":{"status":"ENABLED"}},"buildId":"6af0c6c06412adac01293366","clientVersion":"0.0.4088","searchFilterCounts":[{"language":"en","tag":"Agent SDK","count":60},{"language":"en","tag":"Plugins","count":56},{"language":"de","tag":"Neuigkeiten","count":50},{"language":"en","tag":"What's New","count":50},{"language":"es","tag":"Novedades","count":50},{"language":"fr","tag":"Nouveautés","count":50},{"language":"it","tag":"Novità","count":50},{"language":"ko","tag":"새로운 기능","count":50},{"language":"pt-BR","tag":"Novidades","count":50},{"language":"ru","tag":"Что нового","count":50},{"language":"zh-TW","tag":"最新消息","count":50},{"language":"de","tag":"Erste Schritte","count":49},{"language":"es","tag":"Primeros pasos","count":49},{"language":"fr","tag":"Premiers pas","count":49},{"language":"id","tag":"Memulai","count":49},{"language":"it","tag":"Per iniziare","count":49},{"language":"jp","tag":"はじめに","count":49},{"language":"ko","tag":"시작하기","count":49},{"language":"pt-BR","tag":"Primeiros passos","count":49},{"language":"ru","tag":"Начало работы","count":49},{"language":"zh-TW","tag":"快速入門","count":49},{"language":"en","tag":"Getting started","count":48},{"language":"zh-CN","tag":"快速入门","count":46},{"language":"en","tag":"Overview","count":41},{"language":"de","tag":"Agent SDK","count":36},{"language":"en","tag":"Setup and access","count":36},{"language":"es","tag":"Agent SDK","count":36},{"language":"id","tag":"Agent SDK","count":36},{"language":"it","tag":"Agent SDK","count":36},{"language":"jp","tag":"Agent SDK","count":36},{"language":"pt-BR","tag":"Agent SDK","count":36},{"language":"ru","tag":"Agent SDK","count":36},{"language":"zh-CN","tag":"Agent SDK","count":36},{"language":"zh-TW","tag":"Agent SDK","count":36},{"language":"de","tag":"Administration","count":34},{"language":"en","tag":"Administration","count":34},{"language":"es","tag":"Administración","count":34},{"language":"fr","tag":"Administration","count":34},{"language":"id","tag":"Administrasi","count":34},{"language":"it","tag":"Amministrazione","count":34},{"language":"jp","tag":"管理","count":34},{"language":"ko","tag":"관리","count":34},{"language":"pt-BR","tag":"Administração","count":34},{"language":"ru","tag":"Администрирование","count":34},{"language":"zh-CN","tag":"管理","count":34},{"language":"zh-TW","tag":"管理","count":34},{"language":"de","tag":"Plugins","count":32},{"language":"es","tag":"Plugins","count":32},{"language":"fr","tag":"SDK Agent","count":32},{"language":"fr","tag":"Plugins","count":32},{"language":"id","tag":"Plugin","count":32},{"language":"it","tag":"Plugin","count":32},{"language":"jp","tag":"プラグイン","count":32},{"language":"ko","tag":"Agent SDK","count":32},{"language":"ko","tag":"플러그인","count":32},{"language":"pt-BR","tag":"Plugins","count":32},{"language":"ru","tag":"Плагины","count":32},{"language":"zh-CN","tag":"插件","count":32},{"language":"zh-TW","tag":"外掛","count":32},{"language":"en","tag":"Reference","count":28},{"language":"es","tag":"Configuración","count":28},{"language":"jp","tag":"設定","count":28},{"language":"zh-TW","tag":"設定","count":28},{"language":"de","tag":"Konfiguration","count":25},{"language":"en","tag":"Configuration","count":25},{"language":"fr","tag":"Configuration","count":25},{"language":"id","tag":"Konfigurasi","count":25},{"language":"id","tag":"Apa yang Baru","count":25},{"language":"id","tag":"Yang Baru","count":25},{"language":"it","tag":"Configurazione","count":25},{"language":"jp","tag":"新機能","count":25},{"language":"jp","tag":"最新情報","count":25},{"language":"ko","tag":"구성","count":25},{"language":"pt-BR","tag":"Configuração","count":25},{"language":"ru","tag":"Конфигурация","count":25},{"language":"zh-CN","tag":"配置","count":25},{"language":"zh-CN","tag":"新功能","count":25},{"language":"zh-CN","tag":"最新动态","count":25},{"language":"en","tag":"Settings","count":24},{"language":"de","tag":"Mit Claude Code entwickeln","count":22},{"language":"es","tag":"Crea con Claude Code","count":22},{"language":"fr","tag":"Développer avec Claude Code","count":22},{"language":"id","tag":"Membangun dengan Claude Code","count":22},{"language":"it","tag":"Crea con Claude Code","count":22},{"language":"jp","tag":"Claude Code で構築","count":22},{"language":"ko","tag":"Claude Code로 만들기","count":22},{"language":"pt-BR","tag":"Desenvolva com Claude Code","count":22},{"language":"ru","tag":"Разработка с Claude Code","count":22},{"language":"zh-CN","tag":"使用 Claude Code 构建","count":22},{"language":"zh-TW","tag":"使用 Claude Code 打造","count":22},{"language":"de","tag":"Referenz","count":20},{"language":"es","tag":"Referencia","count":20},{"language":"fr","tag":"Référence","count":20},{"language":"id","tag":"Referensi","count":20},{"language":"it","tag":"Riferimento","count":20},{"language":"jp","tag":"リファレンス","count":20},{"language":"ko","tag":"레퍼런스","count":20},{"language":"pt-BR","tag":"Referência","count":20},{"language":"ru","tag":"Справочник","count":20},{"language":"zh-CN","tag":"参考","count":20},{"language":"de","tag":"Plattformen und Integrationen","count":19},{"language":"es","tag":"Plataformas e integraciones","count":19},{"language":"fr","tag":"Plateformes et intégrations","count":19},{"language":"id","tag":"Platform dan integrasi","count":19},{"language":"it","tag":"Piattaforme e integrazioni","count":19},{"language":"jp","tag":"プラットフォームと連携","count":19},{"language":"ko","tag":"플랫폼 및 통합","count":19},{"language":"pt-BR","tag":"Plataformas e integrações","count":19},{"language":"ru","tag":"Платформы и интеграции","count":19},{"language":"zh-CN","tag":"平台与集成","count":19},{"language":"zh-TW","tag":"平台與整合","count":19},{"language":"de","tag":"Code-Review und Pull Requests","count":14},{"language":"es","tag":"Revisión de código y pull requests","count":14},{"language":"fr","tag":"Revue de code et pull requests","count":14},{"language":"it","tag":"Code review e pull request","count":14},{"language":"ko","tag":"코드 리뷰 및 풀 리퀘스트","count":14},{"language":"pt-BR","tag":"Revisão de código e pull requests","count":14},{"language":"ru","tag":"Код-ревью и pull request","count":14},{"language":"zh-TW","tag":"程式碼審查與 pull request","count":14},{"language":"zh-TW","tag":"部署","count":11}]},"assistantConfig":{"enableAskAiButton":false,"enableStarterQuestions":false,"enableAskAiSearchBar":true},"basePath":"/docs","hasChatPermissions":true,"hasWebMcpPermissions":true,"toggles":[{"name":"kill-isr","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-bash","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"chat-bucketing-batched","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-mintlify-slack","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-integrations-settings","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"rbac-expansion","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-pr-grouping","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-prefix","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"analytics-v7","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"user-flows-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"no-publish-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-onboarding","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"llms-txt-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving-live","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"stripTemperatureMiddleware","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"support-platform-pylon-zendesk","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"instant-rollback","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications-server","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-fable","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fixed-ai-action-pricing","enabled":true,"variant":{"name":"disabled","enabled":false,"fea
+{"docsConfig":{"theme":"mint","$schema":"https://mintlify.com/docs.json","name":"Claude Code Docs","description":"Official documentation for Claude Code, Anthropic's agentic coding tool available in the terminal, IDE, desktop app, and browser. Covers installation, configuration, skills, subagents, hooks, MCP, the Agent SDK, and reference material.","colors":{"primary":"#0E0E0E","light":"#D4A27F","dark":"#0E0E0E"},"logo":{"light":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/light.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=78fd01ff4f4340295a4f66e2ea54903c","dark":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/dark.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=1298a0c3b3a1da603b190d0de0e31712"},"favicon":"https://mintcdn.com/claude-code/T2WlxklWBkR5Y1mJ/favicon.ico?fit=max\u0026auto=format\u0026n=T2WlxklWBkR5Y1mJ\u0026q=85\u0026s=346a85952ae08d5ee90e3c34d4423930","appearance":{"default":"system"},"background":{"color":{"light":"#FDFDF7","dark":"#09090B"}},"navbar":{"links":[{"href":"https://platform.claude.com/","label":"Claude Developer Platform"}],"primary":{"type":"button","label":"Open Claude Code","href":"https://claude.ai/code"}},"footer":{"socials":{"x":"https://x.com/AnthropicAI","linkedin":"https://www.linkedin.com/company/anthropicresearch"},"links":[{"header":"Company","items":[{"label":"Anthropic","href":"https://www.anthropic.com/company"},{"label":"Careers","href":"https://www.anthropic.com/careers"},{"label":"Economic Futures","href":"https://www.anthropic.com/economic-futures"},{"label":"Research","href":"https://www.anthropic.com/research"},{"label":"News","href":"https://www.anthropic.com/news"},{"label":"Trust center","href":"https://trust.anthropic.com/"},{"label":"Transparency","href":"https://www.anthropic.com/transparency"}]},{"header":"Help and security","items":[{"label":"Availability","href":"https://www.anthropic.com/supported-countries"},{"label":"Status","href":"https://status.anthropic.com/"},{"label":"Support center","href":"https://support.claude.com/"}]},{"header":"Learn","items":[{"label":"Courses","href":"https://academy.claude.com/"},{"label":"MCP connectors","href":"https://claude.com/partners/mcp"},{"label":"Customer stories","href":"https://www.claude.com/customers"},{"label":"Engineering blog","href":"https://www.anthropic.com/engineering"},{"label":"Events","href":"https://www.anthropic.com/events"},{"label":"Powered by Claude","href":"https://claude.com/partners/powered-by-claude"},{"label":"Service partners","href":"https://claude.com/partners/services"},{"label":"Startups program","href":"https://claude.com/programs/startups"}]},{"header":"Terms and policies","items":[{"label":"Privacy choices","href":"https://www.anthropic.com/legal/privacy"},{"label":"Privacy policy","href":"https://www.anthropic.com/legal/privacy"},{"label":"Disclosure policy","href":"https://www.anthropic.com/responsible-disclosure-policy"},{"label":"Usage policy","href":"https://www.anthropic.com/legal/aup"},{"label":"Commercial terms","href":"https://www.anthropic.com/legal/commercial-terms"},{"label":"Consumer terms","href":"https://www.anthropic.com/legal/consumer-terms"}]}]},"seo":{"metatags":{"canonical":"https://code.claude.com/docs"}},"fonts":{"family":"Anthropic Sans"},"contextual":{"options":["copy","view","claude"],"display":"header"},"styling":{"latex":true},"navigation":{"languages":[{"language":"en","href":"en/overview"},{"language":"fr","href":"fr/overview"},{"language":"de","href":"de/overview"},{"language":"it","href":"it/overview"},{"language":"jp","href":"ja/overview"},{"language":"es","href":"es/overview"},{"language":"ko","href":"ko/overview"},{"language":"zh-CN","href":"zh-CN/overview"},{"language":"zh-TW","href":"zh-TW/overview"},{"language":"ru","href":"ru/overview"},{"language":"id","href":"id/overview"},{"language":"pt-BR","href":"pt/overview"}]}},"deployment":{"deploymentMetadataValue":{"subdomain":"claude-code","hasAudioNarration":false,"actualSubdomain":"claude-code","customDomains":["code.claude.com"],"gitSource":{"type":"github","owner":"anthropics","repo":"claude-code-docs","deployBranch":"main","contentDirectory":"","isPrivate":true,"mountPath":"","label":""},"feedback":{"thumbs":true},"entitlements":{"AI_CHAT":{"status":"ENABLED"},"REMOVE_BRANDING":{"status":"ENABLED"},"CONTEXTUAL_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"CODE_SNIPPET_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"WEB_MCP":{"status":"ENABLED"},"NARRATION":{"status":"ENABLED"}},"buildId":"6af8b0fc4f86660c4a257522","clientVersion":"0.0.4143","searchFilterCounts":[{"language":"en","tag":"Agent SDK","count":60},{"language":"en","tag":"Plugins","count":56},{"language":"de","tag":"Erste Schritte","count":49},{"language":"es","tag":"Primeros pasos","count":49},{"language":"fr","tag":"Premiers pas","count":49},{"language":"id","tag":"Memulai","count":49},{"language":"it","tag":"Per iniziare","count":49},{"language":"jp","tag":"はじめに","count":49},{"language":"ko","tag":"시작하기","count":49},{"language":"pt-BR","tag":"Primeiros passos","count":49},{"language":"ru","tag":"Начало работы","count":49},{"language":"zh-TW","tag":"快速入門","count":49},{"language":"en","tag":"Getting started","count":48},{"language":"zh-CN","tag":"快速入门","count":46},{"language":"en","tag":"Overview","count":41},{"language":"en","tag":"Setup and access","count":37},{"language":"de","tag":"Agent SDK","count":36},{"language":"es","tag":"Agent SDK","count":36},{"language":"id","tag":"Agent SDK","count":36},{"language":"it","tag":"Agent SDK","count":36},{"language":"jp","tag":"Agent SDK","count":36},{"language":"pt-BR","tag":"Agent SDK","count":36},{"language":"ru","tag":"Agent SDK","count":36},{"language":"zh-CN","tag":"Agent SDK","count":36},{"language":"zh-TW","tag":"Agent SDK","count":36},{"language":"de","tag":"Administration","count":35},{"language":"en","tag":"Administration","count":35},{"language":"es","tag":"Administración","count":35},{"language":"fr","tag":"Administration","count":35},{"language":"id","tag":"Administrasi","count":35},{"language":"it","tag":"Amministrazione","count":35},{"language":"jp","tag":"管理","count":35},{"language":"ko","tag":"관리","count":35},{"language":"pt-BR","tag":"Administração","count":35},{"language":"ru","tag":"Администрирование","count":35},{"language":"zh-CN","tag":"管理","count":35},{"language":"zh-TW","tag":"管理","count":35},{"language":"de","tag":"Plugins","count":32},{"language":"es","tag":"Plugins","count":32},{"language":"fr","tag":"SDK Agent","count":32},{"language":"fr","tag":"Plugins","count":32},{"language":"id","tag":"Plugin","count":32},{"language":"it","tag":"Plugin","count":32},{"language":"jp","tag":"プラグイン","count":32},{"language":"ko","tag":"Agent SDK","count":32},{"language":"ko","tag":"플러그인","count":32},{"language":"pt-BR","tag":"Plugins","count":32},{"language":"ru","tag":"Плагины","count":32},{"language":"zh-CN","tag":"插件","count":32},{"language":"zh-TW","tag":"外掛","count":32},{"language":"es","tag":"Configuración","count":29},{"language":"jp","tag":"設定","count":29},{"language":"zh-TW","tag":"設定","count":29},{"language":"en","tag":"Reference","count":28},{"language":"de","tag":"Konfiguration","count":26},{"language":"en","tag":"Configuration","count":26},{"language":"fr","tag":"Configuration","count":26},{"language":"id","tag":"Konfigurasi","count":26},{"language":"it","tag":"Configurazione","count":26},{"language":"ko","tag":"구성","count":26},{"language":"pt-BR","tag":"Configuração","count":26},{"language":"ru","tag":"Конфигурация","count":26},{"language":"zh-CN","tag":"配置","count":26},{"language":"en","tag":"Settings","count":25},{"language":"en","tag":"Agents and parallel work","count":23},{"language":"de","tag":"Mit Claude Code entwickeln","count":22},{"language":"es","tag":"Crea con Claude Code","count":22},{"language":"fr","tag":"Développer avec Claude Code","count":22},{"language":"id","tag":"Membangun dengan Claude Code","count":22},{"language":"it","tag":"Crea con Claude Code","count":22},{"language":"jp","tag":"Claude Code で構築","count":22},{"language":"ko","tag":"Claude Code로 만들기","count":22},{"language":"pt-BR","tag":"Desenvolva com Claude Code","count":22},{"language":"ru","tag":"Разработка с Claude Code","count":22},{"language":"zh-CN","tag":"使用 Claude Code 构建","count":22},{"language":"zh-TW","tag":"使用 Claude Code 打造","count":22},{"language":"de","tag":"Referenz","count":20},{"language":"es","tag":"Referencia","count":20},{"language":"fr","tag":"Référence","count":20},{"language":"id","tag":"Referensi","count":20},{"language":"it","tag":"Riferimento","count":20},{"language":"jp","tag":"リファレンス","count":20},{"language":"ko","tag":"레퍼런스","count":20},{"language":"pt-BR","tag":"Referência","count":20},{"language":"ru","tag":"Справочник","count":20},{"language":"zh-CN","tag":"参考","count":20},{"language":"de","tag":"Plattformen und Integrationen","count":19},{"language":"es","tag":"Plataformas e integraciones","count":19},{"language":"fr","tag":"Plateformes et intégrations","count":19},{"language":"id","tag":"Platform dan integrasi","count":19},{"language":"it","tag":"Piattaforme e integrazioni","count":19},{"language":"jp","tag":"プラットフォームと連携","count":19},{"language":"ko","tag":"플랫폼 및 통합","count":19},{"language":"pt-BR","tag":"Plataformas e integrações","count":19},{"language":"ru","tag":"Платформы и интеграции","count":19},{"language":"zh-CN","tag":"平台与集成","count":19},{"language":"zh-TW","tag":"平台與整合","count":19},{"language":"de","tag":"Code-Review und Pull Requests","count":14},{"language":"es","tag":"Revisión de código y pull requests","count":14},{"language":"fr","tag":"Revue de code et pull requests","count":14},{"language":"id","tag":"Code review dan pull request","count":14},{"language":"it","tag":"Code review e pull request","count":14},{"language":"jp","tag":"コードレビューとプルリクエスト","count":14},{"language":"ko","tag":"코드 리뷰 및 풀 리퀘스트","count":14},{"language":"pt-BR","tag":"Revisão de código e pull requests","count":14},{"language":"ru","tag":"Код-ревью и pull request","count":14},{"language":"zh-CN","tag":"代码审查与 Pull Request","count":14},{"language":"zh-TW","tag":"程式碼審查與 pull request","count":14},{"language":"de","tag":"Bereitstellung","count":12},{"language":"es","tag":"Despliegue","count":12},{"language":"fr","tag":"Déploiement","count":12},{"language":"id","tag":"Deployment","count":12},{"language":"it","tag":"Distribuzione","count":12},{"language":"jp","tag":"デプロイ","count":12},{"language":"ko","tag":"배포","count":12},{"language":"pt-BR","tag":"Implantação","count":12},{"language":"ru","tag":"Развёртывание","count":12},{"language":"zh-CN","tag":"部署","count":12},{"language":"zh-TW","tag":"部署","count":12},{"language":"zh-TW","tag":"參考","count":11}]},"assistantConfig":{"enableAskAiButton":false,"enableStarterQuestions":false,"enableAskAiSearchBar":true},"basePath":"/docs","hasChatPermissions":true,"hasWebMcpPermissions":true,"toggles":[{"name":"kill-isr","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-rbac-roles","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-bash","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"chat-bucketing-batched","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-mintlify-slack","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-integrations-settings","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"rbac-expansion","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-pr-grouping","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-prefix","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"analytics-v7","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"user-flows-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"no-publish-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-onboarding","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving-live","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"stripTemperatureMiddleware","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"support-platform-pylon-zendesk","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"instant-rollback","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications-server","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"autom
 
 ## Source (commands): https://docs.claude.com/en/docs/claude-code/commands
 
@@ -9373,7 +9284,6 @@ fullscreen rendering
 and
 /help
 immediately. Before v2.1.234, Claude Code queued those dialogs until the turn finished.
-​
 Commands across a typical workflow
 Most commands are useful at a specific point in a session, from setting up a project to shipping a change.
 First session in a repo.
@@ -9458,19 +9368,14 @@ runs a setup checkup that diagnoses installation and configuration issues and ca
 diagnoses runtime issues, and
 /feedback
 reports a bug with session context attached.
-​
 All commands
 The table below lists all the commands included in Claude Code. Most are built-in commands whose behavior is coded into the CLI. Two kinds of entries are marked:
 Skill
 : a bundled skill. It works like skills you write yourself: a prompt handed to Claude.
-/verify
-runs only when you invoke it.
 Workflow
 : a bundled
 dynamic workflow
 that fans work out across many subagents and runs in the background.
-/deep-research
-runs only when you invoke it.
 To add your own commands, see
 skills
 .
@@ -9487,7 +9392,7 @@ doesn’t show on Enterprise plans.
 Command
 Purpose
 /add-dir <path>
-Add a working directory for file access during the current session. Type a partial path to see matching directory suggestions; press
+Add a working directory for file access. Type a partial path to see matching directory suggestions; press
 Tab
 to accept one. Most
 .claude/
@@ -9500,7 +9405,9 @@ network paths
 . After a successful add, your
 DirectoryAdded
 hooks
-run. When you run it while Claude is responding, Claude Code asks you to confirm the directory right away, and once you confirm, Claude’s next tool call in the same turn can access it. Before v2.1.234, Claude Code queued the command until the turn finished
+run. If you run
+/add-dir
+while Claude is responding, Claude’s next tool call can access the directory once you confirm the add
 /advisor [model|off]
 Enable or disable the
 advisor tool
@@ -9646,7 +9553,7 @@ Move the session to another directory
 Configure
 Claude in Chrome
 settings
-/claude-api [migrate|upgrade|api-version|managed-agents-onboard|managed-agents-secure|prompt-audit|cost-optimize|build-eval|hillclimb|preserved-thinking-migration]
+/claude-api [migrate|upgrade|api-version|managed-agents-onboard|managed-agents-secure|prompt-audit|cost-optimize|latency-optimize|build-eval|hillclimb|preserved-thinking-migration]
 Skill
 .
 Load
@@ -9739,27 +9646,21 @@ how compaction handles rules, skills, and memory files
 /config [key=value ...]
 Open the
 Settings
-interface to adjust theme, model,
-output style
-, and other preferences. Pass one or more
+interface to adjust preferences. Pass
 key=value
-pairs to set a setting directly without opening the interface, for example
-/config thinking=false
+pairs to set a setting directly, for example
+/config verbose=true
 ,
 /config theme=dark
 , or
 /config model=sonnet
-. The
-key=value
-form also works in non-interactive mode (
+. That form also works in non-interactive mode (
 -p
 ) and from the Claude mobile app via
 Remote Control
-. The
-key=value
-form can’t turn on a setting that needs your confirmation in the panel, such as
+. It can’t turn on a setting that needs your confirmation in the panel, such as
 autoContinueAtUsageLimit
-, though it can turn one off. Run
+. Run
 /config --help
 to list the keys it accepts. Alias:
 /settings
@@ -10046,8 +9947,6 @@ teammates, and other Claude Code sessions Claude can message, with the name to u
 cross-session messaging
 . Also available as
 /peers
-. Requires Claude Code v2.1.224 or later; earlier versions report
-Unknown command: /list-agents
 . Teammate rows and the first line showing this session’s own name require v2.1.239 or later. Available only in sessions where
 cross-session messaging is enabled
 /login
@@ -10122,7 +10021,9 @@ recent auto mode denials
 auto mode classifier rules
 from the dialog’s
 Auto mode
-tab. Alias:
+tab. In the desktop app, edit your
+settings files
+instead. Alias:
 /allowed-tools
 /plan [description]
 Enter plan mode directly from the prompt. Pass an optional description to enter plan mode and immediately start with that task, for example
@@ -10232,10 +10133,6 @@ Review locally with
 /code-review
 for the exact rules. For a deep cloud review, use
 /code-review ultra
-. Before v2.1.223,
-/review
-was a separate command that ran a single-pass, read-only review of a GitHub pull request by number, listing open PRs to pick from when run with no argument; from v2.1.186 through v2.1.201, it ran the same multi-agent engine as
-/code-review medium
 /rewind
 Rewind the conversation and/or code to a previous point, or summarize from a selected message. See
 checkpointing
@@ -10369,7 +10266,7 @@ Configure Claude Code’s
 status line
 . Describe what you want, or run without arguments to auto-configure from your shell prompt
 /stickers
-Order Claude Code stickers
+Check Claude Code sticker availability
 /stop
 Stop the
 background session
@@ -10452,10 +10349,12 @@ file. For options such as theme and model, use
 /config
 instead
 /upgrade
-Open the upgrade page in your browser to switch to a higher plan tier. When the browser fails to open, the command shows a sign-in prompt without printing the URL
+Open the upgrade page in your browser to switch to a higher plan tier. When no browser can open the page, for example over SSH, the command prints the page’s URL above its sign-in prompt. Printing the URL requires Claude Code v2.1.323 or later
 /usage
 Show session cost, plan usage limits, and activity stats. On a Pro, Max, Ultra, Team, or Enterprise plan, includes a
 breakdown of what counts against your plan limits
+. Behind a Claude apps gateway that tracks spend, shows
+your spend through the gateway
 .
 /cost
 and
@@ -10464,7 +10363,7 @@ are aliases
 /usage-credits
 Configure usage credits, or request them from your admin, when you hit a limit. Opens your
 usage-credits billing settings
-in the browser, except that Team and Enterprise members without billing access instead send a usage-credits request to their admin from the CLI, after confirming in a dialog that the request notifies their admins. When no browser can open the billing page, for example over SSH, the command prints the URL to visit instead; this requires Claude Code v2.1.205 or later, and earlier versions showed nothing in that case. Previously
+in the browser. Team and Enterprise members without billing access instead send a usage-credits request to their admin from the CLI. At a terminal where no browser can open the page, for example over SSH, the command prints the URL. Printing it requires Claude Code v2.1.205 or later. Previously
 /extra-usage
 /verify
 Skill
@@ -10497,7 +10396,6 @@ editing a saved script by hand
 Open the
 workflow
 progress view to watch, pause, resume, or save running and completed workflows
-​
 How the command menu matches what you type
 Claude Code filters the
 /
@@ -10543,12 +10441,10 @@ Hidden commands
 : Claude Code keeps a few available commands, such as
 /heapdump
 , out of the menu by design. A partial name never brings a hidden command into the menu: if the partial matches nothing visible, Claude Code shows the same no-match message. Claude Code lists the command only once you’ve typed its full name, and submitting the full name runs it.
-​
 MCP prompts
 MCP servers can expose prompts that appear as commands. See
 MCP prompts
 for details.
-​
 See also
 Skills
 : create your own commands
@@ -10559,7 +10455,7 @@ CLI reference
 Was this page helpful?
 Yes
 No
-{"docsConfig":{"theme":"mint","$schema":"https://mintlify.com/docs.json","name":"Claude Code Docs","description":"Official documentation for Claude Code, Anthropic's agentic coding tool available in the terminal, IDE, desktop app, and browser. Covers installation, configuration, skills, subagents, hooks, MCP, the Agent SDK, and reference material.","colors":{"primary":"#0E0E0E","light":"#D4A27F","dark":"#0E0E0E"},"logo":{"light":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/light.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=78fd01ff4f4340295a4f66e2ea54903c","dark":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/dark.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=1298a0c3b3a1da603b190d0de0e31712"},"favicon":"https://mintcdn.com/claude-code/T2WlxklWBkR5Y1mJ/favicon.ico?fit=max\u0026auto=format\u0026n=T2WlxklWBkR5Y1mJ\u0026q=85\u0026s=346a85952ae08d5ee90e3c34d4423930","appearance":{"default":"system"},"background":{"color":{"light":"#FDFDF7","dark":"#09090B"}},"navbar":{"links":[{"href":"https://platform.claude.com/","label":"Claude Developer Platform"}],"primary":{"type":"button","label":"Open Claude Code","href":"https://claude.ai/code"}},"footer":{"socials":{"x":"https://x.com/AnthropicAI","linkedin":"https://www.linkedin.com/company/anthropicresearch"},"links":[{"header":"Company","items":[{"label":"Anthropic","href":"https://www.anthropic.com/company"},{"label":"Careers","href":"https://www.anthropic.com/careers"},{"label":"Economic Futures","href":"https://www.anthropic.com/economic-futures"},{"label":"Research","href":"https://www.anthropic.com/research"},{"label":"News","href":"https://www.anthropic.com/news"},{"label":"Trust center","href":"https://trust.anthropic.com/"},{"label":"Transparency","href":"https://www.anthropic.com/transparency"}]},{"header":"Help and security","items":[{"label":"Availability","href":"https://www.anthropic.com/supported-countries"},{"label":"Status","href":"https://status.anthropic.com/"},{"label":"Support center","href":"https://support.claude.com/"}]},{"header":"Learn","items":[{"label":"Courses","href":"https://academy.claude.com/"},{"label":"MCP connectors","href":"https://claude.com/partners/mcp"},{"label":"Customer stories","href":"https://www.claude.com/customers"},{"label":"Engineering blog","href":"https://www.anthropic.com/engineering"},{"label":"Events","href":"https://www.anthropic.com/events"},{"label":"Powered by Claude","href":"https://claude.com/partners/powered-by-claude"},{"label":"Service partners","href":"https://claude.com/partners/services"},{"label":"Startups program","href":"https://claude.com/programs/startups"}]},{"header":"Terms and policies","items":[{"label":"Privacy choices","href":"https://www.anthropic.com/legal/privacy"},{"label":"Privacy policy","href":"https://www.anthropic.com/legal/privacy"},{"label":"Disclosure policy","href":"https://www.anthropic.com/responsible-disclosure-policy"},{"label":"Usage policy","href":"https://www.anthropic.com/legal/aup"},{"label":"Commercial terms","href":"https://www.anthropic.com/legal/commercial-terms"},{"label":"Consumer terms","href":"https://www.anthropic.com/legal/consumer-terms"}]}]},"seo":{"metatags":{"canonical":"https://code.claude.com/docs"}},"fonts":{"family":"Anthropic Sans"},"contextual":{"options":["copy","view","claude"],"display":"header"},"styling":{"latex":true},"navigation":{"languages":[{"language":"en","href":"en/overview"},{"language":"fr","href":"fr/overview"},{"language":"de","href":"de/overview"},{"language":"it","href":"it/overview"},{"language":"jp","href":"ja/overview"},{"language":"es","href":"es/overview"},{"language":"ko","href":"ko/overview"},{"language":"zh-CN","href":"zh-CN/overview"},{"language":"zh-TW","href":"zh-TW/overview"},{"language":"ru","href":"ru/overview"},{"language":"id","href":"id/overview"},{"language":"pt-BR","href":"pt/overview"}]}},"deployment":{"deploymentMetadataValue":{"subdomain":"claude-code","hasAudioNarration":false,"actualSubdomain":"claude-code","customDomains":["code.claude.com"],"gitSource":{"type":"github","owner":"anthropics","repo":"claude-code-docs","deployBranch":"main","contentDirectory":"","isPrivate":true,"mountPath":"","label":""},"feedback":{"thumbs":true},"entitlements":{"AI_CHAT":{"status":"ENABLED"},"REMOVE_BRANDING":{"status":"ENABLED"},"CONTEXTUAL_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"CODE_SNIPPET_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"WEB_MCP":{"status":"ENABLED"},"NARRATION":{"status":"ENABLED"}},"buildId":"6af0c6c06412adac01293366","clientVersion":"0.0.4088","searchFilterCounts":[{"language":"en","tag":"Agent SDK","count":60},{"language":"en","tag":"Plugins","count":56},{"language":"de","tag":"Neuigkeiten","count":50},{"language":"en","tag":"What's New","count":50},{"language":"es","tag":"Novedades","count":50},{"language":"fr","tag":"Nouveautés","count":50},{"language":"it","tag":"Novità","count":50},{"language":"ko","tag":"새로운 기능","count":50},{"language":"pt-BR","tag":"Novidades","count":50},{"language":"ru","tag":"Что нового","count":50},{"language":"zh-TW","tag":"最新消息","count":50},{"language":"de","tag":"Erste Schritte","count":49},{"language":"es","tag":"Primeros pasos","count":49},{"language":"fr","tag":"Premiers pas","count":49},{"language":"id","tag":"Memulai","count":49},{"language":"it","tag":"Per iniziare","count":49},{"language":"jp","tag":"はじめに","count":49},{"language":"ko","tag":"시작하기","count":49},{"language":"pt-BR","tag":"Primeiros passos","count":49},{"language":"ru","tag":"Начало работы","count":49},{"language":"zh-TW","tag":"快速入門","count":49},{"language":"en","tag":"Getting started","count":48},{"language":"zh-CN","tag":"快速入门","count":46},{"language":"en","tag":"Overview","count":41},{"language":"de","tag":"Agent SDK","count":36},{"language":"en","tag":"Setup and access","count":36},{"language":"es","tag":"Agent SDK","count":36},{"language":"id","tag":"Agent SDK","count":36},{"language":"it","tag":"Agent SDK","count":36},{"language":"jp","tag":"Agent SDK","count":36},{"language":"pt-BR","tag":"Agent SDK","count":36},{"language":"ru","tag":"Agent SDK","count":36},{"language":"zh-CN","tag":"Agent SDK","count":36},{"language":"zh-TW","tag":"Agent SDK","count":36},{"language":"de","tag":"Administration","count":34},{"language":"en","tag":"Administration","count":34},{"language":"es","tag":"Administración","count":34},{"language":"fr","tag":"Administration","count":34},{"language":"id","tag":"Administrasi","count":34},{"language":"it","tag":"Amministrazione","count":34},{"language":"jp","tag":"管理","count":34},{"language":"ko","tag":"관리","count":34},{"language":"pt-BR","tag":"Administração","count":34},{"language":"ru","tag":"Администрирование","count":34},{"language":"zh-CN","tag":"管理","count":34},{"language":"zh-TW","tag":"管理","count":34},{"language":"de","tag":"Plugins","count":32},{"language":"es","tag":"Plugins","count":32},{"language":"fr","tag":"SDK Agent","count":32},{"language":"fr","tag":"Plugins","count":32},{"language":"id","tag":"Plugin","count":32},{"language":"it","tag":"Plugin","count":32},{"language":"jp","tag":"プラグイン","count":32},{"language":"ko","tag":"Agent SDK","count":32},{"language":"ko","tag":"플러그인","count":32},{"language":"pt-BR","tag":"Plugins","count":32},{"language":"ru","tag":"Плагины","count":32},{"language":"zh-CN","tag":"插件","count":32},{"language":"zh-TW","tag":"外掛","count":32},{"language":"en","tag":"Reference","count":28},{"language":"es","tag":"Configuración","count":28},{"language":"jp","tag":"設定","count":28},{"language":"zh-TW","tag":"設定","count":28},{"language":"de","tag":"Konfiguration","count":25},{"language":"en","tag":"Configuration","count":25
+{"docsConfig":{"theme":"mint","$schema":"https://mintlify.com/docs.json","name":"Claude Code Docs","description":"Official documentation for Claude Code, Anthropic's agentic coding tool available in the terminal, IDE, desktop app, and browser. Covers installation, configuration, skills, subagents, hooks, MCP, the Agent SDK, and reference material.","colors":{"primary":"#0E0E0E","light":"#D4A27F","dark":"#0E0E0E"},"logo":{"light":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/light.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=78fd01ff4f4340295a4f66e2ea54903c","dark":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/dark.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=1298a0c3b3a1da603b190d0de0e31712"},"favicon":"https://mintcdn.com/claude-code/T2WlxklWBkR5Y1mJ/favicon.ico?fit=max\u0026auto=format\u0026n=T2WlxklWBkR5Y1mJ\u0026q=85\u0026s=346a85952ae08d5ee90e3c34d4423930","appearance":{"default":"system"},"background":{"color":{"light":"#FDFDF7","dark":"#09090B"}},"navbar":{"links":[{"href":"https://platform.claude.com/","label":"Claude Developer Platform"}],"primary":{"type":"button","label":"Open Claude Code","href":"https://claude.ai/code"}},"footer":{"socials":{"x":"https://x.com/AnthropicAI","linkedin":"https://www.linkedin.com/company/anthropicresearch"},"links":[{"header":"Company","items":[{"label":"Anthropic","href":"https://www.anthropic.com/company"},{"label":"Careers","href":"https://www.anthropic.com/careers"},{"label":"Economic Futures","href":"https://www.anthropic.com/economic-futures"},{"label":"Research","href":"https://www.anthropic.com/research"},{"label":"News","href":"https://www.anthropic.com/news"},{"label":"Trust center","href":"https://trust.anthropic.com/"},{"label":"Transparency","href":"https://www.anthropic.com/transparency"}]},{"header":"Help and security","items":[{"label":"Availability","href":"https://www.anthropic.com/supported-countries"},{"label":"Status","href":"https://status.anthropic.com/"},{"label":"Support center","href":"https://support.claude.com/"}]},{"header":"Learn","items":[{"label":"Courses","href":"https://academy.claude.com/"},{"label":"MCP connectors","href":"https://claude.com/partners/mcp"},{"label":"Customer stories","href":"https://www.claude.com/customers"},{"label":"Engineering blog","href":"https://www.anthropic.com/engineering"},{"label":"Events","href":"https://www.anthropic.com/events"},{"label":"Powered by Claude","href":"https://claude.com/partners/powered-by-claude"},{"label":"Service partners","href":"https://claude.com/partners/services"},{"label":"Startups program","href":"https://claude.com/programs/startups"}]},{"header":"Terms and policies","items":[{"label":"Privacy choices","href":"https://www.anthropic.com/legal/privacy"},{"label":"Privacy policy","href":"https://www.anthropic.com/legal/privacy"},{"label":"Disclosure policy","href":"https://www.anthropic.com/responsible-disclosure-policy"},{"label":"Usage policy","href":"https://www.anthropic.com/legal/aup"},{"label":"Commercial terms","href":"https://www.anthropic.com/legal/commercial-terms"},{"label":"Consumer terms","href":"https://www.anthropic.com/legal/consumer-terms"}]}]},"seo":{"metatags":{"canonical":"https://code.claude.com/docs"}},"fonts":{"family":"Anthropic Sans"},"contextual":{"options":["copy","view","claude"],"display":"header"},"styling":{"latex":true},"navigation":{"languages":[{"language":"en","href":"en/overview"},{"language":"fr","href":"fr/overview"},{"language":"de","href":"de/overview"},{"language":"it","href":"it/overview"},{"language":"jp","href":"ja/overview"},{"language":"es","href":"es/overview"},{"language":"ko","href":"ko/overview"},{"language":"zh-CN","href":"zh-CN/overview"},{"language":"zh-TW","href":"zh-TW/overview"},{"language":"ru","href":"ru/overview"},{"language":"id","href":"id/overview"},{"language":"pt-BR","href":"pt/overview"}]}},"deployment":{"deploymentMetadataValue":{"subdomain":"claude-code","hasAudioNarration":false,"actualSubdomain":"claude-code","customDomains":["code.claude.com"],"gitSource":{"type":"github","owner":"anthropics","repo":"claude-code-docs","deployBranch":"main","contentDirectory":"","isPrivate":true,"mountPath":"","label":""},"feedback":{"thumbs":true},"entitlements":{"AI_CHAT":{"status":"ENABLED"},"REMOVE_BRANDING":{"status":"ENABLED"},"CONTEXTUAL_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"CODE_SNIPPET_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"WEB_MCP":{"status":"ENABLED"},"NARRATION":{"status":"ENABLED"}},"buildId":"6af8b0fc4f86660c4a257522","clientVersion":"0.0.4143","searchFilterCounts":[{"language":"en","tag":"Agent SDK","count":60},{"language":"en","tag":"Plugins","count":56},{"language":"de","tag":"Erste Schritte","count":49},{"language":"es","tag":"Primeros pasos","count":49},{"language":"fr","tag":"Premiers pas","count":49},{"language":"id","tag":"Memulai","count":49},{"language":"it","tag":"Per iniziare","count":49},{"language":"jp","tag":"はじめに","count":49},{"language":"ko","tag":"시작하기","count":49},{"language":"pt-BR","tag":"Primeiros passos","count":49},{"language":"ru","tag":"Начало работы","count":49},{"language":"zh-TW","tag":"快速入門","count":49},{"language":"en","tag":"Getting started","count":48},{"language":"zh-CN","tag":"快速入门","count":46},{"language":"en","tag":"Overview","count":41},{"language":"en","tag":"Setup and access","count":37},{"language":"de","tag":"Agent SDK","count":36},{"language":"es","tag":"Agent SDK","count":36},{"language":"id","tag":"Agent SDK","count":36},{"language":"it","tag":"Agent SDK","count":36},{"language":"jp","tag":"Agent SDK","count":36},{"language":"pt-BR","tag":"Agent SDK","count":36},{"language":"ru","tag":"Agent SDK","count":36},{"language":"zh-CN","tag":"Agent SDK","count":36},{"language":"zh-TW","tag":"Agent SDK","count":36},{"language":"de","tag":"Administration","count":35},{"language":"en","tag":"Administration","count":35},{"language":"es","tag":"Administración","count":35},{"language":"fr","tag":"Administration","count":35},{"language":"id","tag":"Administrasi","count":35},{"language":"it","tag":"Amministrazione","count":35},{"language":"jp","tag":"管理","count":35},{"language":"ko","tag":"관리","count":35},{"language":"pt-BR","tag":"Administração","count":35},{"language":"ru","tag":"Администрирование","count":35},{"language":"zh-CN","tag":"管理","count":35},{"language":"zh-TW","tag":"管理","count":35},{"language":"de","tag":"Plugins","count":32},{"language":"es","tag":"Plugins","count":32},{"language":"fr","tag":"SDK Agent","count":32},{"language":"fr","tag":"Plugins","count":32},{"language":"id","tag":"Plugin","count":32},{"language":"it","tag":"Plugin","count":32},{"language":"jp","tag":"プラグイン","count":32},{"language":"ko","tag":"Agent SDK","count":32},{"language":"ko","tag":"플러그인","count":32},{"language":"pt-BR","tag":"Plugins","count":32},{"language":"ru","tag":"Плагины","count":32},{"language":"zh-CN","tag":"插件","count":32},{"language":"zh-TW","tag":"外掛","count":32},{"language":"es","tag":"Configuración","count":29},{"language":"jp","tag":"設定","count":29},{"language":"zh-TW","tag":"設定","count":29},{"language":"en","tag":"Reference","count":28},{"language":"de","tag":"Konfiguration","count":26},{"language":"en","tag":"Configuration","count":26},{"language":"fr","tag":"Configuration","count":26},{"language":"id","tag":"Konfigurasi","count":26},{"language":"it","tag":"Configurazione","count":26},{"language":"ko","tag":"구성","count":26},{"language":"pt-BR","tag":"Configuração","count":26},{"language":"ru","tag":"Конфигурация","count":26},{"language":"zh-CN","tag":"配置","count":26},{"language":"en","tag":"Settings","count":25},{"language":"en","tag":"Agents and parallel work","count":23},{"language":"de","tag":"Mit Claude Code entwickeln","count":22},{"language":"es","tag":"Crea con Claude Code","count":22},{"language":"fr","tag":"Développer avec Claude Code","count":22},{"language":"id","tag":"Membangun dengan Claude Code","count":22},{"language":"it","tag":"Crea con Claude Code","count":22},{"language":"jp","tag":"Claude Code で構築","count":22},{"language":"ko","tag":"Claude Code로 만들기","count":22},{"language":"pt-BR","tag":"Desenvolva com Claude Code","count":22},{"language":"ru","tag":"Разработка с Claude Code","count":22},{"language":"zh-CN","tag":"使用 Claude Code 构建","count":22},{"languag
 
 ## Source (plugins): https://docs.claude.com/en/docs/claude-code/plugins
 
@@ -10597,7 +10493,6 @@ Create a plugin
 : build your own
 Decide whether you need a plugin
 : whether a plugin is the right tool for what you want
-​
 Understand what a plugin is
 A plugin is a directory of components, usually with a manifest. The manifest, a JSON file at
 .claude-plugin/plugin.json
@@ -10621,12 +10516,11 @@ MCP servers
 This diagram shows a plugin named
 my-plugin
 that holds a skill, an agent, hooks, and an MCP server, and what you get from each file once the plugin loads.
-For every component type a plugin can hold, with an example of each, see
+For component types a plugin can hold, with an example of each, see
 Plugin components
 . To see where each piece is located in a plugin’s directory, use the
 plugin explorer
 on that page.
-​
 Decide whether you need a plugin
 Skills, subagents, hooks, and MCP servers all work on their own, without a plugin. A skill you save in
 ~/.claude/skills/
@@ -10640,7 +10534,6 @@ Hooks
 MCP
 .
 Use a plugin when you want several skills, subagents, hooks, or MCP servers packaged as one unit. Install one to get a setup someone else built, with one command and updates from its marketplace. Make one to give your own setup to teammates, install it in many projects, or publish versioned releases.
-​
 What an enabled plugin adds to your sessions
 An enabled plugin is part of every session, not only the sessions where you use it. That has a few consequences worth knowing before you install one:
 Context and usage
@@ -10682,7 +10575,6 @@ claude plugin disable
 . See
 Manage installed plugins
 .
-​
 Get plugins from a marketplace
 A marketplace is a repository or directory with a
 .claude-plugin/marketplace.json
@@ -10712,7 +10604,6 @@ has the install steps for each place you run Claude Code. While you’re develop
 , as
 Develop without a marketplace
 shows.
-​
 Make an installed plugin available in your session
 Before a plugin you installed gives you a skill you can run, it has to be present at each of these layers:
 Settings
@@ -10728,7 +10619,6 @@ reload plugins
 Read
 Plugin loading reference
 for the rules at each layer, including which settings file takes precedence and where the files are on disk.
-​
 Tell Anthropic’s marketplaces from third-party ones
 A marketplace’s name places it in one of three tiers. Claude Code accepts the official and community names only for marketplaces sourced from
 github.com/anthropics/
@@ -10757,7 +10647,6 @@ managed settings
 , an organization can allowlist or block marketplaces, force-install plugins, and turn off session-only loading. Read
 Manage plugins for your organization
 for those controls.
-​
 Understand install scopes
 When you install a plugin, you pick a scope, and the scope decides who the plugin is enabled for:
 User scope
@@ -10780,7 +10669,6 @@ Plugins on claude.ai and in Cowork
 on claude.com and its
 component support table
 .
-​
 Next steps
 Most people start by installing a plugin from Anthropic’s official marketplace, which Claude Code adds the first time you start an interactive terminal session. Run
 /plugin
@@ -10817,7 +10705,7 @@ Troubleshoot plugins
 Was this page helpful?
 Yes
 No
-{"docsConfig":{"theme":"mint","$schema":"https://mintlify.com/docs.json","name":"Claude Code Docs","description":"Official documentation for Claude Code, Anthropic's agentic coding tool available in the terminal, IDE, desktop app, and browser. Covers installation, configuration, skills, subagents, hooks, MCP, the Agent SDK, and reference material.","colors":{"primary":"#0E0E0E","light":"#D4A27F","dark":"#0E0E0E"},"logo":{"light":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/light.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=78fd01ff4f4340295a4f66e2ea54903c","dark":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/dark.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=1298a0c3b3a1da603b190d0de0e31712"},"favicon":"https://mintcdn.com/claude-code/T2WlxklWBkR5Y1mJ/favicon.ico?fit=max\u0026auto=format\u0026n=T2WlxklWBkR5Y1mJ\u0026q=85\u0026s=346a85952ae08d5ee90e3c34d4423930","appearance":{"default":"system"},"background":{"color":{"light":"#FDFDF7","dark":"#09090B"}},"navbar":{"links":[{"href":"https://platform.claude.com/","label":"Claude Developer Platform"}],"primary":{"type":"button","label":"Open Claude Code","href":"https://claude.ai/code"}},"footer":{"socials":{"x":"https://x.com/AnthropicAI","linkedin":"https://www.linkedin.com/company/anthropicresearch"},"links":[{"header":"Company","items":[{"label":"Anthropic","href":"https://www.anthropic.com/company"},{"label":"Careers","href":"https://www.anthropic.com/careers"},{"label":"Economic Futures","href":"https://www.anthropic.com/economic-futures"},{"label":"Research","href":"https://www.anthropic.com/research"},{"label":"News","href":"https://www.anthropic.com/news"},{"label":"Trust center","href":"https://trust.anthropic.com/"},{"label":"Transparency","href":"https://www.anthropic.com/transparency"}]},{"header":"Help and security","items":[{"label":"Availability","href":"https://www.anthropic.com/supported-countries"},{"label":"Status","href":"https://status.anthropic.com/"},{"label":"Support center","href":"https://support.claude.com/"}]},{"header":"Learn","items":[{"label":"Courses","href":"https://academy.claude.com/"},{"label":"MCP connectors","href":"https://claude.com/partners/mcp"},{"label":"Customer stories","href":"https://www.claude.com/customers"},{"label":"Engineering blog","href":"https://www.anthropic.com/engineering"},{"label":"Events","href":"https://www.anthropic.com/events"},{"label":"Powered by Claude","href":"https://claude.com/partners/powered-by-claude"},{"label":"Service partners","href":"https://claude.com/partners/services"},{"label":"Startups program","href":"https://claude.com/programs/startups"}]},{"header":"Terms and policies","items":[{"label":"Privacy choices","href":"https://www.anthropic.com/legal/privacy"},{"label":"Privacy policy","href":"https://www.anthropic.com/legal/privacy"},{"label":"Disclosure policy","href":"https://www.anthropic.com/responsible-disclosure-policy"},{"label":"Usage policy","href":"https://www.anthropic.com/legal/aup"},{"label":"Commercial terms","href":"https://www.anthropic.com/legal/commercial-terms"},{"label":"Consumer terms","href":"https://www.anthropic.com/legal/consumer-terms"}]}]},"seo":{"metatags":{"canonical":"https://code.claude.com/docs"}},"fonts":{"family":"Anthropic Sans"},"contextual":{"options":["copy","view","claude"],"display":"header"},"styling":{"latex":true},"navigation":{"languages":[{"language":"en","href":"en/overview"},{"language":"fr","href":"fr/overview"},{"language":"de","href":"de/overview"},{"language":"it","href":"it/overview"},{"language":"jp","href":"ja/overview"},{"language":"es","href":"es/overview"},{"language":"ko","href":"ko/overview"},{"language":"zh-CN","href":"zh-CN/overview"},{"language":"zh-TW","href":"zh-TW/overview"},{"language":"ru","href":"ru/overview"},{"language":"id","href":"id/overview"},{"language":"pt-BR","href":"pt/overview"}]}},"deployment":{"deploymentMetadataValue":{"subdomain":"claude-code","hasAudioNarration":false,"actualSubdomain":"claude-code","customDomains":["code.claude.com"],"gitSource":{"type":"github","owner":"anthropics","repo":"claude-code-docs","deployBranch":"main","contentDirectory":"","isPrivate":true,"mountPath":"","label":""},"feedback":{"thumbs":true},"entitlements":{"AI_CHAT":{"status":"ENABLED"},"REMOVE_BRANDING":{"status":"ENABLED"},"CONTEXTUAL_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"CODE_SNIPPET_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"WEB_MCP":{"status":"ENABLED"},"NARRATION":{"status":"ENABLED"}},"buildId":"6af0c6c06412adac01293366","clientVersion":"0.0.4088","searchFilterCounts":[{"language":"en","tag":"Agent SDK","count":60},{"language":"en","tag":"Plugins","count":56},{"language":"de","tag":"Neuigkeiten","count":50},{"language":"en","tag":"What's New","count":50},{"language":"es","tag":"Novedades","count":50},{"language":"fr","tag":"Nouveautés","count":50},{"language":"it","tag":"Novità","count":50},{"language":"ko","tag":"새로운 기능","count":50},{"language":"pt-BR","tag":"Novidades","count":50},{"language":"ru","tag":"Что нового","count":50},{"language":"zh-TW","tag":"最新消息","count":50},{"language":"de","tag":"Erste Schritte","count":49},{"language":"es","tag":"Primeros pasos","count":49},{"language":"fr","tag":"Premiers pas","count":49},{"language":"id","tag":"Memulai","count":49},{"language":"it","tag":"Per iniziare","count":49},{"language":"jp","tag":"はじめに","count":49},{"language":"ko","tag":"시작하기","count":49},{"language":"pt-BR","tag":"Primeiros passos","count":49},{"language":"ru","tag":"Начало работы","count":49},{"language":"zh-TW","tag":"快速入門","count":49},{"language":"en","tag":"Getting started","count":48},{"language":"zh-CN","tag":"快速入门","count":46},{"language":"en","tag":"Overview","count":41},{"language":"de","tag":"Agent SDK","count":36},{"language":"en","tag":"Setup and access","count":36},{"language":"es","tag":"Agent SDK","count":36},{"language":"id","tag":"Agent SDK","count":36},{"language":"it","tag":"Agent SDK","count":36},{"language":"jp","tag":"Agent SDK","count":36},{"language":"pt-BR","tag":"Agent SDK","count":36},{"language":"ru","tag":"Agent SDK","count":36},{"language":"zh-CN","tag":"Agent SDK","count":36},{"language":"zh-TW","tag":"Agent SDK","count":36},{"language":"de","tag":"Administration","count":34},{"language":"en","tag":"Administration","count":34},{"language":"es","tag":"Administración","count":34},{"language":"fr","tag":"Administration","count":34},{"language":"id","tag":"Administrasi","count":34},{"language":"it","tag":"Amministrazione","count":34},{"language":"jp","tag":"管理","count":34},{"language":"ko","tag":"관리","count":34},{"language":"pt-BR","tag":"Administração","count":34},{"language":"ru","tag":"Администрирование","count":34},{"language":"zh-CN","tag":"管理","count":34},{"language":"zh-TW","tag":"管理","count":34},{"language":"de","tag":"Plugins","count":32},{"language":"es","tag":"Plugins","count":32},{"language":"fr","tag":"SDK Agent","count":32},{"language":"fr","tag":"Plugins","count":32},{"language":"id","tag":"Plugin","count":32},{"language":"it","tag":"Plugin","count":32},{"language":"jp","tag":"プラグイン","count":32},{"language":"ko","tag":"Agent SDK","count":32},{"language":"ko","tag":"플러그인","count":32},{"language":"pt-BR","tag":"Plugins","count":32},{"language":"ru","tag":"Плагины","count":32},{"language":"zh-CN","tag":"插件","count":32},{"language":"zh-TW","tag":"外掛","count":32},{"language":"en","tag":"Reference","count":28},{"language":"es","tag":"Configuración","count":28},{"language":"jp","tag":"設定","count":28},{"language":"zh-TW","tag":"設定","count":28},{"language":"de","tag":"Konfiguration","count":25},{"language":"en","tag":"Configuration","count":25},{"language":"fr","tag":"Configuration","count":25},{"language":"id","tag":"Konfigurasi","count":25},{"language":"id","tag":"Apa yang Baru","count":25},{"language":"id","tag":"Yang Baru","count":25},{"language":"it","tag":"Configurazione","count":25},{"language":"jp","tag":"新機能","count":25},{"language":"jp","tag":"最新情報","count":25},{"language":"ko","tag":"구성","count":25},{"language":"pt-BR","tag":"Configuração","count":25},{"language":"ru","tag":"Конфигурация","count":25},{"language":"zh-CN","tag":"配置","count":25},{"language":"zh-CN","tag":"新功能","count":25},{"language":"zh-CN","tag":"最新动态","count":25},{"language":"en","tag":"Settings","count":24},{"language":"de","tag":"Mit Claude Code entwickeln","count":22},{"language":"es","tag":"Crea con Claude Code","count":22},{"language":"fr","tag":"Développer avec Claude Code","count":22},{"language":"id","tag":"Membangun dengan Claude Code","count":22},{"language":"it","tag":"Crea con Claude Code","count":22},{"language":"jp","tag":"Claude Code で構築","count":22},{"language":"ko","tag":"Claude Code로 만들기","count":22},{"language":"pt-BR","tag":"Desenvolva com Claude Code","count":22},{"language":"ru","tag":"Разработка с Claude Code","count":22},{"language":"zh-CN","tag":"使用 Claude Code 构建","count":22},{"language":"zh-TW","tag":"使用 Claude Code 打造","count":22},{"language":"de","tag":"Referenz","count":20},{"language":"es","tag":"Referencia","count":20},{"language":"fr","tag":"Référence","count":20},{"language":"id","tag":"Referensi","count":20},{"language":"it","tag":"Riferimento","count":20},{"language":"jp","tag":"リファレンス","count":20},{"language":"ko","tag":"레퍼런스","count":20},{"language":"pt-BR","tag":"Referência","count":20},{"language":"ru","tag":"Справочник","count":20},{"language":"zh-CN","tag":"参考","count":20},{"language":"de","tag":"Plattformen und Integrationen","count":19},{"language":"es","tag":"Plataformas e integraciones","count":19},{"language":"fr","tag":"Plateformes et intégrations","count":19},{"language":"id","tag":"Platform dan integrasi","count":19},{"language":"it","tag":"Piattaforme e integrazioni","count":19},{"language":"jp","tag":"プラットフォームと連携","count":19},{"language":"ko","tag":"플랫폼 및 통합","count":19},{"language":"pt-BR","tag":"Plataformas e integrações","count":19},{"language":"ru","tag":"Платформы и интеграции","count":19},{"language":"zh-CN","tag":"平台与集成","count":19},{"language":"zh-TW","tag":"平台與整合","count":19},{"language":"de","tag":"Code-Review und Pull Requests","count":14},{"language":"es","tag":"Revisión de código y pull requests","count":14},{"language":"fr","tag":"Revue de code et pull requests","count":14},{"language":"it","tag":"Code review e pull request","count":14},{"language":"ko","tag":"코드 리뷰 및 풀 리퀘스트","count":14},{"language":"pt-BR","tag":"Revisão de código e pull requests","count":14},{"language":"ru","tag":"Код-ревью и pull request","count":14},{"language":"zh-TW","tag":"程式碼審查與 pull request","count":14},{"language":"zh-TW","tag":"部署","count":11}]},"assistantConfig":{"enableAskAiButton":false,"enableStarterQuestions":false,"enableAskAiSearchBar":true},"basePath":"/docs","hasChatPermissions":true,"hasWebMcpPermissions":true,"toggles":[{"name":"kill-isr","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-bash","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"chat-bucketing-batched","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-mintlify-slack","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-integrations-settings","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"rbac-expansion","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-pr-grouping","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-prefix","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"analytics-v7","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"user-flows-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"no-publish-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-onboarding","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"llms-txt-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving-live","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"stripTemperatureMiddleware","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"support-platform-pylon-zendesk","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"instant-rollback","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications-server","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-fable","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fixed-ai-action-pricing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automation-resolve-merge-conflict","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"scoped-publishing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"mintql","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"page-level-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"editor-version-history-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"billing-page-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"full-page-search","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workspace-projects","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-v5","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fork-pr-previews","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"revalidation-jwt","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-sso-scim","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"hobby-abuse-scan","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"dashboard-inbox","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-signup","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"turbopuffer-dual-write","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-enabled","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"approve-review-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"editor-metadata","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"sso-setup-deadline-banner","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"turbopuffer-serve","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"live-agents","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"comment-mode","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false}],"googleFontsInlined":false},"customCss":[{"filePath":"button.css","content":".btn{position:relative;display:inline-flex;gap:0.5rem;align-items:center;justify-content:center;flex-shrink:0;min-width:5rem;height:2.25rem;padding:0.5rem 1rem;white-space:nowrap;font-family:Styrene;font-weight:600;border-radius:0.5rem;\u0026:active{transform:scale(0.985)}\u0026.size-xs{height:1.75rem;min-width:3.5rem;padding:0 0.5rem;border-radius:0.25rem;font-size:0.75rem;gap:0.25rem}\u0026.size-sm{height:2rem;min-width:4rem;padding:0 0.75rem;border-radius:0.375rem;font-size:0.75rem}\u0026.size-lg{height:2.75rem;min-width:6rem;padding:0 1.25rem;border-radius:0.6rem}\u0026:disabled{pointer-events:none;opacity:0.5;box-shadow:none}\u0026:focus-visible{outline:none;--tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow)}\u0026.primary{font-weight:600;color:hsl(var(--oncolor-100));background-color:hsl(var(--accent-main-100));background-image:linear-gradient(\n      to right,\n      hsl(var(--accent-main-100)) 0%,\n      hsl(var(--accent-main-200) / 0.5) 50%,\n      hsl(var(--accent-main-200)) 100%\n    );background-size:200% 100%;background-position:0% 0%;border:0.5px solid hsl(var(--border-300) / 0.25);box-shadow:inset 0 0.5px 0px rgba(255, 255, 0, 0.15),\n      0 1px 1px rgba(0, 0, 0, 0.05);text-shadow:0 1px 2px rgb(0 0 0 / 10%);transition:all 150ms cubic-bezier(0.4, 0, 0.2, 1);\u0026:hover{background-position:100% 0%;background-image:linear-gradient(\n        to right,\n        hsl(var(--accent-main-200)) 0%,\n        hsl(var(--accent-main-200)) 100%\n      )}\u0026:active{background-color:hsl(var(--accent-main-000));box-shadow:inset 0 1px 6px rgba(0, 0, 0, 0.2);transform:scale(0.985)}}\u0026.flat{font-weight:500;color:hsl(var(--oncolor-100));background-color:hsl(var(--accent-main-100));transition:background-color 150ms;\u0026:hover{background-color:hsl(var(--accent-main-200))}}\u0026.secondary{font-weight:600;color:hsl(var(--text-100) / 0.9);background-image:radial-gradient(\n      ellipse at center,\n      hsl(var(--bg-500) / 0.1) 50%,\n      hsl(var(--bg-500) / 0.3) 100%\n    );border:0.5px solid hsl(var(--border-400));transition:color 150ms, background-color 150ms;\u0026:hover{color:hsl(var(--text-000));background-color:hsl(var(--bg-500) / 0.6)}\u0026:active{background-color:hsl(var(--bg-500) / 0.5)}}\u0026.outline{font-weight:600;color:hsl(var(--text-200));background-color:transparent;border:1.5px solid currentColor;transition:color 150ms, background-color 150ms;\u0026:hover{color:hsl(var(--text-100));background-color:hsl(var(--bg-400));border-color:hsl(var(--bg-400))}}\u0026.ghost{color:hsl(var(--text-200));border-color:transparent;transition:color 150ms, background-color 150ms;\u0026:hover{color:hsl(var(--text-100));background-color:hsl(var(--bg-500) / 0.4)}\u0026:active{background-color:hsl(var(--bg-400))}}\u0026.underline{opacity:0.8;text-decoration-line:none;text-underline-offset:3px;transition:all 150ms;\u0026:hover{opacity:1;text-decoration-line:underline}\u0026:active{transform:scale(0.985)}}\u0026.danger{font-weight:600;color:hsl(var(--oncolor-100));background-color:hsl(var(--danger-100));transition:background-color 150ms;\u0026:hover{background-color:hsl(var(--danger-200))}}}"},{"filePath":"style.css","content":"@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Regular-Static.otf\") format(\"opentype\");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-RegularItalic-Static.otf\") format(\"opentype\");font-weight:400;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Medium-Static.otf\") format(\"opentype\");font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-MediumItalic-Static.otf\") format(\"opentype\");font-weight:500;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Semibold-Static.otf\") format(\"opentype\");font-weight:600;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-SemiboldItalic-Static.otf\") format(\"opentype\");font-weight:600;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Bold-Static.otf\") format(\"opentype\");font-weight:700;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-BoldItalic-Static.otf\") format(\"opentype\");font-weight:700;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Regular-Static.otf\") format(\"opentype\");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-RegularItalic-Static.otf\") format(\"opentype\");font-weight:400;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Medium-Static.otf\") format(\"opentype\");font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Semibold-Static.otf\") format(\"opentype\");font-weight:600;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Bold-Static.otf\") format(\"opentype\");font-weight:700;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Regular-Static.otf\") format(\"opentype\");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-RegularItalic-Static.otf\") format(\"opentype\");font-weight:400;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Medium-Static.otf\") format(\"opentype\");font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-MediumItalic-Static.otf\") format(\"opentype\");font-weight:500;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Semibold-Static.otf\") format(\"opentype\");font-weight:600;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-SemiboldItalic-Static.otf\") format(\"opentype\");font-weight:600;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Bold-Static.otf\") format(\"opentype\");font-weight:700;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-BoldItalic-Static.otf\") format(\"opentype\");font-weight:700;font-style:italic;font-display:swap}:root{--always-white: 0 0% 100%;--always-black: 0 0% 0%;--constant-book-cloth: 15 55% 80%;--constant-clay: 15 60% 85%;--constant-kraft: 25 40% 83%;--constant-manilla: 40 20% 92%;--constant-slate-000: 0 0% 100%;--constant-slate-050: 48 33.3% 97.1%;--constant-slate-100: 53 28.6% 94.5%;--constant-slate-150: 48 25% 92.2%;--constant-slate-200: 50 20.7% 88.6%;--constant-slate-250: 51 16.5% 84.5%;--constant-slate-300: 50 11.5% 79.6%;--constant-slate-350: 50 9% 73.7%;--constant-slate-400: 49 6.5% 66.9%;--constant-slate-450: 48 4.8% 59.2%;--constant-slate-500: 53 3.2% 51.4%;--constant-slate-550: 51 3.1% 43.7%;--constant-slate-600: 48 2.7% 35.9%;--constant-slate-650: 48 3.4% 29.2%;--constant-slate-700: 60 2.5% 23.3%;--constant-slate-750: 60 2.1% 18.4%;--constant-slate-800: 60 2.7% 14.5%;--constant-slate-850: 30 3.3% 11.8%;--constant-slate-900: 30 4% 9.8%;--constant-slate-950: 60 2.6% 7.6%;--constant-slate-1000: 60 3.4% 5.7%}:root:not(.dark){--accent-brand: 15 63.1% 59.6%;--accent-main-000: 15 55.6% 52.4%;--accent-main-100: 15 55.6% 52.4%;--accent-main-200: 15 63.1% 59.6%;--accent-main-900: 0 0% 0%;--accent-pro-000: 251 34.2% 33.3%;--accent-pro-100: 251 40% 45.1%;--accent-pro-200: 251 61% 72.2%;--accent-pro-900: 253 33.3% 91.8%;--accent-secondary-000: 210 73.7% 40.2%;--accent-secondary-100: 210 70.9% 51.6%;--accent-secondary-200: 210 70.9% 51.6%;--accent-secondary-900: 211 72% 90%;--bg-000: 0 0% 100%;--bg-100: 48 33.3% 97.1%;--bg-200: 53 28.6% 94.5%;--bg-300: 48 25% 92.2%;--bg-400: 50 20.7% 88.6%;--bg-500: 50 20.7% 88.6%;--border-100: 30 3.3% 11.8%;--border-200: 30 3.3% 11.8%;--border-300: 30 3.3% 11.8%;--border-400: 30 3.3% 11.8%;--danger-000: 0 61.4% 22.4%;--danger-100: 0 58.6% 34.1%;--danger-200: 0 58.6% 34.1%;--danger-900: 0 50% 95%;--oncolor-100: 0 0% 100%;--oncolor-200: 60 6.7% 97.1%;--oncolor-300: 60 6.7% 97.1%;--text-000: 60 2.6% 7.6%;--text-100: 60 2.6% 7.6%;--text-200: 60 2.5% 23.3%;--text-300: 60 2.5% 23.3%;--text-400: 51 3.1% 43.7%;--text-500: 51 3.1% 43.7%}:root.dark{--accent-brand: 15 63.1% 59.6%;--accent-main-000: 15 55.6% 52.4%;--accent-main-100: 15 63.1% 59.6%;--accent-main-200: 15 63.1% 59.6%;--accent-main-900: 0 0% 0%;--accent-pro-000: 251 84.6% 74.5%;--accent-pro-100: 251 40.2% 54.1%;--accent-pro-200: 251 40% 45.1%;--accent-pro-900: 250 25.3% 19.4%;--accent-secondary-000: 210 71.1% 62%;--accent-secondary-100: 210 70.9% 51.6%;--accent-secondary-200: 210 70.9% 51.6%;--accent-secondary-900: 210 55.9% 24.6%;--bg-000: 60 2.1% 18.4%;--bg-100: 60 2.7% 14.5%;--bg-200: 30 3.3% 11.8%;--bg-300: 60 2.6% 7.6%;--bg-400: 60 3.4% 5.7%;--bg-500: 60 3.4% 5.7%;--border-100: 51 16.5% 84.5%;--border-200: 51 16.5% 84.5%;--border-300: 51 16.5% 84.5%;--border-400: 51 16.5% 84.5%;--danger-000: 0 73.1% 66.5%;--danger-100: 0 58.6% 34.1%;--danger-200: 0 58.6% 34.1%;--danger-900: 0 23% 15.6%;--oncolor-100: 0 0% 100%;--oncolor-200: 60 6.7% 97.1%;--oncolor-300: 60 6.7% 97.1%;--text-000: 48 33.3% 97.1%;--text-100: 48 33.3% 97.1%;--text-200: 50 9% 73.7%;--text-300: 50 9% 73.7%;--text-400: 48 4.8% 59.2%;--text-500: 48 4.8% 59.2%}#home-header{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;font-weight:400!important;font-size:50px;line-height:1.2;margin-bottom:1rem;color:--text-000;display:flex;align-items:baseline;justify-content:center;flex-wrap:nowrap}#localization-select-trigger>:has(img[src*=\"flags\"]){display:none}div[id^=\"localization-select-item\"]>:has(img[src*=\"flags\"]){display:none}@media (min-width: 768px){#home-header{justify-content:center}}.build-with{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;letter-spacing:-0.02em}.claude-wordmark-wrapper{display:inline-flex;align-items:baseline;margin-left:10px}.claude-wordmark{height:40px;width:auto;position:relative}.dark #home-header{color:white}.description-text{color:black}.dark .description-text{color:white}.dark .claude-wordmark{filter:invert(1)}:root{--bg-color: #f0efea}.dark{--bg-color: #2b2b2b}body,input,#category-select,.dropdown-item,#table-of-contents{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif}.eyebrow{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;text-transform:uppercase;letter-spacing:0.02rem}#content-container{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif}#content-container h1,#content-container h2,#content-container h3,#content-container h4,#content-container h5,#content-container h6{font-family:\"Anthropic Serif Display\", Georgia, \"Times New Roman\", Times, serif;font-weight:400;letter-spacing:0;word-spacing:0.1em}#content-container p{font-size:1rem;line-height:1.65rem}.font-extrabold{font-weight:600!important}.wide-table{width:100%;overflow-x:auto}.wide-table table{width:175%;margin-bottom:0}#prompt-library-container{margin:4rem auto;max-width:48rem;padding-left:1.25rem;padding-right:1.25rem}.prompt-library-title{font-size:24px;text-align:center;font-weight:700;color:#1f2937}.dark .prompt-library-title{color:#e5e7eb}.prompt-library-description{margin-top:1rem;text-align:center}.main-content{margin-bottom:10rem;max-width:64rem;margin-left:auto;margin-right:auto;padding-left:1.25rem;padding-right:1.25rem}.prompt-controllers{display:flex;gap:0.5rem}.prompt-search-container{position:relative;flex:1 1 0%}.prompt-search-icon-container{display:flex;position:absolute;top:0;bottom:0;left:0;align-items:center;padding-left:0.75rem}.prompt-search-icon{margin-left:0.25rem;margin-right:0.75rem;flex:none;width:1rem;height:1rem;background-color:#6b7280;mask-image:url(https://mintlify.b-cdn.net/v6.5.1/solid/magnifying-glass.svg);mask-repeat:no-repeat;mask-position:center center}input.prompt-search-bar{display:block;height:2.5rem;padding-left:2.5rem;border-radius:0.75rem;border-width:1px;background-color:#ffffff;width:100%;color:#111827;box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05)}.dark input.prompt-search-bar{color:#ffffff;background-color:rgb(var(--background-dark));border-color:#d1d5db1a}input.prompt-search-bar:focus{outline-color:rgb(var(--primary))}.dark input.prompt-search-bar:focus{outline-color:rgb(var(--primary-light))}.dark .prompt-search-icon{background-color:#ffffff80}#category-select{padding-left:1rem;padding-right:2.5rem;height:2.5rem;display:flex;align-items:center;border-radius:0.75rem;border-width:1px;color:#111827;background-color:#ffffff;cursor:pointer;box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05);white-space:nowrap}.dark #category-select{background-color:rgb(var(--background-dark));border-color:#d1d5db1a;color:#ffffff}#category-select:hover{background-color:#f9fafb}.dark #category-select:hover{background-color:#ffffff0d}#category-select:focus{outline-color:rgb(var(--primary))}.dark #category-select:focus{outline-color:rgb(var(--primary-light))}#categories-dropdown{top:calc(100% + 4px);padding:0.5rem 0.5rem;display:none;position:absolute;z-index:10;border-radius:0.75rem;border-width:1px;width:100%;color:#111827;background-color:#ffffff;box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05)}.dark #categories-dropdown{background-color:rgb(var(--background-dark));border-color:#d1d5db1a;color:#ffffff}#categories-dropdown-clickout{position:fixed;top:0;right:0;bottom:0;left:0;z-index:0}.dropdown-icon-container{display:flex;position:absolute;top:0;bottom:0;right:0;align-items:center;padding-right:0.25rem}.dropdown-icon{margin-left:0.25rem;margin-right:0.75rem;flex:none;width:0.75rem;height:0.75rem;background-color:#6b7280;mask-image:url(https://mintlify.b-cdn.net/v6.5.1/solid/caret-down.svg);mask-repeat:no-repeat;mask-position:center center}.dark .dropdown-icon{background-color:#ffffff80}#prompts-container{grid-template-columns:repeat(1, minmax(0, 1fr));gap:2rem}.dropdown-item{padding:0.25rem 0.5rem;border-radius:0.375rem;display:flex;align-items:center;cursor:pointer}.dropdown-item:hover{background-color:#f9fafb}.dark .dropdown-item:hover{background-color:#ffffff0d}.check-icon{mask-image:url(https://mintlify.b-cdn.net/v6.5.1/solid/check.svg);height:0.875rem;width:1rem;background-color:rgb(var(--primary-light));mask-repeat:no-repeat;mask-position:center center}.prompt-card{margin:-0.75rem;padding:0.75rem;display:flex;border-radius:1rem}.prompt-card:hover{background-color:#03071208}.dark .prompt-card:hover{background-color:#ffffff08}.prompt-icon-container{display:flex;flex:none;align-items:center;justify-content:center;margin-right:1.5rem;border-radius:0.75rem;height:4rem;width:4rem;background-color:#cb785c1a}.prompt-icon{height:1.5rem;width:1.5rem;background-color:rgb(var(--primary-light));mask-repeat:no-repeat;mask-position:center center}.prompt-title{color:rgb(31 41 55);font-weight:600}.dark .prompt-title{color:rgb(229 231 235)}.prompt-description{margin-top:0.25rem}#prompts-container{display:grid;margin-top:2.5rem}@media (min-width: 640px){#category-select{width:16rem}}@media (min-width: 1024px){#prompts-container{grid-template-columns:repeat(2, minmax(0, 1fr))}}.home-cards-custom{display:grid;grid-template-columns:repeat(3, 1fr);grid-template-rows:repeat(2, auto);gap:1.5rem}.home-cards-custom .card{background:transparent;border:0.5px solid hsl(var(--border-300));border-radius:12px;padding:0.25rem}@media (max-width: 1024px){.home-cards-custom{grid-template-columns:repeat(2, 1fr);grid-template-rows:repeat(3, auto)}}@media (max-width: 768px){.home-cards-custom{grid-template-columns:1fr;grid-template-rows:repeat(6, auto)}}.relative{position:relative}.flex-1{flex:1 1 0%}.mermaid{position:relative;background-color:#FDFDFB;background-image:linear-gradient(rgba(235, 219, 188, .25) 1px, transparent 1px), /* Secondary color #EBDBBC with low opacity */\n    linear-gradient(90deg, rgba(235, 219, 188, .25) 1px, transparent 1px),\n    linear-gradient(rgba(235, 219, 188, .1) 1px, transparent 1px),\n    linear-gradient(90deg, rgba(235, 219, 188, .1) 1px, transparent 1px);background-size:20px 20px,\n    20px 20px,\n    4px 4px,\n    4px 4px;background-position:-1px -1px,\n    -1px -1px,\n    -1px -1px,\n    -1px -1px;padding:20px;border-radius:8px;border:1px solid rgba(235, 219, 188, .4);box-shadow:0 2px 4px rgba(64, 64, 62, 0.08)}.dark .mermaid{background-color:#1a1918;background-image:linear-gradient(rgba(212, 162, 127, .15) 1px, transparent 1px), /* Tertiary color #D4A27F with low opacity */\n    linear-gradient(90deg, rgba(212, 162, 127, .15) 1px, transparent 1px),\n    linear-gradient(rgba(212, 162, 127, .08) 1px, transparent 1px),\n    linear-gradient(90deg, rgba(212, 162, 127, .08) 1px, transparent 1px);border:1px solid rgba(102, 102, 99, .5);box-shadow:0 2px 4px rgba(0, 0, 0, 0.2)}.digest-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem 1rem;padding:0.75rem 1rem;margin:1.5rem 0 2.5rem;border:1px solid hsl(var(--border-300) / 0.15);background:hsl(var(--bg-200));font-variant-numeric:tabular-nums;font-size:0.875rem;color:hsl(var(--text-400))}#content-container .digest-meta a{color:hsl(var(--accent-main-100));font-weight:500;text-decoration:none;border-bottom:none}#content-container .digest-meta a:hover{text-decoration:underline}.digest-feature{position:relative;margin:2.5rem 0;padding:1.875rem 1.875rem 1.625rem;background:radial-gradient(circle, hsl(var(--text-000) / 0.025) 1px, transparent 1px) 0 0 / 18px 18px,\n    linear-gradient(180deg, hsl(var(--constant-manilla) / 0.55), hsl(var(--constant-manilla) / 0.38));border:1px solid hsl(var(--border-300) / 0.12);box-shadow:inset 0 1px 0 hsl(var(--text-000) / 0.04),\n    0 1px 2px hsl(var(--always-black) / 0.04)}.digest-feature::before{content:\"\";position:absolute;inset:0 auto 0 0;width:4px;background:hsl(var(--accent-brand))}.dark .digest-feature{background:radial-gradient(circle, hsl(var(--text-000) / 0.02) 1px, transparent 1px) 0 0 / 18px 18px,\n    linear-gradient(180deg, hsl(var(--bg-000) / 0.75), hsl(var(--bg-000) / 0.5));border-color:hsl(var(--border-300) / 0.1);box-shadow:inset 0 1px 0 hsl(var(--text-000) / 0.03),\n    0 1px 2px hsl(var(--always-black) / 0.25)}.digest-feature>:first-child{margin-top:0}.digest-feature>:last-child{margin-bottom:0}.digest-feature-header{display:flex;align-items:center;flex-wrap:wrap;gap:0.625rem;margin:0 0 0.75rem}#content-container .digest-feature-title{font-family:\"Anthropic Serif Display\", Georgia, serif;font-size:1.75rem;line-height:1.15;font-weight:500;letter-spacing:-0.015em;color:hsl(var(--text-000));margin:0}#content-container .digest-feature-pill{font-family:ui-monospace, \"SF Mono\", Menlo, Consolas, monospace;font-size:0.75rem;line-height:1;letter-spacing:0.01em;padding:0.3rem 0.6rem;border-radius:999px;background:hsl(var(--accent-brand) / 0.12);color:hsl(var(--accent-main-000));border:1px solid hsl(var(--accent-brand) / 0.25);white-space:nowrap;transform:translateY(1px)}#content-container .digest-feature-lede{font-size:1.0625rem;line-height:1.65;color:hsl(var(--text-100));margin:0 0 1.25rem;max-width:none}#content-container .digest-feature-lede code{font-size:0.875em;padding:0.1em 0.35em}#content-container .digest-feature-try{font-size:0.875rem;color:hsl(var(--text-400));margin:1.25rem 0 0.5rem}#content-container .digest-feature .frame{margin:1rem 0;border-radius:0;padding:0}#content-container .digest-feature .frame>*{border-radius:0}#content-container .digest-feature pre,#content-container .digest-feature [class*=\"CodeBlock\"]{border-radius:0}#content-container .digest-feature-link{display:inline-flex;align-items:center;gap:0.35rem;font-size:0.875rem;font-weight:500;color:hsl(var(--accent-main-100));text-decoration:none;border-bottom:none;margin-top:0.75rem}#content-container .digest-feature-link::after{content:\"→\";transition:transform 120ms ease-out}#content-container .digest-feature-link:hover::after{transform:translateX(3px)}.digest-wins{margin:2.5rem 0;padding:1.5rem 1.75rem 1.25rem;background:hsl(var(--bg-200));border:1px solid hsl(var(--border-300) / 0.1)}.dark .digest-wins{background:hsl(var(--bg-200) / 0.6)}#content-container .digest-wins-title{font-family:\"Anthropic Serif Display\", Georgia, serif;font-size:1.25rem;font-weight:500;color:hsl(var(--text-000));margin:0 0 0.75rem}.digest-wins-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(16rem, 1fr));column-gap:2rem}#content-container .digest-wins-grid>div{position:relative;font-size:0.875rem;line-height:1.5;color:hsl(var(--text-300));padding:0.5rem 0 0.5rem 1.125rem;border-top:1px solid hsl(var(--border-300) / 0.06);margin:0}#content-container .digest-wins-grid>div::before{content:\"+\";position:absolute;left:0;top:0.5rem;font-family:ui-monospace, \"SF Mono\", Menlo, Consolas, monospace;font-size:0.8125rem;font-weight:600;color:hsl(var(--accent-brand))}#content-container .digest-wins-grid>div:first-child,#content-container .digest-wins-grid>div:nth-child(2){border-top:none;padding-top:0}#content-container .digest-wins-grid>div:first-child::before,#content-container .digest-wins-grid>div:nth-child(2)::before{top:0}#content-container .digest-wins-grid code{font-size:0.8125rem;padding:0.1em 0.3em}:root{--toc-wrapper-max: 92rem;--toc-wrapper-pad: 2rem;--toc-col: 19rem;--toc-side: 28rem;--toc-btn-size: 1.75rem}#toc-collapse-toggle{display:none;align-items:center;justify-content:center;position:fixed;top:10rem;right:calc(\n    max((100% - var(--toc-wrapper-max)) / 2, 0px) + var(--toc-wrapper-pad) +\n      var(--toc-col) - var(--toc-btn-size) - 0.35rem\n  );transition:right 200ms ease-out;z-index:30;width:var(--toc-btn-size);height:var(--toc-btn-size);border-radius:9999px;border:1px solid hsl(var(--border-300) / 0.15);background:hsl(var(--bg-100));color:hsl(var(--text-400));cursor:poi
+{"docsConfig":{"theme":"mint","$schema":"https://mintlify.com/docs.json","name":"Claude Code Docs","description":"Official documentation for Claude Code, Anthropic's agentic coding tool available in the terminal, IDE, desktop app, and browser. Covers installation, configuration, skills, subagents, hooks, MCP, the Agent SDK, and reference material.","colors":{"primary":"#0E0E0E","light":"#D4A27F","dark":"#0E0E0E"},"logo":{"light":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/light.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=78fd01ff4f4340295a4f66e2ea54903c","dark":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/dark.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=1298a0c3b3a1da603b190d0de0e31712"},"favicon":"https://mintcdn.com/claude-code/T2WlxklWBkR5Y1mJ/favicon.ico?fit=max\u0026auto=format\u0026n=T2WlxklWBkR5Y1mJ\u0026q=85\u0026s=346a85952ae08d5ee90e3c34d4423930","appearance":{"default":"system"},"background":{"color":{"light":"#FDFDF7","dark":"#09090B"}},"navbar":{"links":[{"href":"https://platform.claude.com/","label":"Claude Developer Platform"}],"primary":{"type":"button","label":"Open Claude Code","href":"https://claude.ai/code"}},"footer":{"socials":{"x":"https://x.com/AnthropicAI","linkedin":"https://www.linkedin.com/company/anthropicresearch"},"links":[{"header":"Company","items":[{"label":"Anthropic","href":"https://www.anthropic.com/company"},{"label":"Careers","href":"https://www.anthropic.com/careers"},{"label":"Economic Futures","href":"https://www.anthropic.com/economic-futures"},{"label":"Research","href":"https://www.anthropic.com/research"},{"label":"News","href":"https://www.anthropic.com/news"},{"label":"Trust center","href":"https://trust.anthropic.com/"},{"label":"Transparency","href":"https://www.anthropic.com/transparency"}]},{"header":"Help and security","items":[{"label":"Availability","href":"https://www.anthropic.com/supported-countries"},{"label":"Status","href":"https://status.anthropic.com/"},{"label":"Support center","href":"https://support.claude.com/"}]},{"header":"Learn","items":[{"label":"Courses","href":"https://academy.claude.com/"},{"label":"MCP connectors","href":"https://claude.com/partners/mcp"},{"label":"Customer stories","href":"https://www.claude.com/customers"},{"label":"Engineering blog","href":"https://www.anthropic.com/engineering"},{"label":"Events","href":"https://www.anthropic.com/events"},{"label":"Powered by Claude","href":"https://claude.com/partners/powered-by-claude"},{"label":"Service partners","href":"https://claude.com/partners/services"},{"label":"Startups program","href":"https://claude.com/programs/startups"}]},{"header":"Terms and policies","items":[{"label":"Privacy choices","href":"https://www.anthropic.com/legal/privacy"},{"label":"Privacy policy","href":"https://www.anthropic.com/legal/privacy"},{"label":"Disclosure policy","href":"https://www.anthropic.com/responsible-disclosure-policy"},{"label":"Usage policy","href":"https://www.anthropic.com/legal/aup"},{"label":"Commercial terms","href":"https://www.anthropic.com/legal/commercial-terms"},{"label":"Consumer terms","href":"https://www.anthropic.com/legal/consumer-terms"}]}]},"seo":{"metatags":{"canonical":"https://code.claude.com/docs"}},"fonts":{"family":"Anthropic Sans"},"contextual":{"options":["copy","view","claude"],"display":"header"},"styling":{"latex":true},"navigation":{"languages":[{"language":"en","href":"en/overview"},{"language":"fr","href":"fr/overview"},{"language":"de","href":"de/overview"},{"language":"it","href":"it/overview"},{"language":"jp","href":"ja/overview"},{"language":"es","href":"es/overview"},{"language":"ko","href":"ko/overview"},{"language":"zh-CN","href":"zh-CN/overview"},{"language":"zh-TW","href":"zh-TW/overview"},{"language":"ru","href":"ru/overview"},{"language":"id","href":"id/overview"},{"language":"pt-BR","href":"pt/overview"}]}},"deployment":{"deploymentMetadataValue":{"subdomain":"claude-code","hasAudioNarration":false,"actualSubdomain":"claude-code","customDomains":["code.claude.com"],"gitSource":{"type":"github","owner":"anthropics","repo":"claude-code-docs","deployBranch":"main","contentDirectory":"","isPrivate":true,"mountPath":"","label":""},"feedback":{"thumbs":true},"entitlements":{"AI_CHAT":{"status":"ENABLED"},"REMOVE_BRANDING":{"status":"ENABLED"},"CONTEXTUAL_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"CODE_SNIPPET_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"WEB_MCP":{"status":"ENABLED"},"NARRATION":{"status":"ENABLED"}},"buildId":"6af8b0fc4f86660c4a257522","clientVersion":"0.0.4143","searchFilterCounts":[{"language":"en","tag":"Agent SDK","count":60},{"language":"en","tag":"Plugins","count":56},{"language":"de","tag":"Erste Schritte","count":49},{"language":"es","tag":"Primeros pasos","count":49},{"language":"fr","tag":"Premiers pas","count":49},{"language":"id","tag":"Memulai","count":49},{"language":"it","tag":"Per iniziare","count":49},{"language":"jp","tag":"はじめに","count":49},{"language":"ko","tag":"시작하기","count":49},{"language":"pt-BR","tag":"Primeiros passos","count":49},{"language":"ru","tag":"Начало работы","count":49},{"language":"zh-TW","tag":"快速入門","count":49},{"language":"en","tag":"Getting started","count":48},{"language":"zh-CN","tag":"快速入门","count":46},{"language":"en","tag":"Overview","count":41},{"language":"en","tag":"Setup and access","count":37},{"language":"de","tag":"Agent SDK","count":36},{"language":"es","tag":"Agent SDK","count":36},{"language":"id","tag":"Agent SDK","count":36},{"language":"it","tag":"Agent SDK","count":36},{"language":"jp","tag":"Agent SDK","count":36},{"language":"pt-BR","tag":"Agent SDK","count":36},{"language":"ru","tag":"Agent SDK","count":36},{"language":"zh-CN","tag":"Agent SDK","count":36},{"language":"zh-TW","tag":"Agent SDK","count":36},{"language":"de","tag":"Administration","count":35},{"language":"en","tag":"Administration","count":35},{"language":"es","tag":"Administración","count":35},{"language":"fr","tag":"Administration","count":35},{"language":"id","tag":"Administrasi","count":35},{"language":"it","tag":"Amministrazione","count":35},{"language":"jp","tag":"管理","count":35},{"language":"ko","tag":"관리","count":35},{"language":"pt-BR","tag":"Administração","count":35},{"language":"ru","tag":"Администрирование","count":35},{"language":"zh-CN","tag":"管理","count":35},{"language":"zh-TW","tag":"管理","count":35},{"language":"de","tag":"Plugins","count":32},{"language":"es","tag":"Plugins","count":32},{"language":"fr","tag":"SDK Agent","count":32},{"language":"fr","tag":"Plugins","count":32},{"language":"id","tag":"Plugin","count":32},{"language":"it","tag":"Plugin","count":32},{"language":"jp","tag":"プラグイン","count":32},{"language":"ko","tag":"Agent SDK","count":32},{"language":"ko","tag":"플러그인","count":32},{"language":"pt-BR","tag":"Plugins","count":32},{"language":"ru","tag":"Плагины","count":32},{"language":"zh-CN","tag":"插件","count":32},{"language":"zh-TW","tag":"外掛","count":32},{"language":"es","tag":"Configuración","count":29},{"language":"jp","tag":"設定","count":29},{"language":"zh-TW","tag":"設定","count":29},{"language":"en","tag":"Reference","count":28},{"language":"de","tag":"Konfiguration","count":26},{"language":"en","tag":"Configuration","count":26},{"language":"fr","tag":"Configuration","count":26},{"language":"id","tag":"Konfigurasi","count":26},{"language":"it","tag":"Configurazione","count":26},{"language":"ko","tag":"구성","count":26},{"language":"pt-BR","tag":"Configuração","count":26},{"language":"ru","tag":"Конфигурация","count":26},{"language":"zh-CN","tag":"配置","count":26},{"language":"en","tag":"Settings","count":25},{"language":"en","tag":"Agents and parallel work","count":23},{"language":"de","tag":"Mit Claude Code entwickeln","count":22},{"language":"es","tag":"Crea con Claude Code","count":22},{"language":"fr","tag":"Développer avec Claude Code","count":22},{"language":"id","tag":"Membangun dengan Claude Code","count":22},{"language":"it","tag":"Crea con Claude Code","count":22},{"language":"jp","tag":"Claude Code で構築","count":22},{"language":"ko","tag":"Claude Code로 만들기","count":22},{"language":"pt-BR","tag":"Desenvolva com Claude Code","count":22},{"language":"ru","tag":"Разработка с Claude Code","count":22},{"language":"zh-CN","tag":"使用 Claude Code 构建","count":22},{"language":"zh-TW","tag":"使用 Claude Code 打造","count":22},{"language":"de","tag":"Referenz","count":20},{"language":"es","tag":"Referencia","count":20},{"language":"fr","tag":"Référence","count":20},{"language":"id","tag":"Referensi","count":20},{"language":"it","tag":"Riferimento","count":20},{"language":"jp","tag":"リファレンス","count":20},{"language":"ko","tag":"레퍼런스","count":20},{"language":"pt-BR","tag":"Referência","count":20},{"language":"ru","tag":"Справочник","count":20},{"language":"zh-CN","tag":"参考","count":20},{"language":"de","tag":"Plattformen und Integrationen","count":19},{"language":"es","tag":"Plataformas e integraciones","count":19},{"language":"fr","tag":"Plateformes et intégrations","count":19},{"language":"id","tag":"Platform dan integrasi","count":19},{"language":"it","tag":"Piattaforme e integrazioni","count":19},{"language":"jp","tag":"プラットフォームと連携","count":19},{"language":"ko","tag":"플랫폼 및 통합","count":19},{"language":"pt-BR","tag":"Plataformas e integrações","count":19},{"language":"ru","tag":"Платформы и интеграции","count":19},{"language":"zh-CN","tag":"平台与集成","count":19},{"language":"zh-TW","tag":"平台與整合","count":19},{"language":"de","tag":"Code-Review und Pull Requests","count":14},{"language":"es","tag":"Revisión de código y pull requests","count":14},{"language":"fr","tag":"Revue de code et pull requests","count":14},{"language":"id","tag":"Code review dan pull request","count":14},{"language":"it","tag":"Code review e pull request","count":14},{"language":"jp","tag":"コードレビューとプルリクエスト","count":14},{"language":"ko","tag":"코드 리뷰 및 풀 리퀘스트","count":14},{"language":"pt-BR","tag":"Revisão de código e pull requests","count":14},{"language":"ru","tag":"Код-ревью и pull request","count":14},{"language":"zh-CN","tag":"代码审查与 Pull Request","count":14},{"language":"zh-TW","tag":"程式碼審查與 pull request","count":14},{"language":"de","tag":"Bereitstellung","count":12},{"language":"es","tag":"Despliegue","count":12},{"language":"fr","tag":"Déploiement","count":12},{"language":"id","tag":"Deployment","count":12},{"language":"it","tag":"Distribuzione","count":12},{"language":"jp","tag":"デプロイ","count":12},{"language":"ko","tag":"배포","count":12},{"language":"pt-BR","tag":"Implantação","count":12},{"language":"ru","tag":"Развёртывание","count":12},{"language":"zh-CN","tag":"部署","count":12},{"language":"zh-TW","tag":"部署","count":12},{"language":"zh-TW","tag":"參考","count":11}]},"assistantConfig":{"enableAskAiButton":false,"enableStarterQuestions":false,"enableAskAiSearchBar":true},"basePath":"/docs","hasChatPermissions":true,"hasWebMcpPermissions":true,"toggles":[{"name":"kill-isr","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-rbac-roles","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-bash","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"chat-bucketing-batched","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-mintlify-slack","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-integrations-settings","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"rbac-expansion","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-pr-grouping","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-prefix","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"analytics-v7","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"user-flows-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"no-publish-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-onboarding","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving-live","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"stripTemperatureMiddleware","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"support-platform-pylon-zendesk","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"instant-rollback","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications-server","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-fable","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fixed-ai-action-pricing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automation-resolve-merge-conflict","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"scoped-publishing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"mintql","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"page-level-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"editor-version-history-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"billing-page-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"full-page-search","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workspace-projects","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-v5","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fork-pr-previews","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"revalidation-jwt","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-sso-scim","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"hobby-abuse-scan","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"dashboard-inbox","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-signup","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"turbopuffer-dual-write","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-enabled","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"approve-review-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"editor-metadata","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"sso-setup-deadline-banner","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"turbopuffer-serve","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"live-agents","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"llms-txt-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false}],"googleFontsInlined":false},"customCss":[{"filePath":"button.css","content":".btn{position:relative;display:inline-flex;gap:0.5rem;align-items:center;justify-content:center;flex-shrink:0;min-width:5rem;height:2.25rem;padding:0.5rem 1rem;white-space:nowrap;font-family:Styrene;font-weight:600;border-radius:0.5rem;\u0026:active{transform:scale(0.985)}\u0026.size-xs{height:1.75rem;min-width:3.5rem;padding:0 0.5rem;border-radius:0.25rem;font-size:0.75rem;gap:0.25rem}\u0026.size-sm{height:2rem;min-width:4rem;padding:0 0.75rem;border-radius:0.375rem;font-size:0.75rem}\u0026.size-lg{height:2.75rem;min-width:6rem;padding:0 1.25rem;border-radius:0.6rem}\u0026:disabled{pointer-events:none;opacity:0.5;box-shadow:none}\u0026:focus-visible{outline:none;--tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow)}\u0026.primary{font-weight:600;color:hsl(var(--oncolor-100));background-color:hsl(var(--accent-main-100));background-image:linear-gradient(\n      to right,\n      hsl(var(--accent-main-100)) 0%,\n      hsl(var(--accent-main-200) / 0.5) 50%,\n      hsl(var(--accent-main-200)) 100%\n    );background-size:200% 100%;background-position:0% 0%;border:0.5px solid hsl(var(--border-300) / 0.25);box-shadow:inset 0 0.5px 0px rgba(255, 255, 0, 0.15),\n      0 1px 1px rgba(0, 0, 0, 0.05);text-shadow:0 1px 2px rgb(0 0 0 / 10%);transition:all 150ms cubic-bezier(0.4, 0, 0.2, 1);\u0026:hover{background-position:100% 0%;background-image:linear-gradient(\n        to right,\n        hsl(var(--accent-main-200)) 0%,\n        hsl(var(--accent-main-200)) 100%\n      )}\u0026:active{background-color:hsl(var(--accent-main-000));box-shadow:inset 0 1px 6px rgba(0, 0, 0, 0.2);transform:scale(0.985)}}\u0026.flat{font-weight:500;color:hsl(var(--oncolor-100));background-color:hsl(var(--accent-main-100));transition:background-color 150ms;\u0026:hover{background-color:hsl(var(--accent-main-200))}}\u0026.secondary{font-weight:600;color:hsl(var(--text-100) / 0.9);background-image:radial-gradient(\n      ellipse at center,\n      hsl(var(--bg-500) / 0.1) 50%,\n      hsl(var(--bg-500) / 0.3) 100%\n    );border:0.5px solid hsl(var(--border-400));transition:color 150ms, background-color 150ms;\u0026:hover{color:hsl(var(--text-000));background-color:hsl(var(--bg-500) / 0.6)}\u0026:active{background-color:hsl(var(--bg-500) / 0.5)}}\u0026.outline{font-weight:600;color:hsl(var(--text-200));background-color:transparent;border:1.5px solid currentColor;transition:color 150ms, background-color 150ms;\u0026:hover{color:hsl(var(--text-100));background-color:hsl(var(--bg-400));border-color:hsl(var(--bg-400))}}\u0026.ghost{color:hsl(var(--text-200));border-color:transparent;transition:color 150ms, background-color 150ms;\u0026:hover{color:hsl(var(--text-100));background-color:hsl(var(--bg-500) / 0.4)}\u0026:active{background-color:hsl(var(--bg-400))}}\u0026.underline{opacity:0.8;text-decoration-line:none;text-underline-offset:3px;transition:all 150ms;\u0026:hover{opacity:1;text-decoration-line:underline}\u0026:active{transform:scale(0.985)}}\u0026.danger{font-weight:600;color:hsl(var(--oncolor-100));background-color:hsl(var(--danger-100));transition:background-color 150ms;\u0026:hover{background-color:hsl(var(--danger-200))}}}"},{"filePath":"style.css","content":"@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Regular-Static.otf\") format(\"opentype\");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-RegularItalic-Static.otf\") format(\"opentype\");font-weight:400;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Medium-Static.otf\") format(\"opentype\");font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-MediumItalic-Static.otf\") format(\"opentype\");font-weight:500;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Semibold-Static.otf\") format(\"opentype\");font-weight:600;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-SemiboldItalic-Static.otf\") format(\"opentype\");font-weight:600;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Bold-Static.otf\") format(\"opentype\");font-weight:700;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-BoldItalic-Static.otf\") format(\"opentype\");font-weight:700;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Regular-Static.otf\") format(\"opentype\");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-RegularItalic-Static.otf\") format(\"opentype\");font-weight:400;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Medium-Static.otf\") format(\"opentype\");font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Semibold-Static.otf\") format(\"opentype\");font-weight:600;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Bold-Static.otf\") format(\"opentype\");font-weight:700;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Regular-Static.otf\") format(\"opentype\");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-RegularItalic-Static.otf\") format(\"opentype\");font-weight:400;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Medium-Static.otf\") format(\"opentype\");font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-MediumItalic-Static.otf\") format(\"opentype\");font-weight:500;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Semibold-Static.otf\") format(\"opentype\");font-weight:600;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-SemiboldItalic-Static.otf\") format(\"opentype\");font-weight:600;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Bold-Static.otf\") format(\"opentype\");font-weight:700;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-BoldItalic-Static.otf\") format(\"opentype\");font-weight:700;font-style:italic;font-display:swap}:root{--always-white: 0 0% 100%;--always-black: 0 0% 0%;--constant-book-cloth: 15 55% 80%;--constant-clay: 15 60% 85%;--constant-kraft: 25 40% 83%;--constant-manilla: 40 20% 92%;--constant-slate-000: 0 0% 100%;--constant-slate-050: 48 33.3% 97.1%;--constant-slate-100: 53 28.6% 94.5%;--constant-slate-150: 48 25% 92.2%;--constant-slate-200: 50 20.7% 88.6%;--constant-slate-250: 51 16.5% 84.5%;--constant-slate-300: 50 11.5% 79.6%;--constant-slate-350: 50 9% 73.7%;--constant-slate-400: 49 6.5% 66.9%;--constant-slate-450: 48 4.8% 59.2%;--constant-slate-500: 53 3.2% 51.4%;--constant-slate-550: 51 3.1% 43.7%;--constant-slate-600: 48 2.7% 35.9%;--constant-slate-650: 48 3.4% 29.2%;--constant-slate-700: 60 2.5% 23.3%;--constant-slate-750: 60 2.1% 18.4%;--constant-slate-800: 60 2.7% 14.5%;--constant-slate-850: 30 3.3% 11.8%;--constant-slate-900: 30 4% 9.8%;--constant-slate-950: 60 2.6% 7.6%;--constant-slate-1000: 60 3.4% 5.7%}:root:not(.dark){--accent-brand: 15 63.1% 59.6%;--accent-main-000: 15 55.6% 52.4%;--accent-main-100: 15 55.6% 52.4%;--accent-main-200: 15 63.1% 59.6%;--accent-main-900: 0 0% 0%;--accent-pro-000: 251 34.2% 33.3%;--accent-pro-100: 251 40% 45.1%;--accent-pro-200: 251 61% 72.2%;--accent-pro-900: 253 33.3% 91.8%;--accent-secondary-000: 210 73.7% 40.2%;--accent-secondary-100: 210 70.9% 51.6%;--accent-secondary-200: 210 70.9% 51.6%;--accent-secondary-900: 211 72% 90%;--bg-000: 0 0% 100%;--bg-100: 48 33.3% 97.1%;--bg-200: 53 28.6% 94.5%;--bg-300: 48 25% 92.2%;--bg-400: 50 20.7% 88.6%;--bg-500: 50 20.7% 88.6%;--border-100: 30 3.3% 11.8%;--border-200: 30 3.3% 11.8%;--border-300: 30 3.3% 11.8%;--border-400: 30 3.3% 11.8%;--danger-000: 0 61.4% 22.4%;--danger-100: 0 58.6% 34.1%;--danger-200: 0 58.6% 34.1%;--danger-900: 0 50% 95%;--oncolor-100: 0 0% 100%;--oncolor-200: 60 6.7% 97.1%;--oncolor-300: 60 6.7% 97.1%;--text-000: 60 2.6% 7.6%;--text-100: 60 2.6% 7.6%;--text-200: 60 2.5% 23.3%;--text-300: 60 2.5% 23.3%;--text-400: 51 3.1% 43.7%;--text-500: 51 3.1% 43.7%}:root.dark{--accent-brand: 15 63.1% 59.6%;--accent-main-000: 15 55.6% 52.4%;--accent-main-100: 15 63.1% 59.6%;--accent-main-200: 15 63.1% 59.6%;--accent-main-900: 0 0% 0%;--accent-pro-000: 251 84.6% 74.5%;--accent-pro-100: 251 40.2% 54.1%;--accent-pro-200: 251 40% 45.1%;--accent-pro-900: 250 25.3% 19.4%;--accent-secondary-000: 210 71.1% 62%;--accent-secondary-100: 210 70.9% 51.6%;--accent-secondary-200: 210 70.9% 51.6%;--accent-secondary-900: 210 55.9% 24.6%;--bg-000: 60 2.1% 18.4%;--bg-100: 60 2.7% 14.5%;--bg-200: 30 3.3% 11.8%;--bg-300: 60 2.6% 7.6%;--bg-400: 60 3.4% 5.7%;--bg-500: 60 3.4% 5.7%;--border-100: 51 16.5% 84.5%;--border-200: 51 16.5% 84.5%;--border-300: 51 16.5% 84.5%;--border-400: 51 16.5% 84.5%;--danger-000: 0 73.1% 66.5%;--danger-100: 0 58.6% 34.1%;--danger-200: 0 58.6% 34.1%;--danger-900: 0 23% 15.6%;--oncolor-100: 0 0% 100%;--oncolor-200: 60 6.7% 97.1%;--oncolor-300: 60 6.7% 97.1%;--text-000: 48 33.3% 97.1%;--text-100: 48 33.3% 97.1%;--text-200: 50 9% 73.7%;--text-300: 50 9% 73.7%;--text-400: 48 4.8% 59.2%;--text-500: 48 4.8% 59.2%}#home-header{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;font-weight:400!important;font-size:50px;line-height:1.2;margin-bottom:1rem;color:--text-000;display:flex;align-items:baseline;justify-content:center;flex-wrap:nowrap}#localization-select-trigger>:has(img[src*=\"flags\"]){display:none}div[id^=\"localization-select-item\"]>:has(img[src*=\"flags\"]){display:none}@media (min-width: 768px){#home-header{justify-content:center}}.build-with{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;letter-spacing:-0.02em}.claude-wordmark-wrapper{display:inline-flex;align-items:baseline;margin-left:10px}.claude-wordmark{height:40px;width:auto;position:relative}.dark #home-header{color:white}.description-text{color:black}.dark .description-text{color:white}.dark .claude-wordmark{filter:invert(1)}:root{--bg-color: #f0efea}.dark{--bg-color: #2b2b2b}body,input,#category-select,.dropdown-item,#table-of-contents{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif}.eyebrow{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;text-transform:uppercase;letter-spacing:0.02rem}#content-container{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif}#content-container h1,#content-container h2,#content-container h3,#content-container h4,#content-container h5,#content-container h6{font-family:\"Anthropic Serif Display\", Georgia, \"Times New Roman\", Times, serif;font-weight:400;letter-spacing:0;word-spacing:0.1em}#content-container p{font-size:1rem;line-height:1.65rem}.font-extrabold{font-weight:600!important}.wide-table{width:100%;overflow-x:auto}.wide-table table{width:175%;margin-bottom:0}#prompt-library-container{margin:4rem auto;max-width:48rem;padding-left:1.25rem;padding-right:1.25rem}.prompt-library-title{font-size:24px;text-align:center;font-weight:700;color:#1f2937}.dark .prompt-library-title{color:#e5e7eb}.prompt-library-description{margin-top:1rem;text-align:center}.main-content{margin-bottom:10rem;max-width:64rem;margin-left:auto;margin-right:auto;padding-left:1.25rem;padding-right:1.25rem}.prompt-controllers{display:flex;gap:0.5rem}.prompt-search-container{position:relative;flex:1 1 0%}.prompt-search-icon-container{display:flex;position:absolute;top:0;bottom:0;left:0;align-items:center;padding-left:0.75rem}.prompt-search-icon{margin-left:0.25rem;margin-right:0.75rem;flex:none;width:1rem;height:1rem;background-color:#6b7280;mask-image:url(https://mintlify.b-cdn.net/v6.5.1/solid/magnifying-glass.svg);mask-repeat:no-repeat;mask-position:center center}input.prompt-search-bar{display:block;height:2.5rem;padding-left:2.5rem;border-radius:0.75rem;border-width:1px;background-color:#ffffff;width:100%;color:#111827;box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05)}.dark input.prompt-search-bar{color:#ffffff;background-color:rgb(var(--background-dark));border-color:#d1d5db1a}input.prompt-search-bar:focus{outline-color:rgb(var(--primary))}.dark input.prompt-search-bar:focus{outline-color:rgb(var(--primary-light))}.dark .prompt-search-icon{background-color:#ffffff80}#category-select{padding-left:1rem;padding-right:2.5rem;height:2.5rem;display:flex;align-items:center;border-radius:0.75rem;border-width:1px;color:#111827;background-color:#ffffff;cursor:pointer;box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05);white-space:nowrap}.dark #category-select{background-color:rgb(var(--background-dark));border-color:#d1d5db1a;color:#ffffff}#category-select:hover{background-color:#f9fafb}.dark #category-select:hover{background-color:#ffffff0d}#category-select:focus{outline-color:rgb(var(--primary))}.dark #category-select:focus{outline-color:rgb(var(--primary-light))}#categories-dropdown{top:calc(100% + 4px);padding:0.5rem 0.5rem;display:none;position:absolute;z-index:10;border-radius:0.75rem;border-width:1px;width:100%;color:#111827;background-color:#ffffff;box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05)}.dark #categories-dropdown{background-color:rgb(var(--background-dark));border-color:#d1d5db1a;color:#ffffff}#categories-dropdown-clickout{position:fixed;top:0;right:0;bottom:0;left:0;z-index:0}.dropdown-icon-container{display:flex;position:absolute;top:0;bottom:0;right:0;align-items:center;padding-right:0.25rem}.dropdown-icon{margin-left:0.25rem;margin-right:0.75rem;flex:none;width:0.75rem;height:0.75rem;background-color:#6b7280;mask-image:url(https://mintlify.b-cdn.net/v6.5.1/solid/caret-down.svg);mask-repeat:no-repeat;mask-position:center center}.dark .dropdown-icon{background-color:#ffffff80}#prompts-container{grid-template-columns:repeat(1, minmax(0, 1fr));gap:2rem}.dropdown-item{padding:0.25rem 0.5rem;border-radius:0.375rem;display:flex;align-items:center;cursor:pointer}.dropdown-item:hover{background-color:#f9fafb}.dark .dropdown-item:hover{background-color:#ffffff0d}.check-icon{mask-image:url(https://mintlify.b-cdn.net/v6.5.1/solid/check.svg);height:0.875rem;width:1rem;background-color:rgb(var(--primary-light));mask-repeat:no-repeat;mask-position:center center}.prompt-card{margin:-0.75rem;padding:0.75rem;display:flex;border-radius:1rem}.prompt-card:hover{background-color:#03071208}.dark .prompt-card:hover{background-color:#ffffff08}.prompt-icon-container{display:flex;flex:none;align-items:center;justify-content:center;margin-right:1.5rem;border-radius:0.75rem;height:4rem;width:4rem;background-color:#cb785c1a}.prompt-icon{height:1.5rem;width:1.5rem;background-color:rgb(var(--primary-light));mask-repeat:no-repeat;mask-position:center center}.prompt-title{color:rgb(31 41 55);font-weight:600}.dark .prompt-title{color:rgb(229 231 235)}.prompt-description{margin-top:0.25rem}#prompts-container{display:grid;margin-top:2.5rem}@media (min-width: 640px){#category-select{width:16rem}}@media (min-width: 1024px){#prompts-container{grid-template-columns:repeat(2, minmax(0, 1fr))}}.home-cards-custom{display:grid;grid-template-columns:repeat(3, 1fr);grid-template-rows:repeat(2, auto);gap:1.5rem}.home-cards-custom .card{background:transparent;border:0.5px solid hsl(var(--border-300));border-radius:12px;padding:0.25rem}@media (max-width: 1024px){.home-cards-custom{grid-template-columns:repeat(2, 1fr);grid-template-rows:repeat(3, auto)}}@media (max-width: 768px){.home-cards-custom{grid-template-columns:1fr;grid-template-rows:repeat(6, auto)}}.relative{position:relative}.flex-1{flex:1 1 0%}.mermaid{position:relative;background-color:#FDFDFB;background-image:linear-gradient(rgba(235, 219, 188, .25) 1px, transparent 1px), /* Secondary color #EBDBBC with low opacity */\n    linear-gradient(90deg, rgba(235, 219, 188, .25) 1px, transparent 1px),\n    linear-gradient(rgba(235, 219, 188, .1) 1px, transparent 1px),\n    linear-gradient(90deg, rgba(235, 219, 188, .1) 1px, transparent 1px);background-size:20px 20px,\n    20px 20px,\n    4px 4px,\n    4px 4px;background-position:-1px -1px,\n    -1px -1px,\n    -1px -1px,\n    -1px -1px;padding:20px;border-radius:8px;border:1px solid rgba(235, 219, 188, .4);box-shadow:0 2px 4px rgba(64, 64, 62, 0.08)}.dark .mermaid{background-color:#1a1918;background-image:linear-gradient(rgba(212, 162, 127, .15) 1px, transparent 1px), /* Tertiary color #D4A27F with low opacity */\n    linear-gradient(90deg, rgba(212, 162, 127, .15) 1px, transparent 1px),\n    linear-gradient(rgba(212, 162, 127, .08) 1px, transparent 1px),\n    linear-gradient(90deg, rgba(212, 162, 127, .08) 1px, transparent 1px);border:1px solid rgba(102, 102, 99, .5);box-shadow:0 2px 4px rgba(0, 0, 0, 0.2)}.digest-meta{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem 1rem;padding:0.75rem 1rem;margin:1.5rem 0 2.5rem;border:1px solid hsl(var(--border-300) / 0.15);background:hsl(var(--bg-200));font-variant-numeric:tabular-nums;font-size:0.875rem;color:hsl(var(--text-400))}#content-container .digest-meta a{color:hsl(var(--accent-main-100));font-weight:500;text-decoration:none;border-bottom:none}#content-container .digest-meta a:hover{text-decoration:underline}.digest-feature{position:relative;margin:2.5rem 0;padding:1.875rem 1.875rem 1.625rem;background:radial-gradient(circle, hsl(var(--text-000) / 0.025) 1px, transparent 1px) 0 0 / 18px 18px,\n    linear-gradient(180deg, hsl(var(--constant-manilla) / 0.55), hsl(var(--constant-manilla) / 0.38));border:1px solid hsl(var(--border-300) / 0.12);box-shadow:inset 0 1px 0 hsl(var(--text-000) / 0.04),\n    0 1px 2px hsl(var(--always-black) / 0.04)}.digest-feature::before{content:\"\";position:absolute;inset:0 auto 0 0;width:4px;background:hsl(var(--accent-brand))}.dark .digest-feature{background:radial-gradient(circle, hsl(var(--text-000) / 0.02) 1px, transparent 1px) 0 0 / 18px 18px,\n    linear-gradient(180deg, hsl(var(--bg-000) / 0.75), hsl(var(--bg-000) / 0.5));border-color:hsl(var(--border-300) / 0.1);box-shadow:inset 0 1px 0 hsl(var(--text-000) / 0.03),\n    0 1px 2px hsl(var(--always-black) / 0.25)}.digest-feature>:first-child{margin-top:0}.digest-feature>:last-child{margin-bottom:0}.digest-feature-header{display:flex;align-items:center;flex-wrap:wrap;gap:0.625rem;margin:0 0 0.75rem}#content-container .digest-feature-title{font-family:\"Anthropic Serif Display\", Georgia, serif;font-size:1.75rem;line-height:1.15;font-weight:500;letter-spacing:-0.015em;color:hsl(var(--text-000));margin:0}#content-container .digest-feature-pill{font-family:ui-monospace, \"SF Mono\", Menlo, Consolas, monospace;font-size:0.75rem;line-height:1;letter-spacing:0.01em;padding:0.3rem 0.6rem;border-radius:999px;background:hsl(var(--accent-brand) / 0.12);color:hsl(var(--accent-main-000));border:1px solid hsl(var(--accent-brand) / 0.25);white-space:nowrap;transform:translateY(1px)}#content-container .digest-feature-lede{font-size:1.0625rem;line-height:1.65;color:hsl(var(--text-100));margin:0 0 1.25rem;max-width:none}#content-container .digest-feature-lede code{font-size:0.875em;padding:0.1em 0.35em}#content-container .digest-feature-try{font-size:0.875rem;color:hsl(var(--text-400));margin:1.25rem 0 0.5rem}#content-container .digest-feature .frame{margin:1rem 0;border-radius:0;padding:0}#content-container .digest-feature .frame>*{border-radius:0}#content-container .digest-feature pre,#content-container .digest-feature [class*=\"CodeBlock\"]{border-radius:0}#content-container .digest-feature-link{display:inline-flex;align-items:center;gap:0.35rem;font-size:0.875rem;font-weight:500;color:hsl(var(--accent-main-100));text-decoration:none;border-bottom:none;margin-top:0.75rem}#content-container .digest-feature-link::after{content:\"→\";transition:transform 120ms ease-out}#content-container .digest-feature-link:hover::after{transform:translateX(3px)}.digest-wins{margin:2.5rem 0;padding:1.5rem 1.75rem 1.25rem;background:hsl(var(--bg-200));border:1px solid hsl(var(--border-300) / 0.1)}.dark .digest-wins{background:hsl(var(--bg-200) / 0.6)}#content-container .digest-wins-title{font-family:\"Anthropic Serif Display\", Georgia, serif;font-size:1.25rem;font-weight:500;color:hsl(var(--text-000));margin:0 0 0.75rem}.digest-wins-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(16rem, 1fr));column-gap:2rem}#content-container .digest-wins-grid>div{position:relative;font-size:0.875rem;line-height:1.5;color:hsl(var(--text-300));padding:0.5rem 0 0.5rem 1.125rem;border-top:1px solid hsl(var(--border-300) / 0.06);margin:0}#content-container .digest-wins-grid>div::before{content:\"+\";position:absolute;left:0;top:0.5rem;font-family:ui-monospace, \"SF Mono\", Menlo, Consolas, monospace;font-size:0.8125rem;font-weight:600;color:hsl(var(--accent-brand))}#content-container .digest-wins-grid>div:first-child,#content-container .digest-wins-grid>div:nth-child(2){border-top:none;padding-top:0}#content-container .digest-wins-grid>div:first-child::before,#content-container .digest-wins-grid>div:nth-child(2)::before{top:0}#content-container .digest-wins-grid code{font-size:0.8125rem;padding:0.1em 0.3em}:root{--toc-wrapper-max: 92rem;--toc-wrapper-pad: 2rem;--toc-col: 19rem;--toc-side: 28rem;--toc-btn-size: 1.75rem}#toc-collapse-toggle{display:none;align-items:center;justify-content:center;position:fixed;top:10rem;right:calc(\n    max((100% - var(--toc-wrapper-max)) / 2, 0px) + var(--toc-wrapper-pad) +\n      var(--toc-col) - var(--toc-btn-size) - 0.35rem\n  );transition:right 200ms ease-out;z-index:30;width:var(--toc-btn-size);height:var(--toc-btn-size);border-radius:9999px;border:1px solid hsl(var(--border-300) / 0.15);background:hsl(va
 
 ## Source (plugins-reference): https://docs.claude.com/en/docs/claude-code/plugins-reference
 
@@ -10873,7 +10761,6 @@ claude plugin validate
 : the
 troubleshooting page
 lists each message with its fix and links to the relevant sections on this page
-​
 Manifest file
 The manifest is optional. Without it, Claude Code loads the components it finds in the
 standard layout
@@ -11049,7 +10936,6 @@ true
 }
 }
 }
-​
 Unrecognized fields
 An unrecognized top-level key is stripped, and an unrecognized key inside a
 userConfig
@@ -11074,7 +10960,6 @@ lspServers
 configs, and
 monitors
 entries are strict. An unknown key inside one is an error, and the plugin doesn’t load
-​
 Validate the manifest
 claude plugin validate
 is the authoritative check for a manifest. Run it from your shell against the plugin directory:
@@ -11128,9 +11013,8 @@ http://
 or
 ws://
 URL to a non-loopback host, and a header value that looks like a literal credential
-​
 Fields
-The table lists the top-level keys in
+The table lists top-level keys in
 plugin.json
 .
 name
@@ -11212,13 +11096,6 @@ true
 dependencies
 Array of strings or objects
 Plugins that must be enabled for this one to work
-settings
-Object
-Settings Claude Code applies while the plugin is enabled. Only
-agent
-and
-subagentStatusLine
-take effect
 userConfig
 Object
 Values Claude Code prompts the user for when the plugin is enabled
@@ -11340,7 +11217,6 @@ overrides it
 In the Type column, a path is a string relative to the plugin root, such as
 "./custom/commands"
 .
-​
 name
 The plugin identifier. It must be non-empty, with no spaces,
 @
@@ -11405,7 +11281,6 @@ claude plugin init
 and
 claude plugin tag
 refuse a name that draws the error. Claude Code still installs and loads a plugin whose name they refuse.
-​
 displayName
 The name shown in UI in place of
 name
@@ -11415,7 +11290,6 @@ displayName
 on the
 marketplace entry
 takes precedence over this value.
-​
 version
 A version string, not checked against semver. Setting it pins the plugin to that version until you change it; see
 Versions and updates
@@ -11427,10 +11301,8 @@ marketplace hosted on claude.ai
 , and a plugin
 loaded in place
 from a marketplace added from a local path aren’t pinned by this field.
-​
 metadata
-A free-form object for your own data, such as catalog or entitlement fields. Claude Code doesn’t read it. Requires Claude Code v2.1.222 or later.
-​
+A free-form object for your own data, such as catalog or entitlement fields. Claude Code doesn’t read it.
 Directory listing fields
 Anthropic’s directory reads the
 icon
@@ -11468,7 +11340,6 @@ Unknown field
 warning for each one, so a
 --strict
 run fails on those versions.
-​
 defaultEnabled
 Whether the plugin starts enabled when the user hasn’t set it in
 enabledPlugins
@@ -11480,7 +11351,6 @@ enabledPlugins
 entry is written, it persists across plugin updates, so changing
 defaultEnabled
 in a later release doesn’t change the setting for an existing user.
-​
 dependencies
 Plugins that must be enabled for this one to work. Each entry is
 "name"
@@ -11491,18 +11361,6 @@ Plugins that must be enabled for this one to work. Each entry is
 . Bare names resolve against this plugin’s own marketplace. See
 dependency constraints
 .
-​
-settings
-Settings Claude Code applies while the plugin is enabled. Only
-agent
-and
-subagentStatusLine
-take effect; other keys are dropped at load. A
-settings.json
-at the plugin root takes precedence over this key. See
-Default settings
-.
-​
 Component path forms
 Every component key accepts a path relative to the plugin root.
 hooks
@@ -11519,7 +11377,6 @@ mcpServers
 also accepts MCP bundle paths and URLs. The examples that follow show each accepted shape once. For what each component does at runtime, see
 Plugin components
 .
-​
 Path-only fields
 agents
 ,
@@ -11554,7 +11411,6 @@ entries must be directories. The other three accept a directory or a file.
 :
 "./styles/"
 }
-​
 commands
 commands
 takes a path, an array of paths, or an object map. A path names a flat
@@ -11616,7 +11472,6 @@ This map declares one command from a file and one from inline content:
 }
 }
 }
-​
 hooks
 hooks
 takes a
@@ -11706,7 +11561,6 @@ ${CLAUDE_PLUGIN_ROOT}
 ]
 }
 }
-​
 mcpServers
 mcpServers
 takes a
@@ -11736,13 +11590,13 @@ Extracts the
 or
 .dxt
 bundle into
-.mcpb-cache/
-under the plugin root and reads its server config
+mcpb/
+under the
+plugins root
+and reads its server config
 MCP bundle URL
 "https://example.com/server.mcpb"
-Downloads the bundle into
-.mcpb-cache/
-, then reads it
+Downloads the bundle, then extracts and reads it the same way
 Inline map
 { "deploy-api": { "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/server.js"] } }
 Uses the map as server configs keyed by name
@@ -11751,7 +11605,6 @@ A bundle path or URL must end in
 or
 .dxt
 . Any other extension fails validation.
-​
 lspServers
 lspServers
 takes a
@@ -11854,7 +11707,6 @@ files:
 For the language servers Anthropic publishes as plugins and how the servers behave at runtime, see
 Code intelligence
 .
-​
 monitors
 experimental.monitors
 takes a
@@ -11921,7 +11773,6 @@ ${user_config.*}
 . See
 Fields that run through a shell
 .
-​
 Path rules
 Every component path in a manifest is relative to the plugin root and must start with
 ./
@@ -11939,11 +11790,7 @@ skills
 "."
 and
 "./"
-denote the plugin root. Before v2.1.221,
-"."
-failed manifest validation, so use
-"./"
-when the plugin must load on earlier versions
+denote the plugin root
 mcpServers
 : also accepts an
 https://
@@ -11958,7 +11805,6 @@ checks the value when it runs instead. It names a directory below the plugin roo
 prefix. With an array, only the first entry is used. For what the value accepts and what happens with an unusable one, see
 Use a different eval directory
 .
-​
 Containment and existence
 Every component path must resolve inside the plugin root and must exist.
 claude plugin validate
@@ -11975,6 +11821,14 @@ is the usual case, and
 claude plugin validate
 reports the error
 Path contains ".." which could be a path traversal attempt
+. For an
+mcpServers
+or
+lspServers
+file, a
+path not read
+message means the path is absolute or contains
+..
 Existence
 : a path that doesn’t exist doesn’t load, and the
 /plugin
@@ -11996,7 +11850,6 @@ themes
 paths, the
 claude plugin validate
 check requires Claude Code v2.1.283 or later.
-​
 How each key combines with its default location
 Each component key either replaces its default location, adds to it, or merges with it:
 Replaces the default
@@ -12045,7 +11898,6 @@ Default <folder>/ folder is ignored because the manifest sets "<key>"
 To avoid the warning, set the key to a path inside that folder:
 "commands": ["./commands/deploy.md"]
 names a file in the default folder and produces no warning.
-​
 User configuration
 userConfig
 declares values Claude Code prompts the user for when the plugin is enabled, so users don’t edit
@@ -12157,7 +12009,6 @@ true
 }
 }
 }
-​
 Limit a field to fixed options
 Set
 options
@@ -12221,7 +12072,6 @@ claude plugin validate
 , which you run in your shell, reports anything else it rejects. A plugin whose
 options
 break these rules fails to load.
-​
 Where values are stored
 Non-sensitive values are saved under
 pluginConfigs
@@ -12232,7 +12082,6 @@ settings page
 lists which settings files
 pluginConfigs
 is read from.
-​
 Reference a saved value
 Reference a saved value where the plugin needs it, in one of two forms:
 ${user_config.KEY}
@@ -12248,7 +12097,6 @@ uppercased. A shell-form hook reads
 $CLAUDE_PLUGIN_OPTION_API_TOKEN
 for
 api_token
-​
 Fields that run through a shell
 Shell-form hook commands, monitor commands, and MCP
 headersHelper
@@ -12281,7 +12129,6 @@ CLAUDE_CODE_MCP_SERVER_NAME
 , and
 CLAUDE_CODE_MCP_SERVER_URL
 but no option values, so the helper script has to obtain the value on its own
-​
 Channels
 channels
 declares the message channels a plugin provides, such as a bridge to a chat app. When you declare one, Claude Code can prompt for the channel’s configuration when the plugin is enabled. For how the server injects messages, see the
@@ -12369,7 +12216,6 @@ true
 }
 ]
 }
-​
 Environment variables
 Claude Code provides three path variables to plugin components. Reference them as
 ${NAME}
@@ -12409,7 +12255,6 @@ directory when you uninstall the plugin from the last place it’s installed. Fo
 and the other cases where it stays, see
 plugin uninstall
 .
-​
 Where each variable resolves
 In each plugin component,
 ${...}
@@ -12480,7 +12325,6 @@ Not applicable
 The variables aren’t present in the environment of commands Claude runs through the Bash tool, in the main session or in a subagent. In skill, command, and agent content, write the
 ${...}
 reference in the Markdown body instead, and Claude Code substitutes the path inline when it loads the content.
-​
 Quoting and path separators
 Keep each substituted path a single argument:
 Hook commands
@@ -12530,7 +12374,6 @@ C:/Users/you/...
 . They keep their native backslashes in an
 exec-form hook
 and in a hook that runs through PowerShell, which is the default shell on Windows when Git Bash isn’t installed.
-​
 Standard layout
 Each component type has a default location under the plugin root, used when the manifest doesn’t point elsewhere.
 Component
@@ -12588,13 +12431,7 @@ Files here are on the Bash tool’s
 PATH
 while the plugin is enabled, so Claude runs them as bare commands. claude.ai and Cowork don’t install a plugin that has this directory, including one you
 distribute through claude.ai organization settings
-Settings
-settings.json
-agent
-and
-subagentStatusLine
-defaults applied while the plugin is enabled
-A plugin that uses every default location, plus a
+A plugin that uses default locations, plus a
 scripts/
 folder that its hooks call, is laid out like this:
 deploy-tools/
@@ -12621,7 +12458,6 @@ deploy-tools/
 │   └── deploy-tool
 ├── scripts/
 │   └── format.sh
-├── settings.json
 ├── .mcp.json
 └── .lsp.json
 To click through this layout and read what each file does, open the
@@ -12632,7 +12468,6 @@ CLAUDE.md
 at the plugin root isn’t loaded as context, and
 claude plugin validate
 warns when it finds one. To include instructions that load into Claude’s context, put them in a skill.
-​
 Marketplace entries and the manifest
 A
 marketplace entry
@@ -12650,7 +12485,6 @@ plugin.json
 . It defaults to
 true
 .
-​
 How entry fields combine with
 plugin.json
 The entry either serves as the manifest, adds components to it, or conflicts with it:
@@ -12714,7 +12548,6 @@ skills
 key in the manifest instead
 adds to the default
 .
-​
 Metadata precedence
 Some metadata fields have a fixed precedence regardless of
 strict
@@ -12741,7 +12574,6 @@ uses the entry name, and components are namespaced under the manifest name
 For the full precedence table, see
 Strict mode
 .
-​
 Next steps
 Add components to a plugin
 : what each component does at runtime, with an example that validates
@@ -12756,7 +12588,7 @@ Troubleshoot plugins
 Was this page helpful?
 Yes
 No
-{"docsConfig":{"theme":"mint","$schema":"https://mintlify.com/docs.json","name":"Claude Code Docs","description":"Official documentation for Claude Code, Anthropic's agentic coding tool available in the terminal, IDE, desktop app, and browser. Covers installation, configuration, skills, subagents, hooks, MCP, the Agent SDK, and reference material.","colors":{"primary":"#0E0E0E","light":"#D4A27F","dark":"#0E0E0E"},"logo":{"light":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/light.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=78fd01ff4f4340295a4f66e2ea54903c","dark":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/dark.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=1298a0c3b3a1da603b190d0de0e31712"},"favicon":"https://mintcdn.com/claude-code/T2WlxklWBkR5Y1mJ/favicon.ico?fit=max\u0026auto=format\u0026n=T2WlxklWBkR5Y1mJ\u0026q=85\u0026s=346a85952ae08d5ee90e3c34d4423930","appearance":{"default":"system"},"background":{"color":{"light":"#FDFDF7","dark":"#09090B"}},"navbar":{"links":[{"href":"https://platform.claude.com/","label":"Claude Developer Platform"}],"primary":{"type":"button","label":"Open Claude Code","href":"https://claude.ai/code"}},"footer":{"socials":{"x":"https://x.com/AnthropicAI","linkedin":"https://www.linkedin.com/company/anthropicresearch"},"links":[{"header":"Company","items":[{"label":"Anthropic","href":"https://www.anthropic.com/company"},{"label":"Careers","href":"https://www.anthropic.com/careers"},{"label":"Economic Futures","href":"https://www.anthropic.com/economic-futures"},{"label":"Research","href":"https://www.anthropic.com/research"},{"label":"News","href":"https://www.anthropic.com/news"},{"label":"Trust center","href":"https://trust.anthropic.com/"},{"label":"Transparency","href":"https://www.anthropic.com/transparency"}]},{"header":"Help and security","items":[{"label":"Availability","href":"https://www.anthropic.com/supported-countries"},{"label":"Status","href":"https://status.anthropic.com/"},{"label":"Support center","href":"https://support.claude.com/"}]},{"header":"Learn","items":[{"label":"Courses","href":"https://academy.claude.com/"},{"label":"MCP connectors","href":"https://claude.com/partners/mcp"},{"label":"Customer stories","href":"https://www.claude.com/customers"},{"label":"Engineering blog","href":"https://www.anthropic.com/engineering"},{"label":"Events","href":"https://www.anthropic.com/events"},{"label":"Powered by Claude","href":"https://claude.com/partners/powered-by-claude"},{"label":"Service partners","href":"https://claude.com/partners/services"},{"label":"Startups program","href":"https://claude.com/programs/startups"}]},{"header":"Terms and policies","items":[{"label":"Privacy choices","href":"https://www.anthropic.com/legal/privacy"},{"label":"Privacy policy","href":"https://www.anthropic.com/legal/privacy"},{"label":"Disclosure policy","href":"https://www.anthropic.com/responsible-disclosure-policy"},{"label":"Usage policy","href":"https://www.anthropic.com/legal/aup"},{"label":"Commercial terms","href":"https://www.anthropic.com/legal/commercial-terms"},{"label":"Consumer terms","href":"https://www.anthropic.com/legal/consumer-terms"}]}]},"seo":{"metatags":{"canonical":"https://code.claude.com/docs"}},"fonts":{"family":"Anthropic Sans"},"contextual":{"options":["copy","view","claude"],"display":"header"},"styling":{"latex":true},"navigation":{"languages":[{"language":"en","href":"en/overview"},{"language":"fr","href":"fr/overview"},{"language":"de","href":"de/overview"},{"language":"it","href":"it/overview"},{"language":"jp","href":"ja/overview"},{"language":"es","href":"es/overview"},{"language":"ko","href":"ko/overview"},{"language":"zh-CN","href":"zh-CN/overview"},{"language":"zh-TW","href":"zh-TW/overview"},{"language":"ru","href":"ru/overview"},{"language":"id","href":"id/overview"},{"language":"pt-BR","href":"pt/overview"}]}},"deployment":{"deploymentMetadataValue":{"subdomain":"claude-code","hasAudioNarration":false,"actualSubdomain":"claude-code","customDomains":["code.claude.com"],"gitSource":{"type":"github","owner":"anthropics","repo":"claude-code-docs","deployBranch":"main","contentDirectory":"","isPrivate":true,"mountPath":"","label":""},"feedback":{"thumbs":true},"entitlements":{"AI_CHAT":{"status":"ENABLED"},"REMOVE_BRANDING":{"status":"ENABLED"},"CONTEXTUAL_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"CODE_SNIPPET_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"WEB_MCP":{"status":"ENABLED"},"NARRATION":{"status":"ENABLED"}},"buildId":"6af0c6c06412adac01293366","clientVersion":"0.0.4088","searchFilterCounts":[{"language":"en","tag":"Agent SDK","count":60},{"language":"en","tag":"Plugins","count":56},{"language":"de","tag":"Neuigkeiten","count":50},{"language":"en","tag":"What's New","count":50},{"language":"es","tag":"Novedades","count":50},{"language":"fr","tag":"Nouveautés","count":50},{"language":"it","tag":"Novità","count":50},{"language":"ko","tag":"새로운 기능","count":50},{"language":"pt-BR","tag":"Novidades","count":50},{"language":"ru","tag":"Что нового","count":50},{"language":"zh-TW","tag":"最新消息","count":50},{"language":"de","tag":"Erste Schritte","count":49},{"language":"es","tag":"Primeros pasos","count":49},{"language":"fr","tag":"Premiers pas","count":49},{"language":"id","tag":"Memulai","count":49},{"language":"it","tag":"Per iniziare","count":49},{"language":"jp","tag":"はじめに","count":49},{"language":"ko","tag":"시작하기","count":49},{"language":"pt-BR","tag":"Primeiros passos","count":49},{"language":"ru","tag":"Начало работы","count":49},{"language":"zh-TW","tag":"快速入門","count":49},{"language":"en","tag":"Getting started","count":48},{"language":"zh-CN","tag":"快速入门","count":46},{"language":"en","tag":"Overview","count":41},{"language":"de","tag":"Agent SDK","count":36},{"language":"en","tag":"Setup and access","count":36},{"language":"es","tag":"Agent SDK","count":36},{"language":"id","tag":"Agent SDK","count":36},{"language":"it","tag":"Agent SDK","count":36},{"language":"jp","tag":"Agent SDK","count":36},{"language":"pt-BR","tag":"Agent SDK","count":36},{"language":"ru","tag":"Agent SDK","count":36},{"language":"zh-CN","tag":"Agent SDK","count":36},{"language":"zh-TW","tag":"Agent SDK","count":36},{"language":"de","tag":"Administration","count":34},{"language":"en","tag":"Administration","count":34},{"language":"es","tag":"Administración","count":34},{"language":"fr","tag":"Administration","count":34},{"language":"id","tag":"Administrasi","count":34},{"language":"it","tag":"Amministrazione","count":34},{"language":"jp","tag":"管理","count":34},{"language":"ko","tag":"관리","count":34},{"language":"pt-BR","tag":"Administração","count":34},{"language":"ru","tag":"Администрирование","count":34},{"language":"zh-CN","tag":"管理","count":34},{"language":"zh-TW","tag":"管理","count":34},{"language":"de","tag":"Plugins","count":32},{"language":"es","tag":"Plugins","count":32},{"language":"fr","tag":"SDK Agent","count":32},{"language":"fr","tag":"Plugins","count":32},{"language":"id","tag":"Plugin","count":32},{"language":"it","tag":"Plugin","count":32},{"language":"jp","tag":"プラグイン","count":32},{"language":"ko","tag":"Agent SDK","count":32},{"language":"ko","tag":"플러그인","count":32},{"language":"pt-BR","tag":"Plugins","count":32},{"language":"ru","tag":"Плагины","count":32},{"language":"zh-CN","tag":"插件","count":32},{"language":"zh-TW","tag":"外掛","count":32},{"language":"en","tag":"Reference","count":28},{"language":"es","tag":"Configuración","count":28},{"language":"jp","tag":"設定","count":28},{"language":"zh-TW","tag":"設定","count":28},{"language":"de","tag":"Konfiguration","count":25},{"language":"en","tag":"Configuration","count":25},{"language":"fr","tag":"Configuration","count":25},{"language":"id","tag":"Konfigurasi","count":25},{"language":"id","tag":"Apa yang Baru","count":25},{"language":"id","tag":"Yang Baru","count":25},{"language":"it","tag":"Configurazione","count":25},{"language":"jp","tag":"新機能","count":25},{"language":"jp","tag":"最新情報","count":25},{"language":"ko","tag":"구성","count":25},{"language":"pt-BR","tag":"Configuração","count":25},{"language":"ru","tag":"Конфигурация","count":25},{"language":"zh-CN","tag":"配置","count":25},{"language":"zh-CN","tag":"新功能","count":25},{"language":"zh-CN","tag":"最新动态","count":25},{"language":"en","tag":"Settings","count":24},{"language":"de","tag":"Mit Claude Code entwickeln","count":22},{"language":"es","tag":"Crea con Claude Code","count":22},{"language":"fr","tag":"Développer avec Claude Code","count":22},{"language":"id","tag":"Membangun dengan Claude Code","count":22},{"language":"it","tag":"Crea con Claude Code","count":22},{"language":"jp","tag":"Claude Code で構築","count":22},{"language":"ko","tag":"Claude Code로 만들기","count":22},{"language":"pt-BR","tag":"Desenvolva com Claude Code","count":22},{"language":"ru","tag":"Разработка с Claude Code","count":22},{"language":"zh-CN","tag":"使用 Claude Code 构建","count":22},{"language":"zh-TW","tag":"使用 Claude Code 打造","count":22},{"language":"de","tag":"Referenz","count":20},{"language":"es","tag":"Referencia","count":20},{"language":"fr","tag":"Référence","count":20},{"language":"id","tag":"Referensi","count":20},{"language":"it","tag":"Riferimento","count":20},{"language":"jp","tag":"リファレンス","count":20},{"language":"ko","tag":"레퍼런스","count":20},{"language":"pt-BR","tag":"Referência","count":20},{"language":"ru","tag":"Справочник","count":20},{"language":"zh-CN","tag":"参考","count":20},{"language":"de","tag":"Plattformen und Integrationen","count":19},{"language":"es","tag":"Plataformas e integraciones","count":19},{"language":"fr","tag":"Plateformes et intégrations","count":19},{"language":"id","tag":"Platform dan integrasi","count":19},{"language":"it","tag":"Piattaforme e integrazioni","count":19},{"language":"jp","tag":"プラットフォームと連携","count":19},{"language":"ko","tag":"플랫폼 및 통합","count":19},{"language":"pt-BR","tag":"Plataformas e integrações","count":19},{"language":"ru","tag":"Платформы и интеграции","count":19},{"language":"zh-CN","tag":"平台与集成","count":19},{"language":"zh-TW","tag":"平台與整合","count":19},{"language":"de","tag":"Code-Review und Pull Requests","count":14},{"language":"es","tag":"Revisión de código y pull requests","count":14},{"language":"fr","tag":"Revue de code et pull requests","count":14},{"language":"it","tag":"Code review e pull request","count":14},{"language":"ko","tag":"코드 리뷰 및 풀 리퀘스트","count":14},{"language":"pt-BR","tag":"Revisão de código e pull requests","count":14},{"language":"ru","tag":"Код-ревью и pull request","count":14},{"language":"zh-TW","tag":"程式碼審查與 pull request","count":14},{"language":"zh-TW","tag":"部署","count":11}]},"assistantConfig":{"enableAskAiButton":false,"enableStarterQuestions":false,"enableAskAiSearchBar":true},"basePath":"/docs","hasChatPermissions":true,"hasWebMcpPermissions":true,"toggles":[{"name":"kill-isr","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-bash","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"chat-bucketing-batched","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-mintlify-slack","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-integrations-settings","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"rbac-expansion","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-pr-grouping","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-prefix","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"analytics-v7","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"user-flows-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"no-publish-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-onboarding","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"llms-txt-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving-live","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"stripTemperatureMiddleware","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"support-platform-pylon-zendesk","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"instant-rollback","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications-server","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-fable","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fixed-ai-action-pricing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automation-resolve-merge-conflict","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"scoped-publishing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"mintql","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impress
+{"docsConfig":{"theme":"mint","$schema":"https://mintlify.com/docs.json","name":"Claude Code Docs","description":"Official documentation for Claude Code, Anthropic's agentic coding tool available in the terminal, IDE, desktop app, and browser. Covers installation, configuration, skills, subagents, hooks, MCP, the Agent SDK, and reference material.","colors":{"primary":"#0E0E0E","light":"#D4A27F","dark":"#0E0E0E"},"logo":{"light":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/light.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=78fd01ff4f4340295a4f66e2ea54903c","dark":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/dark.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=1298a0c3b3a1da603b190d0de0e31712"},"favicon":"https://mintcdn.com/claude-code/T2WlxklWBkR5Y1mJ/favicon.ico?fit=max\u0026auto=format\u0026n=T2WlxklWBkR5Y1mJ\u0026q=85\u0026s=346a85952ae08d5ee90e3c34d4423930","appearance":{"default":"system"},"background":{"color":{"light":"#FDFDF7","dark":"#09090B"}},"navbar":{"links":[{"href":"https://platform.claude.com/","label":"Claude Developer Platform"}],"primary":{"type":"button","label":"Open Claude Code","href":"https://claude.ai/code"}},"footer":{"socials":{"x":"https://x.com/AnthropicAI","linkedin":"https://www.linkedin.com/company/anthropicresearch"},"links":[{"header":"Company","items":[{"label":"Anthropic","href":"https://www.anthropic.com/company"},{"label":"Careers","href":"https://www.anthropic.com/careers"},{"label":"Economic Futures","href":"https://www.anthropic.com/economic-futures"},{"label":"Research","href":"https://www.anthropic.com/research"},{"label":"News","href":"https://www.anthropic.com/news"},{"label":"Trust center","href":"https://trust.anthropic.com/"},{"label":"Transparency","href":"https://www.anthropic.com/transparency"}]},{"header":"Help and security","items":[{"label":"Availability","href":"https://www.anthropic.com/supported-countries"},{"label":"Status","href":"https://status.anthropic.com/"},{"label":"Support center","href":"https://support.claude.com/"}]},{"header":"Learn","items":[{"label":"Courses","href":"https://academy.claude.com/"},{"label":"MCP connectors","href":"https://claude.com/partners/mcp"},{"label":"Customer stories","href":"https://www.claude.com/customers"},{"label":"Engineering blog","href":"https://www.anthropic.com/engineering"},{"label":"Events","href":"https://www.anthropic.com/events"},{"label":"Powered by Claude","href":"https://claude.com/partners/powered-by-claude"},{"label":"Service partners","href":"https://claude.com/partners/services"},{"label":"Startups program","href":"https://claude.com/programs/startups"}]},{"header":"Terms and policies","items":[{"label":"Privacy choices","href":"https://www.anthropic.com/legal/privacy"},{"label":"Privacy policy","href":"https://www.anthropic.com/legal/privacy"},{"label":"Disclosure policy","href":"https://www.anthropic.com/responsible-disclosure-policy"},{"label":"Usage policy","href":"https://www.anthropic.com/legal/aup"},{"label":"Commercial terms","href":"https://www.anthropic.com/legal/commercial-terms"},{"label":"Consumer terms","href":"https://www.anthropic.com/legal/consumer-terms"}]}]},"seo":{"metatags":{"canonical":"https://code.claude.com/docs"}},"fonts":{"family":"Anthropic Sans"},"contextual":{"options":["copy","view","claude"],"display":"header"},"styling":{"latex":true},"navigation":{"languages":[{"language":"en","href":"en/overview"},{"language":"fr","href":"fr/overview"},{"language":"de","href":"de/overview"},{"language":"it","href":"it/overview"},{"language":"jp","href":"ja/overview"},{"language":"es","href":"es/overview"},{"language":"ko","href":"ko/overview"},{"language":"zh-CN","href":"zh-CN/overview"},{"language":"zh-TW","href":"zh-TW/overview"},{"language":"ru","href":"ru/overview"},{"language":"id","href":"id/overview"},{"language":"pt-BR","href":"pt/overview"}]}},"deployment":{"deploymentMetadataValue":{"subdomain":"claude-code","hasAudioNarration":false,"actualSubdomain":"claude-code","customDomains":["code.claude.com"],"gitSource":{"type":"github","owner":"anthropics","repo":"claude-code-docs","deployBranch":"main","contentDirectory":"","isPrivate":true,"mountPath":"","label":""},"feedback":{"thumbs":true},"entitlements":{"AI_CHAT":{"status":"ENABLED"},"REMOVE_BRANDING":{"status":"ENABLED"},"CONTEXTUAL_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"CODE_SNIPPET_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"WEB_MCP":{"status":"ENABLED"},"NARRATION":{"status":"ENABLED"}},"buildId":"6af8b0fc4f86660c4a257522","clientVersion":"0.0.4143","searchFilterCounts":[{"language":"en","tag":"Agent SDK","count":60},{"language":"en","tag":"Plugins","count":56},{"language":"de","tag":"Erste Schritte","count":49},{"language":"es","tag":"Primeros pasos","count":49},{"language":"fr","tag":"Premiers pas","count":49},{"language":"id","tag":"Memulai","count":49},{"language":"it","tag":"Per iniziare","count":49},{"language":"jp","tag":"はじめに","count":49},{"language":"ko","tag":"시작하기","count":49},{"language":"pt-BR","tag":"Primeiros passos","count":49},{"language":"ru","tag":"Начало работы","count":49},{"language":"zh-TW","tag":"快速入門","count":49},{"language":"en","tag":"Getting started","count":48},{"language":"zh-CN","tag":"快速入门","count":46},{"language":"en","tag":"Overview","count":41},{"language":"en","tag":"Setup and access","count":37},{"language":"de","tag":"Agent SDK","count":36},{"language":"es","tag":"Agent SDK","count":36},{"language":"id","tag":"Agent SDK","count":36},{"language":"it","tag":"Agent SDK","count":36},{"language":"jp","tag":"Agent SDK","count":36},{"language":"pt-BR","tag":"Agent SDK","count":36},{"language":"ru","tag":"Agent SDK","count":36},{"language":"zh-CN","tag":"Agent SDK","count":36},{"language":"zh-TW","tag":"Agent SDK","count":36},{"language":"de","tag":"Administration","count":35},{"language":"en","tag":"Administration","count":35},{"language":"es","tag":"Administración","count":35},{"language":"fr","tag":"Administration","count":35},{"language":"id","tag":"Administrasi","count":35},{"language":"it","tag":"Amministrazione","count":35},{"language":"jp","tag":"管理","count":35},{"language":"ko","tag":"관리","count":35},{"language":"pt-BR","tag":"Administração","count":35},{"language":"ru","tag":"Администрирование","count":35},{"language":"zh-CN","tag":"管理","count":35},{"language":"zh-TW","tag":"管理","count":35},{"language":"de","tag":"Plugins","count":32},{"language":"es","tag":"Plugins","count":32},{"language":"fr","tag":"SDK Agent","count":32},{"language":"fr","tag":"Plugins","count":32},{"language":"id","tag":"Plugin","count":32},{"language":"it","tag":"Plugin","count":32},{"language":"jp","tag":"プラグイン","count":32},{"language":"ko","tag":"Agent SDK","count":32},{"language":"ko","tag":"플러그인","count":32},{"language":"pt-BR","tag":"Plugins","count":32},{"language":"ru","tag":"Плагины","count":32},{"language":"zh-CN","tag":"插件","count":32},{"language":"zh-TW","tag":"外掛","count":32},{"language":"es","tag":"Configuración","count":29},{"language":"jp","tag":"設定","count":29},{"language":"zh-TW","tag":"設定","count":29},{"language":"en","tag":"Reference","count":28},{"language":"de","tag":"Konfiguration","count":26},{"language":"en","tag":"Configuration","count":26},{"language":"fr","tag":"Configuration","count":26},{"language":"id","tag":"Konfigurasi","count":26},{"language":"it","tag":"Configurazione","count":26},{"language":"ko","tag":"구성","count":26},{"language":"pt-BR","tag":"Configuração","count":26},{"language":"ru","tag":"Конфигурация","count":26},{"language":"zh-CN","tag":"配置","count":26},{"language":"en","tag":"Settings","count":25},{"language":"en","tag":"Agents and parallel work","count":23},{"language":"de","tag":"Mit Claude Code entwickeln","count":22},{"language":"es","tag":"Crea con Claude Code","count":22},{"language":"fr","tag":"Développer avec Claude Code","count":22},{"language":"id","tag":"Membangun dengan Claude Code","count":22},{"language":"it","tag":"Crea con Claude Code","count":22},{"language":"jp","tag":"Claude Code で構築","count":22},{"language":"ko","tag":"Claude Code로 만들기","count":22},{"language":"pt-BR","tag":"Desenvolva com Claude Code","count":22},{"language":"ru","tag":"Разработка с Claude Code","count":22},{"language":"zh-CN","tag":"使用 Claude Code 构建","count":22},{"language":"zh-TW","tag":"使用 Claude Code 打造","count":22},{"language":"de","tag":"Referenz","count":20},{"language":"es","tag":"Referencia","count":20},{"language":"fr","tag":"Référence","count":20},{"language":"id","tag":"Referensi","count":20},{"language":"it","tag":"Riferimento","count":20},{"language":"jp","tag":"リファレンス","count":20},{"language":"ko","tag":"레퍼런스","count":20},{"language":"pt-BR","tag":"Referência","count":20},{"language":"ru","tag":"Справочник","count":20},{"language":"zh-CN","tag":"参考","count":20},{"language":"de","tag":"Plattformen und Integrationen","count":19},{"language":"es","tag":"Plataformas e integraciones","count":19},{"language":"fr","tag":"Plateformes et intégrations","count":19},{"language":"id","tag":"Platform dan integrasi","count":19},{"language":"it","tag":"Piattaforme e integrazioni","count":19},{"language":"jp","tag":"プラットフォームと連携","count":19},{"language":"ko","tag":"플랫폼 및 통합","count":19},{"language":"pt-BR","tag":"Plataformas e integrações","count":19},{"language":"ru","tag":"Платформы и интеграции","count":19},{"language":"zh-CN","tag":"平台与集成","count":19},{"language":"zh-TW","tag":"平台與整合","count":19},{"language":"de","tag":"Code-Review und Pull Requests","count":14},{"language":"es","tag":"Revisión de código y pull requests","count":14},{"language":"fr","tag":"Revue de code et pull requests","count":14},{"language":"id","tag":"Code review dan pull request","count":14},{"language":"it","tag":"Code review e pull request","count":14},{"language":"jp","tag":"コードレビューとプルリクエスト","count":14},{"language":"ko","tag":"코드 리뷰 및 풀 리퀘스트","count":14},{"language":"pt-BR","tag":"Revisão de código e pull requests","count":14},{"language":"ru","tag":"Код-ревью и pull request","count":14},{"language":"zh-CN","tag":"代码审查与 Pull Request","count":14},{"language":"zh-TW","tag":"程式碼審查與 pull request","count":14},{"language":"de","tag":"Bereitstellung","count":12},{"language":"es","tag":"Despliegue","count":12},{"language":"fr","tag":"Déploiement","count":12},{"language":"id","tag":"Deployment","count":12},{"language":"it","tag":"Distribuzione","count":12},{"language":"jp","tag":"デプロイ","count":12},{"language":"ko","tag":"배포","count":12},{"language":"pt-BR","tag":"Implantação","count":12},{"language":"ru","tag":"Развёртывание","count":12},{"language":"zh-CN","tag":"部署","count":12},{"language":"zh-TW","tag":"部署","count":12},{"language":"zh-TW","tag":"參考","count":11}]},"assistantConfig":{"enableAskAiButton":false,"enableStarterQuestions":false,"enableAskAiSearchBar":true},"basePath":"/docs","hasChatPermissions":true,"hasWebMcpPermissions":true,"toggles":[{"name":"kill-isr","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-rbac-roles","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-bash","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"chat-bucketing-batched","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-mintlify-slack","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-integrations-settings","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"rbac-expansion","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-pr-grouping","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-prefix","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"analytics-v7","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"user-flows-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"no-publish-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-onboarding","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving-live","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"stripTemperatureMiddleware","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"support-platform-pylon-zendesk","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"instant-rollback","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications-server","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-fable","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fixed-ai-action-pricing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automation-resolve-merge-conflict","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"scoped-publishing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"mintql","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"page-level-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"editor-version-history-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"billing-page-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"full-page-search","enabled":true,"variant":{"name":"disabled","enabled":false,"
 
 ## Source (output-styles): https://docs.claude.com/en/docs/claude-code/output-styles
 
@@ -12788,7 +12620,6 @@ hook
 For skills, subagents, and the other options, see
 Choose between an output style and other features
 .
-​
 Built-in output styles
 Claude Code starts in the
 Default
@@ -12811,7 +12642,6 @@ You’re getting to know a codebase or want the reasoning along with the change
 Learning
 Claude explains its choices and leaves small pieces of code for you to write yourself
 You want hands-on coding practice while the task still gets done
-​
 Default
 Default means no output style is selected. Claude Code adds no style instructions, and Claude works from Claude Code’s standard system prompt, which is written for software engineering tasks.
 default
@@ -12820,14 +12650,12 @@ appears in the
 list with the other styles, so you
 select it the same way
 .
-​
 Proactive
 In the Proactive style, Claude starts implementing as soon as you send a task. It makes reasonable assumptions about routine decisions rather than stopping to ask, and it doesn’t switch to plan mode unless you ask for a plan. You can redirect it at any point.
 The style’s instructions also tell Claude to check with you in the conversation before an action that deletes data or changes a shared or production system. That check is an instruction Claude follows and is separate from permission prompts.
 Switching to the Proactive style doesn’t change your
 permission mode
 . Your permission mode still decides which tool calls run without asking you, so permission prompts appear the same way they did before you switched.
-​
 Concise
 In the Concise style, the first sentence of a response states what happened or what the answer is. Claude leaves out the lead-in, the step-by-step narration, and the closing recap, and answers a simple question in one to three sentences. It does the engineering work as thoroughly as in the Default style. Requires Claude Code v2.1.237 or later.
 Claude still writes at full length in these cases:
@@ -12835,7 +12663,6 @@ Anything you ask for
 : when you ask for an explanation or more detail, Claude answers in full.
 Anything you need in order to act safely
 : error reports, failing test output, security warnings, and confirmations for destructive actions keep their complete content.
-​
 Explanatory
 In the Explanatory style, Claude does the task the way it does in the Default style and adds short explanations of why it made the choices it made. Each explanation appears in the conversation, before or after the code it’s about, in a block labeled
 Insight
@@ -12847,7 +12674,6 @@ block carries two or three points about your codebase or the code Claude wrote, 
 - Every route in this repo goes through the withAuth wrapper, so the new endpoint gets session checks without its own middleware.
 - Rate limits are set per route in limits.ts, which is why this change adds an entry there rather than a global default.
 ─────────────────────────────────────────────────
-​
 Learning
 In the Learning style, Claude adds the same
 Insight
@@ -12866,7 +12692,6 @@ TODO(human)
 comment and tell Claude when you’re done. Claude responds with one
 Insight
 about your code and continues the task.
-​
 Change your output style
 Pick a style with the command, a menu, or a settings file. The command and both menus save your choice to
 .claude/settings.local.json
@@ -12947,7 +12772,6 @@ Changing output style
 . Before v2.1.251, the new style applied only after you ran
 /clear
 or started a new session.
-​
 Create a custom output style
 A custom output style is a Markdown file: frontmatter for metadata, then the instructions for Claude.
 In the VS Code extension, you can also create the file from the
@@ -13007,7 +12831,6 @@ Plugins
 can also ship output styles in an
 output-styles/
 directory.
-​
 Frontmatter reference
 Configure an output style with YAML
 frontmatter
@@ -13045,7 +12868,6 @@ to apply this style automatically whenever the plugin is enabled, without requir
 outputStyle
 setting. If multiple enabled plugins set this, Claude Code uses the first one loaded. Default:
 false
-​
 Choose between an output style and other features
 An output style applies to every response in a session. It’s an instruction Claude follows, so nothing enforces it. When what you want is narrower than every response, or has to happen without fail, another feature fits better.
 This table matches what you want to the feature that does it:
@@ -13076,7 +12898,6 @@ It appends to the system prompt without removing anything
 These features combine. For example, you can use CLAUDE.md for what Claude should know, an output style for how it responds, and a hook for anything that has to be guaranteed.
 Extend Claude Code
 compares the rest of the extension features.
-​
 How output styles work
 An output style changes the instructions Claude Code gives Claude.
 Claude Code sends the active style’s instructions with every request.
@@ -13096,7 +12917,6 @@ subagents run their own system prompt
 , so styles don’t change how they respond.
 Token usage depends on the style. A style’s instructions add input tokens, though prompt caching reduces this cost after the first request in a session.
 The built-in Explanatory and Learning styles produce longer responses than Default by design, which increases output tokens. The Concise style does the opposite by instructing Claude to keep responses short by default. For custom styles, output token usage depends on what your instructions tell Claude to produce.
-​
 Related resources
 Settings
 : where the
@@ -13111,7 +12931,7 @@ Debug your configuration
 Was this page helpful?
 Yes
 No
-{"docsConfig":{"theme":"mint","$schema":"https://mintlify.com/docs.json","name":"Claude Code Docs","description":"Official documentation for Claude Code, Anthropic's agentic coding tool available in the terminal, IDE, desktop app, and browser. Covers installation, configuration, skills, subagents, hooks, MCP, the Agent SDK, and reference material.","colors":{"primary":"#0E0E0E","light":"#D4A27F","dark":"#0E0E0E"},"logo":{"light":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/light.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=78fd01ff4f4340295a4f66e2ea54903c","dark":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/dark.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=1298a0c3b3a1da603b190d0de0e31712"},"favicon":"https://mintcdn.com/claude-code/T2WlxklWBkR5Y1mJ/favicon.ico?fit=max\u0026auto=format\u0026n=T2WlxklWBkR5Y1mJ\u0026q=85\u0026s=346a85952ae08d5ee90e3c34d4423930","appearance":{"default":"system"},"background":{"color":{"light":"#FDFDF7","dark":"#09090B"}},"navbar":{"links":[{"href":"https://platform.claude.com/","label":"Claude Developer Platform"}],"primary":{"type":"button","label":"Open Claude Code","href":"https://claude.ai/code"}},"footer":{"socials":{"x":"https://x.com/AnthropicAI","linkedin":"https://www.linkedin.com/company/anthropicresearch"},"links":[{"header":"Company","items":[{"label":"Anthropic","href":"https://www.anthropic.com/company"},{"label":"Careers","href":"https://www.anthropic.com/careers"},{"label":"Economic Futures","href":"https://www.anthropic.com/economic-futures"},{"label":"Research","href":"https://www.anthropic.com/research"},{"label":"News","href":"https://www.anthropic.com/news"},{"label":"Trust center","href":"https://trust.anthropic.com/"},{"label":"Transparency","href":"https://www.anthropic.com/transparency"}]},{"header":"Help and security","items":[{"label":"Availability","href":"https://www.anthropic.com/supported-countries"},{"label":"Status","href":"https://status.anthropic.com/"},{"label":"Support center","href":"https://support.claude.com/"}]},{"header":"Learn","items":[{"label":"Courses","href":"https://academy.claude.com/"},{"label":"MCP connectors","href":"https://claude.com/partners/mcp"},{"label":"Customer stories","href":"https://www.claude.com/customers"},{"label":"Engineering blog","href":"https://www.anthropic.com/engineering"},{"label":"Events","href":"https://www.anthropic.com/events"},{"label":"Powered by Claude","href":"https://claude.com/partners/powered-by-claude"},{"label":"Service partners","href":"https://claude.com/partners/services"},{"label":"Startups program","href":"https://claude.com/programs/startups"}]},{"header":"Terms and policies","items":[{"label":"Privacy choices","href":"https://www.anthropic.com/legal/privacy"},{"label":"Privacy policy","href":"https://www.anthropic.com/legal/privacy"},{"label":"Disclosure policy","href":"https://www.anthropic.com/responsible-disclosure-policy"},{"label":"Usage policy","href":"https://www.anthropic.com/legal/aup"},{"label":"Commercial terms","href":"https://www.anthropic.com/legal/commercial-terms"},{"label":"Consumer terms","href":"https://www.anthropic.com/legal/consumer-terms"}]}]},"seo":{"metatags":{"canonical":"https://code.claude.com/docs"}},"fonts":{"family":"Anthropic Sans"},"contextual":{"options":["copy","view","claude"],"display":"header"},"styling":{"latex":true},"navigation":{"languages":[{"language":"en","href":"en/overview"},{"language":"fr","href":"fr/overview"},{"language":"de","href":"de/overview"},{"language":"it","href":"it/overview"},{"language":"jp","href":"ja/overview"},{"language":"es","href":"es/overview"},{"language":"ko","href":"ko/overview"},{"language":"zh-CN","href":"zh-CN/overview"},{"language":"zh-TW","href":"zh-TW/overview"},{"language":"ru","href":"ru/overview"},{"language":"id","href":"id/overview"},{"language":"pt-BR","href":"pt/overview"}]}},"deployment":{"deploymentMetadataValue":{"subdomain":"claude-code","hasAudioNarration":false,"actualSubdomain":"claude-code","customDomains":["code.claude.com"],"gitSource":{"type":"github","owner":"anthropics","repo":"claude-code-docs","deployBranch":"main","contentDirectory":"","isPrivate":true,"mountPath":"","label":""},"feedback":{"thumbs":true},"entitlements":{"AI_CHAT":{"status":"ENABLED"},"REMOVE_BRANDING":{"status":"ENABLED"},"CONTEXTUAL_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"CODE_SNIPPET_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"WEB_MCP":{"status":"ENABLED"},"NARRATION":{"status":"ENABLED"}},"buildId":"6af0c6c06412adac01293366","clientVersion":"0.0.4088","searchFilterCounts":[{"language":"en","tag":"Agent SDK","count":60},{"language":"en","tag":"Plugins","count":56},{"language":"de","tag":"Neuigkeiten","count":50},{"language":"en","tag":"What's New","count":50},{"language":"es","tag":"Novedades","count":50},{"language":"fr","tag":"Nouveautés","count":50},{"language":"it","tag":"Novità","count":50},{"language":"ko","tag":"새로운 기능","count":50},{"language":"pt-BR","tag":"Novidades","count":50},{"language":"ru","tag":"Что нового","count":50},{"language":"zh-TW","tag":"最新消息","count":50},{"language":"de","tag":"Erste Schritte","count":49},{"language":"es","tag":"Primeros pasos","count":49},{"language":"fr","tag":"Premiers pas","count":49},{"language":"id","tag":"Memulai","count":49},{"language":"it","tag":"Per iniziare","count":49},{"language":"jp","tag":"はじめに","count":49},{"language":"ko","tag":"시작하기","count":49},{"language":"pt-BR","tag":"Primeiros passos","count":49},{"language":"ru","tag":"Начало работы","count":49},{"language":"zh-TW","tag":"快速入門","count":49},{"language":"en","tag":"Getting started","count":48},{"language":"zh-CN","tag":"快速入门","count":46},{"language":"en","tag":"Overview","count":41},{"language":"de","tag":"Agent SDK","count":36},{"language":"en","tag":"Setup and access","count":36},{"language":"es","tag":"Agent SDK","count":36},{"language":"id","tag":"Agent SDK","count":36},{"language":"it","tag":"Agent SDK","count":36},{"language":"jp","tag":"Agent SDK","count":36},{"language":"pt-BR","tag":"Agent SDK","count":36},{"language":"ru","tag":"Agent SDK","count":36},{"language":"zh-CN","tag":"Agent SDK","count":36},{"language":"zh-TW","tag":"Agent SDK","count":36},{"language":"de","tag":"Administration","count":34},{"language":"en","tag":"Administration","count":34},{"language":"es","tag":"Administración","count":34},{"language":"fr","tag":"Administration","count":34},{"language":"id","tag":"Administrasi","count":34},{"language":"it","tag":"Amministrazione","count":34},{"language":"jp","tag":"管理","count":34},{"language":"ko","tag":"관리","count":34},{"language":"pt-BR","tag":"Administração","count":34},{"language":"ru","tag":"Администрирование","count":34},{"language":"zh-CN","tag":"管理","count":34},{"language":"zh-TW","tag":"管理","count":34},{"language":"de","tag":"Plugins","count":32},{"language":"es","tag":"Plugins","count":32},{"language":"fr","tag":"SDK Agent","count":32},{"language":"fr","tag":"Plugins","count":32},{"language":"id","tag":"Plugin","count":32},{"language":"it","tag":"Plugin","count":32},{"language":"jp","tag":"プラグイン","count":32},{"language":"ko","tag":"Agent SDK","count":32},{"language":"ko","tag":"플러그인","count":32},{"language":"pt-BR","tag":"Plugins","count":32},{"language":"ru","tag":"Плагины","count":32},{"language":"zh-CN","tag":"插件","count":32},{"language":"zh-TW","tag":"外掛","count":32},{"language":"en","tag":"Reference","count":28},{"language":"es","tag":"Configuración","count":28},{"language":"jp","tag":"設定","count":28},{"language":"zh-TW","tag":"設定","count":28},{"language":"de","tag":"Konfiguration","count":25},{"language":"en","tag":"Configuration","count":25},{"language":"fr","tag":"Configuration","count":25},{"language":"id","tag":"Konfigurasi","count":25},{"language":"id","tag":"Apa yang Baru","count":25},{"language":"id","tag":"Yang Baru","count":25},{"language":"it","tag":"Configurazione","count":25},{"language":"jp","tag":"新機能","count":25},{"language":"jp","tag":"最新情報","count":25},{"language":"ko","tag":"구성","count":25},{"language":"pt-BR","tag":"Configuração","count":25},{"language":"ru","tag":"Конфигурация","count":25},{"language":"zh-CN","tag":"配置","count":25},{"language":"zh-CN","tag":"新功能","count":25},{"language":"zh-CN","tag":"最新动态","count":25},{"language":"en","tag":"Settings","count":24},{"language":"de","tag":"Mit Claude Code entwickeln","count":22},{"language":"es","tag":"Crea con Claude Code","count":22},{"language":"fr","tag":"Développer avec Claude Code","count":22},{"language":"id","tag":"Membangun dengan Claude Code","count":22},{"language":"it","tag":"Crea con Claude Code","count":22},{"language":"jp","tag":"Claude Code で構築","count":22},{"language":"ko","tag":"Claude Code로 만들기","count":22},{"language":"pt-BR","tag":"Desenvolva com Claude Code","count":22},{"language":"ru","tag":"Разработка с Claude Code","count":22},{"language":"zh-CN","tag":"使用 Claude Code 构建","count":22},{"language":"zh-TW","tag":"使用 Claude Code 打造","count":22},{"language":"de","tag":"Referenz","count":20},{"language":"es","tag":"Referencia","count":20},{"language":"fr","tag":"Référence","count":20},{"language":"id","tag":"Referensi","count":20},{"language":"it","tag":"Riferimento","count":20},{"language":"jp","tag":"リファレンス","count":20},{"language":"ko","tag":"레퍼런스","count":20},{"language":"pt-BR","tag":"Referência","count":20},{"language":"ru","tag":"Справочник","count":20},{"language":"zh-CN","tag":"参考","count":20},{"language":"de","tag":"Plattformen und Integrationen","count":19},{"language":"es","tag":"Plataformas e integraciones","count":19},{"language":"fr","tag":"Plateformes et intégrations","count":19},{"language":"id","tag":"Platform dan integrasi","count":19},{"language":"it","tag":"Piattaforme e integrazioni","count":19},{"language":"jp","tag":"プラットフォームと連携","count":19},{"language":"ko","tag":"플랫폼 및 통합","count":19},{"language":"pt-BR","tag":"Plataformas e integrações","count":19},{"language":"ru","tag":"Платформы и интеграции","count":19},{"language":"zh-CN","tag":"平台与集成","count":19},{"language":"zh-TW","tag":"平台與整合","count":19},{"language":"de","tag":"Code-Review und Pull Requests","count":14},{"language":"es","tag":"Revisión de código y pull requests","count":14},{"language":"fr","tag":"Revue de code et pull requests","count":14},{"language":"it","tag":"Code review e pull request","count":14},{"language":"ko","tag":"코드 리뷰 및 풀 리퀘스트","count":14},{"language":"pt-BR","tag":"Revisão de código e pull requests","count":14},{"language":"ru","tag":"Код-ревью и pull request","count":14},{"language":"zh-TW","tag":"程式碼審查與 pull request","count":14},{"language":"zh-TW","tag":"部署","count":11}]},"assistantConfig":{"enableAskAiButton":false,"enableStarterQuestions":false,"enableAskAiSearchBar":true},"basePath":"/docs","hasChatPermissions":true,"hasWebMcpPermissions":true,"toggles":[{"name":"kill-isr","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-bash","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"chat-bucketing-batched","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-mintlify-slack","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-integrations-settings","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"rbac-expansion","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-pr-grouping","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-prefix","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"analytics-v7","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"user-flows-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"no-publish-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-onboarding","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"llms-txt-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving-live","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"stripTemperatureMiddleware","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"support-platform-pylon-zendesk","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"instant-rollback","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications-server","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-fable","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fixed-ai-action-pricing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automation-resolve-merge-conflict","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"scoped-publishing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"mintql","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"page-level-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"editor-version-history-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"billing-page-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"full-page-search","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workspace-projects","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-v5","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fork-pr-previews","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"revalidation-jwt","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-sso-scim","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"hobby-abuse-scan","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"dashboard-inbox","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-signup","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"turbopuffer-dual-write","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-enabled","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"approve-review-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"editor-metadata","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"sso-setup-deadline-banner","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"turbopuffer-serve","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"live-agents","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"comment-mode","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false}],"googleFontsInlined":false},"customCss":[{"filePath":"button.css","content":".btn{position:relative;display:inline-flex;gap:0.5rem;align-items:center;justify-content:center;flex-shrink:0;min-width:5rem;height:2.25rem;padding:0.5rem 1rem;white-space:nowrap;font-family:Styrene;font-weight:600;border-radius:0.5rem;\u0026:active{transform:scale(0.985)}\u0026.size-xs{height:1.75rem;min-width:3.5rem;padding:0 0.5rem;border-radius:0.25rem;font-size:0.75rem;gap:0.25rem}\u0026.size-sm{height:2rem;min-width:4rem;padding:0 0.75rem;border-radius:0.375rem;font-size:0.75rem}\u0026.size-lg{height:2.75rem;min-width:6rem;padding:0 1.25rem;border-radius:0.6rem}\u0026:disabled{pointer-events:none;opacity:0.5;box-shadow:none}\u0026:focus-visible{outline:none;--tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow)}\u0026.primary{font-weight:600;color:hsl(var(--oncolor-100));background-color:hsl(var(--accent-main-100));background-image:linear-gradient(\n      to right,\n      hsl(var(--accent-main-100)) 0%,\n      hsl(var(--accent-main-200) / 0.5) 50%,\n      hsl(var(--accent-main-200)) 100%\n    );background-size:200% 100%;background-position:0% 0%;border:0.5px solid hsl(var(--border-300) / 0.25);box-shadow:inset 0 0.5px 0px rgba(255, 255, 0, 0.15),\n      0 1px 1px rgba(0, 0, 0, 0.05);text-shadow:0 1px 2px rgb(0 0 0 / 10%);transition:all 150ms cubic-bezier(0.4, 0, 0.2, 1);\u0026:hover{background-position:100% 0%;background-image:linear-gradient(\n        to right,\n        hsl(var(--accent-main-200)) 0%,\n        hsl(var(--accent-main-200)) 100%\n      )}\u0026:active{background-color:hsl(var(--accent-main-000));box-shadow:inset 0 1px 6px rgba(0, 0, 0, 0.2);transform:scale(0.985)}}\u0026.flat{font-weight:500;color:hsl(var(--oncolor-100));background-color:hsl(var(--accent-main-100));transition:background-color 150ms;\u0026:hover{background-color:hsl(var(--accent-main-200))}}\u0026.secondary{font-weight:600;color:hsl(var(--text-100) / 0.9);background-image:radial-gradient(\n      ellipse at center,\n      hsl(var(--bg-500) / 0.1) 50%,\n      hsl(var(--bg-500) / 0.3) 100%\n    );border:0.5px solid hsl(var(--border-400));transition:color 150ms, background-color 150ms;\u0026:hover{color:hsl(var(--text-000));background-color:hsl(var(--bg-500) / 0.6)}\u0026:active{background-color:hsl(var(--bg-500) / 0.5)}}\u0026.outline{font-weight:600;color:hsl(var(--text-200));background-color:transparent;border:1.5px solid currentColor;transition:color 150ms, background-color 150ms;\u0026:hover{color:hsl(var(--text-100));background-color:hsl(var(--bg-400));border-color:hsl(var(--bg-400))}}\u0026.ghost{color:hsl(var(--text-200));border-color:transparent;transition:color 150ms, background-color 150ms;\u0026:hover{color:hsl(var(--text-100));background-color:hsl(var(--bg-500) / 0.4)}\u0026:active{background-color:hsl(var(--bg-400))}}\u0026.underline{opacity:0.8;text-decoration-line:none;text-underline-offset:3px;transition:all 150ms;\u0026:hover{opacity:1;text-decoration-line:underline}\u0026:active{transform:scale(0.985)}}\u0026.danger{font-weight:600;color:hsl(var(--oncolor-100));background-color:hsl(var(--danger-100));transition:background-color 150ms;\u0026:hover{background-color:hsl(var(--danger-200))}}}"},{"filePath":"style.css","content":"@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Regular-Static.otf\") format(\"opentype\");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-RegularItalic-Static.otf\") format(\"opentype\");font-weight:400;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Medium-Static.otf\") format(\"opentype\");font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-MediumItalic-Static.otf\") format(\"opentype\");font-weight:500;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Semibold-Static.otf\") format(\"opentype\");font-weight:600;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-SemiboldItalic-Static.otf\") format(\"opentype\");font-weight:600;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Bold-Static.otf\") format(\"opentype\");font-weight:700;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-BoldItalic-Static.otf\") format(\"opentype\");font-weight:700;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Regular-Static.otf\") format(\"opentype\");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-RegularItalic-Static.otf\") format(\"opentype\");font-weight:400;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Medium-Static.otf\") format(\"opentype\");font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Semibold-Static.otf\") format(\"opentype\");font-weight:600;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Bold-Static.otf\") format(\"opentype\");font-weight:700;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Regular-Static.otf\") format(\"opentype\");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-RegularItalic-Static.otf\") format(\"opentype\");font-weight:400;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Medium-Static.otf\") format(\"opentype\");font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-MediumItalic-Static.otf\") format(\"opentype\");font-weight:500;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Semibold-Static.otf\") format(\"opentype\");font-weight:600;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-SemiboldItalic-Static.otf\") format(\"opentype\");font-weight:600;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Bold-Static.otf\") format(\"opentype\");font-weight:700;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-BoldItalic-Static.otf\") format(\"opentype\");font-weight:700;font-style:italic;font-display:swap}:root{--always-white: 0 0% 100%;--always-black: 0 0% 0%;--constant-book-cloth: 15 55% 80%;--constant-clay: 15 60% 85%;--constant-kraft: 25 40% 83%;--constant-manilla: 40 20% 92%;--constant-slate-000: 0 0% 100%;--constant-slate-050: 48 33.3% 97.1%;--constant-slate-100: 53 28.6% 94.5%;--constant-slate-150: 48 25% 92.2%;--constant-slate-200: 50 20.7% 88.6%;--constant-slate-250: 51 16.5% 84.5%;--constant-slate-300: 50 11.5% 79.6%;--constant-slate-350: 50 9% 73.7%;--constant-slate-400: 49 6.5% 66.9%;--constant-slate-450: 48 4.8% 59.2%;--constant-slate-500: 53 3.2% 51.4%;--constant-slate-550: 51 3.1% 43.7%;--constant-slate-600: 48 2.7% 35.9%;--constant-slate-650: 48 3.4% 29.2%;--constant-slate-700: 60 2.5% 23.3%;--constant-slate-750: 60 2.1% 18.4%;--constant-slate-800: 60 2.7% 14.5%;--constant-slate-850: 30 3.3% 11.8%;--constant-slate-900: 30 4% 9.8%;--constant-slate-950: 60 2.6% 7.6%;--constant-slate-1000: 60 3.4% 5.7%}:root:not(.dark){--accent-brand: 15 63.1% 59.6%;--accent-main-000: 15 55.6% 52.4%;--accent-main-100: 15 55.6% 52.4%;--accent-main-200: 15 63.1% 59.6%;--accent-main-900: 0 0% 0%;--accent-pro-000: 251 34.2% 33.3%;--accent-pro-100: 251 40% 45.1%;--accent-pro-200: 251 61% 72.2%;--accent-pro-900: 253 33.3% 91.8%;--accent-secondary-000: 210 73.7% 40.2%;--accent-secondary-100: 210 70.9% 51.6%;--accent-secondary-200: 210 70.9% 51.6%;--accent-secondary-900: 211 72% 90%;--bg-000: 0 0% 100%;--bg-100: 48 33.3% 97.1%;--bg-200: 53 28.6% 94.5%;--bg-300: 48 25% 92.2%;--bg-400: 50 20.7% 88.6%;--bg-500: 50 20.7% 88.6%;--border-100: 30 3.3% 11.8%;--border-200: 30 3.3% 11.8%;--border-300: 30 3.3% 11.8%;--border-400: 30 3.3% 11.8%;--danger-000: 0 61.4% 22.4%;--danger-100: 0 58.6% 34.1%;--danger-200: 0 58.6% 34.1%;--danger-900: 0 50% 95%;--oncolor-100: 0 0% 100%;--oncolor-200: 60 6.7% 97.1%;--oncolor-300: 60 6.7% 97.1%;--text-000: 60 2.6% 7.6%;--text-100: 60 2.6% 7.6%;--text-200: 60 2.5% 23.3%;--text-300: 60 2.5% 23.3%;--text-400: 51 3.1% 43.7%;--text-500: 51 3.1% 43.7%}:root.dark{--accent-brand: 15 63.1% 59.6%;--accent-main-000: 15 55.6% 52.4%;--accent-main-100: 15 63.1% 59.6%;--accent-main-200: 15 63.1% 59.6%;--accent-main-900: 0 0% 0%;--accent-pro-000: 251 84.6% 74.5%;--accent-pro-100: 251 40.2% 54.1%;--accent-pro-200: 251 40% 45.1%;--accent-pro-900: 250 25.3% 19.4%;--accent-secondary-000: 210 71.1% 62%;--accent-secondary-100: 210 70.9% 51.6%;--accent-secondary-200: 210 70.9% 51.6%;--accent-secondary-900: 210 55.9% 24.6%;--bg-000: 60 2.1% 18.4%;--bg-100: 60 2.7% 14.5%;--bg-200: 30 3.3% 11.8%;--bg-300: 60 2.6% 7.6%;--bg-400: 60 3.4% 5.7%;--bg-500: 60 3.4% 5.7%;--border-100: 51 16.5% 84.5%;--border-200: 51 16.5% 84.5%;--border-300: 51 16.5% 84.5%;--border-400: 51 16.5% 84.5%;--danger-000: 0 73.1% 66.5%;--danger-100: 0 58.6% 34.1%;--danger-200: 0 58.6% 34.1%;--danger-900: 0 23% 15.6%;--oncolor-100: 0 0% 100%;--oncolor-200: 60 6.7% 97.1%;--oncolor-300: 60 6.7% 97.1%;--text-000: 48 33.3% 97.1%;--text-100: 48 33.3% 97.1%;--text-200: 50 9% 73.7%;--text-300: 50 9% 73.7%;--text-400: 48 4.8% 59.2%;--text-500: 48 4.8% 59.2%}#home-header{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;font-weight:400!important;font-size:50px;line-height:1.2;margin-bottom:1rem;color:--text-000;display:flex;align-items:baseline;justify-content:center;flex-wrap:nowrap}#localization-select-trigger>:has(img[src*=\"flags\"]){display:none}div[id^=\"localization-select-item\"]>:has(img[src*=\"flags\"]){display:none}@media (min-width: 768px){#home-header{justify-content:center}}.build-with{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;letter-spacing:-0.02em}.claude-wordmark-wrapper{display:inline-flex;align-items:baseline;margin-left:10px}.claude-wordmark{height:40px;width:auto;position:relative}.dark #home-header{color:white}.description-text{color:black}.dark .description-text{color:white}.dark .claude-wordmark{filter:invert(1)}:root{--bg-color: #f0efea}.dark{--bg-color: #2b2b2b}body,input,#category-select,.dropdown-item,#table-of-contents{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif}.eyebrow{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;text-transform:uppercase;letter-spacing:0.02rem}#content-container{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif}#content-container h1,#content-container h2,#content-container h3,#content-container h4,#content-container h5,#content-container h6{font-family:\"Anthropic Serif Display\", Georgia, \"Times New Roman\", Times, serif;font-weight:400;letter-spacing:0;word-spacing:0.1em}#content-container p{font-size:1rem;line-height:1.65rem}.font-extrabold{font-weight:600!important}.wide-table{width:100%;overflow-x:auto}.wide-table table{width:175%;margin-bottom:0}#prompt-library-container{margin:4rem auto;max-width:48rem;padding-left:1.25rem;padding-right:1.25rem}.prompt-library-title{font-size:24px;text-align:center;font-weight:700;color:#1f2937}.dark .prompt-library-title{color:#e5e7eb}.prompt-library-description{margin-top:1rem;text-align:center}.main-content{margin-bottom:10rem;max-width:64rem;margin-left:auto;margin-right:auto;padding-left:1.25rem;padding-right:1.25rem}.prompt-controllers{display:flex;gap:0.5rem}.prompt-search-container{position:relative;flex:1 1 0%}.prompt-search-icon-container{display:flex;position:absolute;top:0;bottom:0;left:0;align-items:center;padding-left:0.75rem}.prompt-search-icon{margin-left:0.25rem;margin-right:0.75rem;flex:none;width:1rem;height:1rem;background-color:#6b7280;mask-image:url(https://mintlify.b-cdn.net/v6.5.1/solid/magnifying-glass.svg);mask-repeat:no-repeat;mask-position:center center}input.prompt-search-bar{display:block;height:2.5rem;padding-left:2.5rem;border-radius:0.75rem;border-width:1px;background-color:#ffffff;width:100%;color:#111827;box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05)}.dark input.prompt-search-bar{color:#ffffff;background-color:rgb(var(--background-dark));border-color:#d1d5db1a}input.prompt-search-bar:focus{outline-color:rgb(var(--primary))}.dark input.prompt-search-bar:focus{outline-color:rgb(var(--primary-light))}.dark .prompt-search-icon{background-color:#ffffff80}#category-select{padding-left:1rem;padding-right:2.5rem;height:2.5rem;display:flex;align-items:center;border-radius:0.75rem;border-width:1px;color:#111827;background-color:#ffffff;cursor:pointer;box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05);white-space:nowrap}.dark #category-select{background-color:rgb(var(--background-dark));border-color:#d1d5db1a;color:#ffffff}#category-select:hover{background-color:#f9fafb}.dark #category-select:hover{background-color:#ffffff0d}#category-select:focus{outline-color:rgb(var(--primary))}.dark #category-select:focus{outline-color:rgb(var(--primary-light))}#categories-dropdown{top:calc(100% + 4px);padding:0.5rem 0.5rem;display:none;position:absolute;z-index:10;border-radius:0.75rem;border-width:1px;width:100%;color:#111827;background-color:#ffffff;box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05)}.dark #categories-dropdown{background-color:rgb(var(--background-dark));border-color:#d1d5db1a;color:#ffffff}#categories-dropdown-clickout{position:fixed;top:0;right:0;bottom:0;left:0;z-index:0}.dropdown-icon-container{display:flex;position:absolute;top:0;bottom:0;right:0;align-items:center;padding-right:0.25rem}.dropdown-icon{margin-left:0.25rem;margin-right:0.75rem;flex:none;width:0.75rem;height:0.75rem;background-color:#6b7280;mask-image:url(https://mintlify.b-cdn.net/v6.5.1/solid/caret-down.svg);mask-repeat:no-repeat;mask-position:center center}.dark .dropdown-icon{background-color:#ffffff80}#prompts-container{grid-template-columns:repeat(1, minmax(0, 1fr));gap:2rem}.dropdown-item{padding:0.25rem 0.5rem;border-radius:0.375rem;display:flex;align-items:center;cursor:pointer}.dropdown-item:hover{background-color:#f9fafb}.dark .dropdown-item:hover{background-color:#ffffff0d}.check-icon{mask-image:url(https://mintlify.b-cdn.net/v6.5.1/solid/check.svg);height:0.875rem;width:1rem;background-color:rgb(var(--primary-light));mask-repeat:no-repeat;mask-position:center center}.prompt-card{margin:-0.75rem;padding:0.75rem;display:flex;border-radius:1rem}.prompt-card:hover{background-color:#03071208}.dark .prompt-card:hover{background-color:#ffffff08}.prompt-icon-container{display:flex;flex:none;align-items:center;justify-content:center;margin-right:1.5rem;border-radius:0.75rem;height:4rem;width:4rem;background-color:#cb785c1a}.prompt-icon{height:1.5rem;width:1.5rem;background-color:rgb(var(--primary-light));mask-repeat:no-repeat;mask-position:center center}.prompt-title{color:rgb(31 41 55);font-weight:600}.dark .prompt-title{color:rgb(229 231 235)}.prompt-description{margin-top:0.25rem}#prompts-container{display:grid;margin-top:2.5rem}@media (min-width: 640px){#category-select{width:16rem}}@media (min-width: 1024px){#prompts-container{grid-template-columns:repeat(2, minmax(0, 1fr))}}.home-cards-custom{display:grid;grid-template-columns:repeat(3, 1fr);grid-template-rows:repeat(2, auto);gap:1.5rem}.home-cards-custom .card{background:transparent;border:0.5px solid hsl(var(--border-300));border-radius:12px;padding:0.25rem}@media (max-width: 1024px){.home-cards-custom{grid-template-columns:repeat(2, 1fr);grid-template-rows:repeat(3, auto)}}@media (max-width: 768px){.home-cards-custom{grid-template-columns:1fr;grid-template-rows:repeat(6, auto)}}.relative{position:relative}.flex-1{flex:1 1 0%}.mermaid{position:relative;background-color:#FDFDFB;background-image:linear-gradient(rgba(235, 219, 188, .25) 1px, transparent 1px), /* Secondary color #EBDBBC with low opacity */\n    linear-gradient(90deg, rgba(235, 219, 188, .25) 1px, transparent 1px),\n    linear-gradient(rgba(235, 219, 188, .1) 1px, transparent 1px),\n    linear-gradient(90deg, rgba(235, 219, 188, .1) 1px, transparent 1px);background-size:20px 20px,\n    20px 20px,\n    4px 4px,\n    4px 4px;background-position:-1px -1px,\n    -1px -1px,\n    -1px -1px,\n    -1px -1px;padding:20px;border-radius:8px;border:1px solid rgba(235, 219, 188, .4);box-shadow:0 2px 4px rgba(64, 64, 62, 0.08)}.dark .mermaid{background-color:#1a1918;background-image:linear-gradient(rgba(212, 162, 127, .15) 1px, transparent 1px), /* Tertiary color #D4A27F with low opacity */\n    linear-gradient(90deg, rgba(212, 162, 127, .15) 1px, transparent 1px),\n    linear-gradient(rgba(212, 162, 127, .08) 1px, transparent 1px),\n    linear-gradient(90deg, rgba(212, 162, 127, .08) 1px, transparent 1px);border:1px solid rgba(102, 102, 99, .5);box-shadow:0 2px 4px rgba(0, 0, 0, 0.2)}.digest-meta{display:flex;align-items:center;justify-content:space-between;flex-wr
+{"docsConfig":{"theme":"mint","$schema":"https://mintlify.com/docs.json","name":"Claude Code Docs","description":"Official documentation for Claude Code, Anthropic's agentic coding tool available in the terminal, IDE, desktop app, and browser. Covers installation, configuration, skills, subagents, hooks, MCP, the Agent SDK, and reference material.","colors":{"primary":"#0E0E0E","light":"#D4A27F","dark":"#0E0E0E"},"logo":{"light":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/light.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=78fd01ff4f4340295a4f66e2ea54903c","dark":"https://mintcdn.com/claude-code/c5r9_6tjPMzFdDDT/logo/dark.svg?fit=max\u0026auto=format\u0026n=c5r9_6tjPMzFdDDT\u0026q=85\u0026s=1298a0c3b3a1da603b190d0de0e31712"},"favicon":"https://mintcdn.com/claude-code/T2WlxklWBkR5Y1mJ/favicon.ico?fit=max\u0026auto=format\u0026n=T2WlxklWBkR5Y1mJ\u0026q=85\u0026s=346a85952ae08d5ee90e3c34d4423930","appearance":{"default":"system"},"background":{"color":{"light":"#FDFDF7","dark":"#09090B"}},"navbar":{"links":[{"href":"https://platform.claude.com/","label":"Claude Developer Platform"}],"primary":{"type":"button","label":"Open Claude Code","href":"https://claude.ai/code"}},"footer":{"socials":{"x":"https://x.com/AnthropicAI","linkedin":"https://www.linkedin.com/company/anthropicresearch"},"links":[{"header":"Company","items":[{"label":"Anthropic","href":"https://www.anthropic.com/company"},{"label":"Careers","href":"https://www.anthropic.com/careers"},{"label":"Economic Futures","href":"https://www.anthropic.com/economic-futures"},{"label":"Research","href":"https://www.anthropic.com/research"},{"label":"News","href":"https://www.anthropic.com/news"},{"label":"Trust center","href":"https://trust.anthropic.com/"},{"label":"Transparency","href":"https://www.anthropic.com/transparency"}]},{"header":"Help and security","items":[{"label":"Availability","href":"https://www.anthropic.com/supported-countries"},{"label":"Status","href":"https://status.anthropic.com/"},{"label":"Support center","href":"https://support.claude.com/"}]},{"header":"Learn","items":[{"label":"Courses","href":"https://academy.claude.com/"},{"label":"MCP connectors","href":"https://claude.com/partners/mcp"},{"label":"Customer stories","href":"https://www.claude.com/customers"},{"label":"Engineering blog","href":"https://www.anthropic.com/engineering"},{"label":"Events","href":"https://www.anthropic.com/events"},{"label":"Powered by Claude","href":"https://claude.com/partners/powered-by-claude"},{"label":"Service partners","href":"https://claude.com/partners/services"},{"label":"Startups program","href":"https://claude.com/programs/startups"}]},{"header":"Terms and policies","items":[{"label":"Privacy choices","href":"https://www.anthropic.com/legal/privacy"},{"label":"Privacy policy","href":"https://www.anthropic.com/legal/privacy"},{"label":"Disclosure policy","href":"https://www.anthropic.com/responsible-disclosure-policy"},{"label":"Usage policy","href":"https://www.anthropic.com/legal/aup"},{"label":"Commercial terms","href":"https://www.anthropic.com/legal/commercial-terms"},{"label":"Consumer terms","href":"https://www.anthropic.com/legal/consumer-terms"}]}]},"seo":{"metatags":{"canonical":"https://code.claude.com/docs"}},"fonts":{"family":"Anthropic Sans"},"contextual":{"options":["copy","view","claude"],"display":"header"},"styling":{"latex":true},"navigation":{"languages":[{"language":"en","href":"en/overview"},{"language":"fr","href":"fr/overview"},{"language":"de","href":"de/overview"},{"language":"it","href":"it/overview"},{"language":"jp","href":"ja/overview"},{"language":"es","href":"es/overview"},{"language":"ko","href":"ko/overview"},{"language":"zh-CN","href":"zh-CN/overview"},{"language":"zh-TW","href":"zh-TW/overview"},{"language":"ru","href":"ru/overview"},{"language":"id","href":"id/overview"},{"language":"pt-BR","href":"pt/overview"}]}},"deployment":{"deploymentMetadataValue":{"subdomain":"claude-code","hasAudioNarration":false,"actualSubdomain":"claude-code","customDomains":["code.claude.com"],"gitSource":{"type":"github","owner":"anthropics","repo":"claude-code-docs","deployBranch":"main","contentDirectory":"","isPrivate":true,"mountPath":"","label":""},"feedback":{"thumbs":true},"entitlements":{"AI_CHAT":{"status":"ENABLED"},"REMOVE_BRANDING":{"status":"ENABLED"},"CONTEXTUAL_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"CODE_SNIPPET_FEEDBACK":{"status":"ENABLED","enabled":"ENABLED"},"WEB_MCP":{"status":"ENABLED"},"NARRATION":{"status":"ENABLED"}},"buildId":"6af8b0fc4f86660c4a257522","clientVersion":"0.0.4143","searchFilterCounts":[{"language":"en","tag":"Agent SDK","count":60},{"language":"en","tag":"Plugins","count":56},{"language":"de","tag":"Erste Schritte","count":49},{"language":"es","tag":"Primeros pasos","count":49},{"language":"fr","tag":"Premiers pas","count":49},{"language":"id","tag":"Memulai","count":49},{"language":"it","tag":"Per iniziare","count":49},{"language":"jp","tag":"はじめに","count":49},{"language":"ko","tag":"시작하기","count":49},{"language":"pt-BR","tag":"Primeiros passos","count":49},{"language":"ru","tag":"Начало работы","count":49},{"language":"zh-TW","tag":"快速入門","count":49},{"language":"en","tag":"Getting started","count":48},{"language":"zh-CN","tag":"快速入门","count":46},{"language":"en","tag":"Overview","count":41},{"language":"en","tag":"Setup and access","count":37},{"language":"de","tag":"Agent SDK","count":36},{"language":"es","tag":"Agent SDK","count":36},{"language":"id","tag":"Agent SDK","count":36},{"language":"it","tag":"Agent SDK","count":36},{"language":"jp","tag":"Agent SDK","count":36},{"language":"pt-BR","tag":"Agent SDK","count":36},{"language":"ru","tag":"Agent SDK","count":36},{"language":"zh-CN","tag":"Agent SDK","count":36},{"language":"zh-TW","tag":"Agent SDK","count":36},{"language":"de","tag":"Administration","count":35},{"language":"en","tag":"Administration","count":35},{"language":"es","tag":"Administración","count":35},{"language":"fr","tag":"Administration","count":35},{"language":"id","tag":"Administrasi","count":35},{"language":"it","tag":"Amministrazione","count":35},{"language":"jp","tag":"管理","count":35},{"language":"ko","tag":"관리","count":35},{"language":"pt-BR","tag":"Administração","count":35},{"language":"ru","tag":"Администрирование","count":35},{"language":"zh-CN","tag":"管理","count":35},{"language":"zh-TW","tag":"管理","count":35},{"language":"de","tag":"Plugins","count":32},{"language":"es","tag":"Plugins","count":32},{"language":"fr","tag":"SDK Agent","count":32},{"language":"fr","tag":"Plugins","count":32},{"language":"id","tag":"Plugin","count":32},{"language":"it","tag":"Plugin","count":32},{"language":"jp","tag":"プラグイン","count":32},{"language":"ko","tag":"Agent SDK","count":32},{"language":"ko","tag":"플러그인","count":32},{"language":"pt-BR","tag":"Plugins","count":32},{"language":"ru","tag":"Плагины","count":32},{"language":"zh-CN","tag":"插件","count":32},{"language":"zh-TW","tag":"外掛","count":32},{"language":"es","tag":"Configuración","count":29},{"language":"jp","tag":"設定","count":29},{"language":"zh-TW","tag":"設定","count":29},{"language":"en","tag":"Reference","count":28},{"language":"de","tag":"Konfiguration","count":26},{"language":"en","tag":"Configuration","count":26},{"language":"fr","tag":"Configuration","count":26},{"language":"id","tag":"Konfigurasi","count":26},{"language":"it","tag":"Configurazione","count":26},{"language":"ko","tag":"구성","count":26},{"language":"pt-BR","tag":"Configuração","count":26},{"language":"ru","tag":"Конфигурация","count":26},{"language":"zh-CN","tag":"配置","count":26},{"language":"en","tag":"Settings","count":25},{"language":"en","tag":"Agents and parallel work","count":23},{"language":"de","tag":"Mit Claude Code entwickeln","count":22},{"language":"es","tag":"Crea con Claude Code","count":22},{"language":"fr","tag":"Développer avec Claude Code","count":22},{"language":"id","tag":"Membangun dengan Claude Code","count":22},{"language":"it","tag":"Crea con Claude Code","count":22},{"language":"jp","tag":"Claude Code で構築","count":22},{"language":"ko","tag":"Claude Code로 만들기","count":22},{"language":"pt-BR","tag":"Desenvolva com Claude Code","count":22},{"language":"ru","tag":"Разработка с Claude Code","count":22},{"language":"zh-CN","tag":"使用 Claude Code 构建","count":22},{"language":"zh-TW","tag":"使用 Claude Code 打造","count":22},{"language":"de","tag":"Referenz","count":20},{"language":"es","tag":"Referencia","count":20},{"language":"fr","tag":"Référence","count":20},{"language":"id","tag":"Referensi","count":20},{"language":"it","tag":"Riferimento","count":20},{"language":"jp","tag":"リファレンス","count":20},{"language":"ko","tag":"레퍼런스","count":20},{"language":"pt-BR","tag":"Referência","count":20},{"language":"ru","tag":"Справочник","count":20},{"language":"zh-CN","tag":"参考","count":20},{"language":"de","tag":"Plattformen und Integrationen","count":19},{"language":"es","tag":"Plataformas e integraciones","count":19},{"language":"fr","tag":"Plateformes et intégrations","count":19},{"language":"id","tag":"Platform dan integrasi","count":19},{"language":"it","tag":"Piattaforme e integrazioni","count":19},{"language":"jp","tag":"プラットフォームと連携","count":19},{"language":"ko","tag":"플랫폼 및 통합","count":19},{"language":"pt-BR","tag":"Plataformas e integrações","count":19},{"language":"ru","tag":"Платформы и интеграции","count":19},{"language":"zh-CN","tag":"平台与集成","count":19},{"language":"zh-TW","tag":"平台與整合","count":19},{"language":"de","tag":"Code-Review und Pull Requests","count":14},{"language":"es","tag":"Revisión de código y pull requests","count":14},{"language":"fr","tag":"Revue de code et pull requests","count":14},{"language":"id","tag":"Code review dan pull request","count":14},{"language":"it","tag":"Code review e pull request","count":14},{"language":"jp","tag":"コードレビューとプルリクエスト","count":14},{"language":"ko","tag":"코드 리뷰 및 풀 리퀘스트","count":14},{"language":"pt-BR","tag":"Revisão de código e pull requests","count":14},{"language":"ru","tag":"Код-ревью и pull request","count":14},{"language":"zh-CN","tag":"代码审查与 Pull Request","count":14},{"language":"zh-TW","tag":"程式碼審查與 pull request","count":14},{"language":"de","tag":"Bereitstellung","count":12},{"language":"es","tag":"Despliegue","count":12},{"language":"fr","tag":"Déploiement","count":12},{"language":"id","tag":"Deployment","count":12},{"language":"it","tag":"Distribuzione","count":12},{"language":"jp","tag":"デプロイ","count":12},{"language":"ko","tag":"배포","count":12},{"language":"pt-BR","tag":"Implantação","count":12},{"language":"ru","tag":"Развёртывание","count":12},{"language":"zh-CN","tag":"部署","count":12},{"language":"zh-TW","tag":"部署","count":12},{"language":"zh-TW","tag":"參考","count":11}]},"assistantConfig":{"enableAskAiButton":false,"enableStarterQuestions":false,"enableAskAiSearchBar":true},"basePath":"/docs","hasChatPermissions":true,"hasWebMcpPermissions":true,"toggles":[{"name":"kill-isr","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-rbac-roles","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-bash","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"chat-bucketing-batched","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-mintlify-slack","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"agent-integrations-settings","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"rbac-expansion","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-pr-grouping","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"custom-prefix","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"analytics-v7","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"user-flows-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"no-publish-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-onboarding","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving-live","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"stripTemperatureMiddleware","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"support-platform-pylon-zendesk","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"snapshot-serving","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"instant-rollback","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications-server","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"granular-notifications","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automations-fable","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fixed-ai-action-pricing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"automation-resolve-merge-conflict","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"scoped-publishing","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"mintql","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"page-level-analytics","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"editor-version-history-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"billing-page-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"full-page-search","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workspace-projects","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"assistant-v5","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"fork-pr-previews","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"revalidation-jwt","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-sso-scim","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"hobby-abuse-scan","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"dashboard-inbox","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-signup","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"turbopuffer-dual-write","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"workos-enabled","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"approve-review-flow","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"editor-metadata","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"sso-setup-deadline-banner","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"turbopuffer-serve","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"live-agents","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false},{"name":"llms-txt-v2","enabled":true,"variant":{"name":"disabled","enabled":false,"feature_enabled":true},"impressionData":false}],"googleFontsInlined":false},"customCss":[{"filePath":"button.css","content":".btn{position:relative;display:inline-flex;gap:0.5rem;align-items:center;justify-content:center;flex-shrink:0;min-width:5rem;height:2.25rem;padding:0.5rem 1rem;white-space:nowrap;font-family:Styrene;font-weight:600;border-radius:0.5rem;\u0026:active{transform:scale(0.985)}\u0026.size-xs{height:1.75rem;min-width:3.5rem;padding:0 0.5rem;border-radius:0.25rem;font-size:0.75rem;gap:0.25rem}\u0026.size-sm{height:2rem;min-width:4rem;padding:0 0.75rem;border-radius:0.375rem;font-size:0.75rem}\u0026.size-lg{height:2.75rem;min-width:6rem;padding:0 1.25rem;border-radius:0.6rem}\u0026:disabled{pointer-events:none;opacity:0.5;box-shadow:none}\u0026:focus-visible{outline:none;--tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow)}\u0026.primary{font-weight:600;color:hsl(var(--oncolor-100));background-color:hsl(var(--accent-main-100));background-image:linear-gradient(\n      to right,\n      hsl(var(--accent-main-100)) 0%,\n      hsl(var(--accent-main-200) / 0.5) 50%,\n      hsl(var(--accent-main-200)) 100%\n    );background-size:200% 100%;background-position:0% 0%;border:0.5px solid hsl(var(--border-300) / 0.25);box-shadow:inset 0 0.5px 0px rgba(255, 255, 0, 0.15),\n      0 1px 1px rgba(0, 0, 0, 0.05);text-shadow:0 1px 2px rgb(0 0 0 / 10%);transition:all 150ms cubic-bezier(0.4, 0, 0.2, 1);\u0026:hover{background-position:100% 0%;background-image:linear-gradient(\n        to right,\n        hsl(var(--accent-main-200)) 0%,\n        hsl(var(--accent-main-200)) 100%\n      )}\u0026:active{background-color:hsl(var(--accent-main-000));box-shadow:inset 0 1px 6px rgba(0, 0, 0, 0.2);transform:scale(0.985)}}\u0026.flat{font-weight:500;color:hsl(var(--oncolor-100));background-color:hsl(var(--accent-main-100));transition:background-color 150ms;\u0026:hover{background-color:hsl(var(--accent-main-200))}}\u0026.secondary{font-weight:600;color:hsl(var(--text-100) / 0.9);background-image:radial-gradient(\n      ellipse at center,\n      hsl(var(--bg-500) / 0.1) 50%,\n      hsl(var(--bg-500) / 0.3) 100%\n    );border:0.5px solid hsl(var(--border-400));transition:color 150ms, background-color 150ms;\u0026:hover{color:hsl(var(--text-000));background-color:hsl(var(--bg-500) / 0.6)}\u0026:active{background-color:hsl(var(--bg-500) / 0.5)}}\u0026.outline{font-weight:600;color:hsl(var(--text-200));background-color:transparent;border:1.5px solid currentColor;transition:color 150ms, background-color 150ms;\u0026:hover{color:hsl(var(--text-100));background-color:hsl(var(--bg-400));border-color:hsl(var(--bg-400))}}\u0026.ghost{color:hsl(var(--text-200));border-color:transparent;transition:color 150ms, background-color 150ms;\u0026:hover{color:hsl(var(--text-100));background-color:hsl(var(--bg-500) / 0.4)}\u0026:active{background-color:hsl(var(--bg-400))}}\u0026.underline{opacity:0.8;text-decoration-line:none;text-underline-offset:3px;transition:all 150ms;\u0026:hover{opacity:1;text-decoration-line:underline}\u0026:active{transform:scale(0.985)}}\u0026.danger{font-weight:600;color:hsl(var(--oncolor-100));background-color:hsl(var(--danger-100));transition:background-color 150ms;\u0026:hover{background-color:hsl(var(--danger-200))}}}"},{"filePath":"style.css","content":"@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Regular-Static.otf\") format(\"opentype\");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-RegularItalic-Static.otf\") format(\"opentype\");font-weight:400;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Medium-Static.otf\") format(\"opentype\");font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-MediumItalic-Static.otf\") format(\"opentype\");font-weight:500;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Semibold-Static.otf\") format(\"opentype\");font-weight:600;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-SemiboldItalic-Static.otf\") format(\"opentype\");font-weight:600;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-Bold-Static.otf\") format(\"opentype\");font-weight:700;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Sans\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSans-Text-BoldItalic-Static.otf\") format(\"opentype\");font-weight:700;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Regular-Static.otf\") format(\"opentype\");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-RegularItalic-Static.otf\") format(\"opentype\");font-weight:400;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Medium-Static.otf\") format(\"opentype\");font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Semibold-Static.otf\") format(\"opentype\");font-weight:600;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif Display\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Display-Bold-Static.otf\") format(\"opentype\");font-weight:700;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Regular-Static.otf\") format(\"opentype\");font-weight:400;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-RegularItalic-Static.otf\") format(\"opentype\");font-weight:400;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Medium-Static.otf\") format(\"opentype\");font-weight:500;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-MediumItalic-Static.otf\") format(\"opentype\");font-weight:500;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Semibold-Static.otf\") format(\"opentype\");font-weight:600;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-SemiboldItalic-Static.otf\") format(\"opentype\");font-weight:600;font-style:italic;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-Bold-Static.otf\") format(\"opentype\");font-weight:700;font-style:normal;font-display:swap}@font-face{font-family:\"Anthropic Serif\";src:url(\"https://assets.claude.ai/Fonts/AnthropicSerif-Text-BoldItalic-Static.otf\") format(\"opentype\");font-weight:700;font-style:italic;font-display:swap}:root{--always-white: 0 0% 100%;--always-black: 0 0% 0%;--constant-book-cloth: 15 55% 80%;--constant-clay: 15 60% 85%;--constant-kraft: 25 40% 83%;--constant-manilla: 40 20% 92%;--constant-slate-000: 0 0% 100%;--constant-slate-050: 48 33.3% 97.1%;--constant-slate-100: 53 28.6% 94.5%;--constant-slate-150: 48 25% 92.2%;--constant-slate-200: 50 20.7% 88.6%;--constant-slate-250: 51 16.5% 84.5%;--constant-slate-300: 50 11.5% 79.6%;--constant-slate-350: 50 9% 73.7%;--constant-slate-400: 49 6.5% 66.9%;--constant-slate-450: 48 4.8% 59.2%;--constant-slate-500: 53 3.2% 51.4%;--constant-slate-550: 51 3.1% 43.7%;--constant-slate-600: 48 2.7% 35.9%;--constant-slate-650: 48 3.4% 29.2%;--constant-slate-700: 60 2.5% 23.3%;--constant-slate-750: 60 2.1% 18.4%;--constant-slate-800: 60 2.7% 14.5%;--constant-slate-850: 30 3.3% 11.8%;--constant-slate-900: 30 4% 9.8%;--constant-slate-950: 60 2.6% 7.6%;--constant-slate-1000: 60 3.4% 5.7%}:root:not(.dark){--accent-brand: 15 63.1% 59.6%;--accent-main-000: 15 55.6% 52.4%;--accent-main-100: 15 55.6% 52.4%;--accent-main-200: 15 63.1% 59.6%;--accent-main-900: 0 0% 0%;--accent-pro-000: 251 34.2% 33.3%;--accent-pro-100: 251 40% 45.1%;--accent-pro-200: 251 61% 72.2%;--accent-pro-900: 253 33.3% 91.8%;--accent-secondary-000: 210 73.7% 40.2%;--accent-secondary-100: 210 70.9% 51.6%;--accent-secondary-200: 210 70.9% 51.6%;--accent-secondary-900: 211 72% 90%;--bg-000: 0 0% 100%;--bg-100: 48 33.3% 97.1%;--bg-200: 53 28.6% 94.5%;--bg-300: 48 25% 92.2%;--bg-400: 50 20.7% 88.6%;--bg-500: 50 20.7% 88.6%;--border-100: 30 3.3% 11.8%;--border-200: 30 3.3% 11.8%;--border-300: 30 3.3% 11.8%;--border-400: 30 3.3% 11.8%;--danger-000: 0 61.4% 22.4%;--danger-100: 0 58.6% 34.1%;--danger-200: 0 58.6% 34.1%;--danger-900: 0 50% 95%;--oncolor-100: 0 0% 100%;--oncolor-200: 60 6.7% 97.1%;--oncolor-300: 60 6.7% 97.1%;--text-000: 60 2.6% 7.6%;--text-100: 60 2.6% 7.6%;--text-200: 60 2.5% 23.3%;--text-300: 60 2.5% 23.3%;--text-400: 51 3.1% 43.7%;--text-500: 51 3.1% 43.7%}:root.dark{--accent-brand: 15 63.1% 59.6%;--accent-main-000: 15 55.6% 52.4%;--accent-main-100: 15 63.1% 59.6%;--accent-main-200: 15 63.1% 59.6%;--accent-main-900: 0 0% 0%;--accent-pro-000: 251 84.6% 74.5%;--accent-pro-100: 251 40.2% 54.1%;--accent-pro-200: 251 40% 45.1%;--accent-pro-900: 250 25.3% 19.4%;--accent-secondary-000: 210 71.1% 62%;--accent-secondary-100: 210 70.9% 51.6%;--accent-secondary-200: 210 70.9% 51.6%;--accent-secondary-900: 210 55.9% 24.6%;--bg-000: 60 2.1% 18.4%;--bg-100: 60 2.7% 14.5%;--bg-200: 30 3.3% 11.8%;--bg-300: 60 2.6% 7.6%;--bg-400: 60 3.4% 5.7%;--bg-500: 60 3.4% 5.7%;--border-100: 51 16.5% 84.5%;--border-200: 51 16.5% 84.5%;--border-300: 51 16.5% 84.5%;--border-400: 51 16.5% 84.5%;--danger-000: 0 73.1% 66.5%;--danger-100: 0 58.6% 34.1%;--danger-200: 0 58.6% 34.1%;--danger-900: 0 23% 15.6%;--oncolor-100: 0 0% 100%;--oncolor-200: 60 6.7% 97.1%;--oncolor-300: 60 6.7% 97.1%;--text-000: 48 33.3% 97.1%;--text-100: 48 33.3% 97.1%;--text-200: 50 9% 73.7%;--text-300: 50 9% 73.7%;--text-400: 48 4.8% 59.2%;--text-500: 48 4.8% 59.2%}#home-header{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;font-weight:400!important;font-size:50px;line-height:1.2;margin-bottom:1rem;color:--text-000;display:flex;align-items:baseline;justify-content:center;flex-wrap:nowrap}#localization-select-trigger>:has(img[src*=\"flags\"]){display:none}div[id^=\"localization-select-item\"]>:has(img[src*=\"flags\"]){display:none}@media (min-width: 768px){#home-header{justify-content:center}}.build-with{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;letter-spacing:-0.02em}.claude-wordmark-wrapper{display:inline-flex;align-items:baseline;margin-left:10px}.claude-wordmark{height:40px;width:auto;position:relative}.dark #home-header{color:white}.description-text{color:black}.dark .description-text{color:white}.dark .claude-wordmark{filter:invert(1)}:root{--bg-color: #f0efea}.dark{--bg-color: #2b2b2b}body,input,#category-select,.dropdown-item,#table-of-contents{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif}.eyebrow{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;text-transform:uppercase;letter-spacing:0.02rem}#content-container{font-family:\"Anthropic Sans\", system-ui, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif}#content-container h1,#content-container h2,#content-container h3,#content-container h4,#content-container h5,#content-container h6{font-family:\"Anthropic Serif Display\", Georgia, \"Times New Roman\", Times, serif;font-weight:400;letter-spacing:0;word-spacing:0.1em}#content-container p{font-size:1rem;line-height:1.65rem}.font-extrabold{font-weight:600!important}.wide-table{width:100%;overflow-x:auto}.wide-table table{width:175%;margin-bottom:0}#prompt-library-container{margin:4rem auto;max-width:48rem;padding-left:1.25rem;padding-right:1.25rem}.prompt-library-title{font-size:24px;text-align:center;font-weight:700;color:#1f2937}.dark .prompt-library-title{color:#e5e7eb}.prompt-library-description{margin-top:1rem;text-align:center}.main-content{margin-bottom:10rem;max-width:64rem;margin-left:auto;margin-right:auto;padding-left:1.25rem;padding-right:1.25rem}.prompt-controllers{display:flex;gap:0.5rem}.prompt-search-container{position:relative;flex:1 1 0%}.prompt-search-icon-container{display:flex;position:absolute;top:0;bottom:0;left:0;align-items:center;padding-left:0.75rem}.prompt-search-icon{margin-left:0.25rem;margin-right:0.75rem;flex:none;width:1rem;height:1rem;background-color:#6b7280;mask-image:url(https://mintlify.b-cdn.net/v6.5.1/solid/magnifying-glass.svg);mask-repeat:no-repeat;mask-position:center center}input.prompt-search-bar{display:block;height:2.5rem;padding-left:2.5rem;border-radius:0.75rem;border-width:1px;background-color:#ffffff;width:100%;color:#111827;box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05)}.dark input.prompt-search-bar{color:#ffffff;background-color:rgb(var(--background-dark));border-color:#d1d5db1a}input.prompt-search-bar:focus{outline-color:rgb(var(--primary))}.dark input.prompt-search-bar:focus{outline-color:rgb(var(--primary-light))}.dark .prompt-search-icon{background-color:#ffffff80}#category-select{padding-left:1rem;padding-right:2.5rem;height:2.5rem;display:flex;align-items:center;border-radius:0.75rem;border-width:1px;color:#111827;background-color:#ffffff;cursor:pointer;box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05);white-space:nowrap}.dark #category-select{background-color:rgb(var(--background-dark));border-color:#d1d5db1a;color:#ffffff}#category-select:hover{background-color:#f9fafb}.dark #category-select:hover{background-color:#ffffff0d}#category-select:focus{outline-color:rgb(var(--primary))}.dark #category-select:focus{outline-color:rgb(var(--primary-light))}#categories-dropdown{top:calc(100% + 4px);padding:0.5rem 0.5rem;display:none;position:absolute;z-index:10;border-radius:0.75rem;border-width:1px;width:100%;color:#111827;background-color:#ffffff;box-shadow:0 1px 2px 0 rgba(0, 0, 0, 0.05)}.dark #categories-dropdown{background-color:rgb(var(--background-dark));border-color:#d1d5db1a;color:#ffffff}#categories-dropdown-clickout{position:fixed;top:0;right:0;bottom:0;left:0;z-index:0}.dropdown-icon-container{display:flex;position:absolute;top:0;bottom:0;right:0;align-items:center;padding-right:0.25rem}.dropdown-icon{margin-left:0.25rem;margin-right:0.75rem;flex:none;width:0.75rem;height:0.75rem;background-color:#6b7280;mask-image:url(https://mintlify.b-cdn.net/v6.5.1/solid/caret-down.svg);mask-repeat:no-repeat;mask-position:center center}.dark .dropdown-icon{background-color:#ffffff80}#prompts-container{grid-template-columns:repeat(1, minmax(0, 1fr));gap:2rem}.dropdown-item{padding:0.25rem 0.5rem;border-radius:0.375rem;display:flex;align-items:center;cursor:pointer}.dropdown-item:hover{background-color:#f9fafb}.dark .dropdown-item:hover{background-color:#ffffff0d}.check-icon{mask-image:url(https://mintlify.b-cdn.net/v6.5.1/solid/check.svg);height:0.875rem;width:1rem;background-color:rgb(var(--primary-light));mask-repeat:no-repeat;mask-position:center center}.prompt-card{margin:-0.75rem;padding:0.75rem;display:flex;border-radius:1rem}.prompt-card:hover{background-color:#03071208}.dark .prompt-card:hover{background-color:#ffffff08}.prompt-icon-container{display:flex;flex:none;align-items:center;justify-content:center;margin-right:1.5rem;border-radius:0.75rem;height:4rem;width:4rem;background-color:#cb785c1a}.prompt-icon{height:1.5rem;width:1.5rem;background-color:rgb(var(--primary-light));mask-repeat:no-repeat;mask-position:center center}.prompt-title{color:rgb(31 41 55);font-weight:600}.dark .prompt-title{color:rgb(229 231 235)}.prompt-description{margin-top:0.25rem}#prompts-container{display:grid;margin-top:2.5rem}@media (min-width: 640px){#category-select{width:16rem}}@media (min-width: 1024px){#prompts-container{grid-template-columns:repeat(2, minmax(0, 1fr))}}.home-cards-custom{display:grid;grid-template-columns:repeat(3, 1fr);grid-template-rows:repeat(2, auto);gap:1.5rem}.home-cards-custom .card{background:transparent;border:0.5px solid hsl(var(--border-300));border-radius:12px;padding:0.25rem}@media (max-width: 1024px){.home-cards-custom{grid-template-columns:repeat(2, 1fr);grid-template-rows:repeat(3, auto)}}@media (max-width: 768px){.home-cards-custom{grid-template-columns:1fr;grid-template-rows:repeat(6, auto)}}.relative{position:relative}.flex-1{flex:1 1 0%}.mermaid{position:relative;background-color:#FDFDFB;background-image:linear-gradient(rgba(235, 219, 188, .25) 1px, transparent 1px), /* Secondary color #EBDBBC with low opacity */\n    linear-gradient(90deg, rgba(235, 219, 188, .25) 1px, transparent 1px),\n    linear-gradient(rgba(235, 219, 188, .1) 1px, transparent 1px),\n    linear-gradient(90deg, rgba(235, 219, 188, .1) 1px, transparent 1px);background-size:20px 20px,\n    20px 20px,\n    4px 4px,\n    4px 4px;background-position:-1px -1px,\n    -1px -1px,\n    -1px -1px,\n    -1px -1px;padding:20px;border-radius:8px;border:1px solid rgba(235, 219, 188, .4);box-shadow:0 2px 4px rgba(64, 64, 62, 0.08)}.dark .mermaid{background-color:#1a1918;background-image:linear-gradient(rgba(212, 162, 127, .15) 1px, transparent 1px), /* Tertiary color #D4A27F with low opacity */\n    linear-gradient(90deg, rgba(212, 162, 127, .15) 1px, transparent 1px),\n    linear-gradient(rgba(212, 162, 127, .08) 1px, transparent 1px),\n    linear-gradient(90deg, rgba(212, 162, 127, .08) 1px, transparent 1px);border:1px solid rgba(102, 102, 99, .5);box-shadow:0 2px 4px rgba(0, 0, 0, 0.2)}.digest-meta{display:flex;align-ite
 
 ## Source (tools-reference): https://docs.claude.com/en/docs/claude-code/tools-reference
 
@@ -13217,7 +13037,7 @@ Makes targeted edits to specific files. See
 Edit tool behavior
 Yes
 EndConversation
-Ends the session, in rare cases of sustained abusive input or when you ask Claude to demonstrate the tool. See
+Ends the session, in rare cases of sustained abusive input or when you ask Claude to end the session and then confirm. See
 EndConversation tool behavior
 No
 EnterPlanMode
@@ -13377,8 +13197,13 @@ Yes
 Skill
 Executes a
 skill
-within the main conversation
-Yes
+within the main conversation. Can prompt for skills that set
+allowed-tools
+,
+disallowed-tools
+, or
+hooks
+Some skills
 SubagentHandback
 Delivers a subagent’s final report to whichever conversation receives that subagent’s result. Provided only in
 auto mode
@@ -13463,7 +13288,6 @@ Write
 Creates or overwrites files. See
 Write tool behavior
 Yes
-​
 Configure tools with permission rules and hooks
 For the most part, Claude decides when to use these tools and you don’t need to name them yourself when interacting with Claude. You reference tool names directly when defining permissions and other configuration:
 in
@@ -13543,7 +13367,6 @@ tool_input
 in hooks, see the
 PreToolUse input reference
 .
-​
 Agent tool behavior
 The Agent tool spawns a subagent in a separate context window. The subagent works through its task autonomously, then returns its result to the parent conversation. The parent doesn’t see the subagent’s intermediate tool calls or outputs, only that final result. The same tool can also launch a teammate or a fork:
 Teammate
@@ -13617,15 +13440,12 @@ limit what a subagent can reach
 in the first place, narrow its
 tools
 field, for example by leaving Bash off the list, or set deny rules in your settings.
-​
 AskUserQuestion tool behavior
 Claude uses
 AskUserQuestion
 to ask you multiple-choice questions when it needs a decision or a clarification. Answer by picking an option, or type your own text through the
 Other
 row or the notes field.
-When you answer by typing your own text, Claude Code relays the answer with neutral wording so Claude follows what you wrote, including a request to wait or explain first.
-​
 Question auto-continue timeout
 Questions stay open until you answer them. If you want a question you leave unanswered to eventually close and let Claude continue without you, set the
 askUserQuestionTimeout
@@ -13652,10 +13472,8 @@ Remote Control
 . Those questions wait until you answer them. The timeout applies only to
 AskUserQuestion
 ’s multiple-choice questions; permission prompts, including plan approval, never auto-resolve on idle.
-​
 Bash tool behavior
 The Bash tool runs each command in a separate process.
-​
 What persists between commands
 When Claude runs
 cd
@@ -13692,7 +13510,6 @@ CLAUDE_ENV_FILE
 to a shell script before launching Claude Code, or use a
 SessionStart hook
 to populate it dynamically.
-​
 Timeout and output limits
 Each command runs under a timeout, and Claude manages it: when it wants longer than the default for a command, it passes the
 timeout
@@ -13711,7 +13528,6 @@ timeout
 on a command that Claude starts in the background instead sets how long the command may run there, with that limit’s separate default and maximum. The
 PowerShell tool
 follows the same timeout rules and reads the same two variables.
-​
 Output limits
 Claude Code streams a command’s output to a working file as the command runs; a command whose output passes 5 GB is killed. When the command finishes, Claude Code reads the output back from that file, up to the read-back window described below. How much of the output reaches Claude inline depends on whether Claude Code treats the result as a failure:
 Result
@@ -13754,14 +13570,12 @@ bashOutputMaxChars
 setting instead, up to 128,000 characters. It sizes the inline ceiling and the read-back window together, and Claude Code then ignores
 BASH_MAX_OUTPUT_LENGTH
 . Requires Claude Code v2.1.261 or later.
-​
 Background commands
 For long-running processes such as dev servers or watch builds, Claude can set
 run_in_background: true
 to start the command as a background task and continue working while it runs. List and stop background tasks with
 /tasks
 . After you stop one there, or from a connected client such as the desktop app, Claude moves on instead of waiting for it. If a subagent started the command, it’s that subagent that moves on.
-​
 When a background command stops
 A command that a
 foreground subagent
@@ -13773,7 +13587,6 @@ While a command that the main conversation started is still running, a run in no
 flag
 stays open after its result
 until that command exits or reaches its time limit. A command that a background subagent started is stopped when the run exits.
-​
 Time limit for background commands
 In a session that runs unattended, such as a run with the
 -p
@@ -13785,20 +13598,17 @@ timeout
 Claude passes with
 run_in_background
 , up to a maximum of 2 hours
-A command that starts in the foreground and then moves to the background, for example at its timeout, gets 30 minutes from the move
+A command that starts in the foreground and then moves to the background at its timeout gets 30 minutes from the move
 In a run with the
 -p
 flag whose prompt you pass as text rather than with
 --input-format stream-json
-, both defaults are 10 minutes instead of 30, because the run
-waits for background commands after its result
-.
+, both defaults are 10 minutes instead of 30.
 When a background command reaches its time limit, Claude Code stops it and tells Claude why, and Claude can start the command again with a longer
 timeout
 if the work still needs it. The stop notice reads
 Background command "<description>" was stopped after reaching its background time limit
 .
-​
 Raise the time limit for background commands
 Two
 environment variables
@@ -13823,7 +13633,6 @@ BASH_DEFAULT_TIMEOUT_MS
 above
 7200000
 raises the maximum the same way
-​
 Foreground commands that move to the background
 When a foreground command reaches its timeout without finishing, Claude Code moves it to the background instead of stopping it, unless the command starts with
 sleep
@@ -13850,7 +13659,6 @@ chdir
 inside a command that is moved to the background never carries over: the result states
 Session cwd remains <dir>; directory changes made by the backgrounded command do not apply to subsequent commands.
 , so Claude doesn’t act on a directory change that didn’t happen.
-​
 Memory limit on Linux and WSL
 On Linux and WSL, set
 CLAUDE_CODE_TOOL_MEMORY_LIMIT
@@ -13922,7 +13730,6 @@ Variable unset
 : Claude Code takes the set of other capped kinds from configuration Anthropic delivers from the server, and that set can change over time, so set the variable when you need a set that doesn’t change
 Permission-gating hooks
 : even with every kind capped, Claude Code excludes from the cap a hook that can block or change the outcome of an action, and any MCP server that such a hook calls, so the kernel killing a permission-gating hook can’t allow the action it was blocking
-​
 Edit tool behavior
 The Edit tool performs exact string replacement. It takes an
 old_string
@@ -13994,7 +13801,14 @@ Read
 and
 Edit
 deny rules cover.
-​
+Protect read-only files in Perforce
+To keep Edit, Write, and NotebookEdit from overwriting read-only files in a Perforce workspace, set
+CLAUDE_CODE_PERFORCE_MODE
+to
+1
+. Those tools then refuse to change read-only files and tell Claude to run
+p4 edit
+first.
 Non-UTF-8 files
 Claude can’t use
 NotebookEdit
@@ -14007,11 +13821,10 @@ tells it to make the change with a shell command that keeps the file’s encodin
 Claude can still replace such a file with Write, unless the new content contains
 U+FFFD
 , the character Read shows Claude in place of bytes it can’t decode. That guard stops Claude from writing back the garbled text it read. When Write does replace the file, it saves the new content as UTF-8, so the file’s original encoding is lost.
-​
 EndConversation tool behavior
 The EndConversation tool ends the current session. Claude uses it only in two situations:
-as a last resort against sustained abusive input, after attempts to redirect the conversation have failed and after a clear warning in an earlier message
-when you explicitly ask to see the tool demonstrated and confirm that you want the session to end
+When you keep sending abusive messages after Claude gives a clear warning and fails to redirect the conversation
+When you explicitly ask Claude to end the session, then confirm when Claude asks whether you still want to proceed
 General frustration, profanity, or a task going badly don’t qualify, and neither do requests for harmful content, which Claude declines instead of ending the session. Claude Code follows the same approach as claude.ai, which can
 end a rare subset of chats
 .
@@ -14090,7 +13903,6 @@ Microsoft Foundry
 , or on sessions signed in through a
 cloud gateway
 .
-​
 EnterWorktree tool behavior
 The EnterWorktree tool creates an isolated
 git worktree
@@ -14131,7 +13943,6 @@ Claude has no
 EnterWorktree
 tool
 .
-​
 Glob tool behavior
 The Glob tool finds files by name pattern. On Windows, it’s part of the default tool set. On macOS, Linux, and WSL, Claude Code leaves Glob and
 Grep
@@ -14224,7 +14035,6 @@ pattern
 or
 path
 value that contains a null byte returns an error asking Claude to remove it.
-​
 Grep tool behavior
 The Grep tool searches file contents for patterns. Where
 Glob
@@ -14279,7 +14089,6 @@ path
 outside the
 working directories
 , so a permission prompt for a path doesn’t mean the path exists.
-​
 LSP tool behavior
 The LSP tool gives Claude code intelligence from a running language server. After each file edit, it automatically reports type errors and warnings so Claude can fix issues without a separate build step. Claude can also call it directly to navigate code:
 Jump to a symbol’s definition
@@ -14295,7 +14104,6 @@ for your language. In
 cloud sessions
 , Claude Code doesn’t start plugin language servers, so the LSP tool stays inactive there. Claude Code takes the language server’s configuration from the plugin, and you install the server binary yourself.
 Claude Code returns an error result for each LSP call on a file whose language server it can’t start.
-​
 Monitor tool
 The Monitor tool lets Claude watch something in the background and react when it changes, without pausing the conversation. Ask Claude to:
 Tail a log file and flag errors as they appear
@@ -14331,9 +14139,6 @@ Monitor
 itself, along with the other
 broad allow rules it drops
 , so the classifier reviews Monitor commands the same way it reviews Bash commands.
-The
-WebSocket source
-has its own approval prompt, which the classifier also decides in auto mode.
 Monitor needs a minimum version or Git Bash in these cases:
 Minimum version
 : on Amazon Bedrock, Claude Platform on AWS, Google Cloud’s Agent Platform, or Microsoft Foundry, or with
@@ -14350,7 +14155,6 @@ is installed
 Plugins can declare monitors that start automatically when the plugin is active, instead of asking Claude to start them. See
 plugin monitors
 .
-​
 WebSocket source
 When a server already pushes events over a WebSocket, Claude can connect to it directly instead of writing a polling script. Each kind of socket activity either becomes an event or ends the watch:
 Text messages
@@ -14388,15 +14192,60 @@ timeout_ms
 deadline applies to a WebSocket watch too: the watch ends at the deadline, and
 TaskStop
 cancels it early.
-Opening a WebSocket prompts for approval; in
+Without a
+Monitor
+allow rule, you’re prompted before Claude opens a WebSocket; in
 auto mode
-the classifier decides instead. The prompt doesn’t offer an option to skip future prompts for the same host.
-Claude Code denies URLs that point at a private, link-local, or cloud-metadata address, including hostnames that resolve to one. It also denies hosts in
+the classifier decides instead, unless an
+ask rule
+applies. The prompt doesn’t offer an option to skip future prompts for the same host.
+Addresses and hosts denied to WebSocket watches
+Claude Code denies URLs that point at a private, link-local, or cloud-metadata address, including hostnames that your machine resolves to one. Behind a
+proxy
+, a watch can reach a private, link-local, or cloud-metadata address unless the proxy blocks it, because Claude Code doesn’t check the address the proxy finds. Claude Code also denies hosts in
 sandbox.network.deniedDomains
 , and when
 allowManagedDomainsOnly
 is set in managed settings, any host outside the managed allowlist.
-​
+If a watch behind a proxy fails with
+could not resolve <host>
+, restart Claude Code v2.1.319 or later with
+CLAUDE_CODE_PROXY_RESOLVES_HOSTS
+set to
+1
+so the proxy looks up the hostname.
+Bash rules that deny or prompt for WebSocket watches
+If Claude Code refuses a
+Monitor
+call that opens a WebSocket, look for a
+deny or ask rule
+written
+Bash
+or
+Bash(*)
+. Do the same if it prompts for that call despite your
+Monitor
+allow rule. A rule on every Bash command also covers these WebSocket watches:
+Deny rule
+: if the rule is in place when the session starts, Claude doesn’t have the Monitor tool, so it can’t start the watch. If you add the rule during a session, Claude’s next
+Monitor
+call is refused. The refusal reads
+Permission to use Monitor has been denied: it runs code as Bash does, and a rule denies Bash.
+Ask rule
+: you’re asked to approve the watch. You can’t have an allow rule, a
+PreToolUse
+hook,
+bypassPermissions
+mode, or the auto mode classifier approve it for you. You can approve it from a
+PermissionRequest
+hook
+. Where nobody can answer, such as in
+dontAsk
+mode, Claude Code denies the watch.
+To let these watches run, narrow the rule to the commands you mean, such as
+Bash(rm *)
+.
+The ask rule, and a deny rule you add during a session, cover these watches in Claude Code v2.1.319 or later.
 NotebookEdit tool behavior
 NotebookEdit modifies a Jupyter notebook one cell at a time, targeting cells by their
 cell_id
@@ -14426,7 +14275,10 @@ Edit(...)
 path format. A rule like
 Edit(notebooks/**)
 covers NotebookEdit calls on files in that directory.
-​
+Replacing a cell clears its saved outputs in the file
+When NotebookEdit replaces a code cell, its execution count and saved outputs are cleared. To get the output back, re-run the cell and any cells that use the functions or variables it defines. See
+Work with Jupyter notebooks
+for the VS Code workflow.
 PowerShell tool
 The PowerShell tool lets Claude run PowerShell commands natively. On Windows, this means commands run in PowerShell instead of routing through Git Bash. How the tool becomes available depends on your platform:
 Windows without Git Bash
@@ -14451,7 +14303,6 @@ PowerShell hook input section
 explains why matching
 Bash
 alone is not enough.
-​
 Enable the PowerShell tool
 Set
 CLAUDE_CODE_USE_POWERSHELL_TOOL=1
@@ -14489,7 +14340,6 @@ UserPolicy
 , so enterprise policies still apply. To respect the machine’s effective execution policy instead, set
 CLAUDE_CODE_POWERSHELL_RESPECT_EXECUTION_POLICY=1
 .
-​
 Bash deny rules also turn off the PowerShell tool
 On Windows with Git Bash installed, denying Bash also turns the PowerShell tool off for the session. This applies to scoped rules such as
 Bash(git push *)
@@ -14517,7 +14367,6 @@ to a settings file, such as a
 PowerShell(git push *)
 deny rule.
 Without one of these, a scoped Bash deny rule leaves the Bash tool available, and Claude Code turns PowerShell off without a warning. A rule that removes the whole Bash tool leaves Claude with no shell tool for the session.
-​
 Shell selection in settings, hooks, and skills
 Three additional settings control where PowerShell is used:
 "defaultShell": "powershell"
@@ -14529,88 +14378,322 @@ commands through PowerShell. Requires the PowerShell tool to be enabled.
 "shell": "powershell"
 on individual
 command hooks
-: runs that hook in PowerShell. Hooks spawn PowerShell directly, so this works regardless of
-CLAUDE_CODE_USE_POWERSHELL_TOOL
-.
-shell: powershell
-in
-skill frontmatter
-: runs
-!`command`
-blocks in PowerShell. Requires the PowerShell tool to be enabled.
-PowerShell commands follow the
-same main-session working-directory reset behavior
-as Bash commands, including the
-CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR
-environment variable.
-PowerShell commands also receive the variables hooks persist through
-CLAUDE_ENV_FILE
-, under the conditions in
-Persisted variables in PowerShell commands
-. Requires Claude Code v2.1.296 or later.
-​
-Exit code 1 from searches and
-git diff
-in PowerShell
-If a
-grep
-or
-rg
-search that matches nothing shows
-Error: Exit code 1
-when Claude runs it in the PowerShell tool, the search didn’t fail. You don’t need to do anything. The error can appear when the search is part of a longer command. For example, when
-rg
-exits with code 1,
-rg foo | Out-Null
-shows the error and
-rg foo
-doesn’t.
-The PowerShell tool can count exit code 1 as a normal result from
-grep
-,
-rg
-,
-egrep
-,
-fgrep
-,
-findstr
-,
-git grep
-, and
-git diff
-. The searches use exit code 1 to report no matches. From
-git diff
-, exit code 1 means the files differ. A command that shows the error when Claude runs it
-counts as failed
-in a skill with
-shell: powershell
-.
-​
-Windows encoding and exit codes
-Redirection with
->
-and
->>
-writes UTF-8 files on PowerShell 5.1
-Claude Code encodes text piped to a native command’s standard input as UTF-8
-Claude Code captures error output without ANSI escape sequences
-A command whose child process waits on standard input receives end-of-file instead of hanging
-If
-where.exe
-finds no match, or
-fc.exe
-or
-diff.exe
-finds that the files differ, the result can show
-Error: Exit code 1
-though the command didn’t fail. You don’t need to do anything.
-If a
-r
+: runs that hook
 
 ## Source (changelog): https://raw.githubusercontent.com/anthropics/claude-code/main/CHANGELOG.md
 
 # Changelog
+
+## 2.1.325
+
+- Fixed a security issue in how zstd-compressed responses are decoded
+- Added a spinner tip in VS Code and similar integrated terminals about re-running a notebook cell, shown once Claude has read or edited a Jupyter notebook
+- Added a line under the error shown when your organization's policy blocks a request, saying how to continue: run `/rewind` and change the message, or run `/clear`
+- Added a note for Claude when a sandboxed `git checkout`, `git stash` or autostash pull cannot update protected files such as those in `.claude`
+- Fixed `/security-review` and skills' inline git commands stopping with an error in worktrees of bare repositories, `--separate-git-dir` checkouts and Android `repo` checkouts
+- Fixed subagents with their own model being moved to the plan-mode model when the model setting is `opusplan` or `haiku`
+- Fixed subagents on a different model sizing file reads and MCP results with the main session's model
+- Fixed sessions on many third-party gateways and Foundry stopping with a context length error on every turn instead of compacting
+- Fixed recent turns sometimes going missing from a resumed session after Claude Code stopped without a clean exit
+- Fixed shell commands running in the launch directory after the working directory was deleted; the command now fails with a message and can be re-issued
+- Fixed an approved plan edit being lost when the `plansDirectory` folder can't take it: the plan is now saved in the default plans folder, and a warning says where and why
+- Fixed a saved `sonnet[1m]` model setting being rewritten on a new install to a model id the API rejects
+- Fixed focus view hiding the reply to your prompt when a scheduled task replied after it
+- Fixed the prompt sometimes missing from a background subagent's view when fullscreen is off
+- Fixed long options in lists and permission prompts being partly overwritten when they wrap, and first-run screens losing lines on narrow terminals
+- Fixed startup warnings about permission rules and the "N MCP servers need authentication" notice being recorded as seen when they were scrolled out of view
+- Fixed the welcome header showing control characters or splitting across lines when an agent's name or the working folder contains them or a line break
+- Fixed the red error shown when Claude tries a command only you can run: a dim line now says it runs only when you type it at the prompt
+- Fixed `/stats` showing an Active days total that was one day too high
+- Fixed `/insights` saying a report was ready when no session qualified for analysis, and writing two values into its HTML report without escaping them
+- Fixed `/voice` saying voice mode changed when managed settings, `--settings`, or the project's `.claude/settings.json` or `.claude/settings.local.json` kept it as it was; it now says what holds it
+- Fixed the IDE welcome dialog showing Cmd+Esc for Quick Launch on Windows and Linux
+- Fixed Slack app tips showing when your organization's policy denies cloud sessions
+- Fixed `claude purge` hanging silently when there is no terminal to read keys from, and its project picker and `-i` prompts ignoring the keyboard when stdin is piped
+- Fixed `claude plugin eval --output-dir ''` writing the report into the current folder; it now exits with an error
+- Fixed `claude -p` text output on a terminal passing control sequences other than text styling; pipes and files are unchanged
+- Fixed leftover `.oauth_refresh.lock.owner.tmp.*` files piling up in the config directory
+- Fixed `/fast` saying "Fast mode has been disabled by your organization" under the keyless Console sign-in, where Claude Code had not asked the server
+- Fixed `/model` saying that your organization restricts a model when Claude Code could not check that, for example with no network
+- Fixed "Sign in with your Console account" in `/login` replacing your existing login when you pressed Esc right after the browser step
+- Fixed the browser showing the sign-in success page in some cases where sign-in failed or was canceled
+- Fixed `claude auth status` and other short commands leaving a lock behind on a Console profile, which made the next session hang for about a minute
+- Fixed background sessions started on your claude.ai login using (and billing) an API key or token from the shell that started the background service
+- Fixed more cases of a session moving to another sign-in in the background; these moves are now refused, with a message saying what works
+- Fixed a second Enter in the exit dialog stopping background work after the move to the background was refused
+- Fixed token counting on Amazon Bedrock sending the conversation to Bedrock when the `allowedProviders` managed setting does not allow it
+- Fixed AWS `credential_process` helpers and Google Cloud default credentials failing when Claude Code is started without a `HOME` environment variable
+- Fixed a session sometimes going back to an earlier permission mode after a subagent's plan was approved
+- Fixed one invalid value in an Agent SDK `applyFlagSettings()` call silently discarding all settings from earlier calls; a call that would do this is now refused with an error
+- Fixed sessions showing as waiting for input when a finished pull request only needed your own review or merge
+- Fixed an unrecognized `teammateMode` settings value being ignored without a warning: `claude -p`, the startup warning and `claude doctor` now list it as a skipped entry (still not applied)
+- Fixed `--worktree` skipping a `WorktreeCreate` hook from a plugin in `CLAUDE_CODE_PLUGIN_SEED_DIR` on the first run in a new home directory
+- Fixed brief-mode sessions, such as Dispatch, sending a reply again after the turn had already replied
+- Fixed Claude saying a working Atlassian, Asana or Sentry connector had failed in cloud sessions when a plugin listed it at a different URL
+- Fixed Claude Desktop and SDK sessions listing a folder's own MCP servers (`.mcp.json`, local) as host-added or not at all, and not connecting WebSocket ones, after a folder move or pre-warmed start
+- Fixed `/mcp` still listing a plugin's MCP server after a plugin reload removed it while it was connecting
+- Fixed an MCP server staying "needs authentication", and its `mcp_tool` hooks being skipped, after a token refresh that was refused only for a moment
+- Fixed MCP elicitation requests being cancelled without asking in headless mode after a server's connection was replaced during a tool call
+- Fixed MCP tool calls from an SDK host answering "Not connected" after a tool call had reconnected the MCP server
+- Fixed an MCP task getting stuck after its question was closed with Esc or asked again: the footer now says it needs your input, and Enter in `/tasks` shows the question again
+- Fixed background MCP tasks that stopped updating after another call to the same server lost the connection, when a later call reconnects
+- Fixed a background MCP task's question opening over a message you were still typing; it now waits until you send or clear the draft, and the spinner and turn timer keep running
+- Fixed `worktree.sparsePaths` and sparse plugin and marketplace clones leaving out the repository's root files on older git versions, such as 2.34
+- Fixed self-hosted runner sessions with several repositories being unable to use a repository added mid-session
+- Fixed Claude asking for permission before reading your own artifact or its data
+- Fixed deny and ask permission rules and hooks for the Artifact tool not applying in some cloud sessions
+- Fixed Code Mode scripts ignoring a worktree entered with `EnterWorktree`, writing `~` paths into the project, and leaving `/mcp` showing an MCP server as connected after its sign-in expired
+- Fixed words typed with a Yes at a permission dialog or plan approval not reaching Claude in Code Mode
+- Fixed Claude starting work by itself when you resumed a session that ended during a Code Mode script; it now waits for your next prompt
+- Fixed a missing OpenTelemetry `user_prompt` event for a message sent while tool calls run. The event has `delivery.mode: "mid_turn"` and the running turn's `prompt.id`
+- Fixed the OpenTelemetry `user_prompt` event leaving out earlier messages' text when queued messages merged into one turn in VS Code, or when one message had an image
+- Fixed a slash command's `allowed-tools` grants applying to background agents woken during or after its turn
+- Fixed `/feedback` and `/bug` to upload other sessions only when they were recorded by the signed-in account or organization
+- Fixed relative deny and ask permission rules (e.g. `Read(./.env)`) no longer covering the project after a `cd`; they now also apply in added directories
+- Fixed deny and ask permission rules starting with `mcp__plugin_*_` missing a plugin's MCP server or tool spelled in another letter case
+- Fixed deny rules not being applied to a permission approval that arrives after Claude Code restarts, in self-hosted runner and `claude remote-control` sessions
+- Fixed a case where a committed `.claude/settings.local.json` could be treated as the user's own when Claude Code was started in certain subfolders of a repository
+- Fixed some deny and ask rules not applying to certain Bash commands
+- Fixed a gap in Bash permission checks where some compound commands could run without asking; these now ask for permission
+- Fixed a case where a Bash allow rule could run a different program than the one it names
+- Fixed a connector tool's approval prompt in cloud sessions being answered automatically while plugins were still loading
+- Fixed some subagents changing an artifact that people outside your organization can see, or uploading files to it, without asking first when an allow rule is set or uploads were approved earlier
+- Fixed some artifact publishes skipping the confirmation for pages that people outside your organization can see when "don't ask again" had been chosen for Artifact
+- Fixed auto mode judging only the first change to an artifact that people outside your organization can see; its yes now covers that change alone
+- Fixed a managed `strictPluginOnlyCustomization` lock on agents and skills not taking effect in sessions that were already running
+- Fixed sandboxed commands being able to write to the native updater's download folder in some cases
+- Fixed a case where the Bash sandbox did not fully protect a worktree's settings and hooks
+- Fixed a case where the Bash sandbox did not fully protect a linked worktree's shared git folder
+- Fixed `/teleport`'s stash choice in some unusual git states: it now stops and says what to do
+- Windows: Fixed a start-up stall that could last about a second when a PATH entry sits under a folder your account cannot open
+- Fixed `/resume` on Windows refusing or hiding sessions whose folder was recorded with a different drive-letter case or slashes
+- Fixed an in-session `/resume` on Windows dropping a project's saved trust when the session was recorded with a different drive-letter case
+- Linux: Fixed sandboxed Bash commands failing with `bwrap: Can't create file` when the working directory was below an `allowRead` folder inside a `denyRead`, such as under a symlinked home directory
+- Fixed Claude Desktop's third-party deployments staying on "Stopping" until a token renewal finished (once it includes this version)
+- Improved subagents cut off at the output token limit: they are now asked for the whole answer again, more briefly, instead of returning only its end
+- Improved startup with a keyless Console sign-in or other Anthropic profile login: a token that is still valid is read without waiting for the credentials lock
+- Improved the account email check: it now also refuses your email as a client's identity in scripts a command runs, file writes, web fetches and MCP calls
+- Improved the `HTTPS authentication failed` message for private plugin marketplaces: it now says git's terminal prompts and askpass programs are disabled, and it also appears with newer git versions
+- Improved the add-marketplace confirmations, plugin recommendation prompts and plugin install warning to say that plugins can run code on your computer, with access to your files and shell
+- Improved the `claude --desktop` sign-in error to name the API key, provider or setting that stops a Claude account sign-in from working
+- Improved the `/voice` "No audio detected" message on macOS and Windows: it now says where to pick your microphone
+- Improved MCP tasks: Claude is now told when a task is waiting for your answer, and can point you to `/tasks`
+- Improved `claude remote-control`: it now exits with status 4 when it stops by itself (single-session runs still exit 0) and 69 when it can't register, so a service manager can start it again
+- Improved the messages shown when a background session can't use its session's API key or token: they no longer suggest adding the key to settings
+- Improved the bundled dataviz skill's part-to-whole advice for static images and for parts with a natural order, such as age bands
+- Changed sandboxed Bash commands to follow the normal permission flow by default; set `sandbox.autoAllowBashIfSandboxed: true` to keep running them without prompts
+- Changed managed settings that turn the sandbox on: to keep commands running without prompts, set `sandbox.autoAllowBashIfSandboxed: true` in your highest-ranking managed source
+- Changed read-only git commands to ask first in a repository that isn't the project's or one you trusted; name it with `--add-dir`, not the `additionalDirectories` setting, to run them without prompts
+- Changed scheduled tasks and `/loop` to ask before running a skill that declares `allowed-tools` or hooks; add `Skill(name)` to `permissions.allow` to run it unattended
+- Changed "Always allow" in Desktop, IDE and SDK hosts: a rule alone is offered only when saving it would allow that command again, so a scheduled task that relied on one can now wait for you
+- Changed the sandbox to refuse sandboxed writes to `.claude` settings, skills, agents, commands and hooks in added directories, as it does in the launch folder
+- Changed worktree isolation: an isolated worktree session or agent is now refused `git bisect run`, `git maintenance register|start` and `scalar`'s set-up commands, and is told what still works
+- Changed plugin MCP bundles (`.mcpb`, `.dxt`) to unpack under the plugins directory, not `.mcpb-cache` in the plugin's folder, so read-only plugin folders load; one fetched by URL downloads again once
+- Changed plugins of a remote marketplace that managed settings declare, enable and list in `prependPlugins` or `appendPlugins` to count as the organization's; `pluginDigests` is deprecated and ignored
+- Changed plugin loading to skip, and `claude plugin validate` to report, some unsafe paths and links in a plugin's folder
+- Changed nested skill loading: `.claude/skills` folders in `--plugin-dir` plugins no longer load from a session started above them; start Claude Code in the plugin folder instead
+- Changed EnterWorktree to refuse a `WorktreeCreate` hook path that goes through a symlink inside the project; have the hook print the real path
+- Changed tmux and iTerm2 teammates, and new sessions from the agents view opened with ←, to start in the session's folder instead of where the shell last ran `cd`
+- Changed prompt suggestions in the terminal to refresh less often after 8 turns in a row started by background or scheduled tasks, saving usage until you press a key or return to the terminal
+- Changed Esc on a background MCP task's question to "answer later": nothing is sent to the server, and the question stays in `/tasks`
+- Changed `CLAUDE_CODE_MAX_CONTEXT_TOKENS` to also set the context window of unrecognized model IDs that start with `claude-`, such as a gateway's `claude-sonnet-latest`
+- Changed `/login` to ask for permission to change your privacy settings
+- Changed `/cost`, `$.session.usage()`, `--max-budget-usd` and the cost and token metrics to count a mod's `$.model.complete` and `$.model.classify` calls
+- Changed the programs that Claude Code's sandbox starts for its own use, such as its network bridge, to run without Claude Code's sign-in tokens and API keys in their environment
+- Changed ripgrep, local git commands and the sandbox runtime's own helper programs to run without the mTLS client key's passphrase in their environment
+- Remote Control: Changed `/resume` and `/teleport` to disconnect first when the connected session has a share link, or when that can't be checked; run `/remote-control` to connect again
+- Changed Claude Code on the web, cloud scheduled tasks and Cowork cloud sessions to start despite `sandbox.failIfUnavailable`: the hosted container has no command sandbox
+- Changed requests for settings, permission rules, hooks or status over a cloud or self-hosted session's connection to return less or be refused; what applies in the session is unchanged
+- Changed `claude -p` with no cached account data to wait for that data before its first request, so a first run in a clean environment can start a few seconds later
+- Changed Claude's instructions to keep files you'll want out of its temporary scratchpad folder, which can be cleared
+- Changed marketplace `ref` to accept the full ID of any commit on a branch or tag; clients before this version can't clone such a pin, so a marketplace pinned this way stops loading there
+- Changed plugin marketplace and plugin downloads to use a CONNECT tunnel when `ALL_PROXY` is the only proxy set; a proxy that refuses CONNECT now fails them
+- Changed `-p` and SDK runs in a worktree or submodule mounted into a container to apply `.claude/settings.local.json` allow rules only once the folder is trusted
+- Changed self-hosted runners to refuse a session whose session folder or repository path is a symbolic link, other than a `checkout` hook's checkout
+- Removed "ask your admin to raise it" from spend limit and shared budget errors in cloud sessions and under Remote Control
+- [VSCode] Added prompt suggestions wherever the terminal shows them: Tab accepts the suggested next prompt; `promptSuggestionEnabled: false` in Claude Code's settings.json turns them off
+- [VSCode] Added a Console sign-in that creates no API key
+- [VSCode] Added a field to paste the redirect URL when signing in to an MCP server from the panel in SSH, WSL and container windows
+- [VSCode] Fixed the model picker's check mark staying on the old model after Claude Code restarted on another model or the model was switched over Remote Control
+- [VSCode] Fixed the effort selector offering levels above the effort cap set by your organization or the `maxEffortLevel` setting
+- [VSCode] Fixed the sign-in screen offering sign-ins that the managed `allowedProviders` setting refuses
+- [VSCode] Fixed the permission prompt for MCP tools not saying why Claude Code asks when a safety check raises the question
+- [VSCode] Fixed the message for organization settings that couldn't load saying to run a command again; it now says to try again, matching the tab's Retry link
+- [VSCode] Improved the note shown for an untrusted folder: it now says why the extension is off and how to turn it on
+- [VSCode] Improved the error shown when the system refuses to run Claude Code: it now says your IT team can allow a blocked program
+- [VSCode] Improved the sign-in card to say what to do when the browser shows a connection error for localhost
+- [VSCode] Changed the install link's marketplace confirmation button to "Trust marketplace and continue"
+- [Claude Code on the web] Fixed new cloud sessions cutting MCP tool descriptions loaded through tool search at 4,096 characters; the limit is now 16,384, as in other Claude Code sessions
+- [Claude Tag] Fixed artifact links pasted in Slack getting no card when the poster's Claude sign-in had expired in a workspace their organization doesn't manage; a plain card now appears
+
+## 2.1.323
+
+- Added Code Mode, an experimental opt-in in which Claude writes JavaScript to call its tools; see https://code.claude.com/docs/en/code-mode to turn it on, or to turn it off for an organization
+- Added `engines["claude-code"]` to `plugin.json`: plugins outside their stated Claude Code version range are not installed, updated or loaded, and install and update pick the newest version that fits
+- Added type checking of a plugin's TypeScript hooks module to `claude plugin validate`; each finding is a warning, and `--strict` fails on it
+- Added to `claude plugin validate` the `$` nouns a mod's `engine.create` hook adds, withholds or replaces
+- Added support for `CLAUDE_CODE_AUTO_MODE_MODEL` in managed settings for Claude Desktop sessions on third-party providers (takes effect once Claude Desktop includes this version)
+- Added an options menu (stop, switch to usage credits, upgrade) when a model needs usage credits that are turned off or used up
+- Added a progress heartbeat every 30 seconds while hooks run long in `claude -p` and SDK sessions, so a host such as Claude Desktop won't end the turn as hung (once it includes this version)
+- Added `.docx` support to Artifact tool asset uploads
+- Added a `/diff to close` hint to the diff panel, and the keys that focus and close a panel to the `?` shortcut guide
+- Added a start-up warning for Bash allow rules with a `*` in a variable's value, such as `Bash(PORT=* npm run dev)`
+- Added a warning when a plugin's language server can't start, naming the server and what to check
+- Added a one-time startup notice naming `CLAUDE_CODE_PERFORCE_MODE` when Perforce settings are found and the mode is off
+- Added `CLAUDE_CODE_DISABLE_AGENT_PROGRESS_SUMMARIES` (available since 2.1.318): set it to `1` to turn off subagent progress summaries and the requests that write them (anthropics/claude-code#86879)
+- Added `CLAUDE_CODE_RESUME_HINT_COMMAND`, which a program that starts Claude Code can set to have the exit hint name its own resume command
+- Added `unsetOptionCount` to the `claude plugin install --json` result: how many `userConfig` options are not yet set
+- Added `isPromptCovered` to the props a mod's pane is drawn with, telling it when a dialog or a field above the prompt covers the prompt
+- Fixed running `/compact` again, or after a command such as `/context`, summarizing away a message that Claude had not answered yet
+- Fixed a resumed session joining your next message to an old interrupted message that was not resumed
+- Fixed a memory spike at the next prompt after Claude changed a very large file
+- Fixed a setting saved in a running session undoing a hand edit made to `settings.json` moments earlier; a settings file you delete during a session now stays deleted
+- Fixed `claude plugin` commands and `claude mcp list` signing you out of a Console profile when they ended while the token was being renewed
+- Fixed Edit and Bash running out of memory on certain `/proc` files, and Edit hanging or running out of memory on devices and named pipes
+- Fixed Claude Code failing to start, or to clear stored credentials at sign-out, when saving its configuration file failed with "Out of memory"
+- Fixed requests sent without streaming failing on errors that streamed requests recover from, such as a rejected image, thinking block or beta header
+- Fixed `ExitWorktree`, the worktree exit dialog and `/resume` leaving the session in the wrong folder when the folder the shell was in before entering the worktree had been deleted
+- Fixed accents and other combining marks sometimes landing left of the text, leaving stale copies on screen, or silently disappearing when text wraps
+- Fixed the last key of a key chord, such as Enter in ctrl+x enter, acting on a dialog's text field when the chord's own action isn't available there
+- Fixed `ps` processes piling up when the process listing Claude Code runs before stopping a command takes too long
+- Fixed subagent transcripts and large tool results being saved apart from the session's transcript after entering a worktree created by a `WorktreeCreate` hook or belonging to a nested repository
+- Fixed a session on a named Anthropic profile moving to another sign-in when `/fork`, the Left arrow or `--bg` continued it in the background; reopen any session that was open during the update
+- Fixed a background session sending a conversation under another sign-in when its named Anthropic profile is missing, changed or overridden; it now stops and says so
+- Fixed a session on an API key, auth token or workload identity from its shell (not a setup token) moving to another sign-in in the background; it now stops and says so
+- Fixed MCP tool calls ending in the sign-in server's error, such as `TOKEN_EXPIRED`, instead of asking you to sign in again
+- Fixed an expired claude.ai login showing "Credit balance too low" when a saved Console key or `ant auth login` profile without credit was used instead
+- Fixed a session on a named Anthropic profile being handed to an older background service that could not keep its sign-in; it now says to restart the service
+- Fixed a background session's sign-in leaving the previous account's login or other credentials in place; it now clears them for every session on the computer, and a refused sign-in can leave no login
+- Fixed background sessions moving between a profile and the stored login when an update restarted them
+- Fixed sessions opened before a sign-in keeping signed-out feature flags after the sign-in
+- Fixed sessions that kept failing after a Claude apps gateway sign-in expired: once you sign in again with `/login` in another terminal, they carry on at the next message
+- Fixed the billing notice naming your `ant auth login` organization when a custom `X-Api-Key` header is set
+- macOS: Fixed "Not logged in · Please run /login" coming back right after a successful `/login` or a token refresh when the keychain was slow to answer
+- Fixed turns failing in Claude Desktop when an organization's gateway answers an expired token with 403: Claude Code now asks Desktop for a fresh token and retries
+- Fixed the error shown when Amazon Bedrock refuses your account a model: it no longer says to refresh your AWS credentials, it says to enable the model
+- Fixed the `awsAuthRefresh` or `gcpAuthRefresh` command sometimes running twice for one request when three or more sessions needed a fresh sign-in at once
+- Fixed the `claude -p` warning about an ended claude.ai login to say that `claude auth logout` also removes saved MCP server logins and plugin secrets
+- Fixed Bash permission prompts offering "don't ask again" for commands that write to sensitive paths such as `.git` or `.claude`, where the saved rule did not stop the next prompt
+- Fixed a case where some `lsof` commands ran without a permission prompt
+- Fixed Bash commands that write a file with `cat > file
+<
+` to `claude remote-control`, which applies a settings file to every session it starts; if the file changes, no new session starts until you restart `claude remote-control`
+- Fixed MCP OAuth requests sending secrets such as refresh tokens to another host when a server redirected them
+- Fixed a case where a read-only Bash command ran outside the sandbox without a permission prompt
+- Fixed a case where Bash permission checks judged a file write from the wrong folder and didn't prompt
+- Fixed deny rules and protected-file prompts not applying to the file that a `cp` or `mv` into a directory writes
+- Fixed the "Draws from usage credits" note showing after a switch to Fable on Enterprise seats whose plan includes Fable
+- Fixed the fallback model sometimes declining a request or mentioning a stopped response when the first model was blocked before replying
+- Fixed `claude mcp login` printing a SEP-2352 issuer warning each time you sign in again to a server that Claude Code registered with
+- Fixed `NotebookEdit` deleting or overwriting a notebook's first cell when the call named no cell, on network paths (UNC shares, WSL folders, `/net` mounts)
+- Fixed Edit changing the first of several matches, replacing a whole file on an empty `old_string`, or editing a notebook as text, on network paths (UNC shares, WSL folders, `/net` mounts)
+- Fixed `/config` showing Manual as the default permission mode when new sessions start in auto mode; pressing Space on "Auto (default)" now saves Don't Ask, not Plan
+- Windows: Fixed `FileChanged` hooks stopping for paths set through `watchPaths` after the first shell command, when the session's working directory had a lowercase drive letter
+- Fixed `--plugin-dir .` and `--plugin-dir ./builtin` writing generated type files for Claude Code's built-in plugins into a `builtin` folder
+- Fixed context usage estimates overcounting tool definitions when exact token counts are unavailable
+- Fixed `/compact` showing twice in Remote Control on web and mobile
+- Fixed plugin auto-updates and `/plugin` marketplace updates downloading a plugin again for each worktree or folder of a repository
+- Fixed auto mode losing a background subagent's report that had started a turn when the conversation was compacted before Claude answered it
+- Fixed project skills, commands and agents staying missing after their folder was removed and came back mid-session, such as with `git stash`, including after entering a worktree
+- Fixed `claude -p` sometimes telling Claude that background commands get 30 minutes when they are stopped after 10
+- Fixed `pkill`, `pgrep` and `pidwait` in cloud sessions matching the session's own parent processes
+- Fixed Claude in Chrome and computer use server processes staying alive after their parent exits behind a proxy that stalls connections
+- Fixed a large hook output pointing Claude to a file that held another hook's output from the same tool call
+- Fixed apps that embed Claude Code getting their own PreToolUse hook's `ask` reason instead of another hook's when both asked
+- Fixed a PreToolUse hook's `ask` being lost when another hook's `defer` finished first and could not be honored
+- Fixed a rare crash on permission prompts and background tasks
+- Fixed project skills, commands and agents disappearing from the menu in SDK and desktop sessions after Claude entered a worktree
+- Fixed `/desktop` on macOS saying Claude Desktop is not installed when it is in `~/Applications`
+- Fixed OpenTelemetry repository attributes (`vcs.*`) missing from Claude Desktop sessions that start on a pre-started process
+- Fixed WebFetch passing "No response from model" to Claude as page content when the model reading the page returned no text; the call now fails with a clear error
+- Fixed screen reader mode delaying the prompt at startup when the system clock moved back while Claude Code was starting
+- Fixed a command's panel sometimes not coming back after a dialog closed, leaving no panel or prompt on screen until the next redraw
+- Fixed a project's MCP server being disconnected after the first message in a Claude Desktop Code tab session when the desktop app has an MCP server or extension of the same name
+- Fixed a turn ending with "API Error: EPROTO: The TLS handshake failed" when the connection broke partway through a reply; the partial reply is kept or the request is retried, as before 2.1.302
+- Fixed high memory use in long sessions that repeatedly read single lines from large files
+- Fixed fast mode losing replies, switching models or retrying for minutes when fast serving is rate-limited, overloaded or failing; it now tries standard speed on the same model first
+- Fixed one request carrying far more background agent reports than intended after Claude was stopped while several were waiting
+- Fixed messages from a Claude Desktop Code tab session to your other sessions staying paused after you typed while Claude was still working
+- Fixed `claude agents` ignoring `--permission-mode`, `--dangerously-skip-permissions`, `--model`, `--effort` or `--agent` typed before `agents` when a flag such as `--verbose` was also on the line
+- Fixed a case where Remote Control showed as off with "login expired" in the desktop app while its connection was still up, because the app was briefly unable to hand over a sign-in token
+- Fixed a Remote Control message sent with "Queue for later" reaching Claude in the middle of the running turn
+- Fixed the git status given to Claude at session start reading as clean when git status failed; it now reads as unavailable
+- Fixed the git status given to Claude at session start showing the first listed file as staged when its changes were not staged
+- Fixed a hang or out-of-memory crash when a connector in a cloud session lists resources with very long names
+- Fixed Remote Control showing as connected after its connection closed for good while the session's history was still uploading
+- Fixed screen reader mode turning off when you return to a conversation from agent view
+- Fixed screen reader mode y/n questions taking as yes a stray "y" at the end of text typed as the question opened
+- Fixed cloud sessions telling Claude that a host is probably not allowed when it is allowed and the network proxy could not connect to it
+- Fixed an MCP server sometimes showing as connected with no tools after it was reconnected or the session's directory changed while its tools were still loading
+- Fixed Bash commands sometimes running in the wrong folder when Claude sent several at once and an earlier one changed folders
+- Fixed files Claude sends from cloud and Remote Control sessions failing at once when an upload gets an HTTP 507 from a proxy; the upload now gets a second try
+- Fixed new messages not being saved, and `claude -p`, SDK and VS Code sessions hanging, when memory ran out while the transcript was being read
+- Fixed sign-in, token refresh and logout waiting indefinitely when something on the network accepts the connection but never answers the TLS handshake
+- Fixed a sent file showing under a different name in the Claude apps when its name hid text-direction or control characters; Claude now refuses to send such a file
+- Fixed sub-agent progress summaries running a request to its end after the model replied with a tool call
+- Fixed Bash reads such as `grep -r foo "$PWD/src"` asking for permission when the same command with the path typed out runs without asking
+- Fixed Claude apps gateway refusing to start when a `desktop` setting holds a field newer than the gateway, such as a managed MCP server's `oauth.omitResource`; it now warns and serves it
+- Fixed Bash commands coming back empty for zsh users whose `.zshrc` sets `KSH_OPTION_PRINT`
+- macOS: Fixed "Unable to read managed policy settings" at startup when a valid MDM profile was slow to read: the read is retried once, and a timeout is now reported as a timeout
+- Fixed agent view erasing another agent view's saved input text when it restarted for an update with nothing typed
+- Fixed remote sessions giving no reply after a restart when a `UserPromptSubmit` hook blocked a replayed permission answer; these hooks no longer run on that replay
+- Fixed `claude remote-control` accepting a `y` typed without Enter at its first-run question when the terminal's input ended
+- Fixed Claude Desktop not showing spend limit warnings behind a Claude apps gateway whose policy has no `code:` rules
+- Fixed fullscreen sessions with some plugins ending with an error when a tool result that had got shorter scrolled off the top of the screen
+- Fixed prompt suggestions making extra API requests when the model replied with a tool call
+- Fixed `PreToolUse` `mcp_tool` hooks on stdio and HTTP MCP servers being skipped when their answer was over 16 MiB; the tool call is now refused
+- Fixed skill and command names holding a Bamum letter that some fonts draw as blank: they are now refused
+- Fixed `claude -p` on Linux exiting 0 in silence when a full NFS export or a used-up NFS quota lost transcript lines: it now prints an error and, in text and json output, exits 1
+- Fixed background agents being reported as stopped by the user, and refused a resume, when a service interrupted a cloud session and nobody pressed Stop
+- Fixed NotebookEdit reporting success to hooks and telemetry when the edit failed, for example when the notebook changed while the permission prompt was open
+- Fixed a blank screen or no answer at startup, and empty `claude mcp list` output, when a stored MCP sign-in record was null
+- Fixed the Artifact tool telling Claude to add filters when an artifact's database collection is too large to sort; it now says to read the collection page by page and sort the results
+- Fixed a restarted cloud session dropping a message with a large image when the restart came before Claude's first reply to it
+- Fixed a restarted cloud session leaving a subagent's message to the main conversation unanswered
+- Fixed Claude not being told when you stop or pause a running workflow, so it no longer says the workflow is still running
+- Improved the `/model` picker: "More models" is now an unnumbered row below every other, and older models open under it without renumbering the rest
+- Gateway: Improved spend limits on a busy replica, which now skips fewer checks and records spend sooner
+- Improved the Claude apps gateway's sign-in limit messages in Claude Code and on the `/device` page: they no longer name gateway settings, which the gateway's own log still names
+- Improved `claude install` and the install scripts: they finish 2 to 4 seconds sooner
+- Improved how soon a Remote Control session whose process crashed can pick up a new message
+- Windows: Improved startup and first-command time by finding programs on PATH without starting a helper process
+- Improved auto mode in headless sessions, the desktop app and VS Code: reports from background subagents that wait together are answered in one model call, as in the terminal
+- Improved the agent view's row for a `claude --bg --worktree` session that couldn't set up its worktree: it now shows the error from its beginning, not an internal tag or its last 200 characters
+- Improved the messages shown when an artifact is in another organization: `/login` is offered only if it's one of yours, and Claude now says where a copy may be after an account move
+- Improved sessions with more images than fit in one request: Claude is told whether it has already seen a dropped image, and repeat reads of an unchanged image are limited
+- Improved `claude remote-control`'s messages for an unanswered first-run question: each now says what to do next
+- Improved start-up time by loading trusted TLS certificates faster
+- Improved Claude apps gateway error messages to show the gateway's address without any user name or password
+- Improved the Claude apps gateway's spend limit error: the reset now shows in your local time, such as "resets 4pm (America/Los_Angeles)"
+- Windows: Improved startup time with a standard Git for Windows install by no longer checking which git.exe to run on every launch
+- Updated the session-feedback message and the `allowedProviders` setting description to name Ultra alongside Pro and Max, and the `forceLoginMethod` description to cover every paid Claude plan
+- Updated the bundled dataviz skill to suggest a list of meters, one row per item, for several ratios that each have their own limit
+- Updated the "Upgrade to Max" options to say "Upgrade to Max or Ultra"
+- Changed mods Claude writes to turn on without asking in auto and bypass modes, even with managed `allowUnsandboxedCommands: false` or `allowManagedDomainsOnly`, and not to load in `dontAsk` mode
+- Changed mods' own tool calls (`$.tool.call`, `$.mcp.call`) to raise no permission prompt, even under your own ask rules or in `dontAsk` and `-p` runs; deny rules and organization policy still apply
+- Changed saved Fable 5.1 model picks to move to `fable`: on Pro and Max plans at once, on Team and Enterprise plans once your organization allows it; use `/model claude-fable-5-1` to switch back
+- Changed the fast mode labels in `/fast`, `/config` and `/model` to name your current model when it supports fast mode, and removed "(Opus only)" from the VS Code row
+- Changed nested skill loading: `.claude/skills` folders inside `~/.claude/plugins` no longer load when Claude works on files there
+- Self-hosted runner: Changed an on-demand runner that the server refuses because it is not needed (session ended or paused, work order superseded) to exit 0 instead of 1
+- Windows: Changed how Claude Code finds programs it starts itself, such as git, to skip relative and UNC PATH entries and links onto a network share, and to pick up PATH changes from settings
+- Changed OpenTelemetry hook events in non-interactive sessions to leave two built-in hooks out of `num_hooks` and `num_success` after Bash and PowerShell calls
+- Changed the number of messages a Claude Desktop Code tab session can send to your other sessions before it waits for you to type again from 10 to 20
+- Changed `AskUserQuestion` in `claude -p` and SDK sessions to deny a host's permission answer that sets the undocumented `afkTimeoutMs` input field
+- Changed managed `extraKnownMarketplaces`: a declared name can't be added from another source, an entry from elsewhere is hidden, and plugins the declared marketplace lists are reinstalled from it
+- Changed Claude in Chrome tools that an app running Claude Code provides, such as the Claude desktop app's Code tab, to follow your organization's Claude in Chrome policy
+- Changed `policy_mode: layered` in the Claude apps gateway: managed MCP servers now add up over every matching policy, `match: {}` included, so a gateway already on it serves more after the upgrade
+- Gateway: Changed Bedrock, Vertex and Foundry upstreams to ignore the `ANTHROPIC_*_BASE_URL` variables in the gateway's environment. Set `base_url` on the upstream to use another endpoint
+- Changed headless sessions to reload mods in `.claude/skills` when their files change; set `CLAUDE_CODE_PLUGIN_DIR_WATCH=0` to turn this off
+- Changed the Cyber Verification Program sentence on a cyber safeguard block to use the same words as claude.ai
+- Changed Cowork cloud sessions: a PostToolUse hook can no longer replace the answer to AskUserQuestion or the plan in ExitPlanMode's result; Claude reads the originals
+- Changed `cp` and `mv` spelled by a path, such as `/bin/cp`, to get the same path checks as `cp` and `mv`
+- Changed background command notifications and TaskStop results to show Claude only the start and end of a command over 1,000 characters, which saves context
+- Changed artifact design guidance to treat Inter and Space Grotesk as good default typefaces
+- Changed the account email check to refuse only a shell command that holds your email and names a User-Agent, without asking, so other commands and scheduled runs no longer stop at its prompt
+- Changed Remote Control sessions to keep the folder they were started in: a connected client can no longer move a session to another folder
+- Changed managed `extraKnownMarketplaces` take-overs from an undeclared source: saved data is set aside for `cleanupPeriodDays`, and options and secrets until `claude plugin restore-set-aside`
+- [VSCode] Added a warning above the prompt box when both an auth token and an API key are set, matching the terminal's startup warning
+- [VSCode] Fixed a plugin's permission request showing a name with hidden characters: it now reads "a plugin"
 
 ## 2.1.319
 
@@ -14659,308 +14742,4 @@ r
 - Fixed background Bash commands that finish almost instantly losing their output while being reported as completed
 - Fixed the Bash tool's diff of changed files missing a file that the command wrote just before it ended
 - Fixed a mistyped model name, such as `opus-5-5`, telling you to update Claude Code instead of suggesting the model you meant
-- Fixed a case where `NotebookEdit` changed the wrong cell when the notebook changed while a permission prompt was open
-- Fixed a ~0.5s hang after pressing Enter on the `/login` success screen: the dialog now dismisses immediately and the post-login refresh runs in the background
-- Fixed Ctrl+G not opening the external editor while typing an "Other" answer to a question in screen reader mode
-- Fixed Monitor's WebSocket watch failing with "could not resolve" behind a proxy when `CLAUDE_CODE_PROXY_RESOLVES_HOSTS` is set and the machine has no DNS of its own
-- Fixed `claude plugin eval` warnings suggesting `max: 0` for a tool that must not be called, which could never pass
-- Fixed background plugin auto-update not installing a dependency added by the updated plugin version
-- Fixed Cmd+click not opening links in Ghostty over tmux in sessions opened from the agents view
-- Fixed a mod's hot reload in `.claude/skills` missing a file that was deleted just after it appeared, and missing its return
-- Fixed `/rewind` failing with "No files were restored" when restoring code to a checkpoint from before `/branch`
-- Fixed the `/claude-api` skill saying Console web settings don't apply to Managed Agents sessions, and tightened its credential and permission examples
-- Fixed needless permission prompts for read-only commands wrapped in a plain `timeout DURATION`, such as `timeout 30 rg foo`
-- Fixed WebFetch describing claude.ai shared-chat links as empty pages; it now says shared chats can't be read and to paste the conversation instead
-- Fixed Artifact database calls being re-sent to artifacts without a database; errors now say whether republishing helps
-- Fixed a case where artifact database reads that save to a folder (`out_dir`) were refused
-- Fixed detailed beta tracing not presenting `CLAUDE_CODE_CLIENT_CERT` to collectors that require a client certificate
-- Fixed the OpenTelemetry `claude_code.session.count` metric counting Agent SDK `prewarm()` processes that were never claimed; a pre-started process now counts once, when it is claimed
-- Fixed `/clear` killing running commands of background agents, teammates and workflows that keep running, and foreground subagents of background agents and teammates
-- Fixed a terminal whose Claude apps gateway sign-in had expired sending telemetry and managed-settings requests that the gateway refused and logged as `invalid_token`
-- Fixed the agents view appearing to send a reply to a background session waiting on a permission prompt; the reply now stays in the box with a hint to open the session and answer
-- Fixed agent view removing a draft saved by another agent view in the same directory when exiting
-- Fixed a case where agent view came back with another agent view's input text after restarting itself for an update
-- Fixed the agents view preview cutting off long commands, results and status lines without an ellipsis, and dropping `**`, backticks and tags from commands waiting for approval
-- Fixed Claude in Chrome reporting the extension as not connected when the connection dropped mid-action; Claude now checks the page before repeating an action that may have run
-- Fixed Remote Control sessions still showing "Limit reached" on other devices after a usage limit was lifted outside the session
-- Fixed the file card sometimes missing in the Claude iOS app when Claude sent a single file
-- Fixed self-hosted runner sessions failing with no explanation when the server keeps refusing to renew model access: the runner now retries sooner and posts a warning in the session
-- Fixed `/permissions` in cloud sessions replying only that it isn't available; it now says where the session's rules live and how to change them
-- Fixed cloud sessions losing session-scoped deny and ask permission rules, such as those a PermissionRequest hook adds, when the session moves to a new worker
-- Fixed mod hot-reloading turning off for the session when you typed three messages instead of answering its question in a cloud session
-- Fixed background tasks that keep running after `/clear` disappearing from the task list in Claude Code on the web until another task started or ended
-- Fixed hidden commands appearing in the slash command menu of cloud sessions on mobile and web
-- Fixed a case where `/rewind` could restore or delete a file through a directory symlink
-- Fixed a case where a `sed` command could skip the permission check in accept-edits and auto mode
-- Fixed a case where `CLAUDE_CODE_AUTO_MODE_SERVER=1` in managed settings was ignored behind an LLM gateway when the gateway's URL is set only there and server-managed settings can't be fetched
-- Fixed a Bash permission bypass where a crafted environment prefix could hide part of a command from permission checks
-- Fixed a case where deny and ask rules, hook matchers and `disallowedTools` entries written with a claude.ai connector's terminal name (`mcp__claude_ai_Slack`) were ignored in Claude Desktop (takes effect once Claude Desktop includes this version)
-- Fixed a sandbox escape when creating a worktree
-- Fixed self-hosted runners: `--trust-workspace false` now also stops hooks in the repository's settings files and skills from running
-- Fixed a case where idle background sessions started through a shell-exported LLM gateway left the gateway after an update
-- Fixed help links in `/status` and the auto mode billing notice opening only part of the address when they wrap
-- Fixed a case where certificate errors behind a TLS-inspecting proxy persisted when `CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC` was set. With it set, Claude Code now makes a TLS handshake with the configured API host after a certificate failure, through your http:// proxy if one is set; it sends no API request
-- Fixed `claude remote-control` exiting silently with status 0 when a first-run question gets no answer (scripts, services, batch jobs, Ctrl+C); it now says why and exits 1
-- Fixed `claude remote-control` ignoring a piped `y` that has no newline after it at the first-run question; it now counts as a yes
-- Fixed `/rename` reporting plain success when the new name could not be saved to the session transcript; it now warns that the new name may not last
-- Fixed `${CLAUDE_PLUGIN_ROOT}` not being substituted in a plugin-provided `subagentStatusLine` command, which can now reference the plugin's own scripts
-- Fixed `claude plugin update` and `/plugin` "Update now" not installing dependencies added by the new plugin version
-- Fixed subagents being told after compaction to expect a completion notice for background agents they neither started nor took over
-- Fixed a case where a background agent's later report was lost silently: the notification now says it was refused and how to ask for it
-- Improved config saves on Windows: Claude Code waits longer for a file another program has open, so a kill during a save is less likely to leave `~/.claude.json` empty
-- Improved Claude in Chrome after a brief disconnect: it waits up to 6 seconds for the session's own browser to return before picking another
-- Improved Claude in Chrome: `javascript_tool` results of up to 60,000 characters now stay in the conversation instead of being saved to a file
-- Improved `claude purge` and the clean-up of old sessions to retry a folder that could not be fully deleted, and to report it as an error if it remains
-- Improved the refusal for a path outside the working directories on macOS and Windows: when only its letter case differs from a path inside them, the message names that spelling
-- Improved the contrast of faint gray secondary text, such as hints, details in `/stats`, `/model` and `/sandbox`, and rejected-action messages
-- Improved the artifact database error when an update targets a document that does not exist, and when the service pauses repeated refused writes
-- Improved the Claude apps gateway's warnings about a failed upstream call: each now names the upstream, not only its provider
-- Improved the Claude apps gateway's spend limit error: it reads "spend limit reached · resets Dec 1", then `admin.blocked_message` if one is set
-- Improved the `/model` picker: older models are now grouped under a "More models" row instead of being listed after the current ones
-- Improved `/context` at the terminal so the table Claude reads stays short: each list keeps its 10 largest rows, and MCP tools that load on demand share one row per server until they're called
-- Improved `/usage` in cloud sessions: it now links to Settings → Usage on claude.ai in a case where plan limits can't be shown
-- [VSCode] Improved the confirmation for removing a plugin marketplace: it now checks which of its plugins are installed at that moment
-- Changed MCP tasks to work in the terminal without feature-flag fetching (Bedrock, Vertex, Foundry, LLM gateways, `DISABLE_TELEMETRY`); set `CLAUDE_CODE_DISABLE_MCP_TASKS=1` to turn them off
-- Changed auto mode so that a project's settings files or a plugin can no longer switch its server-side check back on once you have switched it off outside the project
-- Changed Monitor's WebSocket watch to follow a rule on every Bash command: a deny refuses it, and under an ask rule an allow on Monitor, bypass mode or auto mode no longer skips the prompt
-- Changed `CLAUDE_CODE_PROXY_RESOLVES_HOSTS` so that settings files can no longer set it where the host manages the network; set it in the process environment
-- Changed a session's exact Bash or PowerShell ask rule to be refused, not asked about, when a broader deny rule covers the command
-- Changed the Bash tool to ask for permission before running `which` with flags outside a lookup/display set
-- Changed `--add-dir` directories to register plugin marketplaces only once that directory's own trust dialog has been accepted
-- Changed nested skill loading: with the Bash sandbox on, skills in `.claude/skills` folders below the starting folder load only if you start Claude Code there or `/cd` there
-- Changed self-paced `/loop` to end when a turn finishes without rescheduling, instead of scheduling a fallback wakeup; set `CLAUDE_CODE_LOOP_KEEPALIVE=1` to keep the old behavior
-- Changed PostToolUse hooks to run, with up to 10 seconds to finish, on tool calls that finish after a new message interrupts the turn
-- Changed what Claude is told after safeguards stop a subagent: retry with a narrower prompt or tell you, instead of doing the work itself
-- Changed cloud sessions to drop session-scoped allow rules at a move to a new worker when their deny and ask rules can't all be kept, so you may be asked again
-- Changed the automatic certificate repair behind a TLS-inspecting proxy: it no longer runs when `ALL_PROXY` is the only proxy variable set. Set `HTTPS_PROXY` to the proxy's http:// URL instead
-- Changed artifact database saves of rows others may have written: each file gets a hidden marker file, and existing files without one, earlier versions' exports among them, are left alone and reported
-- Updated `/claude-api managed-agents-onboard` templates to match the Claude Console: removed Performance tuner, renamed two, and turned off web search and fetch in five whose prompts don't use them
-- Removed `shortcuts_list` and `shortcuts_execute`, which listed and started shortcuts saved in the extension, from Claude Code's built-in Claude in Chrome tools
-- Gateway: Added startup warnings for upstreams that mix AWS GovCloud with other upstreams, and for base URL variables in the gateway's environment
-- Gateway: Added a start-up log warning when managed settings name an Amazon Bedrock guardrail in a header, which the gateway doesn't forward, and no `bedrock` upstream sets a `guardrail`
-- Gateway: Fixed Claude Desktop offering a web search tool that always failed when every upstream is Amazon Bedrock
-- Self-hosted runner: Fixed a runner started with `--use-anthropic-git-proxy` or `--configure-git` registering before a failed startup check made it exit; it now exits first
-- Self-hosted runner: Changed `CLAUDE_RUNNER_CHECKOUT_PATH` so that each repository in a session gets its own folder: a folder name already taken in the session gets `-2`, `-3`, … at the end
-- Self-hosted runner: Removed the end-of-session upload of a session's debug log; a failed session's log stays on the runner host unless `--remove-session-state` is set
-- [VSCode] Fixed prompts over 50,000 characters being cut off silently: the prompt now stays in the chat box with a notice, and a paste over the limit is refused with a notice
-- [VSCode] Fixed a click on the survey or "Report a problem" buttons sending the unfinished prompt
-- [VSCode] Fixed cloud sessions opened from the extension's Web tab bringing back turns that `/clear`, or Retry or Edit of a typed prompt, had removed
-- [VSCode] Fixed a deleted session's file coming back when that session was renamed in the extension
-- [VSCode] Fixed Claude carrying out an unapproved plan after a window reload: a step interrupted in plan mode now stops with a notice when the session comes back in another permission mode
-- [VSCode] Improved the "not signed in" message behind a Claude apps gateway: it now looks like an error and has a Sign in link
-- [VSCode] Changed links in Claude's replies that point at Claude sign-in, connector or API addresses to show as text with the address, instead of opening in the browser
-- [VSCode] Fixed a possible chat panel freeze when a dropped item's path contains a very long run of "/" characters
-- [VSCode] Fixed the `claude-vscode.toggleDictation` command starting dictation in every open Claude view at once; it now acts only in the view you are using, and a second press stops it
-- [VSCode] Fixed the chat panel slowing down while a reply with many unclosed `$$` math fences, each shorter than the last, streams in
-- [VSCode] Improved the chat panel's diagnostics tool for large workspaces: it leaves out files with no problems, returns compact JSON, and accepts an optional minimum severity
-- [Cloud sessions] Fixed scheduled tasks silently dropping a connector named memory: runs now keep it, mounted under that name plus a short suffix
-- [Cloud sessions] Fixed Send now on a waiting message in cloud sessions ending running background agents; they now keep running
-- [Cloud sessions] Improved the stalled-setup warning on self-hosted environments: its link now prefers your organization's default or an environment with a live runner, and names it
-- [Code Review] Changed unlinking a GitHub organization to also turn off its All repositories setting in Code Review; it stays off after you relink until you turn it back on
-- [Claude Tag] Fixed Claude Tag setup blocking launch when the channel list couldn't fully load; admins can now launch without picking a channel
-- [Claude Tag] Added a Claude Tag row to the Models admin page for Enterprise orgs with Claude Tag connected, linking to where its model defaults are managed
-- [Claude Tag] Fixed saving auto mode allow rules in Claude Tag admin settings overwriting another admin's changes; the save is now refused with a message
-
-## 2.1.318
-
-- Added a record of your answer when Claude Code asks to turn on the mods it writes in a session
-- Added `assume_role` on `mantle` upstreams of the Claude apps gateway, for a role in another AWS account and for per-developer AWS cost attribution
-- Added an `effort` option to a mod's `$.model.fork`, so a quick side job can run at `low` whatever effort the session uses; the result reports the effort sent
-- Added the date a stored claude.ai sign-in ends to `claude auth status` (`loginExpiresAt`) and to `claude -p` JSON results (`credential_expires_at`)
-- Added a one-line stderr warning to `claude -p` text output, starting 10 days before a stored claude.ai sign-in ends
-- Fixed `--continue` sometimes losing the earlier conversation after a malformed tool call's retries ran out (regression in 2.1.314)
-- Fixed macOS sessions with many running Bash commands stalling while memory grew
-- Fixed permission prompts being answered by keys typed just after sending a message, or before a slow prompt appeared
-- Fixed `/logout`, `claude auth logout` and `claude mcp remove` reporting success, and changes to trust, consent or MCP settings being dropped with no word, when the config file could not be updated on a shared network home directory
-- Fixed jobs exiting with `Not logged in` when another terminal or host signs in again to the same account and organization on the same home
-- Fixed `claude mcp add` and `remove` writing the config without its lock: they now wait for it or exit 1, though another job's save can still replace a saved server
-- Fixed `claude plugin` commands exiting before a slow token refresh was saved, which could sign you out on the next run
-- Fixed `claude plugin validate` passing a custom-named marketplace file that `claude plugin marketplace add` rejects
-- Fixed stdio MCP servers that exit on the version probe being re-probed on every start; a server that dies in under 3s for its own reason is also pinned to the legacy handshake for 7 days
-- Fixed sessions being refused at startup by an `allowedProviders` list that another login on the same machine had stored
-- Fixed idle compaction replacing a conversation with a reply that was not a summary
-- Fixed the "Now using usage credits" notice reappearing about every 30 seconds while a background subagent is running
-- Fixed custom slash commands that fail, or that only Claude can invoke, printing nothing in `claude -p` and SDK sessions
-- Fixed `claude -p` and Agent SDK sessions reporting success when an API error cut off a reply while a mod hooked `turn.step`
-- Fixed a message sent right after a model change still running after Stop in headless sessions: Stop now cancels or stops it as it would a queued message
-- Fixed a deleted session transcript being re-created with its last prompt when an idle non-interactive session exited
-- Fixed `claude remote-control` hosts, the background daemon and self-hosted runners failing to start new sessions (`spawn ENOENT`) after an update or version cleanup removed the binary of a still-running process
-- Fixed a running Claude Code process owned by another user (for example one left by `sudo claude`) being treated as dead by version cleanup, which could delete its binary
-- Fixed `/remote-control` showing a session as available after a failed connection
-- Fixed `/design revoke` reporting success when the request failed with a 404
-- Fixed a shell command approved after a self-hosted runner or cloud session restart running in the session's start folder, not the folder it was asked in; if that folder can't be entered, it is not run
-- Fixed Claude not being told when an approved connector tool was unavailable after a cloud session restart
-- Fixed cloud sessions being stopped in the middle of a turn when the service refuses uploads for several minutes
-- Fixed variables a `Setup` hook writes to `CLAUDE_ENV_FILE` not reaching the Bash tool in some cloud sessions
-- Fixed the iPhone app showing a cloud session's turn as finished while it kept running, after a response was cut off at a tool call or a refused image or document was removed
-- Fixed a restarted session re-sending a message that failed with an API error, ahead of the newer message waiting behind it
-- Fixed a restarted session dropping its interrupted turn when the restart came right after Claude read a large image or retried a tool call
-- Fixed every connection failing when the `NODE_EXTRA_CA_CERTS` file is empty, not PEM, or starts with a damaged certificate: readable certificates are now used, with a warning on stderr
-- Fixed workflows re-running finished agents when resumed after a usage limit
-- Fixed `/mcp` in cloud sessions counting tools the model can't use; a server's row now shows how many of its tools are available
-- Fixed a duplicate notification when Claude left the status field out of a PushNotification call
-- Fixed the error for a too-large image in a request with more than 20 images always saying the limit was 2000px; it now shows the API's limit
-- Fixed the runtime in background shell details not updating while the dialog is open
-- Fixed a mod's `turn.step` hook making a stopped reply finish as a success in headless runs
-- Fixed retention cleanup leaving a home that only runs `claude -p` with no `~/.claude.json` backup: it now takes a fresh backup before deleting the last good one
-- Fixed the stored login being replaced by an empty file when a network home directory has no room left for data but still takes new files
-- Fixed tokens from `setup-token` being refused at start on machines with `forceLoginOrgUUID`, when the token belongs to a permitted organization
-- Fixed non-interactive launches replacing a `~/.claude.json` that isn't valid JSON with defaults; the start now fails, says how to restore the file, and leaves it as is (anthropics/claude-code#87551)
-- Fixed an empty `~/.claude.json` with no backup being reported as corrupted; Claude Code now starts as it does when the file is missing
-- Fixed the restore command printed for a damaged or missing `~/.claude.json` naming an empty or cut-off backup, or failing on a read-only file
-- Fixed the sign-in failure when a stored claude.ai login reaches its time limit: it now says so, and in `claude -p` names `claude auth login` and `claude setup-token`
-- Improved how `~/.claude.json`, settings files and the stored login survive saves on shared network home directories: they are less often deleted, briefly emptied or replaced by a near-empty or older copy
-- Improved sessions on network file systems to look again when the configuration file is wrongly reported as missing, so fewer start without your MCP servers and trusted folders
-- Improved MCP tool errors: a call made before the tool is loaded now returns its input schema
-- Improved the reliability of git commits and pull request creation when the Bash tool runs macOS's built-in `/bin/bash`
-- Improved "Ask your admin for more usage" in the usage limit menu to send the request in one step
-- Improved how fast remote sessions reconnect after a pause or sleep
-- Improved You should know toasts to say "try again" instead of "press 2", which only works in the terminal
-- Improved auto-update reliability: a brief network failure while verifying a release is now retried right away instead of waiting for the next check
-- Improved unattended runs (`claude -p`, SDK apps) to stop rewriting `~/.claude.json` on every run when nothing in it changed
-- Changed Claude Code to no longer install or update the IDE extension when started in an IDE terminal; use `/ide` from an outside terminal or your editor's extensions view
-- Changed subagents to stop instead of switching models when "Switch models when a message is flagged" is set to "Ask each time"
-- Changed background subagents to move a shell command to the background after 3 minutes on all providers, so the prompt cache doesn't expire while it runs
-- Changed subagent progress summaries on Bedrock, Vertex, Foundry, or with telemetry off: on a cold prompt cache, one can now wait up to 5 minutes for the subagent's pending response
-- Changed what a mod attaches at `prompt.submit` to stay in the user's turn rather than go out as a system message
-- Changed `deniedMcpServers` URL entries to also block Anthropic-provided servers whose upstream URL matches, and connectors in cloud sessions and on self-hosted runners, where the session is given the connector's own URL; otherwise deny a connector by name
-- Changed the `/permissions` rule details, built-in rules and delete confirmation views to use the standard dialog; pressing Ctrl+C twice there now goes back or cancels instead of quitting
-- Changed `/claude-api managed-agents-onboard` to give a new agent's built-in tools, and a quickstart template's MCP tools, the `auto` permission policy ("Judge risky actions") by default, matching the Claude Console; say "run without asking" to opt out
-- Removed the 2.1.288 fix that kept the model's earlier thinking when resuming a conversation started on 2.1.286 or earlier; that thinking can now be dropped
-- Gateway: Added a log warning when the Google access token from a federation (`external_account`) credentials file is about to expire
-- Gateway: Improved the log hints about `listen.trusted_proxies`: they now say to list only a proxy that adds the connecting address to `X-Forwarded-For` itself
-- Gateway: Improved the warning when AWS CountTokens fails on Amazon Bedrock: it says Claude Code, not the gateway, counts after the 501, and points at IAM only when AWS denies access
-- Self-hosted runner: Added `CLAUDE_RUNNER_SPAWN_REASON` to the orchestrator's spawn-runner hook environment: why Anthropic sent the request (e.g. `runner_lost`, `resumed`); unset when none was sent
-- Self-hosted runner: Added a startup warning when `--release-idle-session-min` is the last argument with no value (still ignored) or has a value of only spaces (still read as `0`)
-- Self-hosted runner: Changed the orchestrator's log lines: `ok session=…` now prints at every log level on stdout (was debug only, stderr) with `reason=…` after `jti=…`, and `nack session=…` ends its fields with `reason=…` after `retryable=…`; update scripts that match `retryable=true:` or `retryable=false:`
-- Remote Control: Fixed a misleading "spawn error: ENOENT" when a session's working folder is missing; the error now names the folder
-- Remote Control: Improved the title a fork of a terminal fork is created with when the app doesn't set one: "Name (fork 2)"
-- [VSCode] Fixed a window whose sign-in the organization's settings refuse starting a new Claude Code process in the background every minute
-- [VSCode] Fixed a long word in the chat panel's error banner pushing its close button out of view
-- [VSCode] Improved the sign-in screen to show what Claude Code printed when its sign-in status check fails
-- [Cloud sessions] Added a No repository option: a cloud session on an Anthropic-hosted environment can now start without picking a repository
-- [Cloud sessions] Added the usual Chrome names to cloud sessions, so tools other than Playwright can find the built-in Chromium through google-chrome and CHROME_PATH
-- [Cloud sessions] Added a New session button to the card shown when a cloud session's environment was deleted, where the message box is hidden
-- [Cloud sessions] Fixed reading GitHub Actions logs in cloud sessions: `gh run view --log` and `gh api` log requests now get the log in most environments, not an unreachable redirect
-- [Cloud sessions] Improved most Create PR failure messages in cloud and Remote Control sessions: they now give the reason or a link to GitHub instead of saying Try again
-- [Cloud sessions] Changed connector search results to tell Claude that the search covers only part of the connector directory
-- [Remote Control] Fixed side-by-side checkouts of one repository looking identical in the environment menu's Remote Control rows; each now shows its own folder name
-- [Claude Tag] Fixed keyboard focus and screen reader announcements in Claude Tag admin setup; pressing Escape in the connect form no longer also closes the Add dialog
-- [Code Review] Improved the Code Review analytics page to retry once after a server or network failure, then show a Try again banner instead of empty cards
-
-## 2.1.317
-
-- Added a warning to `/schedule` when a new cloud scheduled task gets connectors you did not ask for, with how to remove them
-- Added a check that asks before a web or shell tool call sends your account email address to the network
-- Added `onFailure: "block"` for Agent SDK hook callbacks, so a callback that fails blocks the action instead of letting it run
-- Added a notice in Claude Desktop's Code tab when your organization's remote managed settings haven't loaded for the session, and another once they do
-- Added a notice when auto mode's check has no answer for a subagent's tool call, which used to leave nothing in the main view
-- Added `anthropic.plan`, `anthropic.seat_type`, `anthropic.provider` and `anthropic.custom_base_url` to OTel metrics, events and spans
-- Added a cost report to the Claude apps gateway admin API, `GET /v1/organizations/analytics/cost`, for reading past spend over a date range in total, per developer, per day or per IdP group
-- Added a daily record of each developer's IdP groups on Claude apps gateways with `admin:` set, kept for `admin.identity_retention_days`, which the cost report groups by
-- Added `CLAUDE_CODE_DISABLE_NESTED_SESSION_ID`: set it to `1` on a self-hosted runner to have `claude -p` run inside a session use that session's ID and transcript, as in earlier versions
-- Fixed project and local MCP servers disconnecting after the first turn in some Claude desktop sessions
-- Fixed auto mode failing every turn when an LLM gateway set as the base URL answers 403 or 422 to its server-side safety check (a 403 with an apiKeyHelper is unchanged)
-- Fixed `claude auth status` exiting before a slow token refresh was saved, which could sign you out on the next run
-- Fixed a project's `effortLevel` setting being ignored by sessions that an app starts ahead of time and then opens in the project, such as new sessions in the desktop app's Code tab
-- Fixed `claude --from-pr` reporting "No conversations found" in projects with many sessions when the linked session was older than the first page
-- Fixed the second of two simultaneous permission prompts showing no file path or command on claude.ai and the mobile apps
-- Fixed Remote Control and SDK hosts offering "don't ask again" on a mod's tool calls
-- Fixed session titles being lost in cloud and SDK sessions when a new message or Stop arrived while the title was generating
-- Fixed self-paced `/loop` wakeups sometimes not being scheduled when Claude left a field out of its request
-- Fixed auto mode in cloud sessions stopping for approval when the Artifact tool uploaded, wrote to a database or saved a file through the outputs folder
-- Fixed skills synced from claude.ai being lost or downloaded again every ten minutes when they can't be written to disk
-- Fixed `/schedule` leaving a cloud scheduled task's next run time and link out of its results after creating or updating it
-- Fixed screen readers speaking a running subagent's elapsed time and token count on every change in screen reader mode
-- Fixed a region or network block (HTTP 403) being shown as a sign-in failure; the error now explains the block
-- Fixed Claude saying a working claude.ai connector needed authorization or had failed in cloud sessions when a synced plugin included the same server
-- Fixed `claude -p` exiting 0 when a full disk or quota lost its transcript or ~/.claude.json writes; it now prints an error and, in text and json output, exits 1. Full NFS exports may be missed
-- Fixed edits to settings files made in the first second or so after launch not taking effect until a settings file changed again
-- Fixed old transcripts not being cleaned up on machines where some runs skip cleanup, such as runs using `--setting-sources`
-- Fixed deleted agent team inboxes being re-created by a teammate's late message
-- Fixed a re-created agent teammate being removed from its team by an earlier shutdown approval
-- Fixed stored scheduled tasks being impossible to list or delete after scheduled tasks were turned off
-- Fixed Claude deleting your most recently updated `/team-onboarding` guide when asked to delete one without naming which
-- Fixed Claude saying a `/team-onboarding` guide was deleted when the server refused the delete
-- Fixed the Claude apps gateway hiding Amazon Bedrock's "Input is too long." error, which left sessions failing every turn with "upstream rejected the request" instead of compacting
-- Fixed self-hosted runner sessions losing recent turns or the whole conversation when restarted while a plan waited for approval
-- Fixed "Prompt is too long" after automatic compaction in sessions whose very large CLAUDE.md changed since it was last sent
-- Fixed high memory use and slow startup in headless sessions with many plugins that register commands
-- Fixed stdio MCP servers receiving an empty `AWS_BEARER_TOKEN_BEDROCK` when their env config sets it to empty; the variable is now unset, so the server can use the machine's own AWS credentials
-- Fixed API requests failing with "unable to get local issuer certificate" behind some TLS-inspecting proxies after a root certificate renewal
-- Fixed very long conversations losing their earlier summary when compaction had to shorten its own request
-- Fixed a PDF's own metadata being able to make Read and @-mentions under-count its pages
-- Fixed `DISABLE_PROMPT_CACHING_OPUS` and `DISABLE_PROMPT_CACHING_SONNET` having no effect on `[1m]`, other-region and undated spellings of the default model
-- Fixed `/artifacts` and the Artifact tool's shared list showing no shared artifacts when you have 200 or more of your own
-- Fixed Claude treating partial Grep and Glob results as complete when a search hit its time limit
-- Fixed OpenTelemetry exports to an `https://` endpoint through a proxy never being sent when they started while another export was still in progress
-- Fixed a flood of connection attempts to a proxy that blocks (HTTP 403) OpenTelemetry exports to an `http://` endpoint
-- Fixed OpenTelemetry exports hanging indefinitely behind a proxy that never answers; they now time out after 10 seconds, or `OTEL_EXPORTER_OTLP_TIMEOUT` up to 30 seconds
-- Fixed resumed sessions telling Claude again about a file change it already knew about
-- Fixed Claude sometimes not using a built-in tool in a resumed session after an earlier call failed because the tool was switched off
-- Fixed `/remote-control` answering "Unknown command" instead of saying that Remote Control is turned off by the `disableRemoteControl` setting
-- Fixed agent team teammates in tmux or iTerm2 panes starting in auto mode when the lead session was in manual mode
-- Fixed a background session sometimes losing a just-made change of permission mode when it was upgraded or retired
-- Fixed Ctrl+C stopping all running background agents when pressed to clear typed text at the prompt
-- Fixed /feedback showing "Enter to confirm" while a report is being sent
-- Fixed child processes of a stopped shell command sometimes being sent SIGTERM twice, which could make some programs skip their cleanup
-- Fixed `claude -p` run inside a cloud or self-hosted runner session sharing that session's ID: it wrote into the session's transcript, and a restart could resume the wrong conversation
-- Fixed `claude -p` run inside a cloud or self-hosted runner session generating a title of its own and sending it to that session
-- Improved the error shown on Microsoft Foundry when Azure credentials can't be loaded: it now says to check or refresh them, and reports as `cloud_credential_error`
-- Improved `/design-sync` to say up front when your design system has moved to Claude, and stop before building instead of failing at upload
-- Improved the startup error when a required Claude apps gateway can't be reached: it points to the network instead of a sign-in, and says when the gateway's TLS certificate can't be verified
-- Improved the "Resume this session with" hint shown at exit to repeat the flags you launched with (for example `--chrome --debug`) ahead of `--resume`
-- Improved how self-hosted runners recover from server errors: after a 5xx other than 501 or 529, a runner's next poll now opens a new connection instead of reusing the one that failed
-- Improved how self-hosted runner sessions recover from server errors: after a 5xx other than 501 or 529, a session now opens new connections instead of reusing the one that failed
-- Improved how self-hosted runner sessions recover when connections stop answering: after a heartbeat gets no answer, a session now opens new connections instead of trying each idle one in turn
-- Changed SendMessage so a message to a running background agent arrives earlier: its running command moves to the background, without being stopped
-- Changed subagents and teammates on a different model from the main conversation to use that model's saved effort level or its default, instead of the session's effort level
-- Changed exit to skip the "Background work is running" prompt for plugin monitors
-- Changed the built-in `plugin-authoring` skill to offer once, after a mod you built works, to help share the mod
-- Removed the Read tool's "file unchanged since your last Read" stub: reading an unchanged file again returns its content
-- Windows: Fixed every tool call being refused on some volumes where the native path lookup fails; the working-directory check now compares the folder's identity instead
-- Windows: Fixed the session scratchpad and other temporary paths growing with your project's path length in sessions not started by Claude Desktop, which made repositories cloned into them hit the 260-character path limit
-- Gateway: Fixed the status line and `/usage` showing a developer's own spend limit as 100% used after their group's pooled budget ran out
-- Self-hosted runner: Fixed Claude not seeing the interrupted tool call when a session moves to a new runner and the turn is older than `CLAUDE_CODE_RESUME_INTERRUPTED_TURN_MAX_AGE_MS`
-- Self-hosted runner: Fixed an MCP server that was switched off coming back on after the session moved to a new machine, when the session service had refused to save the switch
-- Remote Control: Improved fork names when the app doesn't set one: a long name keeps its "(fork)" ending, and in sessions started with `claude remote-control` a fork of "Name (fork)" is "Name (fork 2)"
-- [VSCode] Fixed forked conversations dropping messages: only one of the tool calls Claude ran in parallel was kept, and the last messages a compaction kept were lost, which could leave Claude's answer without the question it answered
-- [VSCode] Fixed a message being lost when Claude did not finish starting in time: the extension now starts Claude once more before showing the error
-- [VSCode] Fixed the sign-in screen opening when a request is blocked for its region or network
-- [VSCode] Fixed the Account panel showing the plan name with a lower-cased second word
-- [VSCode] Fixed file links in a Claude tab opening on top of the chat instead of in another editor group
-- [VSCode] Fixed attachment chips, menus, banners and dialogs in the Claude panel staying small when `chat.fontSize` is raised
-- [VSCode] Fixed `ultrathink` not raising effort for its turn or showing its rainbow when telemetry is off
-- [Cloud sessions] Added a link card to cloud sessions, so you can open or decline a link an MCP server asks you to visit instead of the request going unseen
-- [Cloud sessions] Changed the organization environment dialog in admin settings to the personal dialogs' short layout: each section opens from a row, and unsaved input asks before closing
-- [Cloud sessions] Fixed adding a network secret for a host that already has one silently replacing it; the Add secret form now refuses and points you to the existing secret
-- [Cloud sessions] Fixed new scheduled tasks ignoring your organization's default environment: the form now starts on the one an admin chose instead of the Anthropic-hosted default
-- [Remote Control] Fixed the next message to an idle session going unanswered after you restart `claude remote-control`, when you sent it within a minute of your previous message
-- [Claude Tag] Changed newly pasted artifact links in Slack to show a simpler card with an Open button that opens the artifact in Claude, instead of Slack's side panel
-
-## 2.1.316
-
-- Added `CLAUDE_CODE_DISABLE_ULTRATHINK`, which turns the `ultrathink` keyword off
-- Added pooled group budgets to the Claude apps gateway: one monthly budget that a group's members share, on top of each member's own limit, set with `pooled_budget` on the spend limits admin API
-- Added `CLAUDE_CODE_DISABLE_LOOPED_CROSS_CERT_DROP` to keep system cross-certificates that certify each other in a loop, for servers whose private CA needs one
-- Added `CLAUDE_CODE_SUBAGENT_EFFORT` to set the effort level subagents run at when nothing else names one, instead of inheriting the session's
-- Added `managed.policy_mode: layered` to the Claude apps gateway: every policy that matches a developer applies, each merged over the ones listed below it, not only the first
-- Added `guardrail.input_tagging` on Claude apps gateway Bedrock upstreams, which wraps prompts in the input tags that an Amazon Bedrock guardrail's prompt attacks filter needs; `all_messages_and_system` also tags the system prompt
-- Deprecated fast mode for Opus 4.8 as of October 30, 2026; it will be removed on November 30, 2026. After removal, fast mode requests on Opus 4.8 return an error and do not fall back to standard Opus 4.8. Migrate to Opus 5.5 to keep the speedup
-- Fixed shell commands being left running on macOS and Linux when Claude Code exits by itself, for example when credentials are refused or a cloud session is archived
-- Fixed bash aliases with line breaks in their value (except in Git Bash), and functions whose names start with a dash, being garbled or lost in the Bash tool's shell
-- Fixed bash scripts started from the Bash tool stopping after their first command when `SHELLOPTS` is exported
-- Fixed PowerShell hooks not blocking on exit code 2 when the command begins with a type cast, `param`, `using` or an attribute
-- Fixed some network requests hanging when a compressed response was cut off or corrupted
-- Fixed `sonnet`, `opus` and `haiku` on Vertex AI and Amazon Bedrock showing an error mid-session instead of switching to an older model when the newest is not yet available to the account or region
-- Fixed the Claude apps gateway not checking every model a request names against `availableModels`, `deniedModels` and `models`; a request that names a blocked model now gets a 400 naming the field
-- Fixed `claude auth login` refusing to run where managed settings require a Claude apps gateway; in a terminal it now shows the gateway sign-in
-- Fixed `--restricted` sessions uploading files from outside the working directories when a Read allow rule covered them
-- Fixed prompts containing invisible characters needing a second Enter to send; plain prompts now send cleaned on the first Enter, and commands still wait for review
-- Fixed sub-agents that inherited a parent sub-agent's model moving to the main model when a background job or message woke them
-- Fixed a managed `autoMode.allow` list without `"$defaults"` getting the built-in exceptions back from a host app's `--settings`, a first rule added in `/permissions`, or `/auto-mode-setup`
-- Fixed cloud sessions and cloud scheduled tasks not being marked as failed when auto mode stopped a turn because the server returned no safety verdict
-- Fixed `claude -p` text output sometimes not saying why auto mode stopped a turn when a background agent was still running
-- Fixed `CLAUDE_CODE_AUTO_MODE_SERVER=1` being ignored in sessions started by a host application (such as Claude Desktop) behind a proxy or LLM gateway with experimental betas turned off
-- Fixed plugin MCP `headersHelper` scripts receiving a corrupted `CLAUDE_PLUGIN_ROOT` and server URL when a credential-named environment variable was set to a switch value such as `1`
-- Fixed the SDK `register_repo
+- Fixed a case where `Notebo
