@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Elegant-review の Phase 順序・signal・verdict 導出を検査する補助モジュール。
 
 CLI と 30 paradigm の構造検査は validate-paradigm-coverage.py が所有し、本 module は

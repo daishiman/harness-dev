@@ -1,7 +1,9 @@
 # notion-submit-improvement.py 実行契約 (実装照合版)
 
+設定・失敗の調査が必要なときだけ読む実行契約。path はこの skill のディレクトリを起点にする。
+
 本文 (SKILL.md) の要約に対する詳細。**`scripts/notion-submit-improvement.py` と
-`plugins/harness-creator/scripts/notion_config.py` の実装を正とし、乖離を見つけたら
+`scripts/notion_config.py` の実装を正とし、乖離を見つけたら
 本ファイルを先に直してから SKILL.md 本文を同期する。**
 
 ## 1. 解決順 (実装準拠)
@@ -15,7 +17,7 @@
 **CLI 引数で token / DB ID を渡す経路は存在しない** (`argparse` に該当オプションが無い)。
 「CLI > env > config > Keychain」と書くと実装に無い経路を案内することになるので禁止。
 
-上表の解決順は散文の宣言ではなく `lint-feedback-protocol.py` R8 (5) が `get_token` / `get_db_id` を
+上表の解決順は散文の宣言ではなく repo の build_validation.lint_feedback_protocol R8 (5) が `get_token` / `get_db_id` を
 **実際に呼んで返り値で** pin している。順序を入れ替えたら lint が落ちるので、実装を変えるならここも同時に直す。
 
 ### token の受け渡し (curl への transport)

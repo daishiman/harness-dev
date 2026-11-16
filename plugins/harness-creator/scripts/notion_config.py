@@ -26,7 +26,7 @@ Notion DB ID / API キー指定を解決するための唯一の経路。単独 
   1. env `NOTION_CONFIG_PATH` が指すファイル (最優先・明示。不在なら fail-closed)
   2. repo-root (`.git` AND harness marker を持つ親) 直下の `.notion-config.json`
      (monorepo / 複数 repo 共有時)
-  3. plugin-root (`$CLAUDE_PLUGIN_ROOT`、無ければ本ファイルの parents[1]) 直下の
+  3. plugin-root (自 plugin を指す環境変数、無ければ本ファイルの manifest 祖先) 直下の
      `.notion-config.json` (単独 install: repo-root marker 不在環境のフォールバック)
   4. plugin-root 直下の `notion-config.fixed.json`
      (単独 install: 固定 Notion ヒアリングシート DB への既定出力先)
@@ -62,11 +62,13 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 from typing import Optional
 
+sys.dont_write_bytecode = True
+
 from tenant_runtime import TenantConfigError, credential_ref
 
 CONFIG_FILENAME = ".notion-config.json"
 BUNDLED_CONFIG_FILENAME = "notion-config.fixed.json"
-SETUP_DOC_REL = "references/notion-per-repo-setup.md (harness-creator or skill-intake plugin)"
+SETUP_DOC_REL = "references/notion-per-repo-setup.md (owner plugin または run-skill-feedback skill)"
 
 
 REPO_MARKERS = (".notion-config.json", ".notion-config.example.json", "marketplace.json")
@@ -138,10 +140,17 @@ def _hc_env_root() -> Optional[Path]:
 
 def plugin_root() -> Path:
     """単独 install 時の config 探索アンカー。`$HC_ROOT` / `$CLAUDE_PLUGIN_ROOT`
-    (自 plugin を指す場合のみ) 優先、無ければ本ファイル (plugins/<plugin>/scripts/)
-    の親 = plugin root。repo-root marker が存在しない単独 install 環境でも
+    (自 plugin を指す場合のみ) 優先、無ければ本ファイルの manifest 祖先。
+    skill/scripts/ に同梱されても同じ owner plugin を指す。
+    manifest 不在の旧配置だけ本ファイルの親の親へ戻る。repo-root marker が無くても
     .notion-config.json を解決可能にする。"""
-    return _hc_env_root() or Path(__file__).resolve().parents[1]
+    explicit = _hc_env_root()
+    if explicit:
+        return explicit
+    for parent in Path(__file__).resolve().parents:
+        if _manifest_name(parent):
+            return parent
+    return Path(__file__).resolve().parents[1]
 
 
 def find_config_path(start: Optional[Path] = None) -> Optional[Path]:

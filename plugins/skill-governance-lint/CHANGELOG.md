@@ -1,5 +1,17 @@
 # 変更履歴
 
+## 0.1.28 — 2026-11-16
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
+## 0.1.27 — 2026-11-16
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
+## 0.1.26 — 2026-11-16
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## 0.1.25 — 2026-11-14
 
 - lint-skill-description.py に `--skill DIR|SKILL.md` を足した。run-build-skill Step 4 は生成した skill だけを検査し、同じ plugin の既存 skill の違反で新規 build が止まらなくなる。指定した path に SKILL.md が無ければ違反として返す。

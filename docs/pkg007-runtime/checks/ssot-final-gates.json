@@ -1,0 +1,208 @@
+{
+  "status": "pass",
+  "gates": [
+    {
+      "name": "ssot-regression",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 9.68,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/scripts-plugins/test_harness_creator__validate_plugin_package.py",
+        "tests/scripts-plugins/test_harness_creator__render_combinators.py",
+        "tests/scripts-plugins/test_harness_creator__render_combinators_r4.py",
+        "tests/scripts-root/test_root__lint_vendored_ssot.py",
+        "tests/scripts-root/test_scripts__lint_feedback_protocol.py",
+        "tests/test_render_combinators_feedback_contract.py",
+        "tests/test_feedback_runtime_bundle.py",
+        "tests/scripts-root/test_scripts__notion_submit_improvement.py",
+        "tests/scripts-plugins/test_harness_creator__notion_config_r4.py",
+        "tests/scripts-plugins/test_skill_intake__notion_config.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-regression.log"
+    },
+    {
+      "name": "ssot-ubm-doc",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.673,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "plugins/ubm-goal-setting/tests/test_heading_references.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-ubm-doc.log"
+    },
+    {
+      "name": "ssot-briefing-doc",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.798,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "plugins/system-briefing-book/tests/test_single_source.py::test_code_names_in_docs_exist_in_scripts"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-briefing-doc.log"
+    },
+    {
+      "name": "ssot-upstream-pin",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.809,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_upstream_pins.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-upstream-pin.log"
+    },
+    {
+      "name": "ssot-cache-static",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.69,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "plugins/dev-graph/tests/test_no_bytecode_in_harness.py::test_every_sibling_import_comes_after_the_bytecode_flag"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-cache-static.log"
+    },
+    {
+      "name": "ssot-unit",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.578,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/scripts-plugins/test_harness_creator__lint_ssot_duplication.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-unit.log"
+    },
+    {
+      "name": "ssot-strict",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.192,
+      "argv": [
+        "python3",
+        "plugins/harness-creator/skills/run-build-skill/scripts/lint-ssot-duplication.py",
+        "--plugin-dir",
+        "plugins/harness-creator",
+        "--strict"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-strict.log"
+    },
+    {
+      "name": "ssot-frontmatter",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.041,
+      "argv": [
+        "python3",
+        "plugins/skill-governance-lint/scripts/lint-script-frontmatter.py",
+        "plugins/harness-creator/skills/run-build-skill/scripts"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-frontmatter.log"
+    },
+    {
+      "name": "ssot-vendor",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.116,
+      "argv": [
+        "python3",
+        "scripts/lint-vendored-ssot.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-vendor.log"
+    },
+    {
+      "name": "ssot-release",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.282,
+      "argv": [
+        "python3",
+        "scripts/build-plugin-release.py",
+        "--check"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-release.log"
+    },
+    {
+      "name": "ssot-guard",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.833,
+      "argv": [
+        "python3",
+        "scripts/guard-change-category.py",
+        "--base",
+        "origin/main",
+        "--report"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-guard.log"
+    }
+  ],
+  "harness_creator_version": "1.4.68",
+  "dev_graph_version": "0.1.36",
+  "vendored_pairs": 352,
+  "targeted_regression_passed": 523,
+  "ssot_tests_passed": 55,
+  "criteria_passed": 5,
+  "bytecode_scope": "sys.dont_write_bytecode=True代入だけ追加、他の業務処理AST同一",
+  "proof_boundary": "正本/copyがともに入力範囲内、VENDORED_PAIRS登録済み、通常file、経路symlink無し、byte一致のみ。未知copy/不一致/正本scope外/registry無しは従来検出。schema/閾値不変更。",
+  "recovered_collection_issue": "複数pluginを同一pytestへ渡すとconftestモジュール名が衝突したため、CIと同じ個別processで再実行し全件成功。失敗原logも保持。",
+  "versions": {
+    "skill-governance-hooks": "0.1.21",
+    "prompt-creator": "2.1.19",
+    "contract-generator": "0.1.21",
+    "extract-system-blueprint": "0.2.22",
+    "x-longpost-creator": "1.3.12",
+    "slide-report-generator": "0.1.38",
+    "skill-governance-secrets": "0.1.21",
+    "skill-governance-automation": "0.1.21",
+    "flyer-studio": "1.3.6",
+    "skill-governance-config": "0.1.20",
+    "plugin-dev-planner": "0.1.30",
+    "ubm-goal-setting": "0.9.6",
+    "skill-governance-migration": "0.1.21",
+    "skill-governance-lint": "0.1.28",
+    "system-dev-planner": "0.1.24",
+    "dev-graph": "0.1.36",
+    "system-briefing-book": "0.2.16",
+    "system-spec-harness": "0.1.30",
+    "spec-drift-guardian": "0.1.20",
+    "harness-creator": "1.4.68",
+    "skill-intake": "0.1.28",
+    "guide-doc-generator": "0.1.31",
+    "skill-governance-adapters": "0.1.20"
+  },
+  "collection_log_normalization": "失敗原stdout/stderrは情報を保ち、行末空白だけ除去してdiff書式を統一。"
+}

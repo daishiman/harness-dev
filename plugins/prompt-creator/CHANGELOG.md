@@ -26,6 +26,18 @@
 - `R1-interview.md` の裸 TODO 残存 (validate-prompt FAIL) と、open_questions 処遇の矛盾 (TODO(human) 保持 vs auto-resolve) を「AI 最尤補完+仮定記録、TODO(human) 生成禁止」へ統一。
 - `parse_known_args` による未知引数黙殺を 5 scripts で failfast 化。
 
+## [2.1.19] - 2026-11-16
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
+## [2.1.18] - 2026-11-16
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
+## [2.1.17] - 2026-11-16
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## [2.1.16] - 2026-11-02
 
 - build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。

@@ -160,7 +160,7 @@ source-tier: internal
 
 evaluator は一度の採点で完結する read-only 工程。ループは回さないが、**採点の網羅性をチェックリスト**で担保する（全 rubric 項目を評価したか / findings にエビデンスがあるか / score が算出済みか）。
 
-> **P8 整合**: 評価器（`assign-*`）は read-only 単発で**ループしない**。評価→改善の**ループ**は `feedback_contract` / content-review が回す（評価器自身ではない）。内/外ループの正本説明は `content-review-protocol.md` の「ループ分類」表を参照。
+> **P8 整合**: 評価器（`assign-*`）は read-only 単発で**ループしない**。評価→改善の**ループ**は `feedback_contract` / content-review が回す（評価器自身ではない）。内/外ループの説明は [harness-creator 正本のループ分類](https://github.com/daishiman/harness-dev/blob/main/plugins/harness-creator/skills/run-build-skill/references/content-review-protocol.md#ループ分類) を参照。
 
 有界反復の数値正本（SSOT）は `run-elegant-review/references/convergence-policy.json` の `loop_bounds`。本ファイルの goal-seek `max_loops` 既定 5 は `loop_bounds.goal_seek_inner`（手順反復＝AI が文脈から手順を都度導出する内ループの上限）であり、content-review の inner 評価→改善 **再評価** 上限 3（`inner_loop.max_iterations`）とは**別ループ**（同名 'inner' の 3 と 5 を混同しない）。ここでは参照のみ（重複宣言しない）。
 

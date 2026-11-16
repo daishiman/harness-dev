@@ -1,0 +1,535 @@
+{
+  "schema_version": "1.0",
+  "ran_at": "2026-11-16T03:47:34.563489+00:00",
+  "beads_ids": [
+    "harness-zb7q"
+  ],
+  "graph_node_id": "task-pkg007-runtime",
+  "mvp": true,
+  "status": "pass-required-minimal-gates",
+  "publication": "draft-ready-not-merged",
+  "gates": [
+    {
+      "name": "targeted-regression-10files",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 8.705,
+      "argv": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/scripts-plugins/test_harness_creator__validate_plugin_package.py",
+        "tests/scripts-plugins/test_harness_creator__render_combinators.py",
+        "tests/scripts-plugins/test_harness_creator__render_combinators_r4.py",
+        "tests/scripts-root/test_root__lint_vendored_ssot.py",
+        "tests/scripts-root/test_scripts__lint_feedback_protocol.py",
+        "tests/test_render_combinators_feedback_contract.py",
+        "tests/test_feedback_runtime_bundle.py",
+        "tests/scripts-root/test_scripts__notion_submit_improvement.py",
+        "tests/scripts-plugins/test_harness_creator__notion_config_r4.py",
+        "tests/scripts-plugins/test_skill_intake__notion_config.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-targeted-regression-10files.log"
+    },
+    {
+      "name": "pkg007-all23",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 4.393,
+      "argv": [
+        "python3",
+        "scripts/validate-plugin-packages.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-pkg007-all23.log"
+    },
+    {
+      "name": "feedback-strict",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.183,
+      "argv": [
+        "python3",
+        "scripts/lint-feedback-protocol.py",
+        "--strict"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-feedback-strict.log"
+    },
+    {
+      "name": "vendored-ssot",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.096,
+      "argv": [
+        "python3",
+        "scripts/lint-vendored-ssot.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-vendored-ssot.log"
+    },
+    {
+      "name": "release-parity",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.605,
+      "argv": [
+        "python3",
+        "scripts/build-plugin-release.py",
+        "--check"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-release-parity.log"
+    },
+    {
+      "name": "c02-new-5nodes",
+      "result": "pass",
+      "graph_revision": 23,
+      "registered_count": 5,
+      "receipts": [
+        ".dev-graph/state/receipts/node-r000021-add.json",
+        ".dev-graph/state/receipts/node-r000022-update.json",
+        ".dev-graph/state/receipts/node-r000023-update.json"
+      ],
+      "readiness": "5 complete",
+      "status_boundary": "draft/pending maintained"
+    },
+    {
+      "name": "strict-graph",
+      "result": "pass",
+      "exit_code": 0,
+      "argv": [
+        "python3",
+        "-B",
+        "plugins/dev-graph/scripts/validate-graph-schema.py",
+        "--graph",
+        ".dev-graph/state/graph.json",
+        "--repo-root",
+        ".",
+        "--require-canonical-envelope",
+        "--strict-artifact-readiness"
+      ],
+      "log": "docs/pkg007-runtime/strict-graph.json",
+      "violations": 0
+    },
+    {
+      "name": "receipt-sha-and-secrets",
+      "result": "pass",
+      "log": "system-spec/pkg007-runtime/checks/receipt-sha-secrets.json",
+      "method": "receipt evidence SHA、node最新writer receipt照合、既知token/鍵prefix検査"
+    },
+    {
+      "name": "change-category-guard",
+      "result": "pass",
+      "exit_code": 0,
+      "p1_approved": 46,
+      "log": "docs/pkg007-runtime/checks/final-change-category-guard.json",
+      "note": "既存ユーザー承認を46個のversion-only manifestのSHAに束縛。policy/cooldownルールは変更しない。"
+    },
+    {
+      "name": "naming-unit",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 3.392,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/scripts-root/test_root__lint_script_naming.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-naming-unit.log"
+    },
+    {
+      "name": "naming-all",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.773,
+      "argv": [
+        "python3",
+        "scripts/lint-script-naming.py",
+        "--report"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-naming-all.log"
+    },
+    {
+      "name": "approval-guard",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.42,
+      "argv": [
+        "python3",
+        "scripts/guard-change-category.py",
+        "--base",
+        "origin/main",
+        "--report"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-approval-guard.log"
+    },
+    {
+      "name": "metadata-regression",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 8.962,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/scripts-plugins/test_harness_creator__validate_plugin_package.py",
+        "tests/scripts-plugins/test_harness_creator__render_combinators.py",
+        "tests/scripts-plugins/test_harness_creator__render_combinators_r4.py",
+        "tests/scripts-root/test_root__lint_vendored_ssot.py",
+        "tests/scripts-root/test_scripts__lint_feedback_protocol.py",
+        "tests/test_render_combinators_feedback_contract.py",
+        "tests/test_feedback_runtime_bundle.py",
+        "tests/scripts-root/test_scripts__notion_submit_improvement.py",
+        "tests/scripts-plugins/test_harness_creator__notion_config_r4.py",
+        "tests/scripts-plugins/test_skill_intake__notion_config.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-metadata-regression.log"
+    },
+    {
+      "name": "metadata-frontmatter",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.073,
+      "argv": [
+        "python3",
+        "plugins/skill-governance-lint/scripts/lint-script-frontmatter.py",
+        "plugins/skill-governance-hooks/skills/run-skill-feedback/scripts",
+        "plugins/prompt-creator/skills/run-skill-feedback/scripts",
+        "plugins/contract-generator/skills/run-skill-feedback/scripts",
+        "plugins/extract-system-blueprint/skills/run-skill-feedback/scripts",
+        "plugins/x-longpost-creator/skills/run-skill-feedback/scripts",
+        "plugins/slide-report-generator/skills/run-skill-feedback/scripts",
+        "plugins/skill-governance-secrets/skills/run-skill-feedback/scripts",
+        "plugins/skill-governance-automation/skills/run-skill-feedback/scripts",
+        "plugins/flyer-studio/skills/run-skill-feedback/scripts",
+        "plugins/skill-governance-config/skills/run-skill-feedback/scripts",
+        "plugins/plugin-dev-planner/skills/run-skill-feedback/scripts",
+        "plugins/ubm-goal-setting/skills/run-skill-feedback/scripts",
+        "plugins/skill-governance-migration/skills/run-skill-feedback/scripts",
+        "plugins/skill-governance-lint/skills/run-skill-feedback/scripts",
+        "plugins/system-dev-planner/skills/run-skill-feedback/scripts",
+        "plugins/dev-graph/skills/run-skill-feedback/scripts",
+        "plugins/system-briefing-book/skills/run-skill-feedback/scripts",
+        "plugins/system-spec-harness/skills/run-skill-feedback/scripts",
+        "plugins/spec-drift-guardian/skills/run-skill-feedback/scripts",
+        "plugins/harness-creator/skills/run-skill-feedback/scripts",
+        "plugins/skill-intake/skills/run-skill-feedback/scripts",
+        "plugins/guide-doc-generator/skills/run-skill-feedback/scripts",
+        "plugins/skill-governance-adapters/skills/run-skill-feedback/scripts",
+        "plugins/ubm-goal-setting/skills/run-ubm-youtube-ingest/scripts",
+        "plugins/ubm-goal-setting/skills/run-ubm-goal-setting/scripts",
+        "plugins/ubm-goal-setting/skills/run-ubm-knowledge-sync/scripts",
+        "plugins/ubm-goal-setting/skills/run-ubm-journal/scripts",
+        "plugins/ubm-goal-setting/skills/run-ubm-challenge/scripts",
+        "plugins/harness-creator/skills/run-build-skill/scripts",
+        "plugins/harness-creator/skills/assign-skill-design-evaluator/scripts",
+        "plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/scripts",
+        "plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts",
+        "plugins/system-spec-harness/skills/run-system-spec-elicit/scripts"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-metadata-frontmatter.log"
+    },
+    {
+      "name": "metadata-criteria",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 2.903,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/criteria/test_all_skills_criteria.py",
+        "-k",
+        "harness-creator/run-skill-feedback"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-metadata-criteria.log"
+    },
+    {
+      "name": "metadata-vendored",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.074,
+      "argv": [
+        "python3",
+        "scripts/lint-vendored-ssot.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-metadata-vendored.log"
+    },
+    {
+      "name": "metadata-pkg23",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 2.619,
+      "argv": [
+        "python3",
+        "scripts/validate-plugin-packages.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-metadata-pkg23.log"
+    },
+    {
+      "name": "metadata-release",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.281,
+      "argv": [
+        "python3",
+        "scripts/build-plugin-release.py",
+        "--check"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-metadata-release.log"
+    },
+    {
+      "name": "metadata-guard",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.483,
+      "argv": [
+        "python3",
+        "scripts/guard-change-category.py",
+        "--base",
+        "origin/main",
+        "--report"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-metadata-guard.log"
+    },
+    {
+      "name": "ssot-regression",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 9.68,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/scripts-plugins/test_harness_creator__validate_plugin_package.py",
+        "tests/scripts-plugins/test_harness_creator__render_combinators.py",
+        "tests/scripts-plugins/test_harness_creator__render_combinators_r4.py",
+        "tests/scripts-root/test_root__lint_vendored_ssot.py",
+        "tests/scripts-root/test_scripts__lint_feedback_protocol.py",
+        "tests/test_render_combinators_feedback_contract.py",
+        "tests/test_feedback_runtime_bundle.py",
+        "tests/scripts-root/test_scripts__notion_submit_improvement.py",
+        "tests/scripts-plugins/test_harness_creator__notion_config_r4.py",
+        "tests/scripts-plugins/test_skill_intake__notion_config.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-regression.log"
+    },
+    {
+      "name": "ssot-ubm-doc",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.673,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "plugins/ubm-goal-setting/tests/test_heading_references.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-ubm-doc.log"
+    },
+    {
+      "name": "ssot-briefing-doc",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.798,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "plugins/system-briefing-book/tests/test_single_source.py::test_code_names_in_docs_exist_in_scripts"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-briefing-doc.log"
+    },
+    {
+      "name": "ssot-upstream-pin",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.809,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/tests/test_check_upstream_pins.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-upstream-pin.log"
+    },
+    {
+      "name": "ssot-cache-static",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.69,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "plugins/dev-graph/tests/test_no_bytecode_in_harness.py::test_every_sibling_import_comes_after_the_bytecode_flag"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-cache-static.log"
+    },
+    {
+      "name": "ssot-unit",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.578,
+      "argv": [
+        "/Users/dm/miniconda3/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/scripts-plugins/test_harness_creator__lint_ssot_duplication.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-unit.log"
+    },
+    {
+      "name": "ssot-strict",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.192,
+      "argv": [
+        "python3",
+        "plugins/harness-creator/skills/run-build-skill/scripts/lint-ssot-duplication.py",
+        "--plugin-dir",
+        "plugins/harness-creator",
+        "--strict"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-strict.log"
+    },
+    {
+      "name": "ssot-frontmatter",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.041,
+      "argv": [
+        "python3",
+        "plugins/skill-governance-lint/scripts/lint-script-frontmatter.py",
+        "plugins/harness-creator/skills/run-build-skill/scripts"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-frontmatter.log"
+    },
+    {
+      "name": "ssot-vendor",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 0.116,
+      "argv": [
+        "python3",
+        "scripts/lint-vendored-ssot.py"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-vendor.log"
+    },
+    {
+      "name": "ssot-release",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.282,
+      "argv": [
+        "python3",
+        "scripts/build-plugin-release.py",
+        "--check"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-release.log"
+    },
+    {
+      "name": "ssot-guard",
+      "result": "pass",
+      "exit_code": 0,
+      "elapsed_seconds": 1.833,
+      "argv": [
+        "python3",
+        "scripts/guard-change-category.py",
+        "--base",
+        "origin/main",
+        "--report"
+      ],
+      "log": "docs/pkg007-runtime/checks/final-ssot-guard.log"
+    }
+  ],
+  "counts": {
+    "targeted_regression_files": 10,
+    "targeted_tests_passed": 523,
+    "excluded_unrelated_tests_from_source_dirty_tree": 2,
+    "pkg007_plugins": 23,
+    "vendored_pairs": 352,
+    "patched_plugins": 23
+  },
+  "not_run": [
+    "実Notion API投入",
+    "live再走",
+    "install",
+    "LLM全体再評価・30思考法再走",
+    "既存全体coverageの達成検査"
+  ],
+  "remaining": [
+    "実Notion API/liveの運用受入れは今回行っていない",
+    "既存全体coverageは未達",
+    "install・merge・done認定は別判断"
+  ],
+  "notes": "対象共通部品を含む23pluginだけpatch採番・正規metadata生成とrelease整合を実施。harness-creator 1.4.66、dev-graph 0.1.34等。通常起動に追加LLM/全repo走査を入れない。 CI追補: resource-mapとPEP723ヘッダー補完。通常処理AST不変、frontmatter209違反0、criteria5PASS。中間版HC1.4.67/devgraph0.1.35。 最終HC1.4.68/devgraph0.1.36、523回帰/SSOT55/厳格SSOT成功。通常処理の差分はcache抑止代入だけ、header AST不変の先行証拠とは区別する。",
+  "generated_formatting_exception": {
+    "classification": "nonblocking-mvp-generated-format",
+    "finding": "git diff --cached --check がC02新規5文書のblank line at EOFのみを検出",
+    "reason": "公開base版C02は _section_text で入力末尾LFを除き、_block(add)と_body_lines(update)で非空section末尾へ区切り空行を必ず付与する。APIに最終LF数の指定やtrim optionがないため、入力変更だけでは1LFへできない。",
+    "source": [
+      "plugins/dev-graph/scripts/build-graph-node.py:242",
+      "plugins/dev-graph/scripts/build-graph-node.py:293",
+      "plugins/dev-graph/scripts/build-graph-node.py:878"
+    ],
+    "files": [
+      "specs/pkg007-runtime.md",
+      "architecture/pkg007-runtime.md",
+      "features/pkg007-runtime.md",
+      "docs/pkg007-runtime.md",
+      "tasks/pkg007-runtime.md"
+    ],
+    "trailing_lf_bytes": {
+      "specs/pkg007-runtime.md": 2,
+      "architecture/pkg007-runtime.md": 2,
+      "features/pkg007-runtime.md": 2,
+      "docs/pkg007-runtime.md": 2,
+      "tasks/pkg007-runtime.md": 2
+    },
+    "decision": "正規writer出力と実receipt SHAを保持する。手編集や無関係なwriter修正は追加せず、今回MVPでは生成書式の非blocking例外とする。",
+    "effect": "仕様内容・readiness・runtime挙動への影響なし。"
+  },
+  "non_blocking_notes": [
+    {
+      "kind": "raw-machine-score-output",
+      "reason": "機械採点の原stdoutを保持するため末尾空行を変更しない。JSONとしての内容と採点結果に影響なし。",
+      "paths": [
+        "docs/pkg007-runtime/review-history/public-base-20261116T034305Z/assign-plugin-package-evaluator/machine-score.json",
+        "docs/pkg007-runtime/review-history/public-base-20261116T034305Z/run-skill-feedback/machine-score.json"
+      ]
+    }
+  ],
+  "ci_naming_followup": "docs/pkg007-runtime/checks/naming-ledger-review.json",
+  "ci_metadata_followup": "docs/pkg007-runtime/checks/metadata-final-gates.json",
+  "ci_final_followup": "docs/pkg007-runtime/checks/ssot-final-gates.json"
+}

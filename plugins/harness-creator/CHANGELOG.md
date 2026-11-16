@@ -2,6 +2,18 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`harness-creator` plugin (旧名 `skill-creator`) の変更履歴を記録する。設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## 1.4.68 — 2026-11-16
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
+## 1.4.67 — 2026-11-16
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
+## 1.4.66 — 2026-11-16
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## 1.4.65 — 2026-11-14
 
 - live-trial verdict の陳腐化 (stale-sha) を既定で「要再実走」の WARN にした。CI では実走できず、hooks や依存 manifest の変更で verdict が一斉に古くなり、手元の再実走ループが十数時間に及んでいたため。schema 不適合・FAIL・降格は従来どおり FAIL。release 前や定期の再取得では `--enforce` か `LIVE_TRIAL_ENFORCE_FRESHNESS=1` で FAIL に戻せる。判断の正本は `live-trial-verdict.py` の `freshness_enforced`。

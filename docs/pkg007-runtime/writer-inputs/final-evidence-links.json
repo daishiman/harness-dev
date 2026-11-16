@@ -1,0 +1,23 @@
+{
+  "expected_graph_revision": 25,
+  "updates": [
+    {
+      "graph_node_id": "spec-pkg007-runtime",
+      "set_sections": {
+        "互換性・移行・リリース": "repo正本submitと配布版の同階層importを両対応する。canonicalと既存22コピーを既存配布機構で同期した。今回共通部品を含む23pluginだけをbuild-plugin-release.pyでpatch採番し、正規metadataを生成した（harness-creator 1.4.68、dev-graph 0.1.36等）。整合検査を実行しinstallはしない。公開はtask branchからmain向けdraft PRで、merge・done昇格は別判断とする。 PR91のCI後追いでは索引metadataとヘッダーを正規生成元へ反映し、既存同期経路で配布版へ展開した。全23pluginの最新patch版一覧は docs/pkg007-runtime/checks/ssot-final-gates.json の versions を正とする。 最新patch版はharness-creator 1.4.68、dev-graph 0.1.36、plugin-dev-planner 0.1.30。全23pluginを正規採番し、詳細は docs/pkg007-runtime/checks/ssot-final-gates.json と親の版一覧を参照する。installは行わない。"
+      }
+    },
+    {
+      "graph_node_id": "arch-pkg007-runtime",
+      "set_sections": {
+        "Delivery, migration and rollback": "既存canonical→22コピー同期で展開し、今回共通部品を含む23pluginをbuild-plugin-release.pyでpatch採番・正規metadata生成した（harness-creator 1.4.68、dev-graph 0.1.36等）。release整合を検証しinstallはしない。公開はdevgraph/task-pkg007-runtimeからmain向けdraft PR。rollbackは対象commitのrevertを使い、原workspaceや他者差分を消さない。 CI後追いの正規renderer同期とregistry更新後はvendor352一致。最新23版はssot-final-gates.jsonのversionsで照合する。 最新patch版はharness-creator 1.4.68、dev-graph 0.1.36、plugin-dev-planner 0.1.30。全23pluginを正規採番し、詳細は docs/pkg007-runtime/checks/ssot-final-gates.json と親の版一覧を参照する。installは行わない。 2資料の正本と登録済み46doc pairsをbyte同期し、B4/D1引用を再監査してpinを更新した。"
+      }
+    },
+    {
+      "graph_node_id": "task-pkg007-runtime",
+      "set_sections": {
+        "実装対象": "check_pkg_007と対象テスト、APEの契約文書、catalog/36章の007、共通feedback runtimeとcanonical/vendor整合、必要な実行属性の修復。公開base由来の旧8scriptには+xだけを付与した。今回共通部品を含む23pluginだけをpatch採番し正規metadata生成・整合検査を実施した。installは行わない。 PR91 CI後追いでは命名、4参照資料のresource-map metadata、submit/validatorのPEP723等ヘッダーを正規生成元で補完し、renderer/registryを同期した。ヘッダー補完による通常runtime処理のASTは不変更。最新patch版はHC1.4.68/dev-graph0.1.36等、詳細はssot-final-gates.jsonのversions。 最終CIでは意図的同梱のSSOT判定を入力scope/台帳/通常file/非symlink/実byte一致に限定し、共通2資料の引用と工程名、B4/D1 pinを修復した。ヘッダーコメント差分はAST不変。その後、sys.dont_write_bytecode=Trueの1代入だけを追加してcache書込を抑止した。この1代入を除く通常業務処理のASTは同一で、通常の追加LLM呼出し・全repo走査0を維持する。 最新patch版はharness-creator 1.4.68、dev-graph 0.1.36、plugin-dev-planner 0.1.30。全23pluginを正規採番し、詳細は docs/pkg007-runtime/checks/ssot-final-gates.json と親の版一覧を参照する。installは行わない。"
+      }
+    }
+  ]
+}

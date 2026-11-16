@@ -43,9 +43,24 @@ def _feedback_skill_mds():
     )
 
 
+FEEDBACK_RUNTIME_SOURCES = {
+    "scripts/notion-submit-improvement.py": "scripts/notion-submit-improvement.py",
+    "scripts/notion_config.py": "plugins/harness-creator/scripts/notion_config.py",
+    "scripts/tenant_runtime.py": "scripts/tenant_runtime.py",
+    "scripts/extract-plugin-root.py": "plugins/harness-creator/scripts/extract-plugin-root.py",
+    "schemas/skill-list.schema.json": "doc/notion-schema/skill-list.schema.json",
+    "schemas/improvement-request.schema.json": "doc/notion-schema/improvement-request.schema.json",
+    "references/goal-seek-paradigm.md": "plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md",
+    "references/feedback-to-improvement-runbook.md": "plugins/harness-creator/references/feedback-to-improvement-runbook.md",
+}
+
 # (canonical 正本, vendored 複製) のペア。byte 一致を強制する runtime/build-time SSOT と、
 # localize せず正本と同一であることを要件とする doc/schema。
 VENDORED_PAIRS = [
+    *[
+        (ROOT / source, ROOT / "plugins/harness-creator/skills/run-skill-feedback" / relative)
+        for relative, source in FEEDBACK_RUNTIME_SOURCES.items()
+    ],
     # ガバナンスのローカル/配布実行面は同じ承認・cooldown境界を検査する。
     (ROOT / "scripts/guard-change-category.py", ROOT / "plugins/skill-governance-automation/scripts/guard-change-category.py"),
     # 共通フィードバックのアンカー validator。新規配備は skill ディレクトリごとコピーし、
@@ -60,7 +75,7 @@ VENDORED_PAIRS = [
     # run-skill-feedback 本体は harness-creator を正本に、量産先へ実体コピーで配備される
     # (render-combinators.py apply_feedback_loop / feedback_contract_ssot.py の
     # is_feedback_deploy_exempt が正本側を除外する)。lint-feedback-protocol.py R7 は配備の
-    # 「存在」しか見ないため、コピー後の drift を止めるのは本 lint だけ。この3点は量産先ごとに
+    # 「存在」しか見ないため、コピー後の drift を止めるのは本 lint だけ。runtime一式は量産先ごとに
     # localize せず正本と同一であることを要件とするので、doc でも byte 一致を強制する。
     # 配備を手書きで列挙しないので、配備の中で3点のどれかを欠くと存在検査で落ちる。
     # 配備 (run-skill-feedback の dir) そのものの有無は lint-feedback-protocol.py R7 が見る。
@@ -75,6 +90,9 @@ VENDORED_PAIRS = [
             "SKILL.md",
             "workflow-manifest.json",
             "references/notion-submit-contract.md",
+            *FEEDBACK_RUNTIME_SOURCES,
+            "references/notion-per-repo-setup.md",
+            "references/resource-map.yaml",
         )
     ],
     # Tenant selection and credential-reference derivation are shared by every

@@ -649,3 +649,36 @@ def test_every_pending_rename_path_exists_in_repo():
     # repo から消えた path を登録に残すと、後で同じ path に置いた別物を黙って通す。
     missing = sorted(p for p in MOD.PENDING_RENAME_PATHS if not (ROOT / p).exists())
     assert missing == []
+
+
+@pytest.mark.parametrize("filename,status,importer,import_pattern", [
+    ("notion_config.py", "PERMANENT_EXCEPTION", "notion-submit-improvement.py", r"^import notion_config\b"),
+    ("tenant_runtime.py", "PERMANENT_EXCEPTION", "notion_config.py", r"^from tenant_runtime import\b"),
+    ("notion-submit-improvement.py", "PENDING_RENAME", None, None),
+])
+def test_feedback_runtime_copies_keep_canonical_naming_roles(filename, status, importer, import_pattern):
+    # 完全一致の台帳登録だけで扱い、素の import と CLI 互換名を混同しない。
+    directories = sorted(ROOT.glob("plugins/*/skills/run-skill-feedback/scripts"))
+    assert directories
+    for directory in directories:
+        path = directory / filename
+        assert path.is_file()
+        relative = path.relative_to(ROOT).as_posix()
+        assert _classify(relative)[0] == status, relative
+        assert MOD.classify_without_ledger(path)[0] == "VIOLATION"
+        if importer:
+            assert relative in MOD.PERMANENT_EXCEPTION_PATHS
+            assert relative not in MOD.PENDING_RENAME_PATHS
+            assert re.search(import_pattern, (directory / importer).read_text(), re.M)
+        else:
+            assert relative in MOD.PENDING_RENAME_PATHS
+            assert relative not in MOD.PERMANENT_EXCEPTION_PATHS
+            assert _classify("scripts/" + filename)[0] == status
+
+
+def test_feedback_runtime_unknown_underscore_name_remains_violation():
+    status, reason = _classify(
+        "plugins/harness-creator/skills/run-skill-feedback/scripts/unknown_module.py"
+    )
+    assert status == "VIOLATION"
+    assert "underscore" in reason
