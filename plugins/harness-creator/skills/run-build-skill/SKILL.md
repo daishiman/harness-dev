@@ -98,6 +98,7 @@ script_refs:
   - scripts/build-improvement-gate.py
   - scripts/build-usable-draft-proof.py
   - scripts/build-review-launch.py
+  - scripts/validate-run-model-budget.py  # run_id 単位の AI 呼び出し予算。gate・launcher・planner が import して台帳へ予約する
   - scripts/validate-improvement-result.py
 reference_refs:
   - ref-skill-glossary
@@ -141,48 +142,31 @@ source: doc/ClaudeCodeスキルの設計書/
 source-tier: internal
 last-audited: 2026-05-22
 audit-trigger: quarterly
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 runtime_root_policy: host-skill-path
 ---
 ## Pre-choice usable artifact execution
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/diagnoseを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 # run-build-skill
 
 ## Runtime root contract
 
-`runtime_root_policy: host-skill-path` の製品別root解決・cwd推測禁止・prompt継承は [ref-cross-platform-runtime の共有正本](../ref-cross-platform-runtime/references/runtime-portability.md#product別-plugin-root-契約) をそのまま適用する。
-
-> Phase 2 移行後は `plugins/harness-creator/skills/` が正本、`.claude/skills/` は symlink/deploy target。plugin同梱資産は解決済みabsolute `$PLUGIN_ROOT` / `$SKILL_DIR` で参照する。生成対象repositoryのroot-level gateだけは、明示したproject rootを別入力として使う。
+`runtime_root_policy: host-skill-path` の製品別root解決・cwd推測禁止・prompt継承は [ref-cross-platform-runtime の共有正本](../ref-cross-platform-runtime/references/runtime-portability.md#product別-plugin-root-契約) をそのまま適用する。Phase 2 移行後は `plugins/harness-creator/skills/` が正本、`.claude/skills/` は symlink/deploy target。plugin同梱資産は解決済みabsolute `$PLUGIN_ROOT` / `$SKILL_DIR` で参照する。生成対象repositoryのroot-level gateだけは、明示したproject rootを別入力として使う。
 
 ## Purpose & Output Contract
 ユーザー要求から Claude Code Skill を 1 本構築するワークフロー。
 
 - **入力**: `skill_name` (kebab-case), `kind` (run|ref|assign|wrap|delegate), `mode` (create|update), `build_stage` (draft|release、既定=draft), 各種 `--with-*` フラグ, `model` (opus|sonnet)。フラグ仕様は `schemas/build-flags.schema.json`。
 - **出力**: `$OUT_BASE/<name>/SKILL.md` (170 行を目安・本文 300 行以下が上限 (P0-2)、frontmatter 完備、本文は日本語) / `templates/` / `references/` / `scripts/` / `prompts/` / `eval-log/skill-build-trace.json` / verification contract・plan・evidence receipts (既存content-review verdictも互換投影として保持)。
-- **draft proof 条件 (既定)**: 実際に試せる生成物があり、class別の最小guardが通り、`stage_gate.status=usable-draft`となること。現物のpath/試し方を先に提示し、その後に利用者が診断・改善深度を選ぶ。
+- **draft proof 条件 (既定)**: 実際に試せる生成物があり、class別の最小guardが通り、`stage_gate.status=usable-draft`となること。現物のpath/試し方を先に提示し、その後に利用者が現状で試すか診断するかを選ぶ。改善の深さは診断所見の提示後に1回だけ選ぶ。
 - **release 完了条件 (明示時のみ)**: build/semantic/behavior obligation DAGがcurrent PASS proofで閉じ、rubric high severity 0 件、C1-C4 ゲート pass、`validate-build-trace.py` exit 0。`build-only` は未実施proofを明示し完了を偽装しない。
 
 ### usable-first stage
-`draft` と `release` の2段階だけを使う。別の MVP mode は追加しない。無指定では draft の生成と class別最小guard (parse/open・secret・不可逆操作・破損) だけを解き、修復は1周までとする。7 Capabilityのいずれも `artifact_created → minimal_guard_passed → artifact_presented → user_choice_recorded → semantic_evaluator_started` の順を守る。現物と試し方の提示後に診断深度を聞き、`accept-as-is` はevaluator 0 / improver 0。選択された場合だけsemantic evaluator / 30思考法 / multi-agent / 有界改善を起動する。`release` / `exhaustive` は明示選択なしに自動昇格しない。
+`draft` と `release` の2段階だけを使う。別の MVP mode は追加しない。無指定では draft の生成と class別最小guard (parse/open・secret・不可逆操作・破損) だけを解き、修復は1周までとする。7 Capabilityのいずれも `artifact_created → minimal_guard_passed → artifact_presented → user_choice_recorded → semantic_evaluator_started` の順を守る。現物と試し方の提示後に現状で試すか診断するかを聞き、`accept-as-is` はevaluator 0 / improver 0。選択された場合だけsemantic evaluator / 30思考法 / multi-agent / 有界改善を起動する。`release` / `exhaustive` は別の明示eventでだけ受け付け、自動昇格しない。
 
 ## Key Rules
 ### 契約系 (contract)
@@ -201,7 +185,6 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 11. 量産情報 (`pattern_refs` / `variant_axes` / `reuse_targets` / `deterministic_checks` / `placement_candidates` / `hook_events`) を trace と本文へ反映 (29-35章)。
 
 ### lint 系 (lint)
-
 12. **manual-preflight の lint 集合の正本は `$PLUGIN_ROOT/references/lint-matrix.json`** (context=build-preflight。Step 4 の bash ブロックはその射影で、乖離は `lint-matrix-sync.py` が CI で fail。28章: A/B 強制 gate と呼称分離)。`lint-ssot-duplication.py` は編集前に対象プラグイン全体を重複解析する事前ゲート (両方残し禁止・上書き一本化の判断材料)。検出は **DUP-SCHEMA-ID** (同一 `$id`=正本曖昧, **exit1 で fail**) / **REDIRECT-FAT-BODY** / **DUP-REQUIRED-SET** / **DUP-PASSAGE** (後 3 者は smell、build 時は warn・CI の `--strict` で fail 化) の 4 種。build Step4 は早期警告、強制は `governance-check.yml` の `--strict` 実行が担う。
 13. `validate-build-trace.py` が `source_docs` / `build_flow_coverage` / `doc_coverage` / `layer_decisions` / `reproducibility_gates` の空欄・未読・N/A 理由なしを拒否。
 14. context 予算 (CD-005): 同時 Read は 3 章まで。`references/resource-map.yaml` で task category → 章選択。
@@ -210,7 +193,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 17. **prompt 形式**: 新規 prompt は **Markdown (`.md`) を既定**とし、`prompts/<R-id>-<slug>.md` で生成する。骨格は `plugins/prompt-creator/skills/run-prompt-creator-7layer/references/seven-layer-markdown-template.md` を写経。YAML (`.yaml`) は既存資産のみ許容し、新規作成は禁止 (warn を発する)。
 18. **Capability 7 kind 統一**: skill / agent / hook / command / plugin-composition / prompt / workflow の全 kind で `CapabilityManifest commonCore` を必須とする。**必須項目集合の正本は `references/capability-manifest.schema.json#/definitions/commonCore.required` 唯一**（本文に再掲しない＝SSOT。現行は `name` / `description` / `kind` / `version` / `owner` の5項目。`since` / `source-tier` 等は任意）。kind 別追加フィールドは同 schema の `definitions/<kind>` を参照。`commonCore` 欠落は `validate-frontmatter.py` が exit 1（同 lint は必須集合を schema から動的ロードし、`--self-test` で正本との drift を検出）。
 19. **ゴールシーク必須 (固定手順禁止)**: ループ実行系 kind (run / wrap / delegate / orchestrator / agent / agent-team / hook-integrated) は達成手順を固定列挙せず、`## ゴールシーク実行` (**Goal + 目的/背景 + 完了チェックリスト + ゴールシークループ**) で構成する。手順は実行時に AI がチェックリストの未達項目から都度生成する。`assign-*` は評価系のため Goal/Checklist 形は使うが runtime loop は配線しない。`ref-*` (read-only) は対象外で `## 手順` は「参照用。手順なし。」のまま。正本定義は `references/goal-seek-paradigm.md`。lint は `lint-goal-seek.py` (固定 `### Step N:` の連番羅列を実行系本文で検出したら violation)。
-    - **実行可能機構の配線 (with-goal-seek combinator)**: loop 実行系 (run / wrap / delegate) は `render-combinators.py` が `with-goal-seek.patch` を**default-ON で自動適用**し、frontmatter `goal_seek:` と `### ゴールシーク配線` を注入する (`--no-goal-seek` が外すのは render 時の配線だけで、lint の合否は変えない。repo 外の生成物では warning のままだが、repo 内に入った配線の無い loop 系スキルは plugin を問わず `lint-goal-seek.py` の ratchet が exit 1 で落とす。harness-creator のスキルは `GRANDFATHERED_WARNINGS` へ根拠付きで登録するか配線を戻し、ほかの plugin のスキルは baseline が追記禁止なので配線を戻す。正本は `references/goal-seek-paradigm.md`)。周回状態は `schemas/goal-seek-loop.schema.json` 準拠の `eval-log/<skill>-progress.json` に記録し、重い周回は `Skill(run-goal-seek)` に fork 委譲する。`assign-*` は checklist のみ (ループ非配線)。`lint-goal-seek.py` は loop 実行系に対し二値チェックリスト項目の存在・曖昧語不在を violation、`### ゴールシーク配線` 不在を warning で検査する (repo 内では、未登録のものを上の ratchet が exit 1 にする)。フラグ仕様は `schemas/build-flags.schema.json#/properties/with_goal_seek`。
+    - **実行可能機構の配線 (with-goal-seek combinator)**: loop 実行系 (run / wrap / delegate) は `render-combinators.py` が `with-goal-seek.patch` を**default-ON で自動適用**し、frontmatter `goal_seek:` と `### ゴールシーク配線` を注入する (`--no-goal-seek` が外すのは render 時の配線だけで、lint の合否は変えない。repo 外の生成物では warning のままだが、repo 内に入った配線の無い loop 系スキルは plugin を問わず `lint-goal-seek.py` の ratchet が exit 1 で落とす。通すには配線を戻すか、`### ゴールシーク配線を持たない理由` の見出しの下に理由を書いて宣言する。harness-creator の既存負債は `GRANDFATHERED_WARNINGS` が持つが、ほかの plugin の baseline は追記禁止。正本は `references/goal-seek-paradigm.md`)。周回状態は `schemas/goal-seek-loop.schema.json` 準拠の `eval-log/<skill>-progress.json` に記録し、重い周回は `Skill(run-goal-seek)` に fork 委譲する。`assign-*` は checklist のみ (ループ非配線)。`lint-goal-seek.py` は loop 実行系に対し二値チェックリスト項目の存在・曖昧語不在を violation、`### ゴールシーク配線` 不在を warning で検査する (repo 内では、未登録のものを上の ratchet が exit 1 にする)。フラグ仕様は `schemas/build-flags.schema.json#/properties/with_goal_seek`。
     - **engine 変種 (inline / run-goal-seek / task-graph)**: loop kind の既定は最小構成の `inline`。Goal・Checklist・検証契約は維持し、追加 engine 資産は同梱しない。実在する依存グラフの順序制御が必要な場合だけ `goal_seek.engine: task-graph` を brief で明示し、checklist の `depends_on` 依存順消費・self-reflect・4 つの engine script を有効化する。重い周回を外部オーケストレータへ分離する場合だけ `run-goal-seek` を明示する。`task-graph` 指定時の profile は従来どおり `checklist-graph` / `full_task_spec_graph=false` とし、materializer と `--check` の fail-closed 検査を保つ。
 
 `kind → templates/_base + combinator` 対応表は **`schemas/template-selection.schema.json#/selection_rules`** を正本とする (本文に再掲しない)。
@@ -245,7 +228,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - [ ] (`--with-knowledge` or `brief.knowledge_loop` 指定時のみ) curated seed の knowledge/ 雛形展開 + 5スクリプト同梱 + plugin package 外の external-intelligence state + `## ナレッジループ`節注入 + `knowledge_loop`記述子(`contract_version: 1`, `consult_at: ["runtime"]`, `runtime_store: external-intelligence-v1`) + `lint-knowledge-loop.py` exit0 (KL-001..008) <!-- CL-10 -->
 - [ ] (kind=plugin で外部依存(API/DB/秘密)の疎通確認手順が要る場合のみ) install位置を `__file__` 相対で自己解決する doctor 同梱 + 疎通確認はチャット委譲(`/<name>-doctor` or 自然文) + 生のplugin root変数非露出 (README **及び `references/*-setup.md` 等 setup 手順**の bash は**一次手順としては**doctor entry pointだけを案内し、生パス例は開発者補足へ降格したfallback形に限る(env/cwd/repo相対によるplugin root推測は不可)。番号付きリスト内の字下げフェンスも同様)。`scripts/lint-readme-plugin-root-portability.py` exit0。正本 `ref-cross-platform-runtime/references/runtime-portability.md` 層2 <!-- CL-11 -->
 - [ ] (plugin 一括 build=handoff routes 消費時のみ) 実行済みrouteごとに `eval-log/<slug>/build/route-<id>.json` を記録し `validate-route-build-reports.py --route <id>` exit0。全 route 終端の `--complete` はreleaseのみ (契約正本 `references/route-build-report.md`) <!-- CL-12 -->
-- [ ] (`build_stage=draft`) 実artifactの最小guard後にpath/試し方を提示し、その後に診断深度を質問する。accept-as-isはevaluator/improver 0、選択時だけ`elegant-initial-draft-evaluator`をread-only起動し、release/exhaustive自動昇格0件 <!-- CL-13 -->
+- [ ] (`build_stage=draft`) 実artifactの最小guard後にpath/試し方を提示し、その後に現状で試すか診断するかだけを質問する。accept-as-isはevaluator/improver 0、選択時だけ`elegant-initial-draft-evaluator`をread-only起動し、release/exhaustiveは別の明示eventだけで自動昇格0件 <!-- CL-13 -->
 
 ### ゴールシークループ
 
@@ -254,6 +237,10 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - 現状評価は上記チェックリストの未達項目を対象にし、それを埋める局面を下記「局面カタログ」から選ぶ (順序固定なし)。
 - 検証は決定論検査 (lint/trace/score) を優先し、`### 局面: 命名・構造 Lint` / `### 局面: フォーク評価` のコマンド群で機械判定する。
 - ゲート未達の再実行は draft で1周、release で最大3周。draft は超過時に完全化へ進まず、現物と最小修正を引き渡す。
+
+### ゴールシーク配線を持たない理由
+
+本 Skill の周回は上のゲート未達の再実行 (draft 1 周・release 最大 3 周) に限られ、各周の判断と繰越しは `eval-log/skill-build-trace.json` に残り、`validate-build-trace.py` が機械検証する。中間成果物の anchor を別に持つと同じ記録が 2 か所になり、短い周回に対して得るものが無いので持たない。生成先の loop 系スキルには Key Rule 19 のとおり with-goal-seek combinator が配線を入れる。
 
 ## 局面カタログ (順序は都度判断)
 
@@ -266,13 +253,13 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 1. **kind 確認**: 引数 `kind` または `brief.kind` を確定。既定は `skill`。未指定なら Step 1 のヒアリングで決める。7 kind 以外は exit 1。
 2. **対応 skeleton 選択**: kind 語彙の正本は `schemas/build-flags.schema.json#/properties/capability_kind` (7値 enum)、kind → skeleton/出力先/kind別lint の対応表の正本は `references/build-steps.md` §I.1 (本文に再掲しない=SSOT)。kind=skill 配下のサブ種別 5 値の template 選択は `schemas/template-selection.schema.json#/selection_rules` に従う。
 3. **Manifest 検証**: 全 kind で `CapabilityManifest commonCore` を `references/capability-manifest.schema.json` で検証。kind 別追加フィールド (`definitions/kindSkill`, `definitions/kindAgent` …) も同 schema で検証する。
-4. **lint hook 連動**: kind に応じた lint を Step 4 で起動 (skill→既存 4 種、agent→`lint-agent-prompt-section.py` + **`lint-agent-prompt-content.py --mode agent`** (route C02 内容 lint)、hook→`lint-script-frontmatter.py`、plugin-composition→`lint-plugin-composition.py` (整備済・CI 配線済)、prompt→**`lint-agent-prompt-content.py --mode prompt`** (route C02))。command / prompt (構造面) / workflow の kind 専用 lint (`lint-command-md.py` / `lint-prompt-md.py` / `lint-workflow-md.py`) は**未実装 (script 実体なし・整備予定) のため起動しない** — それまで当該 3 kind は共通 lint (`validate-frontmatter.py` 等) のみで検査する。**agent/prompt 生成は本文7層 (l5-contract v2.0.0) を prompt-creator 経由で生成し route C02 を fail-closed ゲートとして通す** (契約: prompt-creator plugin の `skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md`。出典表記)。単独生成の抜け道は Step 3.5 の `prompt_provenance` で塞ぐ。
+4. **lint hook 連動**: kind に応じた lint を Step 4 で起動 (skill→既存 4 種、agent→`lint-agent-prompt-section.py` + **`lint-agent-prompt-content.py --mode agent`** (route C02 内容 lint)、hook→`lint-script-frontmatter.py`、plugin-composition→`lint-plugin-composition.py` (整備済・CI 配線済)、prompt→**`lint-agent-prompt-content.py --mode prompt`** (route C02))。command / prompt (構造面) / workflow の kind 専用 lint (`lint-command-md.py` / `lint-prompt-md.py` / `lint-workflow-md.py`) は**未実装 (script 実体なし・整備予定) のため起動しない** — それまで当該 3 kind は共通 lint (`validate-frontmatter.py` 等) のみで検査する。**agent/prompt 生成は本文7層 (l5-contract v2.0.0) を prompt-creator 経由で生成し route C02 を fail-closed ゲートとして通す** (契約: prompt-creator plugin の `plugins/prompt-creator/skills/run-prompt-creator-7layer/references/subagent-hybrid-format.md`。出典表記)。単独生成の抜け道は Step 3.5 の `prompt_provenance` で塞ぐ。
 
 > 既存「Skill のみ作る」呼び出し (`kind=run|ref|assign|wrap|delegate`) は **kind=skill 配下のサブ種別** として後方互換維持。引数なしまたは `kind` が 5 択のいずれかなら従来通り Step 1 以降の skill 専用フローへ直行する。`kind_filter` はskill内部のサブ種別、`capability_kind_filter` はCapability 7 kindを指す。skillはskill専用phase、非skillは `non-skill-build-lint` のkind別生成/lintを経由し、どちらも共通 `usable-draft-proof` (Step 12.4) → `artifact-present-handoff` (Step 12.45) → `diagnostic-choice` (Step 12.5) へ合流する。Step 12.6/12.7は利用者の選択とその結果に応じてだけ進む。phase依存とkind別upstream対応の正本は `workflow-manifest.json`。
 
 ### Step 1: 要求ヒアリング (phase: init)
 
-> **[MANDATORY]** 公式仕様 cache (`$PLUGIN_ROOT/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md`、約600KB) は全文を Read しない。`last_fetched:` と、生成する kind に要る節だけを読む: skill は `awk '/^Frontmatter reference$/{p=1} /^## Source \(settings\)/{exit} p'` (約16KB)、agent / hook / plugin は `awk -v s='## Source (subagents)' 'index($0,s)==1{p=1;next} p&&/^## Source /{exit} p'` の `s` を `(hooks)` / `(plugins-reference)` に替えた節 (各約50KB)。確認結果は trace の 15/16 章 coverage に出典日付つきで残す。
+> **[MANDATORY]** 公式仕様 cache (`$PLUGIN_ROOT/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md`、約1MB) は全文を Read しない。`python3 "$SKILL_DIR/scripts/extract-yaml-spec-section.py" --kind <kind>` で kind に要る節を索引から引き (hook は生成する event を `--section hooks:<event>` で足す)、出力の `read:` 行の offset/limit の範囲だけを Read する。cache と索引が食い違えば exit 2、見出しが無ければ exit 1 で止まるので、その場で読み進めない。出力 1 行目の `yaml-spec-source:` を trace の 15/16 章 coverage にそのまま貼る (出典日付と sha256 を含む)。
 
 `resolve-skill-dirs.py` で `$PLUGIN_ROOT` / `$SKILL_DIR` / `$OUT_BASE` を確定する。`$SKILL_DIR` は harness-creator plugin 内資産、`$OUT_BASE` は生成先であり、両者を同一パスと仮定しない。続けて `references/resource-map.yaml` で task category 選択 (keyword で選ぶ。ただし brief の `with_subagent_hint` が true なら `agent-teams`、`with_hooks` が true なら `subagent-hook-integration` を keyword に関係なく必ず選ぶ。run-skill-elicit が brief に立てたフラグの受け手はここ) → 01章 5 要素 + 01a Step2 実行レイヤー判断表を埋める。詳細は `references/build-steps.md`。
 
@@ -296,7 +283,7 @@ python3 "$SKILL_DIR/scripts/build-external-intelligence.py" --agent <codex|claud
 python3 "$SKILL_DIR/scripts/validate-build-plan.py" --brief eval-log/skill-brief.json --out eval-log/build-plan.json  # update では --mode update --skill-dir "$OUT_BASE/$SKILL_NAME" を付け、brief 省略 profile を現行生成物から保存
 ```
 
-無指定は `flags.build_stage=draft`。Skill起動時に `--stage release` が明示された場合だけ、上記コマンドに同じ `--stage release` を付け、planへ決定論に固定する。充足検査は Step 4 の `--check` が行う (欠落は exit 1)。brief 無しのフラグ明示 build は NOTE 付き skip。
+無指定は `flags.build_stage=draft`。Skill起動時に `--stage release` が明示された場合だけ、上記コマンドに同じ `--stage release` を付け、planへ決定論に固定する。充足検査は Step 4 の `--check` が行う (欠落は exit 1)。brief 無しのフラグ明示 build では、この導出も Step 4 の `validate-build-plan --check` も呼ばず、必須成果物の突合が未実施であることを NOTE として build report に残す。skip は呼び出し側が決める: brief が無いまま `--brief`・`--out`・`--check` のどれかを付けて呼ぶと、script は exit 2 を返す (偽の PASS や古い build-plan.json を作らない)。
 
 ### Step 2: テンプレ展開 / 既存読込 (phase: scaffold)
 
@@ -314,11 +301,9 @@ run 系は `templates/` / `scripts/` / `examples/`、ref 系は `references/arti
 
 この時点では lint をまだ走らせていないので、`reproducibility_gates.lint` は `N/A` と書く (validator は PASS と N/A しか通さない。FAIL は書かない)。PASS に書き換えるのは Step 4 の lint が全て exit 0 になってからで、この初回記入は Step 4 の `validate-build-trace.py` が検査する。
 
-**要望カバレッジ (RTM)**: brief 経由 build は `requirement_coverage[]` を trace に記録する。brief の非空要求フィールド (例 `key_constraints[2]` / `boundary`) ごとに `disposition: mapped` (+`mapped_to`=反映先 criteria id/生成物) か `not_applicable` (+`reason`) を宣言する。被覆完全性と requirement_id 実在は `validate-build-trace.py` が機械検査し (段階導入: coverage 無しは WARN)、写像の意味的妥当性は Step 12 content-review (LLM 層) が判定する。
-
-**agent/prompt 生成の provenance (route C09)**: agents/*.md・skills/*/prompts/*.md を生成/更新した build は `prompt_provenance` を trace に記録する。`prompt_creator_invocation`=true (prompt-creator 経由で本文7層を生成)・`source_contract_ref` (準拠契約: agent=`subagent-hybrid-format.md` / prompt=`seven-layer-format.md`)・`content_lint`={mode, status:PASS} (route C02 `lint-agent-prompt-content.py` の結果) の3点を持つ。`run` / `assign` が **prompt を生成する** build (`per_responsibility` 非空) では `resolved_policy=optional/skip` を禁止し `required`+provenance を強制する (生成物があるのに optional へ降格する迂回=バイパスを封鎖)。本 build が prompt を生成しない場合 (共有 prompt を消費する等、`per_responsibility` 空) は `optional` で宣言してよい (`skip` は不可)。`required` の build ではこのブロックが必須で、`validate-build-trace.py` が invocation=false・契約参照欠落・content_lint≠PASS・ブロック欠落のいずれも exit1 で止める (バイパス不能性)。実際の本文7層準拠は route C02 の CI repo 全走査が trace 非依存で独立強制する。
-
-**route 実行レポート (plugin 一括 build のみ)**: `handoff-run-plugin-dev-plan.json` の routes を消費する build では、route 1 本の完了ごとに `eval-log/<target_plugin_slug>/build/route-<id>.json` (`schemas/route-build-report.schema.json`) へ実行レポートを書き、後続 route は依存 route のレポート (`handover`/`deviations`) を読んでから着手する。契約正本は `references/route-build-report.md`、機械検証は `scripts/validate-route-build-reports.py` (route 毎 `--route <id>` / 終端 `--complete`)。単発 build (route 外) は対象外。
+- **要望カバレッジ (RTM)**: brief 経由 build は `requirement_coverage[]` を trace に記録する。brief の非空要求フィールド (例 `key_constraints[2]` / `boundary`) ごとに `disposition: mapped` (+`mapped_to`=反映先 criteria id/生成物) か `not_applicable` (+`reason`) を宣言する。被覆完全性と requirement_id 実在は `validate-build-trace.py` が機械検査し (段階導入: coverage 無しは WARN)、写像の意味的妥当性は Step 12 content-review (LLM 層) が判定する。
+- **agent/prompt 生成の provenance (route C09)**: agents/*.md・skills/*/prompts/*.md を生成/更新した build は `prompt_provenance` を trace に記録する。`prompt_creator_invocation`=true (prompt-creator 経由で本文7層を生成)・`source_contract_ref` (準拠契約: agent=`subagent-hybrid-format.md` / prompt=`seven-layer-format.md`)・`content_lint`={mode, status:PASS} (route C02 `lint-agent-prompt-content.py` の結果) の3点を持つ。`run` / `assign` が **prompt を生成する** build (`per_responsibility` 非空) では `resolved_policy=optional/skip` を禁止し `required`+provenance を強制する (生成物があるのに optional へ降格する迂回=バイパスを封鎖)。本 build が prompt を生成しない場合 (共有 prompt を消費する等、`per_responsibility` 空) は `optional` で宣言してよい (`skip` は不可)。`required` の build ではこのブロックが必須で、`validate-build-trace.py` が invocation=false・契約参照欠落・content_lint≠PASS・ブロック欠落のいずれも exit1 で止める (バイパス不能性)。実際の本文7層準拠は route C02 の CI repo 全走査が trace 非依存で独立強制する。
+- **route 実行レポート (plugin 一括 build のみ)**: `handoff-run-plugin-dev-plan.json` の routes を消費する build では、route 1 本の完了ごとに `eval-log/<target_plugin_slug>/build/route-<id>.json` (`schemas/route-build-report.schema.json`) へ実行レポートを書き、後続 route は依存 route のレポート (`handover`/`deviations`) を読んでから着手する。契約正本は `references/route-build-report.md`、機械検証は `scripts/validate-route-build-reports.py` (route 毎 `--route <id>` / 終端 `--complete`)。単発 build (route 外) は対象外。
 
 ### Step 4: 命名・構造 Lint (phase: scripts)
 
@@ -338,17 +323,18 @@ python3 "$SKILL_DIR/scripts/lint-ssot-duplication.py" --plugin-dir "$(dirname "$
 python3 "$SKILL_DIR/scripts/lint-knowledge-loop.py" "$OUT_BASE/$SKILL_NAME"  # knowledge/ がある場合のみ KL-001..008 を検査(無ければ exit0 skip)。既定 warn、CI の --strict で fail 化
 python3 "$SKILL_DIR/scripts/lint-capability-graph-knowledge.py" "$OUT_BASE/$SKILL_NAME"  # brief.goal_seek.engine=task-graph の生成 harness のみ ENG-C06/ENG-C07 同梱・consult token・source_ref を検査(非 task-graph は not-applicable exit0・ENG-C08)
 python3 "$SKILL_DIR/scripts/validate-build-trace.py" eval-log/skill-build-trace.json
-python3 "$SKILL_DIR/scripts/validate-build-plan.py" --brief eval-log/skill-brief.json --check --skill-dir "$OUT_BASE/$SKILL_NAME"  # update は --mode update を付与。brief から決定論導出した必須成果物 (flags/セクション/資産) のディスク実体を突合。brief 不在は NOTE skip
+python3 "$SKILL_DIR/scripts/validate-build-plan.py" --brief eval-log/skill-brief.json --check --skill-dir "$OUT_BASE/$SKILL_NAME"  # update は --mode update を付与。brief から決定論導出した必須成果物 (flags/セクション/資産) のディスク実体を突合。brief 無しのフラグ明示 build ではこの行を呼ばず、突合が未実施であることを NOTE として build report に残す (brief が無いのに --check を求めると exit 2。偽の PASS を作らない)
 python3 ${HARNESS_ROOT:-.}/scripts/lint-readme-plugin-root-portability.py  # kind=plugin / README 更新時。裸のplugin root変数・repo相対直書き・os.environ添字を検出
 ```
 
-全て exit 0 でなければ trace の lint を N/A のまま Step 2 / 3.5 へ戻る。全て exit 0 なら trace の `reproducibility_gates.lint` を PASS にし、検査した skill ディレクトリ全体の digest を `lint_target_sha256` に書く。lint-skill-tree や `validate-build-plan --check` は SKILL.md 以外のファイルも見るので、digest も SKILL.md だけでなくディレクトリ全体を覆う (`__pycache__` と `.DS_Store` は除く)。
+全て exit 0 でなければ trace の lint を N/A のまま Step 2 / 3.5 へ戻る。全て exit 0 なら trace の `reproducibility_gates.lint` を PASS にし、検査した skill ディレクトリ全体の digest を `lint_target_sha256` に、`validate-build-plan --check` が読んだ brief ファイルの sha256 を `lint_brief_sha256` に書く。lint-skill-tree や `validate-build-plan --check` は SKILL.md 以外のファイルも見るので、digest も SKILL.md だけでなくディレクトリ全体を覆う (`__pycache__` と `.DS_Store` は除く)。brief 無しのフラグ明示 build では `validate-build-plan --check` を呼ばないので、`lint_brief_sha256` も書かない。
 
 ```bash
-python3 -c 'import sys; from pathlib import Path; sys.path.insert(0, sys.argv[1]); from feedback_contract_ssot import directory_content_sha256; print(directory_content_sha256(Path(sys.argv[2])))' "$PLUGIN_ROOT/scripts" "$OUT_BASE/$SKILL_NAME"
+python3 -c 'import sys; from pathlib import Path; sys.path.insert(0, sys.argv[1]); from feedback_contract_ssot import directory_content_sha256; print(directory_content_sha256(Path(sys.argv[2])))' "$PLUGIN_ROOT/scripts" "$OUT_BASE/$SKILL_NAME"  # lint_target_sha256
+python3 -c 'import hashlib, sys; print(hashlib.sha256(open(sys.argv[1], "rb").read()).hexdigest())' eval-log/skill-brief.json  # lint_brief_sha256
 ```
 
-create の p0-lint は、同じコマンドで出した今の digest がこの値と一致するときだけ lint 結果を使い回す。Step 4 の後に prompts や assets を足すなど、SKILL.md 以外だけを変えた場合も一致しなくなり、create 側で lint をやり直す。
+create の p0-lint は、同じコマンドで出した今の digest がこの値と一致するときだけ lint 結果を使い回す。Step 4 の後に prompts や assets を足すなど、SKILL.md 以外だけを変えた場合も一致しなくなり、create 側で lint をやり直す。Step 12 の derive は、2 つの値と build_mode がすべて今と一致する unit だけ `validate-build-plan` をその場で 1 回走らせ、exit 0 なら build-conformance の receipt にする (どちらかが無いか違えば、Step 12 で validate-build-plan がいつもどおり走る)。
 
 ### Step 5: 出荷用フォーク評価 (phase: trace-write, release のみ)
 
@@ -412,7 +398,7 @@ build 完了後、量産プラグインを Notion の SSOT (スキル一覧 DB) 
 
 ### Step 12: 証拠DAG解決 (verification obligations, profile 制御)
 
-機械 lint・意味adequacy・実走acceptanceを別々の全件workflowとして起動しない。`derive-verification-contract.py` でgraph全体のclaimを `deterministic/semantic/observational/audit` obligationへcompileし、`plan-verification-obligations.py --stage <build-plan.flags.build_stage>` がcurrent receiptと依存fingerprintから次の最小work setを決める。draft は `generate/check` だけを解決し、`stage_gate.status=usable-draft` をStep 12.4の共通proofに渡す。release でのみ、machine proof後に残った `llm_batches[]` を独立 evaluatorへ、`observational_queue[]` をGate Dへ渡す。既存 `{elegance,rubric}-verdict.json` はCI互換projectionとして維持し、`record-verification-evidence.py` でsemantic fingerprintへ束縛する。3独立analystの30思考法完全監査は `exhaustive` 明示時のaudit obligationに限定する。**正本は `references/verification-obligation-protocol.md`、CI互換verdictとsha結び直しは `references/content-review-protocol.md`**。
+機械 lint・意味adequacy・実走acceptanceを別々の全件workflowとして起動しない。`derive-verification-contract.py --evidence-dir <plannerと同じdir>` でgraph全体のclaimを `deterministic/semantic/observational/audit` obligationへcompileし (trace の lint PASS・build_mode・`lint_target_sha256`・`lint_brief_sha256` がすべて今と一致する unit だけ、derive がその場で contract の `validate-build-plan` を走らせ、exit 0 なら build-conformance の receipt にする。agent が走らせて記録する往復は要らない。1つでも違うか通らなければ check のまま)、`plan-verification-obligations.py --stage <build-plan.flags.build_stage> --run-id <run_id> --state-dir <state_dir>` がcurrent receiptと依存fingerprintから次の最小work setを決め、検証用model actionをStep 12.6のgateと同じ台帳へ予約する (`<state_dir>` は先に作る。同じplanから同じ量を出すので、後で呼ぶgateは二重に引かない)。draft は `generate/check` だけを解決し、`stage_gate.status=usable-draft` をStep 12.4の共通proofに渡す。release でのみ、machine proof後に残った `llm_batches[]` を独立 evaluatorへ、`observational_queue[]` をGate Dへ渡す。既存 `{elegance,rubric}-verdict.json` はCI互換projectionとして維持し、`record-verification-evidence.py` でsemantic fingerprintへ束縛する。3独立analystの30思考法完全監査は `exhaustive` 明示時のaudit obligationに限定する。**正本は `references/verification-obligation-protocol.md`、CI互換verdictとsha結び直しは `references/content-review-protocol.md`**。
 
 ### Step 12.4: 全7 Capability共通 usable-draft proof
 
@@ -422,13 +408,13 @@ build 完了後、量産プラグインを Notion の SSOT (スキル一覧 DB) 
 
 `usable-draft-proof` が束縛した実artifactに、class別のparse/open、secret混入、不可逆操作、破損検査だけを掛ける。PASS後、利用者にpath・開き方・試し方を先に渡す。意味評価やリリース完全性はこのhandoffの完了条件にしない。
 
-### Step 12.5: 提示後の診断深度選択 (draftのみ)
+### Step 12.5: 提示後の診断選択 (draftのみ)
 
-`artifact_presented` の後にだけ `accept-as-is / light / standard / detailed` を聞く。`accept-as-is` は evaluator 0 / improver 0 でdraft handoff完了。`release` / `exhaustive` はこの質問に混ぜず、別の明示eventでだけ受け付ける。今回のように30思考法監査が依頼本文で明示済みなら、現物提示後に現在turn限定の診断選択receiptとして消費できる。そのreceiptを「将来も毎draft自動診断」と解釈しない。
+`artifact_presented` の後にだけ `accept-as-is / diagnose` を聞く。`accept-as-is` は evaluator 0 / improver 0 でdraft handoff完了。改善の深さはこの質問で聞かず、Step 12.6の所見提示後に `references/improvement-levels.json` の `offered_order` から1回だけ聞く。`release` / `exhaustive` はこの質問に混ぜず、別の明示eventでだけ受け付ける。今回のように30思考法監査が依頼本文で明示済みなら、現物提示後に現在turn限定の診断選択receiptとして消費できる。そのreceiptを「将来も毎draft自動診断」と解釈しない。
 
 ### Step 12.6: 選択時のsemantic診断
 
-skill subtypeに限定せず、agent/hook/command/plugin-composition/prompt/workflowを含む全7 Capabilityを共通gateへ渡す。複数component harnessでは対象全体を1つのtarget manifestへ束ねる。claimを取るgate呼び出しには `--user-request-file <state_dir>/user-request.txt` を付ける (briefの `user_request_verbatim`、無ければ利用者の初回依頼原文をPIIだけ伏字にして書く。省略してもclaimは通るがgateがWARNを出し、evaluatorは目的適合を判定できない)。gateは原文を `intent_anchor` としてclaim結果に載せ、launcherがlaunch requestの `request_id` へ束縛する。evaluatorは当初目的を成果物から推測せずこの原文で判定する。`build-improvement-gate.py` がdurable claim付き `status=initial-review-required` を返した場合だけ `build-review-launch.py --gate-plan <gate-plan.json> --runtime <claude-code|codex>` を実行し、artifact+contract fingerprintあたりruntime-neutral requestを1件だけ受け取る。Claude Codeはそのpayloadで `elegant-initial-draft-evaluator` Task、Codexは同じpayloadとR5による単一subagentを起動する。両者ともRead/Glob/Grep限定のfresh contextで、他runtimeはfail-closed。親contextで同じ30思考法を繰り返さない。配送leaseと再配送、起動順序の検査は `references/verification-obligation-protocol.md` の「初回診断の起動契約」に従う。**承認receiptの正本**は、host/runtimeが現物提示後の質問に対して実際に受け取ったuser responseだけを直列化したものとする。評価Agent・改善Agentによる捏造、代理選択、自己発行を禁止する。`exhaustive` 確認は同じ回答から推定せず別turn eventを必須とし、本診断はrelease/audit proofに流用しない。
+skill subtypeに限定せず、agent/hook/command/plugin-composition/prompt/workflowを含む全7 Capabilityを共通gateへ渡す。複数component harnessでは対象全体を1つのtarget manifestへ束ねる。claimを取るgate呼び出しには `--user-request-file <state_dir>/user-request.txt` を付ける (briefの `user_request_verbatim`、無ければ利用者の初回依頼原文をPIIだけ伏字にして書く。省略してもclaimは通るがgateがWARNを出し、evaluatorは目的適合を判定できない)。gateは原文を `intent_anchor` としてclaim結果に載せ、launcherがlaunch requestの `request_id` へ束縛する。evaluatorは当初目的を成果物から推測せずこの原文で判定する。`build-improvement-gate.py` がdurable claim付き `status=initial-review-required` を返した場合だけ `build-review-launch.py --gate-plan <gate-plan.json> --runtime <claude-code|codex>` を実行し、artifact+contract fingerprintあたりruntime-neutral requestを1件だけ受け取る。Claude Codeはそのpayloadで `elegant-initial-draft-evaluator` Task、Codexは同じpayloadとR5による単一subagentを起動する。両者ともRead/Glob/Grep限定のfresh contextで、他runtimeはfail-closed。親contextで同じ30思考法を繰り返さない。gateはclaimと改善の認可の前にrunのAI呼び出し予算 (`run-elegant-review/references/convergence-policy.json#/run_model_action_budget`) を `--state-dir` の台帳へ予約し、足りなければ `status=run-budget-exhausted` でevaluatorもexecutorも起動しない (改善なら残りに収まる浅い深さを選び直せる)。配送leaseと再配送、起動順序の検査は `references/verification-obligation-protocol.md` の「初回診断の起動契約」に従う。**承認receiptの正本**は、host/runtimeが現物提示後の質問に対して実際に受け取ったuser responseだけを直列化したものとする。評価Agent・改善Agentによる捏造、代理選択、自己発行を禁止する。`exhaustive` 確認は同じ回答から推定せず別turn eventを必須とし、本診断はrelease/audit proofに流用しない。
 
 ### Step 12.7: ユーザー選択範囲だけの有界改善
 validated `improvement-decision.json` の `improvement_authorized=true` かつ `selected_finding_ids` 非空の場合だけ `elegant-improvement-executor` を1 worker起動し、引数 `selected_finding_ids` と `max_rounds` に decision の値をそのまま渡し、`output_contract=improvement-result` を指定する。`R6-bounded-improve.md` に従い、selected ID、manifest内path、`max_rounds`だけを変更範囲とする。`accept-draft`または選択対象0件はexecutor 0 contextで停止する。新しいfindingを発見しても範囲を拡大せずresidualへ残す。

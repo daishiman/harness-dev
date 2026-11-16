@@ -110,6 +110,42 @@
       "consumed_by": ["run-skill-iter-improve"]
     }
   },
+  "run_model_action_budget": {
+    "_note": "1 run_id で起動してよい AI context の総数の正本はここ 1 か所。bounds は各ループ上限の写しで、run-build-skill/scripts/validate-run-model-budget.py が bound_sources の実値と突き合わせる。components と total は同 script の compute_worst_case(bounds) の結果 (--print-expected) を書く。上限を変えたら bounds と components/total を同時に直す。どれか 1 つでも食い違えば検査が落ちる。",
+    "unit": "model_action = AI context を 1 つ起動すること (evaluator / executor / 検証用 LLM batch / observe)",
+    "scope": "1 run_id。create の Gate が差し戻して build をやり直しても run_id は変えず、同じ予算から引く",
+    "bounds": {
+      "gate_deny_cycles": 3,
+      "build_rerun_cycles": 3,
+      "initial_diagnosis_contexts": 1,
+      "improvement_rounds": 3,
+      "content_review_inner": 3,
+      "content_review_outer": 3,
+      "goal_seek_loops": 5,
+      "verification_actions": 4
+    },
+    "bound_sources": {
+      "gate_deny_cycles": ["run-skill-create/workflow-manifest.json#/max_iterations", "run-skill-create/prompts/R2-gate-review.md (最大 N 周 / 否認 N 周)"],
+      "build_rerun_cycles": ["run-build-skill/SKILL.md (release で最大 N 周)"],
+      "initial_diagnosis_contexts": ["run-build-skill/scripts/build-improvement-gate.py evaluator_context_limit"],
+      "improvement_rounds": ["run-build-skill/references/improvement-levels.json#/levels/*/max_rounds (最大値)"],
+      "content_review_inner": ["本ファイル #/loop_bounds/content_review_inner_reeval/value", "build-flags.schema.json feedback_contract.inner_loop.max_iterations.default"],
+      "content_review_outer": ["本ファイル #/loop_bounds/content_review_outer_reeval/value", "本ファイル #/parameters/max_iterations", "本ファイル #/halt_conditions/max_iterations_reached/rule", "build-flags.schema.json feedback_contract.outer_loop.max_iterations.default", "run-build-skill/SKILL.md と run-skill-create/SKILL.md の frontmatter feedback_contract.max_iterations"],
+      "goal_seek_loops": ["本ファイル #/loop_bounds/goal_seek_inner/value", "本ファイル #/parameters/inner_max_loops", "build-flags.schema.json with_goal_seek.max_loops.default"],
+      "verification_actions": ["run-build-skill/scripts/plan-verification-obligations.py DEFAULT_INCREMENTAL_MODEL_ACTIONS"]
+    },
+    "components": {
+      "initial_diagnosis": 4,
+      "bounded_improvement": 12,
+      "verification": 64
+    },
+    "total": 80,
+    "enforced_at": [
+      "run-build-skill/scripts/build-improvement-gate.py: 初回診断の claim と改善の認可の前に台帳へ予約する。足りなければ status=run-budget-exhausted で何も起動しない",
+      "run-build-skill/scripts/build-review-launch.py: evaluator を配送する前に claim の予約を確かめる (無ければここで予約する)",
+      "run-build-skill/scripts/plan-verification-obligations.py: --state-dir を渡すと台帳の消費を足した run 全体の残りを budget_gate.run_budget に出す"
+    ]
+  },
   "parameters": {
     "max_iterations": 3,
     "inner_max_loops": 5,

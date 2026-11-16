@@ -48,22 +48,7 @@ reference_refs:
   - references/production-contract.md
   - ../../references/stage-common.md
   - ../../references/design-knowledge-index.json
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 # 目的に合わせて制作し、採用済み改善を実物へ反映する
@@ -79,7 +64,7 @@ artifact_delivery:
 
 ## 選ぶ前の実成果物の作成
 
-「Purpose & Output Contract」の最小の実成果物を親コンテキストで作る。ここでの実成果物は、確認済みの brief と素材から作る 1 案の下書きの紙面（executionPlan があるときは pilot 案の 1 つ）で、`validate` と `render --id <案ID>` が書き出す `out/<案ID>/` の print.pdf と PDF 由来 PNG である。描くのは 1 案でも、validate は全案（brief の count）の scene を検査する（init が全案の雛形を作るのは concepts だけで、scene は空である）。effect に応じた最低限の検査（validate の型・必須事実・素材の公開条件、ファイルが読み込めて開けるか・秘密情報・取り消せない操作・壊れたファイル）だけを行い、現物（PDF と PNG のパス・ハッシュ値・開き方）を見せたうえで、現状で試す／軽微／標準／詳細のどれにするかを記録する（記録する値は順に `accept-as-is`・`light`・`standard`・`detailed`）。現状で試すならその場で引き継ぎを完了とし、後続の節を実行しない。
+「Purpose & Output Contract」の最小の実成果物を親コンテキストで作る。ここでの実成果物は、確認済みの brief と素材から作る 1 案の下書きの紙面（executionPlan があるときは pilot 案の 1 つ）で、`validate` と `render --id <案ID>` が書き出す `out/<案ID>/` の print.pdf と PDF 由来 PNG である。描くのは 1 案でも、validate は全案（brief の count）の scene を検査する（init が全案の雛形を作るのは concepts だけで、scene は空である）。effect に応じた最低限の検査（validate の型・必須事実・素材の公開条件、ファイルが読み込めて開けるか・秘密情報・取り消せない操作・壊れたファイル）だけを行い、現物（PDF と PNG のパス・ハッシュ値・開き方）を見せたうえで、現状で試すか診断するかを記録する（記録する値は順に `accept-as-is`・`diagnose`）。現状で試すならその場で引き継ぎを完了とし、後続の節を実行しない。
 
 下書きを validate する前に、この段で紙面に合わせて brief.policy の文字量（maxChars）と中心軸にそろえる意味群（axisGroups。intake で center がおまかせなら center も）を決め、brief.json へ書く（preset なしの init はどちらも空で作る）。preset の値は下書きとして扱い、今回の紙面で確かめ直す（[runtime の案件と素材](../../references/runtime.md#案件と素材)の E2 と同じ扱い）。
 
@@ -87,7 +72,7 @@ artifact_delivery:
 
 ## 選んだ深さでの改善の実行
 
-以下の既存の節（ゴールシーク実行・Gotchas・実行への接続）は、軽微・標準・詳細のどれかが記録されて `semantic_evaluator_started` へ遷移したときだけ実行する。リリースと完全監査は別イベントとして明示されたときだけ行う。
+以下の既存の節（ゴールシーク実行・Gotchas・実行への接続）は、「診断する」が記録されて `semantic_evaluator_started` へ遷移したときだけ実行する。リリースと完全監査は別イベントとして明示されたときだけ行う。
 
 選んだ後は stage agent が全案を制作し、別 context の[完成画像評価](../assign-flyer-evaluator/SKILL.md)と、その FIX を fixClass どおりに直す改善 cycle を回す。
 

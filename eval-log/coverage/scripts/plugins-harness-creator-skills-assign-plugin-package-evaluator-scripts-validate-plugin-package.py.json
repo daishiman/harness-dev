@@ -5,21 +5,14 @@
   "llm_eval": {
     "verdict": "PASS",
     "score": 94,
-    "notes": "genuine independent delta review、source SHA256=4c75cdb5742555bcb4ed1a3313f9d8532aba032d5f72008cea15f03012c5b469。rootが当該変更著者reset_observer/meta_analystとは別に差分・隣接実装・対応testを通読。既存colon metadataを有効TOMLのtool.harness multiline literalへ移しlint可視範囲へ入れた。PyYAML依存/--output書込/exit契約を実実装と照合。コメントのみでHEADとの実行AST/mode一致。 522回帰、criteria5、frontmatter209、vendor352、23package、releaseを親が実行しPASS。旧scoreと既存課題を維持、過去評価は docs/pkg007-runtime/review-history/ci-metadata/plugins-harness-creator-skills-assign-plugin-package-evaluator-scripts-validate-plugin-package.py.json に保存。metadata補修差分にblocking問題なし。"
+    "notes": "genuine independent delta review、sourceSHA=aed8ce17fae15f6d1bab623c5d17574a9d2a5b30a6932660492dd1c29b309dc7。実装者meta_analystと別の親が統合差分・AST・既存契約を確認。現sourceと元snapshotの実行AST完全一致を確認。mainの有効PEP723ヘッダーを保持し、元r44のpytest_cache除外も維持する。 元のfull評価scoreと既存課題は維持、今回差分にblocking懸念なし。full再評価とは扱わない。元recordは docs/remaining-publication/review-history/plugins-harness-creator-skills-assign-plugin-package-evaluator-scripts-validate-plugin-package.py.json に保全。最終対象unit/CLI結果はquality-gates受領書を参照。"
   },
-  "reviewed_by": "independent-delta-review-20261116-root-ci-metadata",
+  "reviewed_by": "independent-integration-delta-review-20261116-root-esj6",
   "checked": [
     "soundness",
     "responsibility",
     "error-handling",
     "side-effect-safety",
     "frontmatter"
-  ],
-  "provenance": {
-    "method": "genuine-incremental-code-review",
-    "prior_artifact_sha256": "88516515999f8eb57ac99bbd3cbff3fbae59570b3b436a76ad953f8daf6650f9",
-    "prior_record_sha256": "cd3df9ab70eb86805425554f2fdbcc604ad4c33cfe81b8db16817c11bb4056b5",
-    "artifact_sha256": "1366fb0cb7bb608bb4685d0aeeee6a11b96a130329645fe81c30f050e549fc79",
-    "reviewed_difference": "前回レビュー版からの実差分は、先行dirtyに含まれていた.pytest_cache除外定数・predicate・説明文の削除だけ。公開treeのroot及びHC feedback_contract_ssot._is_local_artifactもbytecode/DS_Storeのみを除外しており、parityは一致する。既存cache除外の改善は今回scope外として公開baseへ戻したもので、新007のYAML型/first lexists/containment/stat+x/一実体一findingやAST helper/PKG006/CLI slugは前回真正レビュー版と同一である。"
-  }
+  ]
 }

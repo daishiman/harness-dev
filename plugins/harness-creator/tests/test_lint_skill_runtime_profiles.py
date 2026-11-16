@@ -4,6 +4,8 @@ import importlib.util
 import sys
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = ROOT / "plugins/harness-creator/scripts/lint-skill-runtime-profiles.py"
@@ -125,6 +127,121 @@ def test_task_graph_requires_all_assets(tmp_path: Path) -> None:
     (scripts / MODULE.TASK_GRAPH_ASSETS[0]).write_text("# drift\n", encoding="utf-8")
     profile = MODULE.inspect_skill(skill, root / "plugins")
     assert any("正本と不一致" in finding for finding in profile.findings)
+
+
+_TASK_GRAPH_GOAL_SEEK = (
+    "goal_seek:\n"
+    "  engine: task-graph\n"
+    "  engine_profile: checklist-graph\n"
+    "  full_task_spec_graph: false\n"
+    "  fork: inline\n"
+)
+_TASK_GRAPH_WIRING = (
+    "depends_on extract-ready-set-from-checklist.py build-self-reflection-entry.py "
+    "ready_set selected_item\n"
+)
+_SKILL_RELATIVE_CANONICAL = "../run-build-skill/templates/task-graph-engine/scripts/"
+_REPO_RELATIVE_CANONICAL = (
+    "plugins/harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/"
+)
+
+
+def _canonical_engine(root: Path) -> Path:
+    canonical = root.joinpath("plugins", *MODULE.TASK_GRAPH_CANONICAL_PARTS)
+    canonical.mkdir(parents=True)
+    for name in MODULE.TASK_GRAPH_ASSETS:
+        (canonical / name).write_text("# fixture\n", encoding="utf-8")
+    return canonical
+
+
+def _task_graph_skill(root: Path, plugin: str, script_refs_yaml: str) -> Path:
+    """scripts/ に写しを置かない task-graph skill を作る。"""
+
+    skill = root / f"plugins/{plugin}/skills/run-demo/SKILL.md"
+    skill.parent.mkdir(parents=True)
+    skill.write_text(
+        "---\nname: run-demo\nallowed-tools:\n  - Read\nkind: run\nprefix: run\n"
+        f"{script_refs_yaml}{_TASK_GRAPH_GOAL_SEEK}---\n\n## ゴールシーク実行\n"
+        f"{_TASK_GRAPH_WIRING}",
+        encoding="utf-8",
+    )
+    return skill
+
+
+def _block_refs(prefix: str, names: tuple[str, ...]) -> str:
+    # 末尾コメント付きの行も混ぜ、実 SKILL.md と同じ書き方を読めることを確かめる。
+    return "script_refs:\n" + "".join(
+        f"  - {prefix}{name}  # task-graph engine\n" for name in names
+    )
+
+
+@pytest.mark.parametrize(
+    "script_refs_yaml",
+    [
+        _block_refs(_SKILL_RELATIVE_CANONICAL, MODULE.TASK_GRAPH_ASSETS),
+        _block_refs(_REPO_RELATIVE_CANONICAL, MODULE.TASK_GRAPH_ASSETS),
+        "script_refs: ["
+        + ", ".join(_SKILL_RELATIVE_CANONICAL + name for name in MODULE.TASK_GRAPH_ASSETS)
+        + "]\n",
+    ],
+    ids=["skill-relative", "repo-relative", "flow-list"],
+)
+def test_task_graph_same_plugin_canonical_refs_count_as_bundled(
+    tmp_path: Path, script_refs_yaml: str
+) -> None:
+    _canonical_engine(tmp_path)
+    skill = _task_graph_skill(tmp_path, "harness-creator", script_refs_yaml)
+    profile = MODULE.inspect_skill(skill, tmp_path / "plugins")
+    assert profile.findings == ()
+    assert not (skill.parent / "scripts").exists()
+
+
+def test_task_graph_same_plugin_partial_refs_report_only_unreferenced(
+    tmp_path: Path,
+) -> None:
+    _canonical_engine(tmp_path)
+    referenced = MODULE.TASK_GRAPH_ASSETS[:3]
+    skill = _task_graph_skill(
+        tmp_path, "harness-creator", _block_refs(_SKILL_RELATIVE_CANONICAL, referenced)
+    )
+    profile = MODULE.inspect_skill(skill, tmp_path / "plugins")
+    (finding,) = profile.findings
+    assert "engine asset が不足" in finding
+    assert MODULE.TASK_GRAPH_ASSETS[3] in finding
+    assert not any(name in finding for name in referenced)
+
+
+def test_task_graph_cross_plugin_canonical_refs_fail(tmp_path: Path) -> None:
+    _canonical_engine(tmp_path)
+    prefix = "../../../harness-creator/skills/run-build-skill/templates/task-graph-engine/scripts/"
+    skill = _task_graph_skill(
+        tmp_path, "demo", _block_refs(prefix, MODULE.TASK_GRAPH_ASSETS)
+    )
+    # 参照先の正本は repo には実在する。それでも別 plugin なので同梱扱いにしない。
+    assert all(
+        (skill.parent / f"{prefix}{name}").is_file() for name in MODULE.TASK_GRAPH_ASSETS
+    )
+    profile = MODULE.inspect_skill(skill, tmp_path / "plugins")
+    assert any("別 plugin の task-graph engine 正本" in f for f in profile.findings)
+    (missing,) = [f for f in profile.findings if "engine asset が不足" in f]
+    assert all(name in missing for name in MODULE.TASK_GRAPH_ASSETS)
+
+
+def test_task_graph_without_copies_or_canonical_refs_fails(tmp_path: Path) -> None:
+    _canonical_engine(tmp_path)
+    # 同じ plugin の別 skill に置いた写しを指す参照は、正本参照とみなさない。
+    sibling = tmp_path / "plugins/harness-creator/skills/run-other/scripts"
+    sibling.mkdir(parents=True)
+    for name in MODULE.TASK_GRAPH_ASSETS:
+        (sibling / name).write_text("# fixture\n", encoding="utf-8")
+    for refs in ("", _block_refs("../run-other/scripts/", MODULE.TASK_GRAPH_ASSETS)):
+        skill = _task_graph_skill(tmp_path, "harness-creator", refs)
+        profile = MODULE.inspect_skill(skill, tmp_path / "plugins")
+        (missing,) = [f for f in profile.findings if "engine asset が不足" in f]
+        assert all(name in missing for name in MODULE.TASK_GRAPH_ASSETS)
+        assert not any("別 plugin" in f for f in profile.findings)
+        skill.unlink()
+        skill.parent.rmdir()
 
 
 def test_inline_rejects_unused_task_graph_assets(tmp_path: Path) -> None:

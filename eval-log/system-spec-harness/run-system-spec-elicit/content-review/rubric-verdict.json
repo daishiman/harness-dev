@@ -2,7 +2,8 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-elicit",
-    "skill_md_sha256": "275e76275df5f344c275442173b05ab20428a9d5b54f992b9035849d0a82983b"
+    "skill_md_sha256": "f7165029349766d6640f8e3ddca40d4377c745c8fbcd77db156d3a5fa5316730",
+    "reviewed_skill_md_sha256": "275e76275df5f344c275442173b05ab20428a9d5b54f992b9035849d0a82983b"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -39,5 +40,21 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "iteration 3 の再評価。incremental profile の focused combined review (1 context) で、exhaustive の 30 思考法は実施していない。SKILL.md の作者とは別の独立レビュアーが、作者側の修正後の現物を読んで、iteration 2 の negative_feedback 2 件が解消したかを確かめ、新しい差分が持ち込んだ矛盾も探した。SKILL.md の sha256 は shasum -a 256 の実測値 275e7627…983b (234 行) で、依頼の値と一致した。読んだもの: 差分 scratchpad/cr/run-system-spec-elicit.skilldir.diff (5149 行)、validate-design-knowledge-refs.py 0.3.0 のヘッダと L45-L126、apply-spec-transition.py 0.2.2 のヘッダ (dependencies に validator を追加)・L88-L104 (foundation_provenance の読み込み)・L1918-L2012、tests/test_fix_qa_knowledge_ref.py L158-L177、spec-state-contract.md L368・L411、SKILL.md frontmatter L42-L80、references/resource-map.yaml L20-L28。改名の影響: plugins 配下と scripts 配下の *.py を grep し、旧名 _resolve / _headings を validator module から呼んでいる箇所が残っていないことを確かめた (compile-spec-doc.py は validator を subprocess で呼ぶので影響を受けない)。前回指摘の追跡: (1) validator と fix-qa-knowledge-ref の解決規則の食い違い (dependency_break) = 解消。(2) deterministic_checks・resource-map の宣言漏れ (smell/low) = 解消。実物での確認: (1) pytest: cwd を scratchpad にして PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider --rootdir=<plugin> を実行。<skill>/tests と <plugin>/tests では 776 passed、plugin 全体では 1127 passed (依頼の数字と一致)。test_scripts_smoke.py の 539 passed は自分では再実行しておらず、未確認。(2) probe_it2.py の再実行: V1-V5 (validator) は前回と同じ。F1 は exit 1 に、F2 は exit 0 に変わり (前回は F1 exit 0・F2 exit 1)、F3 は exit 1、F4 は exit 0。(3) probe_it3.py: 見出しだけが壊れた旧 ref は、空 root・INT root のどちらでも validator が exit 1、fix が exit 1 (low smell の根拠)。(4) HarnessHub の system-spec/spec-state.json (ref 421 件) を HarnessHub 作業ツリーを root にして validator 0.3.0 で検査し、違反 0 件。判定: (a)〜(d) の違反は 0 件。low の smell が 1 件残るが、PASS は妨げない。human_review_required=false。 rubric 側: 同じ 1 回の評価を rubric 1.6.0 の観点で記録した。機械採点 render-findings-score.py --rubric-refs ref-skill-design-rubric/references/rubric.json --target run-system-spec-elicit の結果は score=100、threshold=80、passed=true、findings=0、required_fixes=[]、coverage は applicable 20・scored 19・pending_human 1・not_applicable 21。pending_human の BD-004 (description の trigger と本文の手順の 1:1 対応) はレビュアーが判定し、適合とした。description の「ヒアリングを開始するとき」は使い方 1-3 に、「往復ヒアリングして spec-state.json に確定させたいとき」は使い方 4-6 に対応し、今回の差分でもこの対応は変わっていない。rubric の high severity は 0 件で、content-review の (a)〜(d) 違反も 0 件なので PASS とする。"
+  "notes": "iteration 3 の再評価。incremental profile の focused combined review (1 context) で、exhaustive の 30 思考法は実施していない。SKILL.md の作者とは別の独立レビュアーが、作者側の修正後の現物を読んで、iteration 2 の negative_feedback 2 件が解消したかを確かめ、新しい差分が持ち込んだ矛盾も探した。SKILL.md の sha256 は shasum -a 256 の実測値 275e7627…983b (234 行) で、依頼の値と一致した。読んだもの: 差分 scratchpad/cr/run-system-spec-elicit.skilldir.diff (5149 行)、validate-design-knowledge-refs.py 0.3.0 のヘッダと L45-L126、apply-spec-transition.py 0.2.2 のヘッダ (dependencies に validator を追加)・L88-L104 (foundation_provenance の読み込み)・L1918-L2012、tests/test_fix_qa_knowledge_ref.py L158-L177、spec-state-contract.md L368・L411、SKILL.md frontmatter L42-L80、references/resource-map.yaml L20-L28。改名の影響: plugins 配下と scripts 配下の *.py を grep し、旧名 _resolve / _headings を validator module から呼んでいる箇所が残っていないことを確かめた (compile-spec-doc.py は validator を subprocess で呼ぶので影響を受けない)。前回指摘の追跡: (1) validator と fix-qa-knowledge-ref の解決規則の食い違い (dependency_break) = 解消。(2) deterministic_checks・resource-map の宣言漏れ (smell/low) = 解消。実物での確認: (1) pytest: cwd を scratchpad にして PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q -p no:cacheprovider --rootdir=<plugin> を実行。<skill>/tests と <plugin>/tests では 776 passed、plugin 全体では 1127 passed (依頼の数字と一致)。test_scripts_smoke.py の 539 passed は自分では再実行しておらず、未確認。(2) probe_it2.py の再実行: V1-V5 (validator) は前回と同じ。F1 は exit 1 に、F2 は exit 0 に変わり (前回は F1 exit 0・F2 exit 1)、F3 は exit 1、F4 は exit 0。(3) probe_it3.py: 見出しだけが壊れた旧 ref は、空 root・INT root のどちらでも validator が exit 1、fix が exit 1 (low smell の根拠)。(4) HarnessHub の system-spec/spec-state.json (ref 421 件) を HarnessHub 作業ツリーを root にして validator 0.3.0 で検査し、違反 0 件。判定: (a)〜(d) の違反は 0 件。low の smell が 1 件残るが、PASS は妨げない。human_review_required=false。 rubric 側: 同じ 1 回の評価を rubric 1.6.0 の観点で記録した。機械採点 render-findings-score.py --rubric-refs ref-skill-design-rubric/references/rubric.json --target run-system-spec-elicit の結果は score=100、threshold=80、passed=true、findings=0、required_fixes=[]、coverage は applicable 20・scored 19・pending_human 1・not_applicable 21。pending_human の BD-004 (description の trigger と本文の手順の 1:1 対応) はレビュアーが判定し、適合とした。description の「ヒアリングを開始するとき」は使い方 1-3 に、「往復ヒアリングして spec-state.json に確定させたいとき」は使い方 4-6 に対応し、今回の差分でもこの対応は変わっていない。rubric の high severity は 0 件で、content-review の (a)〜(d) 違反も 0 件なので PASS とする。",
+  "sha_rebinds": [
+    {
+      "from_sha": "275e76275df5f344c275442173b05ab20428a9d5b54f992b9035849d0a82983b",
+      "to_sha": "cf9f06d56e2fc4ea26ceb484abf3295036ef3c048a7308acebc4581fde3a059a",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:51Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "cf9f06d56e2fc4ea26ceb484abf3295036ef3c048a7308acebc4581fde3a059a",
+      "to_sha": "f7165029349766d6640f8e3ddca40d4377c745c8fbcd77db156d3a5fa5316730",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:59Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

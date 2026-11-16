@@ -1,0 +1,70 @@
+{
+  "artifacts": [
+    {
+      "artifact_kind": "feature",
+      "slug": "render-diff",
+      "title": "render結果の前回比較",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "priority": "medium",
+      "tracker_binding": "beads",
+      "depends_on": [
+        "LT-FEATURE-001"
+      ],
+      "macro": {
+        "purpose": "render結果の変化を前回との比較で把握する",
+        "goal": "現在と前回のrenderを比較した差分を読み取れる",
+        "scope_in": [
+          "前回と現在のrenderの比較",
+          "追加・削除・変更の識別",
+          "比較元が無い場合の明示"
+        ],
+        "scope_out": [
+          "差分の文章要約",
+          "render生成自体の変更"
+        ],
+        "acceptance": [
+          "同一render同士の差分は0件になる",
+          "追加・削除・変更が比較元と対応して区別される",
+          "前回renderが無い場合は比較不能と示される"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    },
+    {
+      "artifact_kind": "feature",
+      "slug": "render-diff-summary",
+      "title": "render差分の読み手向け要約",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "priority": "medium",
+      "tracker_binding": "beads",
+      "depends_on": [
+        "feature-render-diff"
+      ],
+      "macro": {
+        "purpose": "読み手がrenderの主要な変化を短時間で理解する",
+        "goal": "比較差分を根拠とする要約が読み手に示される",
+        "scope_in": [
+          "差分を根拠とした主要変更の要約",
+          "要約から元の差分への対応",
+          "差分なし・比較不能の明示"
+        ],
+        "scope_out": [
+          "差分計算の再実装",
+          "外部への通知"
+        ],
+        "acceptance": [
+          "要約の各変更内容が元の差分に対応する",
+          "差分0件では変更なしと示される",
+          "比較不能を変更なしとして表示しない"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    }
+  ]
+}

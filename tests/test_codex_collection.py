@@ -36,14 +36,14 @@ def test_internal_absolute_and_relative_links_publish_with_target_bytes_and_orig
     assert receipt["original_fixture_modified"] is False
 
 
-@pytest.mark.parametrize("target",["escape","missing","secret"])
+@pytest.mark.parametrize("target",["escape","missing","secret","secret-local"])
 def test_publication_rejects_true_escape_missing_and_excluded_secret_targets(tmp_path,target):
     module=load();source=tmp_path/"fx";source.mkdir()
     outside=tmp_path/"outside";outside.write_text("private")
     if target=="escape": (source/"link").symlink_to(outside)
     elif target=="missing": (source/"link").symlink_to(source/"missing")
     else:
-        key=source/".guard-key";key.write_text("private key")
+        key=source/(".guard-key-local" if target=="secret-local" else ".guard-key");key.write_text("private key")
         (source/"link").symlink_to(key)
     before=module.tree_inventory(source)
     with pytest.raises(ValueError): module.snapshot_fixture(source,tmp_path/"snapshot")

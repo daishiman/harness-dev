@@ -32,31 +32,16 @@ feedback_contract:
       loop_scope: outer
       text: apply rollback 通知の外部作用はユーザー承認後だけ実行されcommand exit changed pathsと残リスクが報告されている
       verify_by: evaluator
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。parse/open・secret・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはそのままhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。parse/open・secret・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/diagnoseを記録する。accept-as-isはそのままhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 # run-governance-automation
 
@@ -77,7 +62,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 | 目的 | entrypoint | 既定の動き | 書き込み |
 |---|---|---|---|
-| manifest登録 | `build-manifest-registration-plan.py` | 対象はこの script を置いた plugin 自身に固定で（引数で変えられない）、この plugin は plugin.json 形式なので、必須キーを検査するだけの proposals が空の exit 0 になる（実際には何も登録しない）。未登録ファイルの追加計画を出し、追加候補があって `--apply` が無いと `needs_confirmation` で exit 1 になるのは、legacy の manifest.json 形式の plugin に置いたときだけ | しない（この plugin では `--apply` を付けても変えない。plugin.json 形式の分岐が `--apply` を見る前に戻る）。plugin を marketplace.json・bundles.json へ登録するのは repo の `scripts/validate-plugin-completeness.py --fix` |
+| manifest登録 | `build-manifest-registration-plan.py` | 対象は `--plugin <plugin dir>` で渡す（省略時はこの script を置いた plugin 自身）。渡した先に manifest.json も `.claude-plugin/plugin.json` も無ければ `plugin_not_found` で exit 2。形式は manifest.json の有無で決まり、あれば legacy で manifest.json だけを読み（plugin.json を併せ持っても読まない）、無ければ plugin.json 形式で plugin.json を読む。結果は stdout の JSON の `status` と、追加候補の一覧 `proposals` に出る。plugin.json 形式は必須キー（name・version・description）を検査するだけで、揃っていれば追加候補が空の `ok` で exit 0（実際には何も登録しない。省略時のこの plugin もこれ）、どれかが無いか空なら `invalid_plugin_manifest` で exit 1。legacy は未登録ファイルを追加候補として出し、候補が無ければ `ok` で exit 0、あって `--apply` が無ければ `needs_confirmation` で exit 1。読むファイルが JSON として読めないか object でないときなどは traceback で exit 1 になり、stdout は空になる。exit 1 はこの 3 通りなので、`status`（stdout が空なら traceback）で見分ける | しない。legacy に `--apply` を付けると、追加候補があるときだけ manifest.json 全体を書き直し（末尾への追記ではない）、`applied` で exit 0 になる。plugin.json 形式は `--apply` を付けても変えない。plugin を marketplace.json・bundles.json へ登録するのは repo の `scripts/validate-plugin-completeness.py --fix` |
 | rubric合成 | `compose-rubrics.py` | 合成した rubric JSON を stdout に出す | しない |
 | rubric hash | `compute-rubric-hash.py` | **既定で書き込む**（rubric.json の rubric_hash と rubric.normalized.json） | `--dry-run` で hash の計算だけにする |
 | 再評価 | `re-evaluate-on-rubric-bump.py` | major bump の再評価対象を、スキルごとに最新の評価記録で判定して出す（plugin が違えば同じ名前でも別のスキル。別の rubric_id の記録は比べない）。対象があっても exit 0。rubric を読めない・score ログに版を読めない行がある・`--eval-log-dir` がディレクトリでないと exit 2。`--post-tool-use`（PostToolUse hook）では L0 rubric の編集のときだけ走査し、結果を additionalContext で返して常に exit 0 | しない |

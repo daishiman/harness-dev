@@ -2,7 +2,8 @@
   "target": {
     "plugin": "system-spec-harness",
     "skill": "run-system-spec-compile",
-    "skill_md_sha256": "d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82"
+    "skill_md_sha256": "be88c1c40c8d9d494da36f3002c346095848e24e76ff53972adbd1644eece95e",
+    "reviewed_skill_md_sha256": "d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82"
   },
   "verdict": "PASS",
   "reviewer": "cr2-run-system-spec-compile (独立 focused combined reviewer。SKILL.md の作者ではない)",
@@ -45,5 +46,21 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "focused combined review (incremental profile) による、SKILL.md 変更後の再評価。30 思考法は使っていない。前回 verdict (sha 389b3ede…、iteration 2 で PASS) から SKILL.md が変わったため、content-review-protocol.md の retarget 規約 (L122: 1 byte でも変われば独立 context で genuine に再評価) に従って行った。実物で確かめたこと (審査対象への書き込みはせず、cwd は /private/tmp、PYTHONDONTWRITEBYTECODE=1、-p no:cacheprovider): (1) shasum -a 256 SKILL.md = d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82 (依頼の値と一致、228 行)。L89 と L132-139 を除いた再構成は 389b3ede… に一致し、差分は依頼の説明どおり 2 か所だけ。(2) pytest plugins/harness-creator/tests/test_audit_capability_parity.py → 64 passed。pytest plugins/system-spec-harness/skills/run-system-spec-compile/tests → 63 passed。(3) audit-capability-parity.py を import して実 plugin と旧版/現行版の仮 plugin (scratchpad/cr2/probe-oldnew) にかけた。旧版は runtime_root_policy_missing 1 件、現行版と実 plugin は 0 件。(4) scripts/validate-frontmatter.py SKILL.md → ok。scripts/lint-feedback-contract.py --all → rc 0、compile への警告なし。(5) 書く前の lint-content-review.py --all は compile の stale-sha 2 件だけで FAIL (rc 1)。判定: 前回の high/critical は 0 のまま。追加節は (a) 手順 0 の project root の記述や R2-render の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 行と矛盾せず、(b) prompts/ まで覆い、(c) 兄弟 skill と同一の文面・置き場所・見出し言語で、(d) auditor の依存関係を満たす。新規の指摘は手順 0 の validator の書き方の揃い (low) 1 件だけで、残りは前回からの持ち越し 6 件 (low 3: #4・C1・C2、smell 3: テストの参照の書き方・#8・C3。うち #8・C1・C2・C3 は followup 扱い) なので、high/critical 0 として PASS とした。範囲外の観察 (本 skill の findings には数えない): (i) 追加節の Codex の箇条は repo 内 68 個の Runtime root contract のうち 64 個と同じ定型で、正本 runtime-portability.md L50 にある「manifest `name` 一致の確認」を inline の文面はどれも書いていない。repo 全体の定型の話。(ii) 手順 0 の `$CLAUDE_PROJECT_DIR` は Codex で設定される保証が無いが、project root の解決は run-build-skill/SKILL.md L197 が `$CLAUDE_PROJECT_DIR` / cwd を認めており、elicit・doc-fetch も同じ書き方なので plugin 全体の話。(iii) 前回 notes の範囲外観察 (run-system-spec-elicit の apply-spec-transition.py の fix-qa-knowledge-ref) は今回確かめていないので持ち越さない。SKILL.md・script・test は変更していない。直しは作者側が行う。"
+  "notes": "focused combined review (incremental profile) による、SKILL.md 変更後の再評価。30 思考法は使っていない。前回 verdict (sha 389b3ede…、iteration 2 で PASS) から SKILL.md が変わったため、content-review-protocol.md の retarget 規約 (L122: 1 byte でも変われば独立 context で genuine に再評価) に従って行った。実物で確かめたこと (審査対象への書き込みはせず、cwd は /private/tmp、PYTHONDONTWRITEBYTECODE=1、-p no:cacheprovider): (1) shasum -a 256 SKILL.md = d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82 (依頼の値と一致、228 行)。L89 と L132-139 を除いた再構成は 389b3ede… に一致し、差分は依頼の説明どおり 2 か所だけ。(2) pytest plugins/harness-creator/tests/test_audit_capability_parity.py → 64 passed。pytest plugins/system-spec-harness/skills/run-system-spec-compile/tests → 63 passed。(3) audit-capability-parity.py を import して実 plugin と旧版/現行版の仮 plugin (scratchpad/cr2/probe-oldnew) にかけた。旧版は runtime_root_policy_missing 1 件、現行版と実 plugin は 0 件。(4) scripts/validate-frontmatter.py SKILL.md → ok。scripts/lint-feedback-contract.py --all → rc 0、compile への警告なし。(5) 書く前の lint-content-review.py --all は compile の stale-sha 2 件だけで FAIL (rc 1)。判定: 前回の high/critical は 0 のまま。追加節は (a) 手順 0 の project root の記述や R2-render の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 行と矛盾せず、(b) prompts/ まで覆い、(c) 兄弟 skill と同一の文面・置き場所・見出し言語で、(d) auditor の依存関係を満たす。新規の指摘は手順 0 の validator の書き方の揃い (low) 1 件だけで、残りは前回からの持ち越し 6 件 (low 3: #4・C1・C2、smell 3: テストの参照の書き方・#8・C3。うち #8・C1・C2・C3 は followup 扱い) なので、high/critical 0 として PASS とした。範囲外の観察 (本 skill の findings には数えない): (i) 追加節の Codex の箇条は repo 内 68 個の Runtime root contract のうち 64 個と同じ定型で、正本 runtime-portability.md L50 にある「manifest `name` 一致の確認」を inline の文面はどれも書いていない。repo 全体の定型の話。(ii) 手順 0 の `$CLAUDE_PROJECT_DIR` は Codex で設定される保証が無いが、project root の解決は run-build-skill/SKILL.md L197 が `$CLAUDE_PROJECT_DIR` / cwd を認めており、elicit・doc-fetch も同じ書き方なので plugin 全体の話。(iii) 前回 notes の範囲外観察 (run-system-spec-elicit の apply-spec-transition.py の fix-qa-knowledge-ref) は今回確かめていないので持ち越さない。SKILL.md・script・test は変更していない。直しは作者側が行う。",
+  "sha_rebinds": [
+    {
+      "from_sha": "d793d397edd7469061171069fb217ac1f537bbd05d95c9b26c4d614bc5e8cd82",
+      "to_sha": "03b9ad915bc6b0e220a66ba10053a290c4647948bf066af65e8faa3a975ab440",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:51Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "03b9ad915bc6b0e220a66ba10053a290c4647948bf066af65e8faa3a975ab440",
+      "to_sha": "be88c1c40c8d9d494da36f3002c346095848e24e76ff53972adbd1644eece95e",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:59Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

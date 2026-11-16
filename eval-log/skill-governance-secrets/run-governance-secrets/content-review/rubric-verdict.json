@@ -2,7 +2,8 @@
   "target": {
     "plugin": "skill-governance-secrets",
     "skill": "run-governance-secrets",
-    "skill_md_sha256": "e2739b1f8f72be3b049bc0bd93f852374901498117faea66f3cf731548d02acb"
+    "skill_md_sha256": "8d53bc53a15023eabbc46ae748395d2ed18728844e5cee12d11b8c85b84eb80d",
+    "reviewed_skill_md_sha256": "e2739b1f8f72be3b049bc0bd93f852374901498117faea66f3cf731548d02acb"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -36,5 +37,21 @@
     "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "rubric 1.6.0 の rule と照合した。今回の差分（`git diff 03050251`）は allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけで、本文は変わっていない。rubric 1.6.0 の high 規則（FM-001・NM-001・BD-001・BD-003、KL-001 は対象外）はすべて合格。BD-002（Gotchas 見出しの欠如、medium）は既存・差分外のため notes に記すだけで件数に入れていない。plugins/<plugin>/commands/ からこのスキルを呼ぶ command は無い。迷った例: 本文のコマンドは `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` の形で先頭は python3 だが、`${...}` の展開を含むコマンドが `Bash(python3 *)` の prefix 許可でそのまま通るかはホストの実装に依存するため、FAIL にせず記録する。存在確認の入口の欠如は low の漏れとして扱った。incremental の focused review で、exhaustive の30思考法は実施していない。"
+  "notes": "rubric 1.6.0 の rule と照合した。今回の差分（`git diff 03050251`）は allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけで、本文は変わっていない。rubric 1.6.0 の high 規則（FM-001・NM-001・BD-001・BD-003、KL-001 は対象外）はすべて合格。BD-002（Gotchas 見出しの欠如、medium）は既存・差分外のため notes に記すだけで件数に入れていない。plugins/<plugin>/commands/ からこのスキルを呼ぶ command は無い。迷った例: 本文のコマンドは `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` の形で先頭は python3 だが、`${...}` の展開を含むコマンドが `Bash(python3 *)` の prefix 許可でそのまま通るかはホストの実装に依存するため、FAIL にせず記録する。存在確認の入口の欠如は low の漏れとして扱った。incremental の focused review で、exhaustive の30思考法は実施していない。",
+  "sha_rebinds": [
+    {
+      "from_sha": "e2739b1f8f72be3b049bc0bd93f852374901498117faea66f3cf731548d02acb",
+      "to_sha": "2085e235946f78e67b38e8b9f4cbfe8a4b819cca1212d3f704da38813650e16e",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:48Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "2085e235946f78e67b38e8b9f4cbfe8a4b819cca1212d3f704da38813650e16e",
+      "to_sha": "8d53bc53a15023eabbc46ae748395d2ed18728844e5cee12d11b8c85b84eb80d",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:57Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

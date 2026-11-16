@@ -2,7 +2,8 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "assign-blueprint-fidelity-evaluator",
-    "skill_md_sha256": "df32fbdcd67224d049ee49383e472b3703bc99142f4500bec7b4f2264352c81d"
+    "skill_md_sha256": "203ae6592872cee0007886a614cd445d70211eab8a79544c15d687ce8431b140",
+    "reviewed_skill_md_sha256": "df32fbdcd67224d049ee49383e472b3703bc99142f4500bec7b4f2264352c81d"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -34,5 +35,22 @@
     "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "rubric 観点 (single responsibility、fail-closed、記述規約整合、依存関係整合、L0 rubric の high severity) で、現行 SKILL.md と今回の差分 (L87 の引用書き換え 1 行) を照合した。引用先の実在と、skill 配下に親ディレクトリ起点の兄弟参照が無いこと (scripts/lint-sibling-plugin-paths.py exit 0) を確認した。criteria_evaluated は frontmatter feedback_contract の IN1/OUT1 全件。high/medium/low の finding は 0 件で PASS とする。PASS の射程は design claim (静的設計 adequacy) に限る。"
+  "notes": "rubric 観点 (single responsibility、fail-closed、記述規約整合、依存関係整合、L0 rubric の high severity) で、現行 SKILL.md と今回の差分 (L87 の引用書き換え 1 行) を照合した。引用先の実在と、skill 配下に親ディレクトリ起点の兄弟参照が無いこと (scripts/lint-sibling-plugin-paths.py exit 0) を確認した。criteria_evaluated は frontmatter feedback_contract の IN1/OUT1 全件。high/medium/low の finding は 0 件で PASS とする。PASS の射程は design claim (静的設計 adequacy) に限る。",
+  "sha_rebinds": [
+    {
+      "from_sha": "df32fbdcd67224d049ee49383e472b3703bc99142f4500bec7b4f2264352c81d",
+      "to_sha": "203ae6592872cee0007886a614cd445d70211eab8a79544c15d687ce8431b140",
+      "scoped_review": {
+        "sections": [
+          "ゴールシーク実行"
+        ],
+        "reviewer": "assign-skill-design-evaluator",
+        "reviewed_at": "2026-11-15T08:55:04Z",
+        "review_ref": "scoped-reviews/203ae6592872cee0007886a614cd445d70211eab8a79544c15d687ce8431b140.json",
+        "review_sha256": "9b6edf23cbd320f35488f0a4a452fc301426ec8df7bbc227dfa53d3248cf71b5"
+      },
+      "rebound_at": "2026-11-15T08:57:39Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

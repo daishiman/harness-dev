@@ -29,6 +29,12 @@ delegate Skill/Agent の実在を併せて検査する。
 写しが要る。ファイル名に散文で触れただけの行は呼び出しとみなさない。置いてある写しは、
 呼ばれていない側も含めて正本と byte 一致し、plugin の外を指す symlink であってはならない。
 
+engine=task-graph の 4 資産は、skill の scripts/ に置いた写しか、script_refs から
+正本 (harness-creator の run-build-skill/templates/task-graph-engine/scripts/) を指す
+参照のどちらかで足りる。参照で足りるのは、参照元 skill と同じ plugin の中に正本が
+あるときだけ。install された plugin は自分の skills/ しか持たないので、別 plugin から
+正本を指す参照は finding にし、写しの同梱を求める。置いてある写しは正本と byte 一致する。
+
 ratchet の免除リスト (LEGACY_LOOP_BASELINE_PATHS・FORK_TOOLS_BASELINE) は、全体実行の
 ときだけ陳腐化 (返済済み・消滅済み) を検査する。--plugin/--skill の絞り込み実行では
 検査しないので、stdout は stale=skipped と出す。
@@ -56,6 +62,11 @@ TASK_GRAPH_ASSETS = (
     "build-self-reflection-entry.py",
     "extract-capability-dependency-graph.py",
     "build-capability-graph-knowledge-entry.py",
+)
+# task-graph engine の正本。plugins/ 起点の parts で持ち、plugin 名は先頭要素で取る。
+TASK_GRAPH_CANONICAL_PARTS = (
+    "harness-creator", "skills", "run-build-skill", "templates",
+    "task-graph-engine", "scripts",
 )
 GOAL_SEEK_ANCHOR = "validate-inline-goal-seek-anchor.py"
 # SKILL.md が anchor validator を呼ぶ・参照するパス。ルートで写しの置き場所が決まる。
@@ -268,6 +279,69 @@ def _nested_scalars(frontmatter: str, key: str) -> dict[str, str]:
         if match:
             values[match.group(1)] = _strip_scalar(match.group(2))
     return values
+
+
+def _list_values(frontmatter: str, key: str) -> list[str]:
+    """top-level の YAML list を読む（block 形式 `- a` と flow 形式 `[a, b]`）。"""
+
+    lines = frontmatter.splitlines()
+    start = next(
+        (i for i, line in enumerate(lines) if re.match(rf"^{re.escape(key)}:", line)),
+        None,
+    )
+    if start is None:
+        return []
+    inline = _strip_scalar(lines[start].split(":", 1)[1])
+    if inline.startswith("[") and inline.endswith("]"):
+        return [
+            value
+            for value in (_strip_scalar(item) for item in inline[1:-1].split(","))
+            if value
+        ]
+    values: list[str] = []
+    for line in lines[start + 1 :]:
+        if line and not line.startswith((" ", "\t", "-")):
+            break
+        match = re.match(r"^\s*-\s*(.*?)\s*$", line)
+        if match and (value := _strip_scalar(match.group(1))):
+            values.append(value)
+    return values
+
+
+def _canonical_engine_refs(
+    path: Path, frontmatter: str, plugins_root: Path, plugin: str
+) -> tuple[set[str], list[str]]:
+    """script_refs のうち task-graph engine の正本を指すものを (同梱扱い, 別 plugin) に分ける。
+
+    解決は validate-frontmatter.py と同じく repo root 起点、次に skill 起点で試す。
+    同梱扱いにするのは、参照元 skill と同じ plugin の中に正本があるときだけ。
+    install された plugin が持つのは自分の skills/ だけなので、別 plugin の正本は
+    install 先では解決できない。
+    """
+
+    canonical_dir = plugins_root.joinpath(*TASK_GRAPH_CANONICAL_PARTS)
+    canonical = {
+        (canonical_dir / name).resolve(): name
+        for name in TASK_GRAPH_ASSETS
+        if (canonical_dir / name).is_file()
+    }
+    if not canonical:
+        return set(), []
+    plugin_dir = (plugins_root / plugin).resolve()
+    repo_root = plugins_root.parent
+    bundled: set[str] = set()
+    foreign: list[str] = []
+    for ref in _list_values(frontmatter, "script_refs"):
+        for candidate in (repo_root / ref, path.parent / ref):
+            name = canonical.get(candidate.resolve())
+            if name is None:
+                continue
+            if candidate.resolve().is_relative_to(plugin_dir):
+                bundled.add(name)
+            else:
+                foreign.append(ref)
+            break
+    return bundled, sorted(set(foreign))
 
 
 def _has_agent_tool(frontmatter: str) -> bool:
@@ -532,20 +606,21 @@ def inspect_skill(path: Path, plugins_root: Path) -> RuntimeProfile:
             name for name in TASK_GRAPH_ASSETS if (scripts_dir / name).is_file()
         }
         if engine == "task-graph":
-            missing = sorted(set(TASK_GRAPH_ASSETS) - present_assets)
+            referenced, foreign = _canonical_engine_refs(path, fm, plugins_root, plugin)
+            if foreign:
+                findings.append(
+                    "別 plugin の task-graph engine 正本を script_refs で参照している"
+                    "（install 先では届かないので skill の scripts/ に写しを置く）: "
+                    f"{foreign}"
+                )
+            missing = sorted(set(TASK_GRAPH_ASSETS) - present_assets - referenced)
             if missing:
                 findings.append(
-                    f"engine=task-graph だが engine asset が不足: {missing}"
+                    f"engine=task-graph だが engine asset が不足"
+                    "（skill の scripts/ に写しを置くか、同じ plugin の正本を "
+                    f"script_refs で参照する）: {missing}"
                 )
-            canonical_dir = (
-                plugins_root
-                / "harness-creator"
-                / "skills"
-                / "run-build-skill"
-                / "templates"
-                / "task-graph-engine"
-                / "scripts"
-            )
+            canonical_dir = plugins_root.joinpath(*TASK_GRAPH_CANONICAL_PARTS)
             drifted = sorted(
                 name
                 for name in present_assets

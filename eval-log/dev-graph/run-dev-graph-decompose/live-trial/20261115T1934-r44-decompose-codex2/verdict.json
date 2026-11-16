@@ -1,0 +1,148 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-decompose",
+  "args": "graph 実値 render (LT-FEATURE-001) の上に、render 結果を前回の render と比べる差分 feature と、その差分を要約して読み手に示す要約 feature を足す。差分 feature は LT-FEATURE-001 に依存し、要約 feature は差分 feature に依存する。共有の architecture は既存の ARCH-LT-001 を使う。新しい node の tracker_binding は beads。 --repo-root /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/cases/run-dev-graph-decompose2/fx --dry-run",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "native Codex run stopped: TOKEN_CAP"
+    ]
+  },
+  "goal_evaluation": null,
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-decompose"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "FAIL",
+    "goal_fit": "NOT_EVALUATED",
+    "verdict": "BLOCKED"
+  },
+  "skill_dir_tree_sha": "cbde23aa4fcb1265b3ea2e87ad67177d5f655250f0b8a90e1944cd64b0a50946",
+  "transcript_sha256": "8c1a9aa7ed6d06dea6c02747f7b1eae2e14654e3a63231e815ae477b3c4cfbdf",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/orca/workspaces/harness/harness-creatorの改善/eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261115T1934-r44-decompose-codex2/out",
+          "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/cases/run-dev-graph-decompose2/fx"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 0,
+    "single_input_autonomous": false,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "1ed1509a14d18216a925072813cf11674ef98f5293e7078172e6c992d707e674"
+  },
+  "tier": "live",
+  "downgrade_reason": "TOKEN_CAP: scenario の token 予算到達 (fail-closed)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "TOKEN_CAP",
+    "wall_clock_s": 367.0
+  },
+  "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-codex-scenarios.json",
+    "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3-codex-v1",
+    "required_observations": [
+      "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node",
+      "every new node is a draft preview and no feature is registered directly through a plain C02 add",
+      "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes",
+      "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0"
+    ],
+    "observed": [],
+    "unobserved": [
+      {
+        "index": 1,
+        "observation": "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node"
+      },
+      {
+        "index": 2,
+        "observation": "every new node is a draft preview and no feature is registered directly through a plain C02 add"
+      },
+      {
+        "index": 3,
+        "observation": "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes"
+      },
+      {
+        "index": 4,
+        "observation": "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0"
+      }
+    ],
+    "args_divergence": {
+      "task_args_template": "<natural-language macro request adding two dependent features on top of LT-FEATURE-001 with tracker_binding beads> --repo-root <contained-fixture-repo> --dry-run",
+      "template_flags": [
+        "--dry-run",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--dry-run",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 5000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 367.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "11812847a79595165489cebffb8d0e067b558a325fb33a14a8d32333c9c83a8f",
+      "tokens": {
+        "input_tokens": 5016136,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 20637,
+        "total_tokens": 5036773,
+        "assistant_messages": 58,
+        "transcript_files": 3,
+        "measured": true
+      },
+      "violations": [
+        "token-budget-exceeded:5036773>5000000"
+      ]
+    }
+  }
+}

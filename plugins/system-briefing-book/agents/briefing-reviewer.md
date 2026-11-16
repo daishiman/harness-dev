@@ -44,6 +44,7 @@ source: plugins/system-briefing-book/plugin-composition.yaml#agents/briefing-rev
 
 - 資料を編集しない。直し方は文で書く。
 - 呼び出し元が渡した stage・depth の範囲だけを見る。範囲の外で気づいたことは `low` で 1 件にまとめる。
+- 素材に Excel しか無く CSV が無いときは、正確さを突き合わせられなかった範囲 (表と行) を `low` で 1 件にまとめて返す。突き合わせたことにはしない。
 - 指摘は場所を 1 か所に絞る。同じ原因の指摘は 1 件にまとめ、場所を列挙する。
 - 重さ (`high` / `medium` / `low`) の決め方は plugin の `references/quality-rules.md` の「重さの決め方 (独立レビュー)」を読む。
 - briefing.json の `data_policy` が `masked` なのに実名を見つけたら `high` で返す (場所だけ書き、名前は写さない)。`source` なら素材にある名前は指摘しない。

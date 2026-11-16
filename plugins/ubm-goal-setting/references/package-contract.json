@@ -52,6 +52,13 @@
     "harness-creator",
     "skill-governance-config"
   ],
+  "repo_refs": [
+    {
+      "ref": "plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py",
+      "match": "exact",
+      "reason": "run-ubm-consult が 7 層 prompt の検証の正本として出典に書く。prompt-creator は実行時の依存ではないので depends_on に入れず、repo の clone の中での実在だけを確かめる。"
+    }
+  ],
   "skill_dependencies": {
     "run-skill-feedback": [
       "harness-creator"

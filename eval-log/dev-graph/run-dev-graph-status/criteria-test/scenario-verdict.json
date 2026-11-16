@@ -4,10 +4,10 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-status",
     "component_id": "C18",
-    "skill_md_sha256": "2313bb65186704752171dc8324b6e31585f8b4a696f07e8d8f6effcc213be40f"
+    "skill_md_sha256": "65609aa2f49e468850ffe43f04b0e6b3fc0a9a5d02603f01b456b7e1d1bb6e8a"
   },
   "verdict": "PASS",
-  "reviewer": "/root/ci4_status_goal（fresh独立評価、現行製品テストとCodex実走証拠を照合）",
+  "reviewer": "fresh-receipt-evaluator-run-dev-graph-status-r44-20261115",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -23,13 +23,14 @@
         "eval-log/dev-graph/run-dev-graph-status/live-trial/20261102T043829-codex-ci4/fixture-final/status-report.json",
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration5/status-scenario-verdict.before.json"
       ],
-      "observed": "現行 StatusReadOnlyTest 3件（部分検査7件）がPASS。IN1の2件で全列・missing_required_keys=0、C02状態変更への追従、AND/OR/tag検索、空結果の成功、必須キー欠落・dangling dependency・root外pathの診断付きrows=0を確認。今回の実走reportもvalidation=pass、違反0、必須キー欠落0。旧観測の原文はtest_refsの原本保存に保持。"
+      "observed": "現行 StatusReadOnlyTest 3件（部分検査7件）がPASS。IN1の2件で全列・missing_required_keys=0、C02状態変更への追従、AND/OR/tag検索、空結果の成功、必須キー欠落・dangling dependency・root外pathの診断付きrows=0を確認。今回の実走reportもvalidation=pass、違反0、必須キー欠落0。旧観測の原文はtest_refsの原本保存に保持。\n2026-11-15再評価: 現行SKILL.md sha 65609aa2f49e468850ffe43f04b0e6b3fc0a9a5d02603f01b456b7e1d1bb6e8a はHEAD(2313bb65…)比で+3/-18行、差分はartifact_deliveryの2択化(accept-as-is/diagnose)と状態機械の参照1行化のみで、feedback_contractのcriteria・script_refs・workflow本文は不変。extract-graph-status.py・validate-graph-schema.py・resolve-repo-context.py・_common・test_acceptance_gaps_a2.pyはHEADから差分0。StatusReadOnlyTest 3件PASS(26.39秒)、test_acceptance_gaps_a2.py全11件PASS(73.59秒)。r44 codex2実走のfixture-final/eval-log/status-report.jsonはvalidation=pass・violation0・missing_required_keys空・count1・result=matched、row17列をgraph(sha 310a6a6f…、ノード2)の実値と突合し不一致0。C11をfixture-finalの写しで再実行しrc0・valid=true・violation0。"
     },
     "OUT1": {
       "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "test_refs": [
+        "eval-log/dev-graph/run-dev-graph-status/live-trial/20261115T1937-r44-status-codex2/verdict.json",
         "eval-log/dev-graph/run-dev-graph-status/live-trial/20261102T043829-codex-ci4/verdict.json",
         "eval-log/dev-graph/run-dev-graph-status/live-trial/20261102T043829-codex-ci4/goal-evaluation.json",
         "eval-log/dev-graph/run-dev-graph-status/live-trial/20261102T043829-codex-ci4/transcript.jsonl",
@@ -39,9 +40,9 @@
         "eval-log/dev-graph/run-dev-graph-status/live-trial/20261102T043829-codex-ci4/fixture-final/eval-log/status-independent-audit.json",
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration5/status-scenario-verdict.before.json"
       ],
-      "observed": "Codex native実走20261102T043829-codex-ci4を独立照合。task-lt-task-001はstatus=closed、closed_at=2026-11-02T04:39:54.500587Z、depends_on=[task-lt-task-dep]でgraph実値と一致。正規C11終了0、graph digest不変、GitHub/Beads write=0の全3観測をfinal verdictへ束縛。実native注入・原本全文Read・成果物提示後のstandard応答・選択記録後の独立子監査を確認し、継承した親履歴は子実績に二重計上しない。fresh goal PASS/blockers空、overall全PASS、現行Codex閉包digest一致、native runtime検証違反0。原transcript SHAと凍結57ファイル不変。wall 410.1794629096985秒/上限1800秒、tokens 1066244/上限8000000。旧観測の原文はtest_refsの原本保存に保持。",
+      "observed": "Codex native実走20261102T043829-codex-ci4を独立照合。task-lt-task-001はstatus=closed、closed_at=2026-11-02T04:39:54.500587Z、depends_on=[task-lt-task-dep]でgraph実値と一致。正規C11終了0、graph digest不変、GitHub/Beads write=0の全3観測をfinal verdictへ束縛。実native注入・原本全文Read・成果物提示後のstandard応答・選択記録後の独立子監査を確認し、継承した親履歴は子実績に二重計上しない。fresh goal PASS/blockers空、overall全PASS、現行Codex閉包digest一致、native runtime検証違反0。原transcript SHAと凍結57ファイル不変。wall 410.1794629096985秒/上限1800秒、tokens 1066244/上限8000000。旧観測の原文はtest_refsの原本保存に保持。\n2026-11-15再評価: Codex native実走20261115T1937-r44-status-codex2を独立照合。verdictはoverall 4項目PASS・downgrade_reason=null・tier=live・scenario_id一致・required_observations 3件すべてobserved。transcript.jsonl sha 7e91293f1ab879056969dbf620cda5bc8753ef9a539f4dbe9eab0a20cf289591、goal-evaluation c57dc730…・native-run-state 12544a7f…・poll-state d7b9e2c1…がverdict記載と一致。skill_dir_tree_sha(runtime=codex)を再計算し0bf2e16528b30512914660d8bf187038e37ea52d157e2852c0ab6dfd6a6e9f14で一致。主transcript135行: 17行目で原本SKILL.mdを単独cat(20行目の出力8100字が現行SKILL.md sha 65609aa2…と同一バイト列)、34/36行目C24 exit0、48/51行目で正規C11・extractをreturncode assert付きで実行しbefore/after digest一致、54行目でreport path・sha e4361cee…・2択を提示し57行目でturn終了、61行目user応答diagnose、67行目でartifact-choice(diagnose/semantic_evaluator_started)を記録、72行目で初めてspawn_agent、113行目子FINAL_ANSWER PASS、132行目DONE PASS。選択前のAgent起動0。子transcript67行: 1-40行目は継承した親履歴で子実績に数えず、56行目で子自身がC24・C11・extractを再実行しreport各列・dependents逆引き・after digestを照合、58行目(10:43:33)で監査PASSを記録し親のsend_message(101行目10:43:38)より前。report17列とgraph実値の不一致0(status=closed、closed_at=2026-11-15T10:37:58.899176Z、depends_on=[task-lt-task-dep])。C11を写しで再実行rc0。intermediate.jsonl 1行にSKILL記載のgoal-seek検査を自分で当ててPASS、progress state=complete。wall 188.0秒/上限1800秒、tokens 942279/上限8000000、resource violations 0。",
       "scenario_id": "C18-OUT1-positive-read-only-status-fixture-standard-v2-codex-v1",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-status/live-trial/20261102T043829-codex-ci4/verdict.json"
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-status/live-trial/20261115T1937-r44-status-codex2/verdict.json"
     },
     "OUT2": {
       "status": "PASS",
@@ -56,7 +57,7 @@
         "eval-log/dev-graph/run-dev-graph-status/live-trial/20261102T043829-codex-ci4/transcript/subagents/01a19aa3-dde4-75d3-98cf-8eec356ad080.jsonl",
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration5/status-scenario-verdict.before.json"
       ],
-      "observed": "現行OUT2製品テストで成功・不正graph失敗の両経路を確認。graph/config/content/.gitのbytesとmtime不変、gh/bd spy呼出し0、Issue linkage不変、正規script閉包のnetwork=false/write-scope=noneを確認。今回のnative実走ではgraph/config/content全4ファイルの監査前後digestと初回graph digestが一致し、観測した主・子contextのGitHub/Beads writeは0。初回config/contentは正規extractのread_only.changed=[]で比較され、評価記録の書込みは対象外。外部サービスの別actorの変更は照会していない。旧観測の原文はtest_refsの原本保存に保持。"
+      "observed": "現行OUT2製品テストで成功・不正graph失敗の両経路を確認。graph/config/content/.gitのbytesとmtime不変、gh/bd spy呼出し0、Issue linkage不変、正規script閉包のnetwork=false/write-scope=noneを確認。今回のnative実走ではgraph/config/content全4ファイルの監査前後digestと初回graph digestが一致し、観測した主・子contextのGitHub/Beads writeは0。初回config/contentは正規extractのread_only.changed=[]で比較され、評価記録の書込みは対象外。外部サービスの別actorの変更は照会していない。旧観測の原文はtest_refsの原本保存に保持。\n2026-11-15再評価: StatusReadOnlyTest 3件PASS(OUT2の1件を含む)、test_acceptance_gaps_a2.py全11件PASS。r44 codex2実走でstatus-evidence.jsonのbefore/after digestが一致し、fixture-finalの4ファイル(config・graph・tasks/lt-task-001.md・tasks/lt-task-dep.md)の実digestと監査のindependent_after_digestsとも一致。fixture-publication-receiptで同4ファイルのmtimeが実走開始(1794739274.38)より前かつsha一致を確認し、被験の自己申告とは別の根拠とした。主16回・子10回のtool呼出しにgh/bd/curl/wget/git push/git commit/beads/doltは0件、sandbox network_access=false。外部サービスの別actorの変更は今回も照会していない。"
     }
   }
 }

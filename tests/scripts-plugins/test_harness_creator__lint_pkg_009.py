@@ -29,6 +29,7 @@ def test_linter_resolves_to_sibling_plugin_script():
 
 def test_exit_code_is_passed_through(tmp_path, capsys):
     # package contract の無い skills dir は linter 自身が非 0 で止まる。wrapper はその exit をそのまま返す。
+    (tmp_path / "skills").mkdir()
     args = ["--skills-dir", str(tmp_path / "skills"), "--fail-on-external"]
     direct = subprocess.run([sys.executable, str(MOD.linter_path()), *args], capture_output=True, check=False)
     assert direct.returncode != 0
@@ -36,6 +37,23 @@ def test_exit_code_is_passed_through(tmp_path, capsys):
     log = json.loads(capsys.readouterr().out)
     assert (log["pkg_id"], log["status"]) == ("PKG-009", "fail")
     assert any("package contract" in f for f in log["findings"])
+
+
+def test_missing_skills_dir_is_fail_with_linter_exit(tmp_path, capsys):
+    # dir が無いと linter は report を出さずに exit 2。0 件の走査を pass と読まず、exit もそのまま返す
+    assert MOD.main(["--skills-dir", str(tmp_path / "nope"), "--fail-on-external"]) == 2
+    log = json.loads(capsys.readouterr().out)
+    assert (log["pkg_id"], log["status"]) == ("PKG-009", "fail")
+    assert "--skills-dir is not a directory" in log["findings"][0]
+
+
+def test_unreadable_skill_md_is_pkg_009_fail(tmp_path, capsys):
+    skills = _plugin_with_skill(tmp_path, "参照は references/x.md だけ")
+    (skills / "run-demo" / "SKILL.md").write_bytes(b"\xff\xfe not utf-8\n")
+    assert MOD.main(["--skills-dir", str(skills)]) == 1
+    log = json.loads(capsys.readouterr().out)
+    assert (log["pkg_id"], log["status"]) == ("PKG-009", "fail")
+    assert any(f.startswith("unreadable SKILL.md: ") for f in log["findings"])
 
 
 def _plugin_with_skill(tmp_path: Path, body: str, depends_on: list | None = None) -> Path:
@@ -97,6 +115,22 @@ def test_linter_without_json_object_is_fail(monkeypatch, tmp_path, capsys, stdou
 def test_unreadable_external_count_is_fail():
     log = MOD.normalize({"external_ref_count": None, "reports": [], "contract_errors": []}, 0)
     assert log["status"] == "fail"
+
+
+@pytest.mark.parametrize(
+    ("payload", "message"),
+    [
+        # reports が欠けても、件数が 0 でなければ pass にしない
+        ({"external_ref_count": 2, "skills_scanned": 3, "reports": []}, "external_ref_count が 0 でない"),
+        # 1 本も走査していなければ、外部参照の有無を確かめていない
+        ({"external_ref_count": 0, "skills_scanned": 0, "reports": []}, "1 本も走査していない"),
+        ({"external_ref_count": 0, "reports": []}, "1 本も走査していない"),
+    ],
+)
+def test_counts_alone_can_fail_pkg_009(payload, message):
+    log = MOD.normalize(payload, 0)
+    assert log["status"] == "fail"
+    assert any(message in finding for finding in log["findings"]), log["findings"]
 
 
 def test_missing_resolver_stops(monkeypatch, tmp_path):

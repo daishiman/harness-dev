@@ -1,6 +1,6 @@
 ---
 name: html-generator
-description: slide HTML を独立 context で LLM 経路生成(従来 P3 経路)したいときに使う。
+description: slide HTML を独立 context で LLM 経路生成(R3。R6・diagnose 後は所見の範囲だけ再生成)したいときに使う。
 kind: agent
 version: 0.1.0
 owner: harness maintainers
@@ -20,7 +20,7 @@ last-audited: 2026-07-05
 
 ## Purpose
 
-slide HTML を独立 context で LLM 経路生成(従来 P3 経路)したいときに使う。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-html-generator.md` に置く。
+slide HTML を独立 context で LLM 経路生成(R3。R6・diagnose 後は所見の範囲だけ再生成)したいときに使う。このファイルは Task 起動用の薄い adapter で、7 層本文の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-html-generator.md` に置く。
 
 ## Inputs
 
@@ -54,11 +54,11 @@ slide HTML を独立 context で LLM 経路生成(従来 P3 経路)したいと�
 
 ## Goal-Seeking Execution
 
-固定手順を再掲せず、prompt 正本の完了条件に対して未充足項目を特定し、必要最小の作業を実行する。規定周回で未達なら上位 orchestrator に差し戻す。
+固定手順を再掲せず、prompt 正本の完了条件に対して未充足項目を特定し、必要最小の作業を実行する。R6 の周回は主 skill が数える（R6 全体で 1 つを共有）。1 回の起動で未達の項目が残れば、宛先を付けて主 skill へ返す（他の agent へ直接は渡さない。1 周の順番の正本は SKILL.md「R4–R6」節の「R6 の 1 周の順番 (正本)」）。
 
 ## Constraints
 
-- Owner skill: `run-slide-report-generate`。Phase: `R3-generate-evaluate`。
+- Owner skill: `run-slide-report-generate`。Phase: `R3-generate-minimal-guard`（生成）と `R6-selected-semantic-review`（diagnose 後・所見の範囲だけ直す）。どちらも主 skill が起動し、結果を主 skill へ返す。
 - Domain rules, checklists, constants, workflow detail, examples are not duplicated here.
 - If this adapter conflicts with `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/prompts/R3-agent-html-generator.md`, the prompt is the detailed SSOT and this pointer must be corrected.
 

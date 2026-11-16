@@ -1,0 +1,20 @@
+{
+  "policy_id": "artifact-delivery-v1",
+  "skill": "dev-graph:run-dev-graph-requirements",
+  "effect": "local-artifact",
+  "guard": "declared-target-scope-only",
+  "state": "usable-draft",
+  "presented_before_user_choice": true,
+  "target_scope": "eval-log/run-dev-graph-requirements/",
+  "artifacts": [
+    {"path": "eval-log/run-dev-graph-requirements/handoff/FEATURE-1-requirements.md", "sha256": "3adc0ff77d1b87780c4c164bd3071baf70401e0f35eacd4a92d1cae83528023a", "open_with": "markdown viewer"},
+    {"path": "eval-log/run-dev-graph-requirements/handoff/readiness-matrix.json", "sha256": "88a137ecbcfef5d5dc2dbd5b8567f30c445cbe86a47c83adf19ec64ad344deb9", "open_with": "python3 -m json.tool"},
+    {"path": "eval-log/run-dev-graph-requirements/handoff/capability-build-handoff.json", "sha256": "7ca343a08e3b457f5390badeecf7c093ac0979ced7fd4edd47134cf3438e3aa3", "open_with": "python3 -m json.tool"}
+  ],
+  "guards": {
+    "parse_open": "pass (json.tool ok for 2 JSON files; markdown readable)",
+    "secret": "pass (no token/secret/password/api_key)",
+    "irreversible": "none (local files only; graph.json not written)",
+    "corrupt": "pass (graph snapshot digest unchanged per guard digest_match true)"
+  }
+}

@@ -187,7 +187,7 @@ export INTAKE_KEYCHAIN_ACCOUNT=skill-intake-bot
 export INTAKE_NOTION_DATABASE_ID=ffffffffffffffffffffffffffffffff
 ```
 
-`scripts/keychain_get_secret.py` はこれらを自動参照する。未設定なら既定値 (`account=<keychain-prefix>`) にフォールバック。
+`${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/keychain_get_secret.py` はこれらを自動参照する。未設定なら既定値 (`account=<keychain-prefix>`) にフォールバック。
 
 ## 7. ローテーション
 
@@ -210,4 +210,4 @@ export INTAKE_NOTION_DATABASE_ID=ffffffffffffffffffffffffffffffff
 
 ## 9. macOS 以外
 
-Linux: `pass`, Windows: `cmdkey` などに差し替える。`scripts/keychain_get_secret.py` を OS 判定で分岐させる修正が必要。今版では macOS のみ対応。
+Linux: `pass`, Windows: `cmdkey` などに差し替える。`${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/keychain_get_secret.py` を OS 判定で分岐させる修正が必要。今版では macOS のみ対応。

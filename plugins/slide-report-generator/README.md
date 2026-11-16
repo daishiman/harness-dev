@@ -28,7 +28,7 @@ Node 製レンダリング/画像/印刷/検証エンジンは `vendor/` に **b
 /slide-report-status <project-dir>               # 進行状況/フェーズ確認
 ```
 
-`run-slide-report-generate` skill がまず生成 (HTML / 決定論 render-slide.cjs / Codex 画像 / report render-report.js) → 最小guard → 現物提示 → 利用者選択を完了する。`light / standard / detailed` が選ばれた場合だけ、hearing・構成設計・仕様確定ゲート・生成後評価 (deck-evaluator・30種思考法・mode-aware) を選択範囲で駆動する。`accept-as-is` は evaluator 0 / improver 0 でhandoffを終え、release/exhaustiveは別の明示eventを必要とする。
+`run-slide-report-generate` skill は hearing (R1) → 構成設計と仕様確定ゲート (R2) → 生成 (HTML / 決定論 render-slide.cjs / Codex 画像 / report render-report.js) と最小guard (R3) → 現物提示 (R4) → 利用者選択 (R5) までを進める。仕様確定ゲートの WARN は成果物前に質問せず、仮定として R4 で明記する。`diagnose` が選ばれた場合だけ R6 で生成後評価 (evaluate-deck・deck-evaluator・30種思考法・mode-aware) を行い、指摘を提示してから改善の深さを 1 回だけ聞く (既定は standard・最大 3 周)。`accept-as-is` は evaluator 0 / improver 0 でhandoffを終え、release/exhaustiveは別の明示eventを必要とする。
 
 ## 初回セットアップ
 
@@ -59,7 +59,7 @@ Mermaid は runtime 依存を増やさず、`mermaid-render.js` が CDN 初期�
 - **vendor integrity**: `python3 "$CLAUDE_PLUGIN_ROOT/scripts/lint-vendor-parity.py"` が `vendor/vendor-digest-manifest.json` と照合する。upstream 非改変ファイルは sha256 pin、明示local overlayは owner付き semantic contract + tests/goldens で検証する。runtime schema は重複を避けて plugin-root `schemas/` を live SSOT にする。
 - **plugin completeness**: `python3 "$CLAUDE_PLUGIN_ROOT/scripts/validate-plugin-completeness.py"` が manifest 名・entry_points・hook 実体・必須 surface を検証する。
 - **mode 検証**: `validate-output-mode.py` が `output_mode`/`reportType` の値域を fail-closed 検証。
-- **生成後advisory**: `hook-postgen-eval.py` は deck/report 中核ファイル書込を検知し、実HTMLの UTF-8 open / HTML parse / 空・NUL破損 / secret だけを検査する。子プロセスや deck-evaluator は起動せず、成果物の提示と `accept-as-is / light / standard / detailed` の選択を促す。semantic evaluatorは改善レベル選択後だけ起動する。
+- **生成後advisory**: `hook-postgen-eval.py` は deck/report 中核ファイル書込を検知し、実HTMLの UTF-8 open / HTML parse / 空・NUL破損 / secret だけを検査する。子プロセスや deck-evaluator は起動せず、成果物の提示と `accept-as-is / diagnose` の選択を促す。semantic evaluatorは診断選択後だけ起動する。
 - **改善要望ループ**: `run-skill-feedback`（`skills/run-skill-feedback` は harness-creator の SSOT へ向く任意 symlink adapter）で本プラグインの skill への改善要望を起票・集約できる。これは本プラグイン所有の entry point ではないため、handoff routes / `plugin-composition.yaml` / `.claude-plugin/plugin.json` には含めない。
 
 `distributable: false` (社内専用・marketplace/bundle 非登録)。

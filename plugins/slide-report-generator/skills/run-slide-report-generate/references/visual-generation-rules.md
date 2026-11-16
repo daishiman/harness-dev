@@ -1,6 +1,6 @@
 # 視覚生成規約（生成則 SSOT / E1-E6）
 
-> **正本**: このファイルは「良さを作る指示（生成則）」の SSOT。既存の references が持つのは禁止則（やってはいけないこと）であり、面の上に階層・強弱・密度を**作り出す**条件はここだけが持つ。配色 3 値・意匠トーンの数値は**このファイルが唯一の定義箇所**であり、他の reference・agent プロンプト・CSS へ写経しない（参照させる）。ただし面の余白率・充填率・書体下限の**量的**正本は従来どおり `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/assets/slide-templates/frame-contract.json` にあり、本ファイルはそこへの写像と分布条件だけを持つ（同じ数を 2 箇所に置かない）。
+> **正本**: このファイルは「良さを作る指示（生成則）」の SSOT。既存の references が持つのは禁止則（やってはいけないこと）であり、面の上に階層・強弱・密度を**作り出す**条件はここだけが持つ。配色 3 値・意匠トーンの数値は**このファイルが唯一の定義箇所**であり、他の reference・agent プロンプト・CSS へ写経しない（参照させる）。ただし面の余白率・充填率・書体下限の**量的**正本は従来どおり `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/assets/slide-templates/frame-contract.json` にあり、本ファイルはそこへの写像と分布条件だけを持つ（同じ数を 2 箇所に置かない）。
 
 **責務**: 生成条件 E1-E6 とカード化分岐・装飾単一則・文章量分解則の逐語正本。禁止則が「不合格の面を弾く」のに対し、本ファイルは「合格の面を組み立てる」ための条件を、すべて機械検査に落とせる形（測る対象・式・閾値・根拠）で定義する。意匠を手で直しても次の生成で平板へ戻るのは、平板でないことの条件がどこにも書かれていないためであり、本ファイルがその欠落を埋める。
 
@@ -179,7 +179,7 @@ frame-contract `typography.min`（ひな形経路）/ `typography.min_rem_engine
   | 循環（終点が始点へ戻る） | 循環図 / PDCA / フライホイール |
   | **関係が無い** | **図にしない。その項目を並べる必要が本当にあるのかを先に疑う**（並べる理由が説明できないなら落とす） |
 
-- **受理される型と、実際に図が描かれる型は別。** 型を選んだだけでは図は出ない。描画実体の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` §10 の表で、そこで fallback へ落ちる型を選ぶと文字が出る。実測（2026-08-14 20:04 JST・`vendor/scripts/templates/*.html.tpl` 128 本を走査）: `slide-list` / `slide-grid` / `slide-icon-grid` / `slide-timeline` / `slide-process` / `slide-compare` / `slide-table` / `slide-code` / `slide-code-compare` のテンプレートは `<svg` も `{{{svg}}}` も `data-d3-mount` も持たない。**これらを選んだ面は、テンプレートからは図が出ない。** 例外は CSS 側で図になる型で、同じ実測で `slide-timeline` だけが該当する（`vendor/scripts/style-builder.cjs` の `.timeline::before` が軸を、`.timeline-item::before` が節点を描く）。「テンプレートに svg が無い」と「図が無い」は同じではない。
+- **受理される型と、実際に図が描かれる型は別。** 型を選んだだけでは図は出ない。描画実体の正本は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/diagram-type-crosswalk.md` §10 の表で、そこで fallback へ落ちる型を選ぶと文字が出る。実測（2026-08-14 20:04 JST・`vendor/scripts/templates/*.html.tpl` 128 本を走査）: `slide-list` / `slide-grid` / `slide-icon-grid` / `slide-timeline` / `slide-process` / `slide-compare` / `slide-table` / `slide-code` / `slide-code-compare` のテンプレートは `<svg` も `{{{svg}}}` も `data-d3-mount` も持たない。**これらを選んだ面は、テンプレートからは図が出ない。** 例外は CSS 側で図になる型で、同じ実測で `slide-timeline` だけが該当する（`vendor/scripts/style-builder.cjs` の `.timeline::before` が軸を、`.timeline-item::before` が節点を描く）。「テンプレートに svg が無い」と「図が無い」は同じではない。
 - **色で系列を分けない。形・線で分ける**（塗り／輪郭／破線／実線／VGCONST_004 の線幅 3 段）。色は VGCONST_001 の 3 値の範囲で濃淡 3 段まで。色相に意味を担わせると、印刷・投影・色覚差でその意味が消える。
 - **濃い面の上のラベルは白、紙地の面のラベルはインク。** `svg text` へ一律の `fill` を掛けない。実例: 全 `text` へ ink を掛けて、反転ブロック上の白ラベルを地に潰した。反転ブロック内の `text` は `fill` を親から継承させるか、反転側だけ個別に指定する。
 

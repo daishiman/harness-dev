@@ -23,8 +23,6 @@ goal_seek:
   activation_state: semantic_evaluator_started
   engine: inline
   fork: inline
-  spec: eval-log/run-slide-report-status-goal-spec.json
-  progress: eval-log/run-slide-report-status-progress.json
   max_loops: 3
 feedback_contract:
   activation_state: semantic_evaluator_started
@@ -32,37 +30,22 @@ feedback_contract:
   criteria:
     - id: IN1
       loop_scope: inner
-      text: 明示されたproject directoryへworkflow managerのcheck nextとoutput mode preflightをread-onlyで実行し全exit codeを保持している
+      text: 明示されたproject directoryへworkflow managerのverboseとoutput mode preflightをread-onlyで実行しcheckは対象を読むだけのP2_5とP3のgateにだけ付け全exit codeを保持している
       verify_by: script
     - id: OUT1
       loop_scope: outer
       text: deck report両modeの現在phase 欠落artifact 次actionを推測せず報告しplugin runtime欠落を自動復元していない
       verify_by: evaluator
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実回答をmain contextで作成する。secret・欠測・矛盾のminimal guardだけを実行し、根拠refつきの現物をそのまま提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはそのままhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実回答をmain contextで作成する。secret・欠測・矛盾のminimal guardだけを実行し、根拠refつきの現物をそのまま提示してからaccept-as-is/diagnoseを記録する。accept-as-isはそのままhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 # run-slide-report-status
 
@@ -76,29 +59,44 @@ Purpose & Output Contractの最小の実回答をmain contextで作成する。s
 
 ## Purpose & Output Contract
 
-対象project directoryをplugin同梱workflow managerで検査し、現在phase、検証結果、次アクションを返す。
+対象project directoryをplugin同梱workflow managerで検査し、現在phase、検証結果、次アクションを返す。workflow managerがphaseを判定できるのは`structure.md`を持つslide deckだけで、次アクションはどのdirでも成果物の有無から決定的に言える段で返す。reportと`structure.md`の無いdirには、「workflow-managerでは判定できない」というremediationも返す (「workflow manager の出力の読み替え」)。
 
 ## Key Rules
 
 - 対象path未指定時は推測せず確認する。
 - plugin資産は`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}`から解決する。
-- 対象projectへ書き込まず、`--check --next`だけを実行する。
+- 対象projectへ書き込まない。workflow managerの`--check`は、対象を読むだけのgate (phaseが`P2_5`か`P3`) にだけ付ける。成果物の有無は`ls -a`で見る。
 - validator非0を成功へ畳まない。
 
 ## ゴールシーク実行
 
-`goal_seek.engine: inline` / `fork: inline` とし、read-only の2検査と要約をmain contextで完結する。欠落artifactまたは非0終了があれば該当検査だけを最大3周まで再評価し、runtime欠落を自動復元しない。
+`goal_seek.engine: inline` / `fork: inline` とし、read-only の検査と要約をmain contextで完結する。欠落artifactまたは非0終了があれば該当検査だけを再評価し (最大3周)、runtime欠落を自動復元しない。再評価は、欠落の原因が対象 project 側か plugin 側か (Gotchas の区別) と次 action が決まった時点で止める。検査は read-only で決定的なので、入力が同じなら周回を重ねても出力は変わらない。決まらないまま3周に達したら、決まらなかった点を progress の `open_issues` に書いて返す。
 
 ```bash
-node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scripts/workflow-manager.js" "<project-dir>" --check --next
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scripts/workflow-manager.js" "<project-dir>" --verbose
+# 上の「現在のPhase」が P2_5 か P3 のときだけ
+node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/vendor/scripts/workflow-manager.js" "<project-dir>" --check
 python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-output-mode.py" --preflight
 ```
 
-stdout/stderrとexit codeから現在phase、欠落artifact、次アクションを要約する。
+`--verbose` は gate を回さずに、phase・Phase 検証・file の状態を出す。phase は `.workflow-state.json` があればその値になり、`ls -a` だけでは決まらないので、`--check` を付けるかはこの出力の phase で決める。`--check` は phase に紐づく `phase-gate.js` を回す。`P2_5` (P2→P3) と `P3` (P3→P3_5) の gate は対象 dir を読むだけである。`P3_5` の gate (P3_5→complete) は `verify-slides.js` が `<project-dir>/screenshots/slide_NN.png` を書き、消さない。決定論経路の deck は `deploy-guide.md` を持たないので、必ず `P3_5` になる。よって `P3_5` にも、gate の無いほかの phase にも `--check` を付けない。`P3_5` の deck には、UI 検証の gate を回していないことと、利用者が `--check` を回すと `<project-dir>/screenshots/` に書くことを報告する。UI 品質の検証は、generate では diagnose 後の R6 にあたる。
+
+stdout/stderrとexit codeから現在phase、欠落artifact、次アクションを要約する。exit code は下の読み替えの後も、そのままの値で報告する。
+
+### workflow manager の出力の読み替え
+
+vendor の `workflow-manager.js` は byte のまま携行する旧い P 段の判定器である。`detectPhase()` は `structure.md`・`index.html`・`deploy-guide.md`・`.approved` (と、plugin に書き手の無い `.workflow-state.json`) しか見ない。`structure.md` が無い dir は、ほかの成果物があっても `P0 (初期化)`・exit 0・「hearing-facilitator を起動」になる。成果物の有無は `ls -a "<project-dir>"` で見て、要約の前に次のとおり読み替える。
+
+- **report の成果物**: `report-structure.json` か `report.html` があれば、workflow manager の phase・検証結果 (「✅ 問題なし」)・次のステップを report の段に使わない。remediation に「report mode の phase は workflow-manager では判定できない」と書く。
+- **`structure.md` の無い dir**: report の成果物が無くても、workflow manager の phase と検証結果を使わない (`information-priority-map.json`・`structure.json`・`index.html` のどれだけが在っても `P0` になり、`.workflow-state.json` があればその値になる)。remediation に「この dir の段は workflow-manager では判定できない」と書く。
+- **次 action**: workflow manager の「次のステップ」は旧い P 段の文面なので、どの dir でも使わない。gate が exit 1・2 で終わると出ず、`P3_5` では diagnose 後の R6 にあたる UI 検証の確認を、`complete` では「現在のPhaseを特定できません」を出す。代わりに、在る成果物と、それを出す generate の段を報告する。`information-priority-map.json` は R2 の構成着手前の宣言、`structure.json`・`structure.md`・`report-structure.json` は R2 の構成、`index.html`・`report.html` は R3 の生成物 (deck の `deploy-guide.md` と、決定論経路の `structure.md` は、R3 が一緒に書く)、`evaluation-report.json` は diagnose 後の R6 の評価である。次 action は、どれも無ければ「generate の成果物が無い」、宣言だけなら「R2 の構成が無い」、構成までなら「R3 の生成物が無い」と書く。生成物が在れば、R4 の提示と R5 の選択 (accept-as-is / diagnose) は file に残らないので、`complete` の deck でも「file からは判定できない」と書く。gate の FAIL・WARN 行は、次 action とは別に検証結果としてそのまま報告する。`validate-output-mode.py --preflight` は実行環境だけを見て対象 dir を見ないので、runtime 欠落の remediation にだけ使う。
+- **`.approved`**: workflow manager は P2→P3 に `.approved` を求める。既定経路では `.approved` を作らない (利用者が構成レビューを明示的に求めた回だけ structure-validator が作る)。よって「ユーザー承認待ち」「`.approved` マーカー未取得」と、それだけを理由にした「Phase 2 に差し戻し」を、欠落 artifact にも次 action にもしない。同じ gate の `validate-structure.js` など、ほかの FAIL 行はその行のまま報告する。
 
 ### ゴールシーク配線
 
-`original_goal` と対象 project digest を progress に固定し、各再評価を `run-slide-report-status-intermediate.jsonl` へ append する。各行は `iteration/original_goal/current_goal_snapshot/delta_from_original/merged_directive_for_next/drift_signal` を持ち、次回は直前の `merged_directive_for_next` だけを引き継ぐ。
+- **goal-spec**: 持たない。`original_goal` は利用者の依頼と対象 project-dir から推定し、対象 project-dir の絶対 path を本文に含める (対象は `original_goal_hash` で固定される)。progress の `spec_ref` は `inferred` にする。
+- **progress**: `${CLAUDE_PROJECT_DIR}/eval-log/run-slide-report-status-progress.json`。初回に `sha256(original_goal)` を `original_goal_hash` に書き、以降書き換えない。周回数は `iteration` に書く。`original_goal` の本文は progress に書かない (progress の schema はこの項目を持たない)。
+- **intermediate**: `${CLAUDE_PROJECT_DIR}/eval-log/run-slide-report-status-intermediate.jsonl`。初回 (iteration=0) と各再評価の末に 1 行 append する。各行は `iteration/original_goal/current_goal_snapshot/delta_from_original/merged_directive_for_next/drift_signal` を持ち、`original_goal` の本文はこの各行に持つ。次回は直前の `merged_directive_for_next` だけを引き継ぐ。
 
 ### ゴールシーク検証
 
@@ -112,7 +110,10 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek
 
 ## 検証
 
-- deck/report両modeを同じworkflow managerで判定する。
+- 報告した現在の段ごとに、根拠が workflow manager の phase (`structure.md` を持つ deck) か成果物の有無 (report と `structure.md` の無い dir) かを書いている。report の成果物がある dir に `P0 (初期化)` や「hearing-facilitator を起動」を報告していない。
+- 次 action は、どの dir でも成果物の有無から言っており、workflow manager の「次のステップ」を写していない。
+- `--check` を phase が `P2_5`・`P3` の dir にだけ付けており、`P3_5` の deck には UI 検証の gate を回していないことを報告している。対象 dir に `screenshots/` を作っていない。
+- 既定経路の deck に、`.approved` が無いことだけを理由にした承認待ち・差し戻しを報告していない。exit code は読み替える前の値のまま報告している。
 - plugin-local runtime欠落は復元せずremediationとして報告する。
 
 ## Gotchas

@@ -46,7 +46,9 @@ _ROLLOUT_TIME = re.compile(r"^rollout-(\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2})-")
 
 def secret_file(path: Path) -> bool:
     name = path.name.lower()
-    return name in SECRET_NAMES or name.startswith(".env.") or path.suffix.lower() in {".pem", ".key"}
+    # guard の署名の鍵は .guard-key-local と、作成途中の .guard-key-local.<乱数> もある (harness-olh)
+    return (name in SECRET_NAMES or name.startswith((".env.", ".guard-key"))
+            or path.suffix.lower() in {".pem", ".key"})
 
 
 def sibling(name: str):
@@ -376,8 +378,8 @@ def validate_choice_request(request: dict, *, fixture: Path, assistant_text: str
         if str(path) not in assistant_text or sha not in assistant_text:
             raise ValueError("current assistant did not present actual path and digest")
         checked.append({"path": str(path), "sha256": sha})
-    if not all(choice in assistant_text for choice in ("accept-as-is", "light", "standard", "detailed")):
-        raise ValueError("current assistant did not ask the declared depth choice")
+    if not all(choice in assistant_text for choice in ("accept-as-is", "diagnose")):
+        raise ValueError("current assistant did not ask the declared diagnostic choice")
     if not re.search(r"open|cat |開[きくけ]|確認", assistant_text, re.I):
         raise ValueError("current assistant omitted how to open artifacts")
     return {"invocation_id": identity, "target_skill": request["target_skill"], "artifacts": checked}
@@ -1150,8 +1152,8 @@ def drive(cfg: dict, state: dict, prompt: Path, response_pending=None) -> dict:
                       seen_ids={r["invocation_id"] for r in state["responses"]})
             prompt = Path(cfg["private_dir"]) / f"choice-{len(state['responses']) + 1:03d}.txt"
             with prompt.open("x", encoding="utf-8") as stream:
-                stream.write("standard\n")
-            response = {**checked, "kind": "artifact-delivery-choice", "choice": "standard",
+                stream.write("diagnose\n")
+            response = {**checked, "kind": "artifact-delivery-choice", "choice": "diagnose",
                         "request_sha256": digest(request_path), "sent_after_turn": turn["number"],
                         "prompt_sha256": digest(prompt), "submitted": False}
             state["responses"].append(response)

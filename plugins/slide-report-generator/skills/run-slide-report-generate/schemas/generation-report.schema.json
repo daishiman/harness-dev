@@ -3,13 +3,18 @@
   "$id": "https://harness/slide-report-generator/run-slide-report-generate/generation-report.schema.json",
   "title": "Slide/Report Generation Report",
   "type": "object",
-  "required": ["output_mode", "status", "artifacts", "checks", "findings"],
+  "required": ["output_mode", "route", "status", "artifacts", "open_instructions", "assumptions", "checks", "findings"],
   "additionalProperties": false,
   "properties": {
     "output_mode": { "type": "string", "enum": ["slide", "report"] },
     "reportType": {
       "type": ["string", "null"],
       "enum": ["internal-analysis", "client-proposal", "tech-doc", "learning", null]
+    },
+    "route": {
+      "description": "R3 の生成経路。SKILL.md の R3「生成経路」の経路名と 1 対 1。",
+      "type": "string",
+      "enum": ["slide-llm", "slide-deterministic", "report", "ai-image"]
     },
     "status": { "type": "string", "enum": ["PASS", "WARN", "FAIL"] },
     "artifacts": {
@@ -26,6 +31,38 @@
           "path": { "type": "string", "minLength": 1 }
         }
       }
+    },
+    "open_instructions": {
+      "description": "R4 で利用者に示す開き方 (開くファイルとコマンド)。",
+      "type": "string",
+      "minLength": 1
+    },
+    "assumptions": {
+      "description": "R2 の WARN と、各 worker が返した仮定一覧を主 skill が集めたもの。仮定が無ければ空配列。",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["item", "value", "basis", "source_worker"],
+        "additionalProperties": false,
+        "properties": {
+          "item": { "type": "string", "minLength": 1 },
+          "value": { "type": "string", "minLength": 1 },
+          "basis": { "type": "string", "minLength": 1 },
+          "source_worker": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "user_choice": {
+      "description": "R5 の選択。diagnose のときは R6 で選んだ深さも持つ。R4 の提示時点ではまだ無い。",
+      "type": "object",
+      "required": ["choice"],
+      "additionalProperties": false,
+      "properties": {
+        "choice": { "type": "string", "enum": ["accept-as-is", "diagnose"] },
+        "depth": { "type": "string", "enum": ["findings-only", "light", "standard", "detailed"] }
+      },
+      "if": { "properties": { "choice": { "const": "accept-as-is" } } },
+      "then": { "not": { "required": ["depth"] } }
     },
     "checks": {
       "type": "array",

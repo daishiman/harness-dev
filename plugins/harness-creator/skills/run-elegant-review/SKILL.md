@@ -23,8 +23,6 @@ goal_seek:
   engine: task-graph
   engine_profile: checklist-graph
   full_task_spec_graph: false
-  progress: eval-log/run-elegant-review-progress.json
-  intermediate: eval-log/run-elegant-review-intermediate.jsonl
   max_loops: 12
   fork: agent-team
 owner: team-platform
@@ -64,10 +62,10 @@ script_refs:
   - scripts/build-paradigm-scorecard.py
   - scripts/validate-paradigm-coverage.py
   - scripts/emit-observable.py
-  - scripts/extract-ready-set-from-checklist.py
-  - scripts/build-self-reflection-entry.py
-  - scripts/extract-capability-dependency-graph.py
-  - scripts/build-capability-graph-knowledge-entry.py
+  - ../run-build-skill/templates/task-graph-engine/scripts/extract-ready-set-from-checklist.py
+  - ../run-build-skill/templates/task-graph-engine/scripts/build-self-reflection-entry.py
+  - ../run-build-skill/templates/task-graph-engine/scripts/extract-capability-dependency-graph.py
+  - ../run-build-skill/templates/task-graph-engine/scripts/build-capability-graph-knowledge-entry.py
   - scripts/build-verdict.py
   - scripts/build-review-report.py
   - scripts/validate_phase_order.py
@@ -110,31 +108,16 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       text: 改善案の承認を同一 context が行わず別 SubAgent または人間が独立採点する proposer 非イコール approver を満たす
       verify_by: evaluator
       derived_from: [CL-8]
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/diagnoseを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 
 # run-elegant-review (v2)
@@ -183,10 +166,12 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 `goal_seek.max_loops=12` は 1 周回 1 checklist item の消費上限であり、実行回数の規定値ではない。4 条件の改善→再評価は `references/convergence-policy.json` の `content_review_outer_reeval.max_iterations=3` を正本とし、PASS 時は残りの task-graph 予算を消費せず終了する。
 
-- 各周回冒頭で `scripts/extract-ready-set-from-checklist.py eval-log/run-elegant-review-progress.json` を実行し、ready 集合の最小 id だけを選ぶ。Phase 2 選択後に 3 分析者を Agent Team へ read-only で fan-out し、3 成果の fan-in 後に done にする。Phase 3 のみ write ownership を持つ。
-- 4 条件 FAIL で反復できる場合だけ `scripts/build-self-reflection-entry.py` で次反復の分析 / 改善 / 検証を直前検証依存の sink として追記する。未知 `depends_on` と cycle は exit 1 で拒否し、追記 item が done になるまで self-reflect 完了 gate を閉じる。
+engine の 4 script は同じ plugin の正本 `../run-build-skill/templates/task-graph-engine/scripts/` を skill 相対で呼び、この skill の `scripts/` に写しを置かない。
+
+- 各周回冒頭で `../run-build-skill/templates/task-graph-engine/scripts/extract-ready-set-from-checklist.py eval-log/run-elegant-review-progress.json` を実行し、ready 集合の最小 id だけを選ぶ。Phase 2 選択後に 3 分析者を Agent Team へ read-only で fan-out し、3 成果の fan-in 後に done にする。Phase 3 のみ write ownership を持つ。
+- 4 条件 FAIL で反復できる場合だけ `../run-build-skill/templates/task-graph-engine/scripts/build-self-reflection-entry.py` で次反復の分析 / 改善 / 検証を直前検証依存の sink として追記する。未知 `depends_on` と cycle は exit 1 で拒否し、追記 item が done になるまで self-reflect 完了 gate を閉じる。
 - 各周回の `eval-log/run-elegant-review-intermediate.jsonl` に `ready_set` / `selected_item` / `original_goal` / `merged_directive_for_next` を追記する。`selected_item` は `ready_set` の最小 id と一致し、全依存が過去周回で done であることを検証する。トレース不在は依存順消費違反として fail-closed にする。
-- アンカー検証は `required_keys` と `original_goal_hash` を読み、`hashlib.sha256` で不変を確認する。着手前に `scripts/extract-capability-dependency-graph.py` で参照切れを検査し、再利用価値のある依存判断だけを `scripts/build-capability-graph-knowledge-entry.py` で dependency graph knowledge へ記録する。
+- アンカー検証は `required_keys` と `original_goal_hash` を読み、`hashlib.sha256` で不変を確認する。着手前に `../run-build-skill/templates/task-graph-engine/scripts/extract-capability-dependency-graph.py` で参照切れを検査し、再利用価値のある依存判断だけを `../run-build-skill/templates/task-graph-engine/scripts/build-capability-graph-knowledge-entry.py` で dependency graph knowledge へ記録する。
 
 各周回の記録後と完了宣言前に次を実行する。この mode が progress / intermediate 不在、ready 集合の再計算不一致、最小 id 以外の選択、未 done 依存の先行、dangling / cycle、done 証跡漏れ、completed 時の未完了残存、`max_loops` bound 不足を exit 1 にする。
 

@@ -64,32 +64,17 @@ source: doc/ClaudeCodeスキルの設計書/
 source-tier: internal
 last-audited: 2026-07-11
 audit-trigger: quarterly
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物またはremote mutation previewをmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方またはpreview receiptを提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはmutationを実行せずhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物またはremote mutation previewをmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方またはpreview receiptを提示してからaccept-as-is/diagnoseを記録する。accept-as-isはmutationを実行せずhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
 
 <!-- external-mutation-guard-cli:v1 -->
 ### Canonical external mutation receipt flow (mandatory)
@@ -139,9 +124,9 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 ## Purpose & Output Contract
 
-対象URL 1件から、pre-choiceではmain contextが認可済み最小snapshotを根拠にfact/inferenceを分けた開けるblueprint draft (md+json) を生成・決定論guard・提示する。Task analyzer、Mermaid拡充、semantic fidelity評価、有界修正はlight/standard/detailed選択後だけ実行する。外部公開はしない。
+対象URL 1件から、pre-choiceではmain contextが認可済み最小snapshotを根拠にfact/inferenceを分けた開けるblueprint draft (md+json) を生成・決定論guard・提示する。Task analyzer、Mermaid拡充、semantic fidelity評価、有界修正はdiagnose選択後だけ実行する。外部公開はしない。
 
-**入力**: `url` (対象 URL 1 件), `--crawl-mode single|full_site` (既定 single), `--resume` (前 run の site coverage manifest から継続)
+**入力**: `url` (対象 URL 1 件), `--crawl-mode single|full_site` (既定 single), `--resume` (前 run の site coverage manifest から crawl を続ける新しい run。goal-seek の intermediate と progress は引き継がない。「ゴールシーク配線」参照)
 **出力**:
 - ローカル章別 blueprint (`system-blueprint.schema.json` 準拠の md + json)・5 種 Mermaid 図・画面別 layout.json / layout-overlay.svg・合成 design-tokens.json・site coverage manifest・request ledger
 - 完了レポート (日本語本文、パラメーター名・JSON キー・enum は原文)
@@ -155,12 +140,12 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 - **fact / inference / observation_gap 三値分離** (`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/fact-inference-confidence.schema.json`): fact は provenance (source_url/locator/captured_at/method/snapshot_id) 必須・レンズ解釈を含めない。inference は claim + evidence_refs(≥1) + confidence{level,rationale} 必須。observation_gap は not_observed|blocked + reason + budget_state で inference に昇格させない。top-level blueprint shape は `system-blueprint.schema.json` (screens[]/design_tokens/tech_stack/essence 等) を正本とする。
 - **責務 (詳細は `prompts/R1-R3`)**:
   - **R1-fetch** (`prompts/R1-fetch.md`): C12 で AuthzEvidence/request budget/crawl_profile を確定し、C09 の URL discovery → C12 の scope 分類 (in_scope/excluded+reason) で system 関連 URL 台帳を作り、C08 の fail-closed 境界内で C09 静的 HTTP snapshot を全 in-scope 画面へ取得し、加えて C15 (`browser-render.py`・MCP 非依存 headless Chrome via Bash) で rendered DOM/screenshot の取得を試みる (ブラウザ不在=exit 3 時のみ gap)。`--resume` は前 run の site coverage manifest を C12 `--coverage-manifest-in` へ再投入する。
-  - **R2-analyze (post-choice only)**: light/standard/detailed選択後だけC03→C04/C05/C13→C06をTaskの独立contextへ委譲する。提示前とaccept-as-isでは起動しない。各analyzerは提示済みdraft digestを入力にfact/inferenceを分離して拡充する。
+  - **R2-analyze (post-choice only)**: diagnose選択後だけC03→C04/C05/C13→C06をTaskの独立contextへ委譲する。提示前とaccept-as-isでは起動しない。各analyzerは提示済みdraft digestを入力にfact/inferenceを分離して拡充する。
   - **R3-document** (`prompts/R3-document.md`): C11 (`doc-emit.py`) で章別ローカル draft (md/json) と 5 種 Mermaid・画面別 layout.json/overlay を確定し、`doc-emit.py --check-screens` で layout completeness を、`mermaid-validate.py` (C10) で図種網羅を自己検証する。`python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py" --extraction <json> --out-dir <dir> --request-ledger <f> [--check-screens]` で起動する。screenshot / annotated は browser-render (C15) 取得時に extraction の screens[] へ populate され、ブラウザ不在時のみ `observation_gap` として記録する。
 
 ## ゴールシーク実行
 
-> 本 skill は固定手順ではなく、下記ゴールへ向けて完了チェックリストの未達項目を埋める手順を都度生成して反復する。正本は harness-creator plugin の `skills/run-build-skill/references/goal-seek-paradigm.md` (出典表記。本 plugin には同梱しない)。
+> 本 skill は固定手順ではなく、下記ゴールへ向けて完了チェックリストの未達項目を埋める手順を都度生成して反復する。正本は harness-creator plugin の `plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md` (出典表記。本 plugin には同梱しない)。
 
 ### ゴール (Goal)
 
@@ -187,12 +172,36 @@ URL をブラウザ目視 + F12 確認する手作業 3 ステップ (週 2.5 �
 - **現状評価**の単位は上記チェックリスト。未達項目を `## 局面カタログ (順序は都度判断)` から選んで埋める (順序固定禁止)。
 - **検証**は決定論チェック (authz/fetch/mermaid/doc の exit0) を優先し、LLM 判断より機械層を先に通す。
 - **差し戻し**: 決定論チェック fail または C02 FAIL なら R1-R3 の該当局面へ戻す (最大 5 周)。超過・drift 停滞は `open_issues` へ残し上位 orchestrator へ差し戻す。
-- **重い周回は選択後だけ分離 context**: light/standard/detailed選択後のみanalyzerをTaskでforkする。accept-as-isでは0回。親へは最終成果物pathと要約だけを返す。
+- **重い周回は選択後だけ分離 context**: diagnose選択後のみanalyzerをTaskでforkする。accept-as-isでは0回。親へは最終成果物pathと要約だけを返す。
 
 ### ゴールシーク配線
 
-- goal_seek.spec は plugin 単一の `eval-log/goal-spec.json` を本 skill と `run-blueprint-apply` (C14) が共有する (progress は skill 別ファイル。ゴール正本は 1 つ、周回状態は skill 別という設計意図)。
-- 周回状態と中間成果物は **repo-root (非 repo 環境では plugin-root) 直下**の `eval-log/run-extract-blueprint-intermediate.jsonl` へ追記する (cwd 相対禁止)。各周回末に不変アンカー `original_goal` (上記ゴール文の原文) と `delta_from_original`、次周回の必須入力 `merged_directive_for_next` を記録し、次周回 Step2 の必須入力とする (集約化ドリフト圧縮)。周回サマリは `schemas/goal-seek-loop.schema.json` 準拠の `eval-log/run-extract-blueprint-progress.json` に残す。
+- goal_seek.spec は **repo-root (非 repo 環境では plugin-root) 直下**の `eval-log/goal-spec.json` で、最初の周回の前に 1 回だけ読む。この path はプロジェクトで共有され、ほかの依頼のゴールも書かれる (`run-blueprint-apply` は読まない)。そのため `goal` か `purpose` の文中の url のどれかが今回の `url` と一致するときだけ、本 run のゴール正本とする (比べる前に両方を、scheme と host を小文字にし、`#` 以降と path 末尾の `/` を除いた形にそろえる。query は残す)。正本にしたときは `goal` を `original_goal` に転記し、progress の `spec_ref` にその path を書き、`constraints` と `forbidden_loosening` を周回の制約に足す。足すだけで、上の禁則・Key Rules 3 の低負荷不変を緩める根拠にはしない。完了チェックリストは上記のもののままで、goal-spec の checklist で置き換えない。ファイルが無いか今回の `url` と一致しないときは上記ゴール文の原文を `original_goal` にし、`spec_ref` を `inferred` にする。JSON として読めないとき、または正本にする file の `goal` が空でない文字列でないときは、周回を始めずに報告して止まり、file を直すか退けてから run をやり直すよう利用者に伝える。
+- 周回状態と中間成果物は **repo-root (非 repo 環境では plugin-root) 直下**の `eval-log/run-extract-blueprint-intermediate.jsonl` へ追記する (cwd 相対禁止)。この file と `eval-log/run-extract-blueprint-progress.json` には 1 つの run の周回だけを置く (1 file = 1 run)。`--resume` の run も前 run の crawl を続ける新しい run なので、同じに扱う。上の goal_seek.spec の箇条で `original_goal` を決めたあと、最初の周回の前に、下の処理で既存の 2 つの file を `eval-log/run-extract-blueprint-archive/<UTC の YYYYMMDDTHHMMSSZ>/` へ移してから書き始める。この処理は移す先の dir を新しく作れたときだけ移すので、既存の file を上書きしない。exit 0 でないとき (移す先の dir が既にあるときを含む) は周回を始めずに報告して止まる (時刻が変わってからやり直せば別の dir になる)。周回は diagnose 選択後だけ始まるので、accept-as-is (周回 0 回) の run はどちらの file にも触れない。移した file は監査のために残し、本 skill は消さない (不要になったら利用者が dir ごと消す)。移したあとの progress は下の箇条のとおり `workflow-manifest.json` から射影し直し、`iteration` を 0 から数え直し、`original_goal_hash` を今回の `original_goal` の sha256 にする。各周回末に不変アンカー `original_goal` (上の goal_seek.spec の箇条で決めたもの) と `delta_from_original`、次周回の必須入力 `merged_directive_for_next` を記録し、次周回 Step2 の必須入力とする (集約化ドリフト圧縮)。周回サマリは `schemas/goal-seek-loop.schema.json` 準拠の `eval-log/run-extract-blueprint-progress.json` に残す。
+
+```bash
+ESB_RUNTIME_ROOT="$(git -C "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}" rev-parse --show-toplevel 2>/dev/null || printf '%s' "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}")"
+python3 - "$ESB_RUNTIME_ROOT/eval-log" <<'PY'
+import os, sys, time
+
+log_dir = sys.argv[1]
+names = ("run-extract-blueprint-intermediate.jsonl", "run-extract-blueprint-progress.json")
+present = [name for name in names if os.path.lexists(os.path.join(log_dir, name))]
+if not present:
+    raise SystemExit(0)
+archive_root = os.path.join(log_dir, "run-extract-blueprint-archive")
+os.makedirs(archive_root, exist_ok=True)
+dest = os.path.join(archive_root, time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()))
+try:
+    os.mkdir(dest)  # 既にあれば失敗させ、既存の archive を上書きしない
+except FileExistsError:
+    raise SystemExit(f"archive dir already exists; not starting loops: {dest}")
+for name in present:
+    os.rename(os.path.join(log_dir, name), os.path.join(dest, name))
+print(f"archived {len(present)} file(s) to {dest}")
+PY
+```
+
 - `workflow-manifest.json` の R1-fetch → R2-analyze → R3-document を progress checklist へ射影し、`dependsOn` を `depends_on` として保つ。pre-choice 実行済みの R1 は証跡 digest を確認して done trace を作り、post-choice の graph は R2 から再開する。
 - progress checklist の決定論的ID写像は `C1=R1-fetch evidence再検証 (depends_on=[])`、`C2=R2-analyze (depends_on=[C1])`、`C3=R3-document (depends_on=[C2])` とする。C1はpre-choice成果物を再取得せず、post-choice最初のtask-graph周回で提示済みdigestとguard receiptを選択・照合してdoneにするため、選択証跡なきdoneを作らない。C1/C2/C3はそれぞれ `CL-1/CL-2/CL-9`、`CL-3/CL-4`、`CL-5/CL-6` をgateし、`max_loops=5` は3 item+最大2件のself-reflect余裕を持つ。
 - 各周回冒頭で `scripts/extract-ready-set-from-checklist.py eval-log/run-extract-blueprint-progress.json` を実行し、ready 集合の最小 id だけを選ぶ。R2 では `frontend-surface-analyzer` による fact (C03) を先行させ、完了後に backend / UIUX / content (C04/C05/C13) の 3 分析を Agent Team で独立 fan-out する。各自は C03 fact を読み、個別 artifact のみを write scope とする。`architecture-essence-synthesizer` (C06) の fan-in 完了後に R2 を done にする。
@@ -202,7 +211,7 @@ URL をブラウザ目視 + F12 確認する手作業 3 ステップ (週 2.5 �
 
 ### ゴールシーク検証（task-graph consumption）
 
-`engine: task-graph` の完了判定前に、progress checklistとintermediate traceから依存順消費を機械検査する。`ESB_RUNTIME_ROOT` は上記配線で解決したrepo-root（非repo環境ではplugin-root）のabsolute pathに固定し、cwdから推測しない。intermediate不在、unknown依存、cycle、ready最小ID以外の選択、依存未選択、選択証跡なきdone、未完了itemを残したcompletedはfail-closedにする。
+`engine: task-graph` の完了判定前に、progress checklistとintermediate traceから依存順消費を機械検査する。`ESB_RUNTIME_ROOT` は上記配線で解決したrepo-root（非repo環境ではplugin-root）のabsolute pathに固定し、cwdから推測しない。配線の箇条で2つのfileをrunごとに切り替えているので、この検査が読むのは今回のrunのtraceだけである。intermediate不在、unknown依存、cycle、ready最小ID以外の選択、依存未選択、選択証跡なきdone、未完了itemを残したcompletedはfail-closedにする。
 
 ```bash
 ESB_RUNTIME_ROOT="$(git -C "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}" rev-parse --show-toplevel 2>/dev/null || printf '%s' "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}")"

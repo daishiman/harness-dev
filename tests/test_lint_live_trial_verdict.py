@@ -325,6 +325,323 @@ def test_stale_sha_names_drifted_skill_and_skips_manifest_version(lint, monkeypa
     assert verdict_path.name == "verdict.json"
 
 
+# --- Codex の本文照合と古い閉包 ------------------------------------------------
+
+SOURCE_ERRORS = [
+    "native-skill-activation-unproven",
+    "native-skill-source-unproven:demo-plugin:run-demo",
+]
+_GIT_ENV = {
+    "GIT_AUTHOR_NAME": "test",
+    "GIT_AUTHOR_EMAIL": "test@example.com",
+    "GIT_COMMITTER_NAME": "test",
+    "GIT_COMMITTER_EMAIL": "test@example.com",
+}
+
+
+def _git(cwd, *args):
+    env = os.environ.copy()
+    env.update(_GIT_ENV)
+    subprocess.run(["git", *args], cwd=cwd, check=True, env=env)
+
+
+def _source_check(skill_dir):
+    """本文照合の代役。今の本文 (changed 入り) とだけ合わない。"""
+    body = (skill_dir / "SKILL.md").read_text(encoding="utf-8")
+    return list(SOURCE_ERRORS) if "changed" in body else []
+
+
+def _codex_fixture(
+    lint, monkeypatch, tmp_path, runtime_evidence, *,
+    commit=True, recorded_sha=None, removed_after_commit=None,
+):
+    """Codex verdict を受領 commit に載せ、その後に SKILL.md を変える。
+
+    runtime_evidence(skill_dir) の戻り値を validate_runtime_evidence の結果にする。
+    transcript の形は extract-codex-transcript の単体テストが固定するので、ここでは
+    「どのツリーを基準に照合するか」だけを測る。
+    commit="tree-only" は、閉包だけを commit して verdict を未追跡のまま置く。
+    removed_after_commit は、受領 commit の閉包にあって今は消えた skill 内のファイル。
+    """
+    monkeypatch.setattr(lint, "ROOT", tmp_path)
+    plugin = tmp_path / "plugins" / "demo-plugin"
+    for manifest_dir in (".claude-plugin", ".codex-plugin"):
+        (plugin / manifest_dir).mkdir(parents=True)
+        (plugin / manifest_dir / "plugin.json").write_text(
+            json.dumps({"name": "demo-plugin", "version": "0.0.1", "dependencies": []}),
+            encoding="utf-8",
+        )
+    skill_dir = _make_skill(lint)
+    if removed_after_commit:
+        (skill_dir / removed_after_commit).write_text("print('old')\n", encoding="utf-8")
+    verdict_mod, backend_mod, schema = lint.load_harness()
+    monkeypatch.setattr(verdict_mod, "validate_schema", lambda *_: [])
+    monkeypatch.setattr(
+        verdict_mod, "validate_runtime_evidence",
+        lambda _doc, _transcript, checked_dir: runtime_evidence(checked_dir),
+    )
+    monkeypatch.setattr(lint, "load_harness", lambda: (verdict_mod, backend_mod, schema))
+    doc = _valid_doc(lint, skill_dir)
+    doc["environment"]["runtime"] = "codex"
+    doc["skill_dir_tree_sha"] = recorded_sha or verdict_mod.skill_dir_tree_sha(skill_dir, runtime="codex")
+    if commit != "tree-only":
+        _write_verdict(lint, doc)
+    if commit:
+        _git(tmp_path, "init", "-q", "-b", "main")
+        _git(tmp_path, "add", "-A")
+        _git(tmp_path, "commit", "-q", "-m", "baseline")
+    if commit == "tree-only":
+        _write_verdict(lint, doc)
+    if removed_after_commit:
+        (skill_dir / removed_after_commit).unlink()
+    (skill_dir / "SKILL.md").write_text(
+        SKILL_MD_DECLARING.format(name="run-demo") + "\nchanged\n", encoding="utf-8"
+    )
+    return skill_dir
+
+
+def test_stale_codex_source_mismatch_is_folded_into_stale_warn(lint, monkeypatch, tmp_path, capsys):
+    """受領 commit の本文で通る本文照合の誤りは古さなので、stale-sha の 1 行に畳んで WARN にする。"""
+    _codex_fixture(lint, monkeypatch, tmp_path, _source_check)
+    assert lint.run_lint() == 0
+    out = capsys.readouterr().out
+    assert "1 stale (re-trial advised)" in out
+    assert "本文照合 native-skill-activation-unproven" in out and "受領 commit" in out
+    assert "runtime-evidence" not in out
+    # 鮮度強制 (release 前) では、畳んだ行ごと FAIL に戻る
+    assert lint.run_lint(enforce=True) == 1
+    assert "本文照合" in capsys.readouterr().out
+
+
+def test_stale_codex_source_mismatch_fails_when_baseline_body_also_mismatches(
+    lint, monkeypatch, tmp_path, capsys,
+):
+    """受領 commit の本文でも合わないなら起動の証明が無いので、古さの陰に隠さない。"""
+    _codex_fixture(lint, monkeypatch, tmp_path, lambda _dir: list(SOURCE_ERRORS))
+    assert lint.run_lint() == 1
+    out = capsys.readouterr().out
+    assert "runtime-evidence: native-skill-source-unproven" in out
+    assert "本文照合" not in out
+
+
+def test_stale_codex_source_mismatch_fails_for_untracked_verdict(lint, monkeypatch, tmp_path, capsys):
+    """受領 commit が無い (未追跡の) verdict は基準の本文が無いので FAIL のまま。"""
+    _codex_fixture(lint, monkeypatch, tmp_path, _source_check, commit=False)
+    assert lint.run_lint() == 1
+    assert "runtime-evidence: native-skill-activation-unproven" in capsys.readouterr().out
+
+
+def test_untracked_verdict_is_not_rechecked_against_head(lint, monkeypatch, tmp_path, capsys):
+    """閉包は commit 済みでも verdict が未追跡なら、HEAD を受領 commit の代わりにしない。
+
+    HEAD には記録と同じ閉包があるので、HEAD で照合し直すと畳めてしまう。
+    """
+    _codex_fixture(lint, monkeypatch, tmp_path, _source_check, commit="tree-only")
+    assert lint.run_lint() == 1
+    out = capsys.readouterr().out
+    assert "runtime-evidence: native-skill-activation-unproven" in out
+    assert "本文照合" not in out
+
+
+def test_fold_keeps_runtime_errors_that_are_not_source_errors(lint, monkeypatch, tmp_path, capsys):
+    """畳むのは本文照合の誤りだけ。受領 commit でも出る他の誤りは FAIL に残す。"""
+    def check(skill_dir):
+        return _source_check(skill_dir) + ["native-cli-version-mismatch"]
+
+    _codex_fixture(lint, monkeypatch, tmp_path, check)
+    assert lint.run_lint() == 1
+    out = capsys.readouterr().out
+    assert "本文照合 native-skill-activation-unproven" in out
+    assert "runtime-evidence: native-cli-version-mismatch" in out
+    assert "runtime-evidence: native-skill" not in out
+
+
+def test_fold_extracts_files_removed_since_the_baseline(lint, monkeypatch, tmp_path, capsys):
+    """受領 commit の閉包にあって今は消えたファイルも、plugin 単位の展開で取り戻す。"""
+    _codex_fixture(
+        lint, monkeypatch, tmp_path, _source_check, removed_after_commit="scripts/old.py",
+    )
+    assert lint.run_lint() == 0
+    assert "本文照合 native-skill-activation-unproven" in capsys.readouterr().out
+
+
+def test_closure_roots_groups_plugin_files_by_plugin(lint):
+    """plugins/ の下は plugin dir 単位、それ以外は label のまま展開単位にする。"""
+    labels = [
+        "plugins/a/skills/s/SKILL.md",
+        "plugins/a/.codex-plugin/plugin.json",
+        "plugins/b/lib/y.py",
+        "scripts/x.py",
+        "plugins/top.md",
+    ]
+    assert lint._closure_roots(labels) == ["plugins/a", "plugins/b", "plugins/top.md", "scripts/x.py"]
+
+
+def test_extract_baseline_refuses_commit_with_escaping_symlink(lint, monkeypatch, tmp_path):
+    """受領 commit の閉包に外を指す symlink があれば、展開せずに False を返す。"""
+    repo = tmp_path / "repo"
+    scripts = repo / "plugins" / "demo-plugin" / "scripts"
+    scripts.mkdir(parents=True)
+    (scripts / "x.py").write_text("x\n", encoding="utf-8")
+    (scripts / "evil").symlink_to("../../../../outside")
+    _git(repo, "init", "-q", "-b", "main")
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "baseline")
+    monkeypatch.setattr(lint, "ROOT", repo)
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    assert lint._extract_baseline("HEAD", ["plugins/demo-plugin"], dest) is False
+    assert not (dest / "plugins" / "demo-plugin" / "scripts" / "evil").is_symlink()
+    # 受領 commit に展開する対象が 1 つも無いときも、展開できたことにしない
+    assert lint._extract_baseline("HEAD", ["plugins/missing"], dest) is False
+
+
+def test_extract_baseline_without_git_is_false(lint, monkeypatch, tmp_path):
+    """git の実行ファイルが無い環境は、例外を漏らさず False にする。"""
+    def missing(*_args, **_kwargs):
+        raise FileNotFoundError("git")
+
+    monkeypatch.setattr(lint.subprocess, "run", missing)
+    assert lint._extract_baseline("HEAD", ["plugins/demo-plugin"], tmp_path) is False
+
+
+def test_symlink_loop_in_baseline_is_not_explained(lint, monkeypatch, tmp_path, capsys):
+    """受領 commit の閉包に symlink の輪がある (3.11/3.12 は RuntimeError) なら FAIL のまま。"""
+    _codex_fixture(lint, monkeypatch, tmp_path, _source_check)
+    verdict_mod, _, _ = lint.load_harness()
+    current = verdict_mod.skill_dir_tree_sha
+
+    def looping(skill_dir, runtime="claude"):
+        if str(skill_dir).startswith(str(tmp_path / "plugins")):
+            return current(skill_dir, runtime=runtime)
+        raise RuntimeError("Symlink loop from 'scripts/a'")
+
+    monkeypatch.setattr(verdict_mod, "skill_dir_tree_sha", looping)
+    assert lint.run_lint() == 1
+    assert "runtime-evidence: native-skill-activation-unproven" in capsys.readouterr().out
+
+
+def test_stale_codex_source_mismatch_fails_when_recorded_digest_is_not_the_baseline(
+    lint, monkeypatch, tmp_path, capsys,
+):
+    """受領 commit の閉包 digest が記録と違えば、その commit は verdict の基準ではない。"""
+    _codex_fixture(lint, monkeypatch, tmp_path, _source_check, recorded_sha="0" * 64)
+    assert lint.run_lint() == 1
+    assert "runtime-evidence: native-skill-source-unproven" in capsys.readouterr().out
+
+
+def test_stale_codex_baseline_recheck_must_not_add_errors(lint, monkeypatch, tmp_path, capsys):
+    """受領 commit で照合し直したときに新しい誤りが出るなら、畳まずに FAIL のまま。"""
+    def check(skill_dir):
+        return _source_check(skill_dir) or ["native-cli-version-mismatch"]
+
+    _codex_fixture(lint, monkeypatch, tmp_path, check)
+    assert lint.run_lint() == 1
+    assert "runtime-evidence: native-skill-source-unproven" in capsys.readouterr().out
+
+
+def _symlink_archive(*members):
+    """(name, linkname) の symlink だけを並べた tar。"""
+    import io
+    import tarfile
+
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w") as archive:
+        for name, linkname in members:
+            info = tarfile.TarInfo(name)
+            info.type = tarfile.SYMTYPE
+            info.linkname = linkname
+            archive.addfile(info)
+    buf.seek(0)
+    return tarfile.open(fileobj=buf)
+
+
+# 自前の検査 (gh-107845 を抱える版の経路) と stdlib の検査の両方を、どの版でも通す
+@pytest.fixture(params=["patched", "stdlib"])
+def link_check(request, lint, monkeypatch):
+    monkeypatch.setattr(lint, "_STDLIB_LINK_CHECK_SOUND", request.param == "stdlib")
+    return request.param
+
+
+def test_member_filter_accepts_inner_relative_symlink(lint, tmp_path, monkeypatch):
+    """下位 dir の相対 symlink が中を指すなら通す (3.11.4 の data filter は誤って拒む)。"""
+    monkeypatch.setattr(lint, "_STDLIB_LINK_CHECK_SOUND", False)
+    with _symlink_archive(("p/hooks/x.py", "../scripts/x.py")) as archive:
+        archive.extractall(tmp_path, filter=lint._member_filter)
+    assert (tmp_path / "p" / "hooks" / "x.py").is_symlink()
+
+
+@pytest.mark.parametrize("linkname, error", [
+    ("../../../outside.py", "LinkOutsideDestinationError"),
+    ("/etc/passwd", "AbsoluteLinkError"),
+    # 絶対 path は展開先の中を指していても拒む (行き先の検査では止まらない場合)
+    ("{dest}/p/scripts/x.py", "AbsoluteLinkError"),
+])
+def test_member_filter_rejects_escaping_symlink(lint, tmp_path, linkname, error, link_check):
+    """展開先の外を指す symlink と絶対 path の symlink は拒む。"""
+    import tarfile
+
+    linkname = linkname.format(dest=tmp_path)
+    with _symlink_archive(("p/hooks/y.py", linkname)) as archive:
+        with pytest.raises(getattr(tarfile, error)):
+            archive.extractall(tmp_path, filter=lint._member_filter)
+    assert not (tmp_path / "p" / "hooks" / "y.py").exists()
+
+
+def test_member_filter_rejects_escape_chained_through_earlier_link(lint, tmp_path, link_check):
+    """先に置いた link を経由して外へ出る連鎖 (p/x -> . の後の p/x/y -> ../..) を拒む。"""
+    import tarfile
+
+    with _symlink_archive(("p/x", "."), ("p/x/y", "../..")) as archive:
+        with pytest.raises(tarfile.FilterError):
+            archive.extractall(tmp_path, filter=lint._member_filter)
+
+
+def test_member_filter_rejects_case_folded_chain(lint, tmp_path, link_check):
+    """大文字小文字を区別しない FS では、p/X -> . の後の p/x/y -> ../.. も外へ出る連鎖になる。"""
+    import tarfile
+
+    probe = tmp_path / "CaseProbe"
+    probe.mkdir()
+    if not (tmp_path / "caseprobe").exists():
+        pytest.skip("大文字小文字を区別する FS では p/X と p/x は別のもので、連鎖にならない")
+    dest = tmp_path / "dest"
+    dest.mkdir()
+    with _symlink_archive(("p/X", "."), ("p/x/y", "../..")) as archive:
+        with pytest.raises(tarfile.FilterError):
+            archive.extractall(dest, filter=lint._member_filter)
+
+
+def test_member_filter_delegates_to_stdlib_when_its_link_check_is_sound(lint, monkeypatch):
+    """stdlib の検査が正しい版では、symlink も stdlib の data filter に任せる。"""
+    import tarfile
+
+    seen = []
+    monkeypatch.setattr(lint, "_STDLIB_LINK_CHECK_SOUND", True)
+    monkeypatch.setattr(tarfile, "data_filter", lambda member, dest: seen.append(member.name) or member)
+    info = tarfile.TarInfo("p/hooks/x.py")
+    info.type = tarfile.SYMTYPE
+    info.linkname = "../scripts/x.py"
+    lint._member_filter(info, "/unused")
+    assert seen == ["p/hooks/x.py"]
+
+
+def test_stdlib_link_check_probe_matches_stdlib_behaviour(lint, monkeypatch, tmp_path):
+    """判定は、下位 dir の中を指す相対 link を stdlib が受け入れるかどうかと一致する。"""
+    import tarfile
+
+    monkeypatch.setattr(lint, "_STDLIB_LINK_CHECK_SOUND", None)
+    info = tarfile.TarInfo("a/b")
+    info.type = tarfile.SYMTYPE
+    info.linkname = "../c"
+    try:
+        tarfile.data_filter(info, str(tmp_path))
+        expected = True
+    except tarfile.LinkOutsideDestinationError:
+        expected = False
+    assert lint._stdlib_link_check_sound() is expected
+
+
 def test_downgraded_tier_hard_fails(lint, capsys):
     skill_dir = _make_skill(lint)
     doc = _valid_doc(lint, skill_dir)

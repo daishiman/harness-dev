@@ -28,7 +28,7 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R3-phase3-exec
 - release/exhaustive を自動選択せず、呼び出し元の decision が決めた next stage/profile を変更しない。
 - `TODO(human)` を残さず、選択済み finding 内の修正方法は findings と先例から自動決定する (`force_pass` 禁止)。
 - git commit は `commit_authorized=true` の明示時だけ許可し、既定は patch 適用と検証まで。git push / PR は別途明示権限が必要。
-- content-review verdict (`eval-log/<plugin>/<skill>/content-review/{elegance,rubric}-verdict.json`) の指摘を SKILL.md へ当てるときは、編集前の SKILL.md の sha256 を実ファイルから測って控え (verdict の値を写さない)、選んだ指摘を当て終えたら `run-elegant-review/scripts/sync-content-review-sha.py --plugin <plugin> --skill <skill> --from-sha <控えた sha> --finding-ids <elegance:N,rubric:N>` を repo root から (または `--repo-root <repo root>` を付けて) skill ごとに 1 回呼ぶ。id の N は その verdict の `feedback_loop.negative_feedback` の 1 始まりの位置。verdict JSON の sha や評価値は手で書き換えない。
+- content-review verdict (`eval-log/<plugin>/<skill>/content-review/{elegance,rubric}-verdict.json`) の指摘を SKILL.md へ当てるときは、編集前に SKILL.md を `python3` (`shutil.copy2`) で作業用の場所へ写し、その sha256 を実ファイルから測って控える (verdict の値を写さない)。選んだ指摘を当て終えたら `run-elegant-review/scripts/sync-content-review-sha.py --plugin <plugin> --skill <skill> --from-sha <控えた sha> --finding-ids <選んだ id> --from-file <写し>` を repo root から (または `--repo-root <repo root>` を付けて) skill ごとに 1 回呼ぶ。id は利用者が選んだ `F-NNNN` などの元の id (verdict の `finding_locations[*].source_id` にあるもの) をそのまま渡すか、`<elegance|rubric>:N` (N はその verdict の `feedback_loop.negative_feedback` の 1 始まりの位置) で渡す。編集はその指摘の `finding_locations` に挙がった節 (とその子の節) の中だけにする。frontmatter・見出し・節の外を変えると script は結び直さない。verdict JSON の sha や評価値は手で書き換えない。
 - **適用層境界**: 本 executor の消化規律 (選択済み finding の放置 0) は「1 レビューの findings 改善 (eval 非帰属)」に適用され、実走 eval 駆動の反復改善 (`run-skill-iter-improve`, 1 iter 1-2 件) とは編集エンジン・収束判定を共有しない。
 
 ## Layer 2: ドメイン定義層
@@ -74,7 +74,7 @@ source: plugins/harness-creator/skills/run-elegant-review/prompts/R3-phase3-exec
 ### 4.2 失敗時挙動
 - `max_rounds` を使い切って収束しないなら Handoff せず `convergence_status=incomplete / blocked_dimensions[]` で呼び出し元へ差し戻す (human_review 必須・`force_pass` 禁止)。Δneg が 2 周連続で増えたら `convergence_status=diverging` を返す。
 - digest 不一致・認可外 path・検証失敗は incomplete/blocked で返す。改善範囲を広げて自動回復しない。
-- `sync-content-review-sha.py` が exit 1 で拒否したら、verdict JSON に触らず、その skill を「要再レビュー」(拒否理由つき) として `residual_risks[]` に返す。
+- `sync-content-review-sha.py` が exit 1 で拒否したら、verdict JSON に触らず、その skill を「要再レビュー」(拒否理由つき) として `residual_risks[]` に返す。本 executor は変更した本人なので、範囲つき再レビュー (`--scoped-review`) の reviewer にはなれない。変更が範囲の上限 (節 3 つ・60 行まで、入出力契約の節・criteria が名指す節・見出し・frontmatter に触れない) に収まるなら、その旨と変わった節を添え、呼び出し元が独立 reviewer に読ませられるようにする。
 
 ## Layer 5: エージェント定義層 (ゴール駆動の実行主体)
 

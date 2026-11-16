@@ -80,7 +80,7 @@ errors:
 | id | path | when_to_read |
 |---|---|---|
 | catalog | `references/pkg-id-catalog.yaml` | 全 query で必読（一次情報） |
-| schema | `schemas/package-contract.schema.json` | pkg_id 正規表現バリデーション |
+| schema | `schemas/package-contract.schema.json` | `pkg_checks` の key の形を確かめるとき（schema の pattern は 013 を a〜d に展開した形だけを受ける。`query.pkg_id` の検証は §2.3 の正規表現で行い、素の PKG-013 は §2.2 で展開する） |
 | chap36 | `doc/ClaudeCodeスキルの設計書/36-plugin-package-harness-contract.md` | 齟齬検出時の参照（read-only） |
 | chap27 | `doc/ClaudeCodeスキルの設計書/27-rubric-governance-runbook.md` §3.1 | eval-log path 規約 |
 

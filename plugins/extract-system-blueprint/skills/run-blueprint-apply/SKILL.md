@@ -31,8 +31,6 @@ goal_seek:
   activation_state: semantic_evaluator_started
   engine: inline
   fork: subagent
-  spec: eval-log/goal-spec.json
-  progress: eval-log/run-blueprint-apply-progress.json
   max_loops: 3
 feedback_contract: # per-skill 評価基準。content-review verdict の criteria_evaluated と突合
   activation_state: semantic_evaluator_started
@@ -52,32 +50,17 @@ source: doc/ClaudeCodeスキルの設計書/
 source-tier: internal
 last-audited: 2026-07-11
 audit-trigger: quarterly
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/diagnoseを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 
 # run-blueprint-apply
@@ -90,13 +73,13 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
 - `prompts/` 配下はこのowner Skill契約を継承する。
 
-> extract-system-blueprint plugin の下流適用 skill (L1)。C02 (`assign-blueprint-fidelity-evaluator`) が PASS した blueprint 一式と自社コンテキストを入力に、採用/回避/差別化機会の 3 分類 apply-recommendations をローカルへ導出する。共有決定論ゲートは plugin-root の `scripts/doc-emit.py --check-apply` (C11) を配線。パス解決は `$CLAUDE_PLUGIN_ROOT` 起点、成果物は `$CLAUDE_PROJECT_DIR`/cwd 配下。**出力はローカル apply-recommendations のみ・対象 origin 非アクセス (network 0)・blueprint 本体非書換**。
+> extract-system-blueprint plugin の下流適用 skill (L1)。C02 (`assign-blueprint-fidelity-evaluator`) が PASS した blueprint 一式と自社コンテキストを入力に、採用/回避/差別化機会の 3 分類 apply-recommendations をローカルへ導出する。共有決定論ゲートは plugin-root の `scripts/doc-emit.py --check-apply` (C11) を配線。パス解決は Runtime root contract の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点、成果物は `$CLAUDE_PROJECT_DIR`/cwd 配下。**出力はローカル apply-recommendations のみ・対象 origin 非アクセス (network 0)・blueprint 本体非書換**。
 
 ## Purpose & Output Contract
 
 抽出 (対象の忠実記述) と適用 (自社への判断) を分離するための下流 skill。blueprint は対象の記述で完結し「自社ならどれを採用/回避すべきか・どこが差別化機会か」を出さないため、その最後の適用判断を独立 context で担う。blueprint の忠実性と推奨の自社接地性を相互汚染させない。
 
-**入力**: `blueprint_dir` (C02 PASS 済 blueprint 一式のディレクトリ。`blueprint.json` を正本とする), `own_context` (自社コンテキストの文書パスまたは自然文。技術スタック/リソース制約/既存資産/対象ユーザーを含む), `--verdict-dir` (C02 verdict receipt の探索先。既定 `.esb-verdict`), `--out-dir` (出力先。既定 `apply-recommendations/`)
+**入力**: `blueprint_dir` (C02 PASS 済 blueprint 一式のディレクトリ。`blueprint.json` を正本とし、draft_hash は C01 が emit 時に同じディレクトリへ書いた `sink-status.json` から読む), `own_context` (自社コンテキストの文書パスまたは自然文。技術スタック/リソース制約/既存資産/対象ユーザーを含む), `--verdict-dir` (C02 verdict receipt の探索先。既定 `.esb-verdict`), `--out-dir` (出力先。既定 `apply-recommendations/`)
 **出力**:
 - ローカル `apply-recommendations.json` (採用 adopt / 回避 avoid / 差別化機会 differentiate の 3 分類・全項目 `kind=inference` + `evidence_refs` (blueprint 実在 anchor) + `confidence{level,rationale}` + `own_context_ref`)
 - ローカル `apply-recommendations.md` (同一内容の日本語読み物。3 分類ごとに claim/根拠 anchor/確度/自社接地先を提示)
@@ -111,15 +94,15 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - **apply-recommendation shape** (SSOT = `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/doc-emit.py --check-apply`): 各項目は `kind:"inference"` / `category ∈ {adopt, avoid, differentiate}` / `claim` (非空) / `own_context_ref` (自社コンテキスト接地キー・非空) / `evidence_refs:[...]` (≥1・全て blueprint 実在 anchor へ解決) / `confidence:{level ∈ {high,medium,low}, rationale}` を必須とする。ルート形状は `{"recommendations": [...]}`。この契約は独立 schema を持たず `--check-apply` を唯一の機械 SSOT とし、生成側 (本 skill 自己検証) が C01/C02 と同一決定論ロジックを共有する (基準乖離防止)。
 - **blueprint anchor**: evidence_refs は blueprint.json の `anchor|id|screen_id|element_id|record_id|ref` 値・top-level `anchors[]`・top-level 章キー (`screens`/`design_tokens`/`tech_stack`/`essence`/`nonfunctional_baseline` 等) のいずれかへ解決する。解決できない ref は無根拠主張として `--check-apply` が exit1 で遮断する。
 - **責務 (詳細は `prompts/R1-R3`)**:
-  - **R1-ground** (`prompts/R1-ground.md`): `blueprint_dir` の `blueprint.json` を読み、C02 verdict receipt (`--verdict-dir` 既定 `.esb-verdict`) が `verdict=PASS` かつ draft_hash 一致であることを fail-closed に検証する (不在/FAIL/hash 不一致は拒否)。自社コンテキストを技術スタック/リソース制約/既存資産/対象ユーザーの 4 面へ構造化して取り込む。対象 origin へアクセスしない。
+  - **R1-ground** (`prompts/R1-ground.md`): `blueprint_dir` の `blueprint.json` と `sink-status.json` を読み、C02 verdict receipt (`--verdict-dir` 既定 `.esb-verdict`) が `verdict=PASS` かつ `sink-status.json` の draft_hash と一致することを fail-closed に検証する (不在/FAIL/hash 不一致は拒否)。自社コンテキストを技術スタック/リソース制約/既存資産/対象ユーザーの 4 面へ構造化して取り込む。対象 origin へアクセスしない。
   - **R2-recommend** (`prompts/R2-recommend.md`): blueprint の fact/inference (essence 章・design tokens・tech_stack・nonfunctional_baseline 含む) と自社コンテキストを突合し、採用/回避/差別化機会の 3 分類 recommendations を導出する。各項目は blueprint 実在 anchor への evidence_refs + confidence 必須の inference で、blueprint に無い事実を新規主張しない。重い突合・導出は **Task で独立 context へ fork** し、親へは recommendations JSON と要約のみ返す。
   - **R3-emit** (`prompts/R3-emit.md`): `apply-recommendations.json` + `.md` を shape 準拠でローカル `--out-dir` へ書き、`doc-emit.py --check-apply <recommendations.json> --blueprint <blueprint.json>` で schema 適合・evidence anchor 実在・fact 新規主張 0・3 分類のみを自己検証する (exit0)。blueprint 本体へは書き込まない。
 
 ### 入力受理と自己検証の順序 (fail-closed)
 
 ```
-[R1] blueprint_dir/blueprint.json を読み込み → C02 verdict receipt を verdict-dir から解決
-  → verdict=PASS かつ draft_hash == blueprint の draft_hash を確認 (不一致/FAIL/不在は拒否して停止)
+[R1] blueprint_dir/blueprint.json と sink-status.json を読み込み → sink-status.json の draft_hash で C02 verdict receipt を verdict-dir から解決
+  → verdict=PASS かつ receipt の draft_hash == sink-status.json の draft_hash を確認 (不一致/FAIL/不在は拒否して停止)
   → own_context を 4 面 (技術スタック/制約/既存資産/対象ユーザー) へ構造化
 [R2] blueprint fact/inference × own_context を突合 → adopt/avoid/differentiate の 3 分類 recommendations 導出
   → 各項目 kind=inference + evidence_refs(blueprint anchor) + confidence + own_context_ref
@@ -130,7 +113,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## ゴールシーク実行
 
-> 本 skill は固定手順ではなく、下記ゴールへ向けて完了チェックリストの未達項目を埋める手順を都度生成して反復する。正本は harness-creator plugin の `skills/run-build-skill/references/goal-seek-paradigm.md` (出典表記。本 plugin には同梱しない)。
+> 本 skill は固定手順ではなく、下記ゴールへ向けて完了チェックリストの未達項目を埋める手順を都度生成して反復する。正本は harness-creator plugin の `plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md` (出典表記。本 plugin には同梱しない)。
 
 ### ゴール (Goal)
 
@@ -160,6 +143,7 @@ blueprint は対象の忠実記述で完結し「自社ならどれを採用/回
 
 ### ゴールシーク配線
 
+- **goal-spec**: 持たない。プロジェクトで共有される `eval-log/goal-spec.json` は読まない (同じ path には抽出や別の依頼のゴールが書かれるので、読むとゴールの基準が 2 つになる)。`original_goal` は上記ゴール文の原文とし、progress の `spec_ref` は `inferred` にする。
 - 周回状態と中間成果物は **repo-root (非 repo 環境では plugin-root) 直下**の `eval-log/run-blueprint-apply-intermediate.jsonl` へ追記する (cwd 相対禁止)。各周回末に不変アンカー `original_goal` (上記ゴール文の原文) と `delta_from_original`、次周回の必須入力 `merged_directive_for_next` を記録し、次周回 Step2 の必須入力とする (集約化ドリフト圧縮)。周回サマリは `schemas/goal-seek-loop.schema.json` 準拠の `eval-log/run-blueprint-apply-progress.json` に残す。
 - SubAgent dispatch は責務単位で固定する: 重い突合・3 分類導出は独立 Task context へ fork し、fact/inference と自社コンテキストの突合結果を recommendations JSON として成果物ディレクトリへ直接書き出す (応答長起因の無言欠落を排除)。親へは最終成果物パスと要約のみ返す。
 
@@ -172,7 +156,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-goal-seek-anchor
   --intermediate eval-log/run-blueprint-apply-intermediate.jsonl
 ```
 
-検証ロジックの正本は共有 validator `../../scripts/validate-goal-seek-anchor.py` とし、各 skill は対象 JSONL のパスだけを渡す (対象 JSONL 不在は fail-closed で exit 1=配線バグ扱い。必ず追記後に起動する)。
+検証ロジックの正本は共有 validator `../../scripts/validate-goal-seek-anchor.py` とし、各 skill は対象 JSONL のパスだけを渡す (対象 JSONL 不在は fail-closed で exit 1=配線バグ扱い。必ず追記後に起動する)。validator は相対 path を git の toplevel から、非 repo 環境では cwd から解決する。非 repo 環境では追記先 (plugin-root 直下) の絶対 path を `--intermediate` に渡す。
 
 ## 局面カタログ (順序は都度判断)
 
@@ -180,7 +164,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-goal-seek-anchor
 
 ### 局面: 接地と受理検証 (R1-ground)
 
-`blueprint_dir/blueprint.json` を読み込み、C02 verdict receipt を `--verdict-dir` (既定 `.esb-verdict`) から `<draft_hash>.verdict.json` として解決して `verdict=PASS` かつ draft_hash 一致を確認する (不在/FAIL/hash 不一致は受理拒否し停止)。自社コンテキスト (own_context の文書パスは Read、自然文はそのまま) を技術スタック/リソース制約/既存資産/対象ユーザーの 4 面へ構造化する。対象 origin へアクセスしない。
+`blueprint_dir/blueprint.json` と `sink-status.json` を読み込み、`sink-status.json` の draft_hash で C02 verdict receipt を `--verdict-dir` (既定 `.esb-verdict`) から `<draft_hash>.verdict.json` として解決して `verdict=PASS` かつ receipt の draft_hash 一致を確認する (`sink-status.json` や receipt の不在/FAIL/hash 不一致は受理拒否し停止)。自社コンテキスト (own_context の文書パスは Read、自然文はそのまま) を技術スタック/リソース制約/既存資産/対象ユーザーの 4 面へ構造化する。対象 origin へアクセスしない。
 
 ### 局面: 3 分類導出 (R2-recommend)
 
@@ -201,7 +185,7 @@ blueprint の fact/inference (essence 章・design tokens・tech_stack・nonfunc
 
 ## ハンドオフ
 
-- **前工程 (抽出)**: `run-extract-blueprint` (C01) が blueprint draft を生成し、`assign-blueprint-fidelity-evaluator` (C02) が draft_hash に束縛した verdict=PASS を発行する。本 skill はその PASS 済 blueprint 一式と draft_hash を入力にする。
+- **前工程 (抽出)**: `run-extract-blueprint` (C01) が blueprint draft を生成し、`assign-blueprint-fidelity-evaluator` (C02) が draft_hash に束縛した verdict=PASS を発行する。本 skill はその PASS 済 blueprint 一式と、C01 が `sink-status.json` に書いた draft_hash を入力にする。
 - **共有ゲート**: `doc-emit.py --check-apply` (C11) が apply-recommendations の schema/anchor/fact/分類を決定論判定する (C01/C02 と同一 entrypoint)。
 - **下流**: apply-recommendations は自社版スカフォールド・設計判断の入力としてローカルで利用する (ローカル利用に限る)。
 

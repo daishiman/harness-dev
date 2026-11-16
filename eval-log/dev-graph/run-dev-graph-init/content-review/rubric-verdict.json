@@ -2,7 +2,8 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-init",
-    "skill_md_sha256": "03c93563a963879f379dd75e2d2e4dc03f983746fbba56c1a8e3b4133e834808"
+    "skill_md_sha256": "3580eb96c28513d6bffadfa58c052e85ee6c822651b72fc713ed54c5a9d43995",
+    "reviewed_skill_md_sha256": "03c93563a963879f379dd75e2d2e4dc03f983746fbba56c1a8e3b4133e834808"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -40,5 +41,21 @@
     "hook_trigger": "manual: team-lead request for iteration 3/3 of the init content-review after fixing the three low findings of iteration 2 (N1: R1-elicit Layer 3 uses ../../scripts/resolve-repo-context.py and step 1 names both standalone C24 starts; N2: step 4 names status=rejected / code=merge_not_additive for old+new wiring together and how to recover; N3: the static bytecode test also checks argv lists starting with \"python3\", and the a1 harness drops PYTHONDONTWRITEBYTECODE for Harness.run and both reruns); new loop by user decision, 3rd pass of the new loop; incremental focused combined review",
     "next_action": "none"
   },
-  "notes": "rubric=94/100 threshold=80 high=0 (rubric 1.6.0、rubric_hash=22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9)。100 から medium −10・low −3 で数えた。KL-* は knowledge-loop を持たないので対象外。判定方法: incremental の focused combined review を1つの context で行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high severity 0 を一度に判定した (30思考法は使っていない)。回数の数え方: 前のループ (7c9b95b8 の版) は3回目に PASS した。その続きとして OUT3 (共有 harness の bytecode cache) を直した版 (cd74c3d4) の review で medium D・E を挙げ、利用者の判断で、回数を新しいループ (iteration_limit 3) に切り替えた。新しいループの1回目 (43960b48 の版) は medium F (0.1.17 の配線で手順4の再実行が duplicate_registration で止まる) を挙げ、verdict を書かずに team-lead へ報告した。2回目 (34cd5265 の版) は F の解消を確かめて PASS (rubric 94) とし、新しい low N1-N3 を Beads 行きとして返した。N1-N3 は、作者とは別の修正役 (team-lead) がこの PR で直した。今回はその3回目で、iteration=3 と記録する。対象は SKILL.md の全文 (2回目からの変更は L131 と L143)、prompts/R1-elicit.md の全文、resolve-repo-context.py の write-scope と引数、build-project-hook-fallback.py の _verify と拒否の出力 (L287・L381-384)、test_no_bytecode_in_harness.py の全文、test_acceptance_gaps_a1.py の without_bytecode_env と Harness・repair・alt config の起動である。read-only で回したもの (03c93563 の版): test_build_project_hook_fallback・test_init_preflight_gate・test_acceptance_gaps_a1・test_no_bytecode_in_harness・test_build_init_scaffold・test_c25_lifecycle_hook_contract・test_semantic_contract_boundaries_c10_c11_c24・test_semantic_c25_c28・test_runtime_coverage・test_skill_criteria_contracts・test_skill_mass_production_contracts (11本で 146 passed)、lint-skill-name / lint-skill-tree (ok)、render-findings-score (94、scored 19/20、pending_human は BD-004 だけ)。init の behavior closure を live-trial-verdict.py の skill_dir_tree_sha で計算し直して 6765b1769c225fc53d680feca733400a10f55cfd63b7b62f3c533b6b6c14d7c6 を得た (修正役の申告と一致。closure は44 file で、test は入らない)。写しでの実験 (cr-dg4 の scratch の下。rm も git の書込みも使っていない): exp13 は validate-harness-link.py の L126 (remediation の fallback argv) から `-B` だけを外した写しで、test_every_python_child_is_started_with_minus_b が `scripts/validate-harness-link.py:126` を名指しして落ちる (今の版では通る)。script の側 (build-project-hook-fallback.py・validate-harness-link.py・hooks.json・hooks contract) は2回目から sha が変わっていないので、2回目の exp9 (外側の -B と PYTHONDONTWRITEBYTECODE を外して全 script と hook を起こしても .pyc 0件) と exp10 (HEAD の fallback で F が再現) の結果はそのまま使える。この review の操作は、2つの verdict のほかに作業ツリーを変えていない。verify_by=live-trial の OUT1 は、受入条件と script/test の対応を静的に評価しただけで、実機の host 対話はこの verdict の対象外である。low は team-lead の決定で直さずに Beads に回す。"
+  "notes": "rubric=94/100 threshold=80 high=0 (rubric 1.6.0、rubric_hash=22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9)。100 から medium −10・low −3 で数えた。KL-* は knowledge-loop を持たないので対象外。判定方法: incremental の focused combined review を1つの context で行い、矛盾なし・漏れなし・規約整合・依存関係整合・rubric high severity 0 を一度に判定した (30思考法は使っていない)。回数の数え方: 前のループ (7c9b95b8 の版) は3回目に PASS した。その続きとして OUT3 (共有 harness の bytecode cache) を直した版 (cd74c3d4) の review で medium D・E を挙げ、利用者の判断で、回数を新しいループ (iteration_limit 3) に切り替えた。新しいループの1回目 (43960b48 の版) は medium F (0.1.17 の配線で手順4の再実行が duplicate_registration で止まる) を挙げ、verdict を書かずに team-lead へ報告した。2回目 (34cd5265 の版) は F の解消を確かめて PASS (rubric 94) とし、新しい low N1-N3 を Beads 行きとして返した。N1-N3 は、作者とは別の修正役 (team-lead) がこの PR で直した。今回はその3回目で、iteration=3 と記録する。対象は SKILL.md の全文 (2回目からの変更は L131 と L143)、prompts/R1-elicit.md の全文、resolve-repo-context.py の write-scope と引数、build-project-hook-fallback.py の _verify と拒否の出力 (L287・L381-384)、test_no_bytecode_in_harness.py の全文、test_acceptance_gaps_a1.py の without_bytecode_env と Harness・repair・alt config の起動である。read-only で回したもの (03c93563 の版): test_build_project_hook_fallback・test_init_preflight_gate・test_acceptance_gaps_a1・test_no_bytecode_in_harness・test_build_init_scaffold・test_c25_lifecycle_hook_contract・test_semantic_contract_boundaries_c10_c11_c24・test_semantic_c25_c28・test_runtime_coverage・test_skill_criteria_contracts・test_skill_mass_production_contracts (11本で 146 passed)、lint-skill-name / lint-skill-tree (ok)、render-findings-score (94、scored 19/20、pending_human は BD-004 だけ)。init の behavior closure を live-trial-verdict.py の skill_dir_tree_sha で計算し直して 6765b1769c225fc53d680feca733400a10f55cfd63b7b62f3c533b6b6c14d7c6 を得た (修正役の申告と一致。closure は44 file で、test は入らない)。写しでの実験 (cr-dg4 の scratch の下。rm も git の書込みも使っていない): exp13 は validate-harness-link.py の L126 (remediation の fallback argv) から `-B` だけを外した写しで、test_every_python_child_is_started_with_minus_b が `scripts/validate-harness-link.py:126` を名指しして落ちる (今の版では通る)。script の側 (build-project-hook-fallback.py・validate-harness-link.py・hooks.json・hooks contract) は2回目から sha が変わっていないので、2回目の exp9 (外側の -B と PYTHONDONTWRITEBYTECODE を外して全 script と hook を起こしても .pyc 0件) と exp10 (HEAD の fallback で F が再現) の結果はそのまま使える。この review の操作は、2つの verdict のほかに作業ツリーを変えていない。verify_by=live-trial の OUT1 は、受入条件と script/test の対応を静的に評価しただけで、実機の host 対話はこの verdict の対象外である。low は team-lead の決定で直さずに Beads に回す。",
+  "sha_rebinds": [
+    {
+      "from_sha": "03c93563a963879f379dd75e2d2e4dc03f983746fbba56c1a8e3b4133e834808",
+      "to_sha": "a43ebb0e4ec3c2373826e5df8e8f2606908e3c0c0394d5eccbdcbb6d7726d189",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:44Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "a43ebb0e4ec3c2373826e5df8e8f2606908e3c0c0394d5eccbdcbb6d7726d189",
+      "to_sha": "3580eb96c28513d6bffadfa58c052e85ee6c822651b72fc713ed54c5a9d43995",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:52Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

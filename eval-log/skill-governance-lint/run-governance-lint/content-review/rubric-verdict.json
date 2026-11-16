@@ -2,7 +2,8 @@
   "target": {
     "plugin": "skill-governance-lint",
     "skill": "run-governance-lint",
-    "skill_md_sha256": "a01dfa842bf1f1f81376c991ce5cc9d028abaf7658ddac859801ed4a927da36d"
+    "skill_md_sha256": "9994f635a58c21f943304f86d829b193ab24ae26b2945a880fdb316c0d4e0c9b",
+    "reviewed_skill_md_sha256": "a01dfa842bf1f1f81376c991ce5cc9d028abaf7658ddac859801ed4a927da36d"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -34,5 +35,21 @@
     "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "rubric 1.6.0 の rule と照合した。今回の差分（`git diff 03050251`）は allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけで、本文は変わっていない。rubric 1.6.0 の high 規則（FM-001・NM-001・BD-001・BD-003、KL-001 は対象外）はすべて合格。BD-002（Gotchas 見出しの欠如、medium）は既存・差分外のため notes に記すだけで件数に入れていない。plugins/<plugin>/commands/ からこのスキルを呼ぶ command は無い。迷った例: 本文のコマンドは `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` の形で先頭は python3 だが、`${...}` の展開を含むコマンドが `Bash(python3 *)` の prefix 許可でそのまま通るかはホストの実装に依存するため、FAIL にせず記録する。lint script の argparse 欠如（SKILL.md:72 の `--help`）は既存・差分外として記録のみ。incremental の focused review で、exhaustive の30思考法は実施していない。"
+  "notes": "rubric 1.6.0 の rule と照合した。今回の差分（`git diff 03050251`）は allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけで、本文は変わっていない。rubric 1.6.0 の high 規則（FM-001・NM-001・BD-001・BD-003、KL-001 は対象外）はすべて合格。BD-002（Gotchas 見出しの欠如、medium）は既存・差分外のため notes に記すだけで件数に入れていない。plugins/<plugin>/commands/ からこのスキルを呼ぶ command は無い。迷った例: 本文のコマンドは `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` の形で先頭は python3 だが、`${...}` の展開を含むコマンドが `Bash(python3 *)` の prefix 許可でそのまま通るかはホストの実装に依存するため、FAIL にせず記録する。lint script の argparse 欠如（SKILL.md:72 の `--help`）は既存・差分外として記録のみ。incremental の focused review で、exhaustive の30思考法は実施していない。",
+  "sha_rebinds": [
+    {
+      "from_sha": "a01dfa842bf1f1f81376c991ce5cc9d028abaf7658ddac859801ed4a927da36d",
+      "to_sha": "00f95b163b0c566b703f70415c6015ea52a1cfb49ca1ec0b3358e07336438ee4",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:48Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "00f95b163b0c566b703f70415c6015ea52a1cfb49ca1ec0b3358e07336438ee4",
+      "to_sha": "9994f635a58c21f943304f86d829b193ab24ae26b2945a880fdb316c0d4e0c9b",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:56Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

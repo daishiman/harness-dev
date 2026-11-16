@@ -6,7 +6,7 @@
 
 | あなたの要望 | 使う skill |
 | --- | --- |
-| 迷ったら / ヒアリング→生成→評価→governance を一括 | `/prompt-creator:run-prompt-create` |
+| 迷ったら / ヒアリング→生成→提示を一括 (評価と governance は選んだときだけ) | `/prompt-creator:run-prompt-create` |
 | brief 確定済みで 7 層プロンプトの単体生成のみ | `/prompt-creator:run-prompt-creator-7layer` |
 | どの skill にも紐付かない汎用プロンプトの要望整理 | `/prompt-creator:run-prompt-elicit` (standalone モード。出力先はユーザー指定) |
 
@@ -121,17 +121,20 @@ Claude Code 内で次を実行し、`prompt-creator` 関連のエントリが見
 /prompt-creator:run-prompt-create
 ```
 
-次の 6 フェーズを実行します。Gate 1 だけユーザー確認を行い、Gate 2-4 は `references/governance-params.json` と `workflow-manifest.json` の条件を満たす場合に自動承認します。
+P0 lint のあと、生成したプロンプトの現物をすぐに提示します。評価するかどうかは、現物を見てから現状で試す (`accept-as-is`) か診断する (`diagnose`) かで選びます。診断の深さは診断を選んだあとに決め、既定は `standard` です。`accept-as-is` を選ぶと評価は行いません。governance は release を明示したときだけ実行します。
 
 | Step | 役割 | 主な担当 |
 | ---- | ---- | -------- |
-| 1 | ヒアリングと `prompt-brief.json` 作成 | `run-prompt-elicit` |
+| 1 | 依頼から `prompt-brief.json` を作る | `run-prompt-elicit` |
 | 2 | 7 層プロンプト生成 | `run-prompt-creator-7layer` |
 | 3a | P0 lint | script |
-| 3b | 設計評価 C1-C4 | `assign-prompt-design-evaluator` |
-| 4 | elegant-review | `harness-creator:run-elegant-review` |
-| 5 | governance 承認 | `governance-decide.md` |
-| 6 | 完了レポート | `run-prompt-create` |
+| 3b | 現物の提示 | `run-prompt-create` |
+| 3c | 診断の深さを選ぶ | 利用者 |
+| 4 | 設計評価 C1-C4 (選んだときだけ) | `assign-prompt-design-evaluator` |
+| 5 | governance 承認 (release を明示したときだけ) | `harness-creator:run-skill-rubric-governance` (判定は `R3-governance-decide.md`) |
+| 3d | 完了レポート | `run-prompt-create` |
+
+成果物全体を 30 思考法で見直したいときは、`harness-creator:run-elegant-review` を明示的に呼びます (自動では起動しません)。
 
 ### 5-2. 生成 worker を直接起動
 
@@ -188,7 +191,6 @@ plugins/prompt-creator/
     │   ├── prompts/
     │   ├── references/
     │   ├── schemas/
-    │   ├── scripts/                       # evaluate-create-gates.py
     │   └── workflow-manifest.json
     ├── run-prompt-elicit/                 # Step 1 worker
     ├── run-prompt-creator-7layer/         # Step 2 worker

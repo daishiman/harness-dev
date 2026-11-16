@@ -1,0 +1,319 @@
+--- plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py
++++ plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py
+@@ -338,19 +338,21 @@
+ 
+ # byte-compile の生成物は配布物ではない。.pyc には元ファイルの絶対パスと mtime が埋まるので、
+ # 正本とコピーで別々に生成されると中身が同じでも fingerprint がずれ、PKG-003 の偽陽性になる。
+-# macOS の Finder が置く .DS_Store も同じ理由で除く。
++# pytest が起動したディレクトリに置く .pytest_cache と、macOS の Finder が置く .DS_Store も同じ理由で除く。
+ # 除外と算出は plugins/harness-creator/scripts/feedback_contract_ssot.py の directory_content_sha256 と
+ # 同じにする (配布物では SSOT を import できる位置に無いので写す。一致は test で固定している)。
+ _BYTECODE_CACHE_DIR = "__pycache__"
+ _BYTECODE_SUFFIXES = (".pyc", ".pyo")
++_PYTEST_CACHE_DIR = ".pytest_cache"
+ _FINDER_METADATA = ".DS_Store"
+ 
+ 
+ def _is_local_artifact(relative: Path) -> bool:
+-    """fingerprint に含めない、手元で生成されるファイル (bytecode cache と .DS_Store)。"""
++    """fingerprint に含めない、手元で生成されるファイル (bytecode cache・pytest cache・.DS_Store)。"""
+     return (
+         _BYTECODE_CACHE_DIR in relative.parts
+         or relative.suffix in _BYTECODE_SUFFIXES
++        or _PYTEST_CACHE_DIR in relative.parts
+         or relative.name == _FINDER_METADATA
+     )
+ 
+@@ -359,7 +361,7 @@
+     """Directory 内容を path・種類 (file/dir/symlink) 込みで hash し、物理 vendored copy の同一性を判定する。
+ 
+     symlink は辿らず link 先の文字列を hash する。空のディレクトリも数える。
+-    bytecode cache と .DS_Store は除く。読めないファイルは OSError を上げる (main で exit 2)。
++    bytecode cache・.pytest_cache・.DS_Store は除く。読めないファイルは OSError を上げる (main で exit 2)。
+     """
+     digest = hashlib.sha256()
+     for path in sorted(root.rglob("*"), key=lambda item: item.relative_to(root).as_posix()):
+--- tests/scripts-plugins/test_harness_creator__validate_plugin_package.py
++++ tests/scripts-plugins/test_harness_creator__validate_plugin_package.py
+@@ -372,6 +372,25 @@
+     assert MOD.check_pkg_003(a) == []
+ 
+ 
++def test_pkg_003_pytest_cache_does_not_break_shared_feedback_copy(tmp_path):
++    # 写しの中で pytest を回して .pytest_cache ができても、配布物の一致は崩れない (.gitignore 対象で CI には無い)
++    a = _plugin(tmp_path, "demo")
++    b = _plugin(tmp_path, "other")
++    _write_plugin_json(a, {"name": "demo"})
++    _write_plugin_json(b, {"name": "other"})
++    for plug in (a, b):
++        _write_skill(plug, "run-skill-feedback", _full_required_fm())
++    cache = a / "skills" / "run-skill-feedback" / ".pytest_cache" / "v" / "cache"
++    cache.mkdir(parents=True)
++    (cache / "lastfailed").write_text("{}", encoding="utf-8")
++
++    assert MOD.check_pkg_003(a) == []
++
++    # 名前が似ているだけのファイルは配布物として数え、違いは衝突として検出する
++    (a / "skills" / "run-skill-feedback" / ".pytest_cache.md").write_text("note\n", encoding="utf-8")
++    assert len(MOD.check_pkg_003(a)) == 1
++
++
+ def _load_ssot():
+     path = Path(__file__).resolve().parents[2] / "plugins" / "harness-creator" / "scripts" / "feedback_contract_ssot.py"
+     spec = importlib.util.spec_from_file_location("feedback_contract_ssot_for_parity", path)
+@@ -380,13 +399,14 @@
+     return mod
+ 
+ 
+-@pytest.mark.parametrize("shape", ["plain", "empty_dir", "symlink", "bytecode", "nested_pycache_md", "ds_store"])
++@pytest.mark.parametrize(
++    "shape", ["plain", "empty_dir", "symlink", "bytecode", "nested_pycache_md", "ds_store", "pytest_cache"])
+ def test_tree_fingerprint_matches_feedback_contract_ssot(tmp_path, shape):
+     # PKG-003 の一致判定と feedback_contract_ssot.is_vendored_feedback_skill を食い違わせない。
+     # 除外の定数と算出を写しているので、同じツリーで同じ digest になることを固定する
+     ssot = _load_ssot()
+-    assert (MOD._BYTECODE_CACHE_DIR, MOD._BYTECODE_SUFFIXES, MOD._FINDER_METADATA) == (
+-        ssot._BYTECODE_CACHE_DIR, ssot._BYTECODE_SUFFIXES, ssot._FINDER_METADATA)
++    assert (MOD._BYTECODE_CACHE_DIR, MOD._BYTECODE_SUFFIXES, MOD._PYTEST_CACHE_DIR, MOD._FINDER_METADATA) == (
++        ssot._BYTECODE_CACHE_DIR, ssot._BYTECODE_SUFFIXES, ssot._PYTEST_CACHE_DIR, ssot._FINDER_METADATA)
+     root = tmp_path / "skill"
+     (root / "scripts").mkdir(parents=True)
+     (root / "SKILL.md").write_text("---\nname: x\n---\n", encoding="utf-8")
+@@ -405,6 +425,10 @@
+     elif shape == "ds_store":
+         (root / ".DS_Store").write_bytes(b"\x00finder")
+         (root / "scripts" / ".DS_Store").write_bytes(b"\x00finder")
++    elif shape == "pytest_cache":
++        (root / ".pytest_cache" / "v" / "cache").mkdir(parents=True)
++        (root / ".pytest_cache" / "v" / "cache" / "lastfailed").write_text("{}", encoding="utf-8")
++        (root / ".pytest_cache.md").write_text("note\n", encoding="utf-8")
+     assert MOD._tree_fingerprint(root) == ssot.directory_content_sha256(root)
+ 
+ 
+--- plugins/harness-creator/skills/assign-plugin-package-evaluator/SKILL.md
++++ plugins/harness-creator/skills/assign-plugin-package-evaluator/SKILL.md
+@@ -94,11 +94,11 @@
+ | PKG ID | 検査関数（`validate-plugin-package.py`） | fail 条件 |
+ |---|---|---|
+ | PKG-002 | `check_pkg_002` | 公式 `plugin.json` の `name`/`version`/`description`、または `references/package-contract.json` の `package_mode`/`entry_points` のいずれか欠落。`package_mode` が `bundle`/`skill-only` 以外（このときは check を飛ばさず `bundle` として全 check を流す）。`skill_dependencies` のキーが `entry_points.skills` に無い・値が plugin slug の配列でない・重複がある・`depends_on` に無い plugin を指す |
+-| PKG-003 | `check_pkg_003` | 同じ plugins root の別 plugin と skill 名・agent 名が重なる。symlink で配った skill・agent は数えない。`run-skill-feedback` の配布コピーは中身が一致すれば衝突にしない（一致の判定では `__pycache__`・`.pyc`/`.pyo`・`.DS_Store` を除く） |
++| PKG-003 | `check_pkg_003` | 同じ plugins root の別 plugin と skill 名・agent 名が重なる。symlink で配った skill・agent は数えない。`run-skill-feedback` の配布コピーは中身が一致すれば衝突にしない（一致の判定では `__pycache__`・`.pyc`/`.pyo`・`.pytest_cache`・`.DS_Store` を除く） |
+ | PKG-004 | `check_pkg_004` | 自前 skill（symlink でない）の frontmatter が読めない、または `name`/`description`/`kind` が欠落か空値。`responsibility_refs`/`schema_refs`/`manifest` の欠落か空値は P1（`manifest` は理由付きの `completeness_exempt` で代えられる） |
+ | PKG-005 | `check_pkg_005` | `agents/*.md` の frontmatter `name` が無いか、ファイル名（拡張子を除く）と違う。自前 skill の `subagent_refs`（block 形式でも flow 形式 `[a, b]` でもよい。`agents/x.md` と書けば `x`）が指す `agents/<name>.md` が無い |
+-| PKG-006 | `check_pkg_006` | `hooks/` 直下の `*.py`/`*.sh` がどこにも登録されていない（名前は拡張子まで含めて完全一致で比べる。`guard` の登録は `guard.py` を満たさない）。逆に、`hooks/hooks.json`（`plugin.json` に `hooks` キーが無くても Claude Code が読む既定の場所）、`plugin.json` の `hooks`（object ならその中身、文字列か文字列の配列なら指す hooks file の中身）、package contract と `plugin.json` の `entry_points.hooks`、`settings/*.json` の hook command のうち `${CLAUDE_PLUGIN_ROOT}/hooks/…` か `./hooks/…` を指すものに実体が無い、または plugin の外を指す。`plugin.json` の `hooks` が指す file が plugin の中に無い。hooks file が JSON の object として読めない |
+-| PKG-007 | `check_pkg_007` | plugin root 直下の `scripts/` にある `*.py`/`*.sh` に shebang が無い、または shebang があるのに `+x` が無い |
++| PKG-006 | `check_pkg_006` | `hooks/` 直下の `*.py`/`*.sh` がどこにも登録されていない（名前は拡張子まで含めて完全一致で比べる。`guard` の登録は `guard.py` を満たさない。import されるだけの helper とみなした `.py` は数えない。helper とみなすのは、stem が識別子で、shebang が無く、行頭が `if __name__` の行が無いもの）。逆に、`hooks/hooks.json`（`plugin.json` に `hooks` キーが無くても Claude Code が読む既定の場所）、`plugin.json` の `hooks`（object ならその中身、文字列か文字列の配列なら指す hooks file の中身）、package contract と `plugin.json` の `entry_points.hooks`、`settings/*.json` の hook command のうち `${CLAUDE_PLUGIN_ROOT}/hooks/…` か `./hooks/…` を指すものに実体が無い、または plugin の外を指す。`plugin.json` の `hooks` が指す file が plugin の中に無い。hooks file が JSON の object として読めない |
++| PKG-007 | `check_pkg_007` | plugin root 直下の `scripts/` にある `*.py`/`*.sh` に shebang が無い、または shebang があるのに `+x` が無い。PKG-006 と同じ判定で helper とみなした `.py` は見ない |
+ | PKG-008 | `check_pkg_008` | `settings/*.json` が JSON として読めない、最上位が object でない、`$schema` が無い（P1） |
+ | PKG-014 | `check_pkg_014` | `kind` / combinator 宣言と goal-seek / feedback runtime 設定・本文配線が不一致 |
+ 
+@@ -109,7 +109,8 @@
+ | PKG ID | 判定すること | script で判定しない理由 |
+ |---|---|---|
+ | PKG-003 | hook 名・permission 名が同じ marketplace の別 plugin と衝突しない | 何を同じ名前とみなすか（event と matcher の組・permission の pattern の包含）を機械的に決められない |
+-| PKG-007 | SKILL.md の `script_refs` が指す script が plugin の中に実在し、shebang と `+x` がある。`skills/*/scripts/` の script も同じ | `script_refs` には repo root 起点の vendored 参照や注釈付きの値が混じり、機械判定すると正しい参照まで fail にする |
++| PKG-006 | `hooks/` 直下で helper とみなして数えなかった `.py` が、本当に import されるだけである。top-level に import・def・class・代入・docstring 以外の文があれば、登録の要る hook として扱う | script の helper の判定は行の字面だけを見て、top-level の文を読まない |
++| PKG-007 | SKILL.md の `script_refs` が指す script を skill ディレクトリ・plugin root の順に探し、plugin の中に実在して shebang と `+x` がある。参照先が `skills/*/scripts/` にあっても同じ。`script_refs` に載った `.py` は、PKG-006 の判定で helper とみなされる形でも shebang と `+x` を求める（catalog の「参照される scripts/*」に例外が無い）。plugin の中に無い参照は、repo root や別 plugin に実体があっても fail にする（install した plugin の中の path としては解決できない）。`package-contract.json` の宣言（`depends_on`・`repo_refs` など）と PKG-009 の既定の許可 prefix は、参照してよいかを PKG-009 が決めるためのもので、PKG-007 の fail を外さない。plugin root の `scripts/` で helper とみなして見なかった `.py` のうち `script_refs` に載っていないものも、PKG-006 の行と同じく top-level の文を読み、entry point なら shebang と `+x` を確かめる | `script_refs` には注釈付きの値が混じり、どの文字列がどの script を指すかを機械で決められない |
+ | PKG-008 | 34a 章 INV-1〜12 を満たし、Layer3（user・project 設定）とのマージで衝突しない | 不変条件の多くは他の設定層との組み合わせで決まり、settings 断片だけでは判定できない |
+ 
+ この表の条件で違反を見つけたら、その PKG ID の `findings` に `location`・`evidence`・`severity` を付けて足し、`status` を `fail` にする。
+--- plugins/harness-creator/skills/assign-plugin-package-evaluator/prompts/R1-run-pkg-check.md
++++ plugins/harness-creator/skills/assign-plugin-package-evaluator/prompts/R1-run-pkg-check.md
+@@ -44,7 +44,7 @@
+ 
+ - `package_mode=skill-only` の場合、PKG-003/005/006/007/008/014 を即 `not_applicable` 確定（exec しない）
+ - fail が出ても止めず、指定された全 PKG ID の status を確定する（script に途中停止の option は無い）
+-- script の判定に加え、SKILL.md「評価者が読んで判定する条件」の表（PKG-003 の hook・permission 衝突、PKG-007 の `script_refs` 実在と `+x`、PKG-008 の INV-1〜12 と Layer3 衝突）を読んで判定し、違反は当該 PKG ID の findings に足して `status: fail` にする
++- script の判定に加え、SKILL.md「評価者が読んで判定する条件」の表（PKG-003 の hook・permission 衝突、PKG-006 の helper とみなした `.py` が import されるだけか、PKG-007 の `script_refs` が指す script（参照先が `skills/*/scripts/` でも、helper の形の `.py` でも）が plugin の中に実在するかと shebang・`+x`、PKG-008 の INV-1〜12 と Layer3 衝突）を読んで判定し、違反は当該 PKG ID の findings に足して `status: fail` にする
+ - 入力 `pkg_ids` 省略時は中核 8 件を全件実行
+ 
+ ### 2.3 入力契約
+--- plugins/harness-creator/skills/assign-plugin-package-evaluator/references/evaluator-contract.md
++++ plugins/harness-creator/skills/assign-plugin-package-evaluator/references/evaluator-contract.md
+@@ -6,7 +6,7 @@
+ |---|---|---|
+ | PKG-001 公式 CLI strict validate | **B (run-plugin-package-check)** | `claude plugin validate --strict` ラッパー |
+ | PKG-002〜008 静的検査 | **本 skill** | findings JSON で返す |
+-| PKG-009 外部参照ゼロ | **B** | 既存 `scripts/lint-external-refs.py` 直呼出 |
++| PKG-009 外部参照ゼロ | **B** | `run-plugin-package-check/scripts/lint-pkg-009.py` が skill-governance-lint の `lint-external-refs.py` を呼ぶ |
+ | PKG-010 install smoke | **B** | `scripts/smoke-plugin-install.sh` |
+ | PKG-011〜013 / PKG-015 出荷前 gate | **B** | uninstall/upgrade/permission/rubric |
+ | PKG-014 runtime contract | **本 skill** | kind/combinator 宣言と実配線の静的整合を findings JSON で返す |
+--- plugins/harness-creator/skills/ref-pkg-contract/references/pkg-id-catalog.yaml
++++ plugins/harness-creator/skills/ref-pkg-contract/references/pkg-id-catalog.yaml
+@@ -1,8 +1,9 @@
+ # PKG ID 機械可読カタログ
+ # 正本: doc/ClaudeCodeスキルの設計書/36-plugin-package-harness-contract.md
+ # 改廃: 27章 §4.1 rubric governance 経由必須
+-version: "1.0"
+-last_updated: "2026-05-23"
++# script: plugins/harness-creator/skills/ からの相対 path。<plugin> は検査する plugin の名前で、--plugin は省けない。
++version: "1.1"
++last_updated: "2026-11-15"
+ source_chapter: "36"
+ 
+ pkg_ids:
+@@ -11,7 +12,7 @@
+     phase: 0
+     package_modes: [bundle]
+     severity: P0
+-    script: "scripts/run-plugin-validate-strict.sh"
++    script: "run-plugin-package-check/scripts/run-plugin-validate-strict.sh --plugin <plugin>"
+     description: "公式 CLI strict validate が exit 0"
+ 
+   PKG-002:
+@@ -19,7 +20,7 @@
+     phase: 0
+     package_modes: [bundle, skill-only]
+     severity: P0
+-    script: "scripts/validate-plugin-package.py --check pkg-002"
++    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-002"
+     description: "公式 plugin.json の name/version/description と references/package-contract.json の package_mode/entry_points 必須キー充足"
+ 
+   PKG-003:
+@@ -27,7 +28,7 @@
+     phase: 0
+     package_modes: [bundle]
+     severity: P0
+-    script: "scripts/validate-plugin-package.py --check pkg-003"
++    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-003"
+     description: "同一 marketplace 内で skill/agent/hook/permission 名の衝突なし"
+     related_chapter: "34a §4"
+ 
+@@ -36,7 +37,8 @@
+     phase: 0
+     package_modes: [bundle, skill-only]
+     severity: P0
+-    script: "scripts/validate-frontmatter.py --skills-dir plugins/<plugin>/skills"
++    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-004"
++    repo_clone_script: "scripts/validate-frontmatter.py --skills-dir plugins/<plugin>/skills"
+     description: "03章必須キー + responsibility_refs/schema_refs/manifest"
+ 
+   PKG-005:
+@@ -44,7 +46,7 @@
+     phase: 0
+     package_modes: [bundle]
+     severity: P0
+-    script: "scripts/validate-plugin-package.py --check pkg-005"
++    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-005"
+     description: "agents/*.md の name と SKILL.md subagent_refs が一致"
+ 
+   PKG-006:
+@@ -52,7 +54,7 @@
+     phase: 0
+     package_modes: [bundle]
+     severity: P0
+-    script: "scripts/validate-plugin-package.py --check pkg-006"
++    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-006"
+     description: "hooks/*.{json,sh} が settings 断片の hooks 配列で全て参照、逆方向の未登録なし"
+ 
+   PKG-007:
+@@ -60,7 +62,7 @@
+     phase: 0
+     package_modes: [bundle]
+     severity: P0
+-    script: "scripts/validate-plugin-package.py --check pkg-007"
++    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-007"
+     description: "参照される scripts/* が plugin root 配下、shebang あり、+x ビット"
+ 
+   PKG-008:
+@@ -68,7 +70,7 @@
+     phase: 0
+     package_modes: [bundle]
+     severity: P0
+-    script: "scripts/validate-plugin-package.py --check pkg-008"
++    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-008"
+     description: "34a 章 INV-1〜12 を満たし Layer3 衝突なし"
+ 
+   PKG-009:
+@@ -76,15 +78,15 @@
+     phase: 0
+     package_modes: [bundle]
+     severity: P0
+-    script: "scripts/lint-external-refs.py --skills-dir plugins/<plugin>/skills --fail-on-external"
+-    description: "plugin 内ファイルが plugin root 外を参照しない（34章公式制約e）"
++    script: "run-plugin-package-check/scripts/lint-pkg-009.py --skills-dir plugins/<plugin>/skills --fail-on-external"
++    description: "SKILL.md が plugin root 外を参照しない（34章公式制約e）。例外は package-contract.json の宣言 (depends_on・owned-vendored の写し・repo_refs) と既定の許可 prefix (.claude/・eval-log/・references/・scripts/) だけ。repo_refs は repo clone での実在を確かめるが、既定の許可 prefix は宣言なしで通り実在も確かめない"
+ 
+   PKG-010:
+     name: "install smoke"
+     phase: 1
+     package_modes: [bundle]
+     severity: P0
+-    script: "scripts/smoke-plugin-install.sh"
++    script: "run-plugin-package-check/scripts/smoke-plugin-install.sh --plugin <plugin>"
+     description: "local marketplace install smoke、Install UX Contract 検証"
+ 
+   PKG-011:
+@@ -92,7 +94,7 @@
+     phase: 2
+     package_modes: [bundle]
+     severity: P1
+-    script: "scripts/smoke-plugin-uninstall.sh"
++    script: "run-plugin-package-check/scripts/smoke-plugin-uninstall.sh --plugin <plugin>"
+     description: "uninstall 後に symlink/settings/hook 残存なし"
+ 
+   PKG-012:
+@@ -100,7 +102,7 @@
+     phase: 2
+     package_modes: [bundle]
+     severity: P1
+-    script: "scripts/smoke-plugin-upgrade.sh"
++    script: "run-plugin-package-check/scripts/smoke-plugin-upgrade.sh --plugin <plugin>"
+     description: "同一 version re-install が no-op、異 version で破壊変更なし"
+ 
+   PKG-013a:
+@@ -108,7 +110,7 @@
+     phase: 2
+     package_modes: [bundle]
+     severity: P0
+-    script: "scripts/validate-plugin-permissions.py --plugin <name> --check 013a"
++    script: "run-plugin-package-check/scripts/validate-plugin-permissions.py --plugin <plugin> --check 013a"
+     description: "Bash 等の許可コマンド範囲が plugin スコープ宣言内"
+ 
+   PKG-013b:
+@@ -116,7 +118,7 @@
+     phase: 2
+     package_modes: [bundle]
+     severity: P0
+-    script: "scripts/validate-plugin-permissions.py --plugin <name> --check 013b"
++    script: "run-plugin-package-check/scripts/validate-plugin-permissions.py --plugin <plugin> --check 013b"
+     description: "読み書き対象が plugin root 配下に閉じる"
+ 
+   PKG-013c:
+@@ -124,7 +126,7 @@
+     phase: 2
+     package_modes: [bundle]
+     severity: P0
+-    script: "scripts/validate-plugin-permissions.py --plugin <name> --check 013c"
++    script: "run-plugin-package-check/scripts/validate-plugin-permissions.py --plugin <plugin> --check 013c"
+     description: "外部通信先 allowlist が manifest 宣言と一致"
+ 
+   PKG-013d:
+@@ -132,7 +134,7 @@
+     phase: 2
+     package_modes: [bundle]
+     severity: P0
+-    script: "scripts/validate-plugin-permissions.py --plugin <name> --check 013d"
++    script: "run-plugin-package-check/scripts/validate-plugin-permissions.py --plugin <plugin> --check 013d"
+     description: "Notion/Drive/Gmail 等の MCP scope が manifest と一致"
+ 
+   PKG-014:
+@@ -140,7 +142,7 @@
+     phase: 2
+     package_modes: [bundle]
+     severity: P1
+-    script: "scripts/validate-plugin-package.py --check pkg-014"
++    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-014"
+     description: "SKILL.md kind/combinator 宣言と実 runtime 挙動の一致（28章）"
+ 
+   PKG-015:
+@@ -148,7 +150,7 @@
+     phase: 2
+     package_modes: [bundle]
+     severity: P1
+-    script: "run-plugin-package-check/scripts/run-pkg-015.py --plugin <name> --log-dir <log-dir> --out <pkg-log>"
++    script: "run-plugin-package-check/scripts/run-pkg-015.py --plugin <plugin> --log-dir <log-dir> --out <pkg-log>"
+     description: "直近 release で 27章 rubric 違反率が governance 設定値未満"
+ 
+   PKG-016:

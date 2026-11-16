@@ -14,7 +14,7 @@
     "kind": {
       "enum": [
         "preview", "confirmation", "intent",
-        "authorization", "completion", "cancellation"
+        "authorization", "completion", "cancellation", "key-rotation"
       ]
     },
     "action_class": {
@@ -92,6 +92,25 @@
           "preview_receipt_id", "authorization_receipt_id",
           "authorization_receipt_sha256", "status"
         ]
+      }
+    },
+    {
+      "if": {"properties": {"kind": {"const": "key-rotation"}}},
+      "then": {
+        "required": ["retired_previews", "reason"],
+        "properties": {
+          "retired_previews": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "sha256"],
+              "properties": {
+                "name": {"type": "string", "pattern": "^preview-[0-9a-f]{32}\\.json$"},
+                "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+              }
+            }
+          }
+        }
       }
     }
   ]

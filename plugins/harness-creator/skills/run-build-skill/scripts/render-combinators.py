@@ -287,9 +287,6 @@ GOAL_SEEK_FM_BLOCK = (
     "  engine: {{goal_seek.engine | default(\"inline\")}}      # inline(既定/自己完結) | task-graph(明示された依存グラフ用) | run-goal-seek(明示された重い周回用)\n"
     "  engine_profile: {{goal_seek.engine_profile | default(\"goal-loop\")}}  # inline・run-goal-seek=goal-loop / task-graph=checklist-graph\n"
     "  full_task_spec_graph: false                         # 現 profile の fail-closed capability claim\n"
-    "  spec: eval-log/goal-spec.json                       # 任意。あればロードして利用、無ければ AI が文脈から推定\n"
-    "  progress: eval-log/{{skill_name}}-progress.json     # schemas/goal-seek-loop.schema.json 準拠\n"
-    "  intermediate: eval-log/{{skill_name}}-intermediate.jsonl  # 各周回末に append: original_goal/current_goal_snapshot/delta/merged_directive (ドリフト圧縮アンカー)\n"
     "  max_loops: {{goal_seek.max_loops | default(5)}}\n"
     "  fork: {{goal_seek.fork | default(\"inline\")}}        # inline(既定) | subagent(needs_independent_context時) | agent-team(明示された独立並列作業時)"
 )
@@ -456,7 +453,7 @@ GOAL_SEEK_WIRING_SECTION = (
     "`artifact_created` → `minimal_guard_passed` → `artifact_presented` → "
     "`user_choice_recorded` → `semantic_evaluator_started` の順を守る。"
     "guardは成果物class別のparse/open・secret・不可逆操作・破損の最小検査だけ。"
-    "現物のpathと試し方を提示後に利用者が診断深度を選び、`accept-as-is` なら "
+    "現物のpathと試し方を提示後に利用者が現状で試すか診断するかを選び、`accept-as-is` なら "
     "`evaluator_contexts=0` / `improver_contexts=0` で完了する。semantic evaluator、30思考法、"
     "multi-agent、有界改善は選択時だけ。release/exhaustiveは明示選択なしに自動起動しない。\n"
     "- **周回状態**: 各周回で `eval-log/{{skill_name}}-progress.json`"

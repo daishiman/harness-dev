@@ -1,6 +1,10 @@
 # Step 1 棚卸し 8 区分判定ルール
 
-doc/20-migration-path.md §「Step 1 棚卸し」表の機械判定版。
+doc/ClaudeCodeスキルの設計書/20-migration-path.md §「Step 1. 棚卸し」表の機械判定版。
+
+表 9 行のうち 8 行を区分にする。9 行目の「外部プロトコル/接続面 → MCP / plugin / app connector」は
+Skill へ分解しないので区分を立てない。該当 section は下の表で最も近い区分 (多くは ref) に入れ、
+`rationale` の先頭を `connector-candidate:` にする。
 
 | 区分 | キーワード/パターン | 移行先プレフィクス |
 |------|--------------------|--------------------|

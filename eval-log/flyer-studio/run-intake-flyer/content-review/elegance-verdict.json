@@ -2,7 +2,8 @@
   "target": {
     "plugin": "flyer-studio",
     "skill": "run-intake-flyer",
-    "skill_md_sha256": "6d5d448360211a9d87a83d561f3db3bce82fb402da0d63e2ae774b2c08da6e23"
+    "skill_md_sha256": "8a9dbe30cc981ce0fc69421fa7a3a800746c990fd1440db4a7fa4389b1a63adc",
+    "reviewed_skill_md_sha256": "6d5d448360211a9d87a83d561f3db3bce82fb402da0d63e2ae774b2c08da6e23"
   },
   "verdict": "PASS",
   "findings_summary": {
@@ -39,5 +40,21 @@
     "next_action": "none"
   },
   "notes": "今回差分と必要な依存sourceを対象にした独立focusedレビュー。30思考法のフル実走ではない。既存content-reviewの結論は流用していない。初回medium不足は作者の修正後、最終SHAで再評価した。最終high0/medium0、lowは既存FM-005のみ。数値採点・根拠・49 sourceのSHAは同directoryのscorer-raw.json、scorer-reviewed.json、report.md、source-sha-manifest.jsonを参照。CLI helpはajv未導入でexit1のため実行成功は主張しない。Claude Code/Codexのhost trialと実際の利用者による事実承認は未実施で、OUT1は設計上の充足だけを評価した。人間の新しい承認を作成していない。要求に従いsource・fixture・既存証跡・eval-logは変更せず、成果物は/tmpにのみ保存した。",
-  "review_kind": "elegance"
+  "review_kind": "elegance",
+  "sha_rebinds": [
+    {
+      "from_sha": "6d5d448360211a9d87a83d561f3db3bce82fb402da0d63e2ae774b2c08da6e23",
+      "to_sha": "29249057dea4afa7c2dec6ab7f715b42021db653e9c8a375e748f32345d5c8c3",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:45Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "29249057dea4afa7c2dec6ab7f715b42021db653e9c8a375e748f32345d5c8c3",
+      "to_sha": "8a9dbe30cc981ce0fc69421fa7a3a800746c990fd1440db4a7fa4389b1a63adc",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:54Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

@@ -1,0 +1,73 @@
+{
+  "transcript": "/Users/dm/orca/workspaces/harness/harness-creatorの改善/eval-log/dev-graph/run-dev-graph-requirements/live-trial/20261115T1830-r44-req2/transcript.jsonl",
+  "transcript_sha256": "a1dff6fe9729f4ce74a38eebcd77ff18d59721218b39d969271da22eb3366c31",
+  "extracts": [
+    {
+      "evidence_file": "c24.json",
+      "mode": "json",
+      "transcript_tool_use_line": 108,
+      "transcript_tool_result_line": 115,
+      "tool_use_id": "toolu_01PU9qujKJCxsD6tF8oiFfta",
+      "is_error": false,
+      "text_after_json": "exit=0",
+      "command": "S=\"/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/dev-graph/scripts\"; FX=/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/requirements2/fx; python3 \"$S/resolve-repo-context.py\" --help | head -20; python3 \"$S/resolve-repo-context.py\" --mode read --repo-root $FX; echo \"exit=$?\"",
+      "sha256": "9be0051d64f135ec310b44814b3bc5f93977b3fa035bdb0f1c9eec1cf1388f77"
+    },
+    {
+      "evidence_file": "c11-summary.txt",
+      "mode": "text",
+      "transcript_tool_use_line": 122,
+      "transcript_tool_result_line": 123,
+      "tool_use_id": "toolu_01YToWWqr22phMHpVpJSqnyV",
+      "is_error": false,
+      "text_after_json": "",
+      "command": "S=\"/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/dev-graph/scripts\"; FX=/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/requirements2/fx; rm -f $FX/../c11-run.tmp; python3 \"$S/validate-graph-schema.py\" --graph $FX/.dev-graph/state/graph.json --repo-root $FX | python3 -c \"import json,sys;d=json.load(sys.stdin);print({k:(v if k!='artifact_readiness' else {'enforced':v.get('enforced'),'finding_count':v.get('finding_count')}) for k,v in d.items()})\"; echo exit=${PIPESTATUS[0]}; python3 -c \"\nimport json;g=json.load(open('$FX/.dev-graph/state/graph.json'))\nprint(g.keys() if isinstance(g,dict) else type(g)); nodes=g.get('nodes',g)\nfor n in (nodes if isinstance(nodes,list) else nodes.values()):\n  print(n.get('id'),n.get('kind') or n.get('artifact_kind'),n.get('status'),n.get('confirmation_status'),n.get('evaluation_status'),n.get('implementation_readiness',{}).get('status') if isinstance(n.get('implementation_readiness'),dict) else n.get('implementation_readiness'),n.get('artifact_path'))\n\"",
+      "sha256": "e8b14572d099b8938a838d932a3b4b79411ae2a0bb40d1e88b9157d47b2fbd53"
+    },
+    {
+      "evidence_file": "binding.json",
+      "mode": "json",
+      "transcript_tool_use_line": 133,
+      "transcript_tool_result_line": 134,
+      "tool_use_id": "toolu_014hBf2rJShErYfxTQnEKuMR",
+      "is_error": false,
+      "text_after_json": "exit=0",
+      "command": "S=\"/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/dev-graph/scripts\"; FX=/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/requirements2/fx; python3 \"$S/validate-readiness-binding.py\" --repo-root $FX --package-dir .dev-graph/plans/generations/feature-package-feat/851f6700701209795092ce6bb141be5100af2099bd3f22a59ed26a00f03a71a4 --receipt .dev-graph/state/registration-receipts/feat.json; echo \"exit=$?\"",
+      "sha256": "52e4e78c148bdbd3267fe9e265094be2ac4fd7f60a1a422c64e0e39ef80821d4"
+    },
+    {
+      "evidence_file": "guard.json",
+      "mode": "json",
+      "transcript_tool_use_line": 151,
+      "transcript_tool_result_line": 152,
+      "tool_use_id": "toolu_01D5s1qHaPW8GN2e8kWKbshc",
+      "is_error": false,
+      "text_after_json": "exit=0",
+      "command": "S=\"/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/dev-graph/scripts\"; FX=/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/requirements2/fx; python3 \"$S/guard-requirements-handoff.py\" --repo-root $FX --node FEATURE-1 $(for i in 01 02 03 04 05 06 07 08 09 10 11 12 13; do echo --node SYS-P$i; done) --expect-graph-digest sha256:63e2c21bb55aada5e6dab7813febe50839db6ca63f128a9443f09ed0ebf23ba5; echo \"exit=$?\"",
+      "sha256": "dbaaff035d78da768d84d548f40083ae332ca6a6daa05c86af97aba2512f3d08"
+    },
+    {
+      "evidence_file": "artifact-guard.txt",
+      "mode": "text",
+      "transcript_tool_use_line": 220,
+      "transcript_tool_result_line": 227,
+      "tool_use_id": "toolu_01PwLKQnLXExrsJTdiFui7yj",
+      "is_error": false,
+      "text_after_json": "",
+      "command": "FX=/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/requirements2/fx; H=$FX/eval-log/run-dev-graph-requirements/handoff; for f in $H/*.json; do python3 -m json.tool \"$f\" >/dev/null && echo \"json ok: $(basename $f)\"; done; shasum -a 256 $H/* | sed \"s|$FX/||\"; shasum -a 256 $FX/.dev-graph/state/graph.json | sed \"s|$FX/||\"; grep -n -i -E \"token|secret|password|api[_-]?key\" $H/* || echo \"no secrets\"; git -C $FX status --porcelain --untracked-files=all | grep -v -E '^\\?\\? (eval-log/run-dev-graph-requirements/)' | grep -E 'src/|\\.py$|\\.ts$|\\.js$' || echo \"no implementation source files\"",
+      "sha256": "d028c29186a1b8f37002d871f2b9fb1fc3086af3983b117dcbe29a00fd7e4e29"
+    },
+    {
+      "evidence_file": "goal-seek-check.txt",
+      "mode": "text",
+      "transcript_tool_use_line": 299,
+      "transcript_tool_result_line": 306,
+      "tool_use_id": "toolu_01JzCXtrJ4Yds8cMR49bkwTn",
+      "is_error": false,
+      "text_after_json": "",
+      "command": "DEV_GRAPH_ROOT=/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/requirements2/fx\npython3 - \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-requirements-goal-spec.json\" \"$DEV_GRAPH_ROOT/eval-log/run-dev-graph-requirements-intermediate.jsonl\" <<'PY'\nimport hashlib, json, sys\ngoal = json.load(open(sys.argv[1], encoding='utf-8'))\nrows = [json.loads(line) for line in open(sys.argv[2], encoding='utf-8') if line.strip()]\nrequired_keys = {'original_goal','original_goal_hash','current_goal_snapshot','delta_from_original','merged_directive_for_next','drift_signal'}\nexpected = hashlib.sha256(goal['original_goal'].encode('utf-8')).hexdigest()\nassert rows, 'intermediate.jsonl is empty'\nfor row in rows:\n    assert required_keys <= row.keys(), required_keys - row.keys()\n    assert row['original_goal'] == goal['original_goal']\n    assert row['original_goal_hash'] == expected\nPY\necho \"exit=$?\"; shasum -a 256 $DEV_GRAPH_ROOT/.dev-graph/state/graph.json | cut -c1-16",
+      "sha256": "704e296c8795ac7ddbe2320eae05a0d00e3a5545c560fdb586a2f2555bc9fa52"
+    }
+  ],
+  "missing_lines": []
+}

@@ -1,0 +1,12 @@
+{
+  "policy_id": "artifact-delivery-v1",
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "events": [
+    {"state": "artifact_created", "artifact": "eval-log/run-dev-graph-system-spec/preflight-report.json"},
+    {"state": "minimum_guard_pass", "guards": ["parse_open", "secret", "irreversible", "corrupt"]},
+    {"state": "artifact_presented", "path": "eval-log/run-dev-graph-system-spec/preflight-report.json", "sha256": "37df76552290a2ddf0e87e78da656304d51fb8d1e5b8a62823784562fb4ad8b7", "open_with": "python3 -m json.tool <path>"},
+    {"state": "user_choice_recorded", "choice": "diagnose", "source": "fixture pre-answered contract (CLAUDE.local.md / task.md); not a repo or external-account approval"},
+    {"state": "semantic_evaluator_started"}
+  ],
+  "improvement_depth": null
+}

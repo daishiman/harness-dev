@@ -1,0 +1,27 @@
+{
+  "responsibility": "R3-import",
+  "verdict": "PASS",
+  "checklist": [
+    {
+      "item": "全node正規kind、lineage全field/evidence/readiness欠落0になる",
+      "status": "achieved",
+      "evidence": "graph.json revision 1 has 2 nodes: spec-billing-audit-system (artifact_kind=specification) and arch-billing-audit-system (artifact_kind=architecture, subtypes frontend/backend/infrastructure/data/security). Each has the 6 source_lineage fields origin_kind/source_plugin/source_path/source_version/source_digest/imported_at, all non-empty. source_digest matches the sha256 of system-spec/index.md (f7f64767...) and system-spec/00-requirements-definition.md (22d45547...), and matches the evaluator artifact_snapshot. confirmation_status=confirmed, evaluation_status=pass, confirmation_evidence={evaluator,evidence_ref=eval-log/system-spec-completeness-report.json,evaluated_digest=source_digest}, implementation_readiness.status=complete with missing_sections=[]. I re-ran validate-graph-schema.py --require-canonical-envelope --strict-artifact-readiness: exit 0, valid=true, 0 violations, 2 complete and 0 incomplete. No feature nodes, so no content was copied into a feature. No absolute paths in the graph, receipt, import report, payloads or content files."
+    },
+    {
+      "item": "import した node id を渡した validate-source-lineage.py が exit 0 になる",
+      "status": "achieved",
+      "evidence": "I re-ran validate-source-lineage.py --repo-root FX --node-id spec-billing-audit-system --node-id arch-billing-audit-system: exit 0, status=pass, checked=2, violations=[]. The output is identical to eval-log/run-dev-graph-system-spec/r3-lineage.json."
+    },
+    {
+      "item": "C02 の dry-run と確定の add に、confirmation_evidence を含む同じ payload を渡している",
+      "status": "achieved",
+      "evidence": "system-spec-import.json (dry-run, sha256 3a0397cb...) and system-spec-import-apply.json (apply, sha256 65fff2f1...) are equal as JSON once the top-level expected_graph_revision=0 key is removed. Both contain confirmation_evidence for both artifacts. input_sha256 in run-dev-graph-node-dryrun.json is 3a0397cb... and in the receipt node-r000001-add.json is 65fff2f1..., so each run consumed its own file. Transcript lines 478 and 483 invoke build-graph-node.py add --dry-run and add with these files. Observation: line 432 ran an earlier exploratory dry-run on a different probe.json (readiness probe, imported_at 20:40). It came after the evaluator PASS, and probe.json is no longer present. It is not the import's rehearsal dry-run."
+    },
+    {
+      "item": "取込の入力を書いたのも C02 の Skill を起動したのも、evaluator の PASS の report ができた後である",
+      "status": "achieved",
+      "evidence": "Report mtime is 11:21:47Z (20:21:47 local) with verdict=PASS, and its spec_dir equals FX/system-spec, the real chapter directory. Transcript timeline: evaluator Skill at line 232 (11:15:23Z). Verdict read back at line 266 (11:22:10Z), then aggregate check at line 275. The report mtime did not change, so it was not rewritten. Skill dev-graph:run-dev-graph-node at line 280 (11:22:26Z). Payload Write at line 467 (11:26:29Z, mtime 20:26:29). Apply payload written by the line-483 Bash (mtime 20:26:44). The whole session has only one Write/Edit to a payload, graph, specs, architecture or receipts path: the line-467 payload. graph.json, specs/billing-audit-system.md, architecture/billing-audit-system.md and receipts/node-r000001-add.json all have mtime 20:26:45, matching the build-graph-node.py add run at line 483 and the receipt recorded_at 11:26:44.85Z."
+    }
+  ],
+  "blockers": []
+}

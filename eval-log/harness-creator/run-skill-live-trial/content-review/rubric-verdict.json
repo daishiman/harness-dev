@@ -2,7 +2,8 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-live-trial",
-    "skill_md_sha256": "df467642bde2a07abc9103c266b3938571bf8fa61232b89aa0b01cc127dbed93"
+    "skill_md_sha256": "da1835d63887f19166b0d3c55d07817c1ac5bfeafbfffb08f90c74cf879f2321",
+    "reviewed_skill_md_sha256": "df467642bde2a07abc9103c266b3938571bf8fa61232b89aa0b01cc127dbed93"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -45,5 +46,21 @@
     "hook_trigger": "manual-incremental-content-review",
     "next_action": "none"
   },
-  "notes": "incremental profile の focused combined review を 1 context で 1 回行った (iteration 1)。builder とは別の reviewer として、(a) 矛盾なし (b) 漏れなし (c) 規約整合 (d) 依存関係整合 (e) rubric high severity 0 を同時に判定した。skill_md_sha256 は現在の SKILL.md 全バイトを shasum -a 256 で計算した値 (df467642bde2a07abc9103c266b3938571bf8fa61232b89aa0b01cc127dbed93)。前回 verdict (sha 3b784f4e…、HEAD 版の SKILL.md と一致) からの差分は SKILL.md:265 の Codex 行だけである。前回の negative_feedback 1 件のうち、Codex yield 上限の断定は解消した。INTERVAL 依存は未解消なので low として残した。今回の主変更である鮮度の警告化について、SKILL.md には lint の WARN/FAIL 挙動に関する記述が無く、矛盾は出ていない。ただし案内が無いことを low の omission とした。frontmatter で宣言した script_refs / reference_refs / schema_refs と、本文が名指す関数 (derive_acceptance_tier, _merge_dependency_slugs, behavior_closure_files, extract_skill_invocations, scenario_contract_blockers, derive_overall, blocked_cause_for, DENY_TARGET_SKILLS, GATE_TOOLS) の実在を確認した。high 0 / medium 0 / low 4。feedback_contract の IN1/IN2/OUT1/OUT2/OUT3 は今回の差分で変わっていない。この静的照合は live 実走での goal 達成を証明しない。 rubric 機械採点 (render-findings-score.py, L0=ref-skill-design-rubric, L1=assign-skill-design-evaluator, rubric 1.6.0) は --kind skill で score 100 / findings 0 / pending_human は BD-004 のみだった。BD-004 は本 review で PASS と判定した。--kind run では skill 用の rule が not_applicable になり、採点の根拠にならないため使っていない。意味上の所見は rubric の減点に混ぜていない。"
+  "notes": "incremental profile の focused combined review を 1 context で 1 回行った (iteration 1)。builder とは別の reviewer として、(a) 矛盾なし (b) 漏れなし (c) 規約整合 (d) 依存関係整合 (e) rubric high severity 0 を同時に判定した。skill_md_sha256 は現在の SKILL.md 全バイトを shasum -a 256 で計算した値 (df467642bde2a07abc9103c266b3938571bf8fa61232b89aa0b01cc127dbed93)。前回 verdict (sha 3b784f4e…、HEAD 版の SKILL.md と一致) からの差分は SKILL.md:265 の Codex 行だけである。前回の negative_feedback 1 件のうち、Codex yield 上限の断定は解消した。INTERVAL 依存は未解消なので low として残した。今回の主変更である鮮度の警告化について、SKILL.md には lint の WARN/FAIL 挙動に関する記述が無く、矛盾は出ていない。ただし案内が無いことを low の omission とした。frontmatter で宣言した script_refs / reference_refs / schema_refs と、本文が名指す関数 (derive_acceptance_tier, _merge_dependency_slugs, behavior_closure_files, extract_skill_invocations, scenario_contract_blockers, derive_overall, blocked_cause_for, DENY_TARGET_SKILLS, GATE_TOOLS) の実在を確認した。high 0 / medium 0 / low 4。feedback_contract の IN1/IN2/OUT1/OUT2/OUT3 は今回の差分で変わっていない。この静的照合は live 実走での goal 達成を証明しない。 rubric 機械採点 (render-findings-score.py, L0=ref-skill-design-rubric, L1=assign-skill-design-evaluator, rubric 1.6.0) は --kind skill で score 100 / findings 0 / pending_human は BD-004 のみだった。BD-004 は本 review で PASS と判定した。--kind run では skill 用の rule が not_applicable になり、採点の根拠にならないため使っていない。意味上の所見は rubric の減点に混ぜていない。",
+  "sha_rebinds": [
+    {
+      "from_sha": "df467642bde2a07abc9103c266b3938571bf8fa61232b89aa0b01cc127dbed93",
+      "to_sha": "60c24620e85974ffa0c42fb41bfa4103f6e0f08d686a42c4c5b89dc760b26ab4",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:47Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "60c24620e85974ffa0c42fb41bfa4103f6e0f08d686a42c4c5b89dc760b26ab4",
+      "to_sha": "da1835d63887f19166b0d3c55d07817c1ac5bfeafbfffb08f90c74cf879f2321",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:55Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

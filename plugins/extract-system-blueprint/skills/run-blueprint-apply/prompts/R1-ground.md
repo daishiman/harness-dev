@@ -17,7 +17,7 @@
 ## Layer 1: 基本定義層 (不変原則)
 
 ### 1.1 不変ルール
-- C02 verdict receipt が `verdict=PASS` かつ blueprint の draft_hash と一致することを確認できない限り、blueprint を入力として受理しない (不在/FAIL/hash 不一致は fail-closed に拒否して停止)。
+- C02 verdict receipt が `verdict=PASS` かつ `sink-status.json` の draft_hash と一致することを確認できない限り、blueprint を入力として受理しない (不在/FAIL/hash 不一致は fail-closed に拒否して停止)。
 - 対象 origin へ一切アクセスしない (network 0)。blueprint 本体 (`blueprint.json`) を書き換えない。
 - 自社コンテキストは推奨の接地先であり、blueprint の fact/inference と混同しない (blueprint 由来の記述へ自社事実を注入しない)。
 
@@ -27,41 +27,43 @@
 ## Layer 2: ドメイン層 (本質ロジック)
 
 ### 2.1 責務 (Single Responsibility)
-- 担当: `blueprint.json` の読込、C02 verdict receipt の解決と PASS/draft_hash 一致検証、自社コンテキストの 4 面構造化。
+- 担当: `blueprint.json` と `sink-status.json` の読込、C02 verdict receipt の解決と PASS/draft_hash 一致検証、自社コンテキストの 4 面構造化。
 - 非担当: 推奨導出 (R2)、emit と自己検証 (R3)。
 
 ### 2.2 ドメインルール
-- verdict receipt は `--verdict-dir` (既定 `.esb-verdict`) 配下の `<draft_hash>.verdict.json` を解決する。receipt の `draft_hash` と blueprint の `draft_hash` が一致し、`verdict=PASS` のときだけ受理する。
+- draft_hash の出所は、C01 (`doc-emit.py`) が emit 時に `blueprint_dir` へ書く `sink-status.json` の `draft_hash` である。draft_hash は blueprint を含む draft 全体から計算されるので、`blueprint.json` の中には無い (C02 も同じ値に verdict を束縛する)。
+- verdict receipt は `--verdict-dir` (既定 `.esb-verdict`) 配下の `<draft_hash>.verdict.json` を解決する。receipt の `draft_hash` と `sink-status.json` の `draft_hash` が一致し、`verdict=PASS` のときだけ受理する。`sink-status.json` が無い・JSON として読めない・`draft_hash` を持たないときも受理しない。
 - 自社コンテキストは **技術スタック / リソース制約 / 既存資産 / 対象ユーザー** の 4 面へ構造化し、各面へ後段推奨が参照する own_context_ref キーを付与する。文書パスは Read、自然文はそのまま構造化する。
 
 ### 2.3 入力契約
 | field | type | required | 説明 |
 |---|---|---|---|
-| blueprint_dir | path | yes | C02 PASS 済 blueprint 一式のディレクトリ (`blueprint.json` を正本) |
+| blueprint_dir | path | yes | C02 PASS 済 blueprint 一式のディレクトリ (`blueprint.json` を正本、draft_hash は `sink-status.json`) |
 | own_context | path\|text | yes | 自社コンテキストの文書パスまたは自然文 |
 | verdict_dir | path | no | verdict receipt 探索先。既定 `.esb-verdict` |
 
 ### 2.4 出力契約
-- 受理判定 (accepted/rejected + reason) + blueprint の draft_hash + 4 面へ構造化した自社コンテキスト (own_context_ref キー付き)。
-- rejected の場合は理由 (verdict 不在/FAIL/hash 不一致) を提示して停止する (以降の R2/R3 を起動しない)。
+- 受理判定 (accepted/rejected + reason) + `sink-status.json` の draft_hash + 4 面へ構造化した自社コンテキスト (own_context_ref キー付き)。
+- rejected の場合は理由 (sink-status.json や verdict の不在/FAIL/hash 不一致) を提示して停止する (以降の R2/R3 を起動しない)。
 
 ## Layer 3: インフラ層 (外部依存)
 
 ### 3.1 参照リソース
 | id | path | when_to_read |
 |---|---|---|
-| blueprint 正本 | `<blueprint_dir>/blueprint.json` | fact/inference/anchor/draft_hash の読取 |
+| blueprint 正本 | `<blueprint_dir>/blueprint.json` | fact/inference/anchor の読取 |
+| draft の hash | `<blueprint_dir>/sink-status.json` | draft_hash の読取 (C01 が emit 時に書く) |
 | verdict receipt | `<verdict_dir>/<draft_hash>.verdict.json` | C02 PASS + draft_hash 一致検証 |
 | blueprint schema | `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/schemas/system-blueprint.schema.json` | top-level shape 正本 |
 
 ### 3.2 外部ツール / API
-- ファイル Read のみ (blueprint.json / verdict receipt / own_context 文書)。network なし・書込なし。
+- ファイル Read のみ (blueprint.json / sink-status.json / verdict receipt / own_context 文書)。network なし・書込なし。
 - 対象システムの公開 URL へは一切アクセスしない。
 
 ## Layer 4: 共通ポリシー層
 
 ### 4.1 失敗時挙動
-- verdict receipt 不在 / `verdict=FAIL` / draft_hash 不一致は受理拒否し理由を提示して停止する (R2/R3 を起動しない)。own_context が空/解決不能なら不足を提示して停止する。
+- `sink-status.json` や verdict receipt の不在 / `verdict=FAIL` / draft_hash 不一致は受理拒否し理由を提示して停止する (R2/R3 を起動しない)。own_context が空/解決不能なら不足を提示して停止する。
 - 最大反復回数: 3。
 
 ### 4.2 観測 / ロギング
@@ -81,7 +83,7 @@
 - 達成ゴール: verdict=PASS かつ draft_hash 一致が確認され、自社コンテキストが 4 面 (技術スタック/制約/既存資産/対象ユーザー) へ own_context_ref 付きで構造化された状態。
 
 ### 5.3 完了チェックリスト (ゴール到達の停止条件)
-- [ ] `blueprint_dir/blueprint.json` を読み draft_hash と anchor 集合を把握した
+- [ ] `blueprint_dir/blueprint.json` を読んで anchor 集合を、`sink-status.json` を読んで draft_hash を把握した
 - [ ] C02 verdict receipt を解決し `verdict=PASS` かつ draft_hash 一致を確認した (不在/FAIL/不一致は受理拒否)
 - [ ] 自社コンテキストを技術スタック/リソース制約/既存資産/対象ユーザーの 4 面へ構造化した
 - [ ] 各面へ後段推奨が参照する own_context_ref キーを付与した
@@ -115,4 +117,4 @@
 
 LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
 
-`blueprint_dir/blueprint.json` を Read して draft_hash と anchor 集合を把握し、`--verdict-dir` (既定 `.esb-verdict`) の `<draft_hash>.verdict.json` を解決して `verdict=PASS` かつ draft_hash 一致を確認する。不在/FAIL/hash 不一致は受理拒否し理由を提示して停止する (R2/R3 を起動しない)。受理できたら own_context (文書パスは Read、自然文はそのまま) を技術スタック/リソース制約/既存資産/対象ユーザーの 4 面へ構造化し、各面へ own_context_ref キーを付与する。対象 origin へアクセスせず blueprint 本体を書き換えない。Layer 5 の完了チェックリストを唯一の停止条件とし、未充足項目を特定→解消手順を都度立案→実行→自己評価→全項目充足まで反復する (固定手順なし、上限: Layer 4 最大反復回数)。出力は受理判定・draft_hash・4 面サマリのみ、前置き禁止。
+`blueprint_dir/blueprint.json` を Read して anchor 集合を、`blueprint_dir/sink-status.json` を Read して draft_hash を把握し、`--verdict-dir` (既定 `.esb-verdict`) の `<draft_hash>.verdict.json` を解決して `verdict=PASS` かつ receipt の draft_hash 一致を確認する。sink-status.json や receipt の不在/FAIL/hash 不一致は受理拒否し理由を提示して停止する (R2/R3 を起動しない)。受理できたら own_context (文書パスは Read、自然文はそのまま) を技術スタック/リソース制約/既存資産/対象ユーザーの 4 面へ構造化し、各面へ own_context_ref キーを付与する。対象 origin へアクセスせず blueprint 本体を書き換えない。Layer 5 の完了チェックリストを唯一の停止条件とし、未充足項目を特定→解消手順を都度立案→実行→自己評価→全項目充足まで反復する (固定手順なし、上限: Layer 4 最大反復回数)。出力は受理判定・draft_hash・4 面サマリのみ、前置き禁止。

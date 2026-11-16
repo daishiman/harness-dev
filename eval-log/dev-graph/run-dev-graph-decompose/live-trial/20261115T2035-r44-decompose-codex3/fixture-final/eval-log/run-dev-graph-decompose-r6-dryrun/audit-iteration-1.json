@@ -1,0 +1,72 @@
+{
+  "verdict": "FAIL",
+  "checks": [
+    {
+      "id": "macro_contract",
+      "status": "PASS",
+      "evidence": "新規候補は前回比較と差分要約の2 featureのみ。purpose/goal/scope_in/scope_out/acceptance/architecture_refsを保持し、ARCH-LT-001を共有している。"
+    },
+    {
+      "id": "independent_value_and_acceptance",
+      "status": "PASS",
+      "evidence": "比較は変化の特定、要約は要点の把握という別の利用価値を持つ。同一入力、追加・削除・変更、比較不能、根拠対応、変更なしの受入条件は二値判定可能。"
+    },
+    {
+      "id": "dependency_semantics",
+      "status": "PASS",
+      "evidence": "前回比較→LT-FEATURE-001、要約→前回比較の依存は成果物の利用関係として妥当で循環なし。noneの既存renderを起点とするcross_binding_dependencyが要約まで伝播している。"
+    },
+    {
+      "id": "no_new_phase_tasks",
+      "status": "PASS",
+      "evidence": "macro-inputとC02 planned_nodesはいずれも新規feature 2件のみ。既存P01..P13 task文書、graph、登録receiptのSHA-256はoriginal-digestsと一致。"
+    },
+    {
+      "id": "draft_projection",
+      "status": "PASS",
+      "evidence": "新規2件はdraft/pending。C28はplanned:trueでpromotion_gate blocked、write_count:0を返しており、not in graphを判定根拠にしていない。"
+    },
+    {
+      "id": "registered_package_handling",
+      "status": "FAIL",
+      "evidence": "登録済みとの表示は正しいが、既存13 taskは全件binding=beadsかつbeads_linkage=null。各taskのC28 create dry-run結果と個別operation・判定が報告されていない。"
+    },
+    {
+      "id": "all_targets_operations_digests",
+      "status": "FAIL",
+      "evidence": "publication_report.targetsは新規2 featureのみ。既存13 taskとpackage内12依存edgeのpreviewが欠落している。C02 revision 3→4、planned digestとC28参照digestは整合している。"
+    },
+    {
+      "id": "write_zero",
+      "status": "PASS_WITH_LIMITATION",
+      "evidence": "C02と新規2件のC28 receiptはwrite_count:0。reportのlocal_graph/content/receipt/beads/github/projectsも全て0。保護対象の実測hashは一致する。ただし全操作の呼出履歴や外部状態差分は提示されていないため、外部writeの完全な独立実証には限界がある。"
+    },
+    {
+      "id": "single_authority",
+      "status": "PASS",
+      "evidence": "configはbeads、github.enabled=false、github_mirror=none。新規2件はbeads、既存renderとarchitectureはnoneとして扱われている。"
+    }
+  ],
+  "findings": [
+    {
+      "id": "F1",
+      "severity": "high",
+      "summary": "登録済みpackageの全target previewが欠落",
+      "contract": "SKILL.md「dry-run の preview」4、6、およびR6の全target/operation/digest表示",
+      "details": "LT-FEATURE-001-P01..P13は現在graphに存在し、全件beads_linkageがない。登録receiptだけでは現在の投影判定を代替できない。package内のP02→P01からP13→P12までの12 edgeについても判定が必要。"
+    },
+    {
+      "id": "F2",
+      "severity": "medium",
+      "summary": "保存成果物に環境固有の絶対pathが含まれる",
+      "contract": "各責務Layer 3とconfig.path_policy.stored_paths=repository-relative",
+      "details": "両C28 previewのgate.planned_preview、およびmacro-reportへ埋め込まれた同値が環境固有の絶対path。参照先は正しいが成果物の可搬性契約に反する。"
+    }
+  ],
+  "改善案": [
+    "register-packageの再実行やtask生成は行わず、既存13 taskそれぞれについて正規C28 create --dry-runを実行し、現在graph上の判定を記録する。",
+    "既存13 taskのbinding・operation・判定・根拠digestをpublication_reportに追加する。package内12 edgeは両端未起票としてcreate後のedge候補を明示し、dep-addは呼ばない。",
+    "既存renderとarchitectureについてもbinding=none、外部operationなしを明示し、報告対象の取りこぼしをなくす。",
+    "CLI由来の絶対pathは証拠の出所を保ちながら公開reportではrepo相対参照として提示し、保存path契約との整合を確認する。"
+  ]
+}

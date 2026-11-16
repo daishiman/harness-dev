@@ -105,6 +105,22 @@
       "pattern": "^[0-9a-f]{64}$",
       "description": "Step 4 の lint が全て exit 0 になったときの生成 skill ディレクトリ全体の digest (feedback_contract_ssot.directory_content_sha256。__pycache__ と .DS_Store は除く)。run-skill-create の p0-lint は、今のディレクトリの digest と一致するときだけ build の lint 結果を使い回す。build 後にディレクトリ内のどれかが変わっていれば covered_scripts をその場で再実行する。"
     },
+    "lint_brief_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "Step 4 の lint が全て exit 0 になったときに validate-build-plan --check が読んだ brief ファイルの bytes の sha256 (shasum -a 256 の値)。derive-verification-contract.py --evidence-dir は、これと lint_target_sha256・build_mode が今と一致する unit だけ、contract の validate-build-plan をその場で 1 回走らせ、exit 0 なら Step 12 の build-conformance の receipt にする (agent が走らせて記録する往復を省く)。値の無い古い trace や brief 無しの build は使い回さない。"
+    },
+    "skill_path": {"type": "string", "minLength": 1, "description": "生成した skill のディレクトリ (repo root からの相対パス)。"},
+    "target_skill_path": {"type": "string", "minLength": 1, "description": "skill_path の旧名。読むのは validate-build-trace.py だけで、新しい trace は skill_path を書く。"},
+    "context_map_decision": {"type": "object", "description": "resource-map が選んだ task category・selected_docs・理由。中身の検査の正本は validate-build-trace.py (reproducibility-trace-schema.md)。"},
+    "design_model": {"type": "object", "description": "01章の 5 要素 (Intent / Contract / Boundary / Execution / Feedback)。中身の検査の正本は validate-build-trace.py。"},
+    "variant_support": {"type": "object", "description": "prefix・role_suffix・subagent・hook。中身の検査の正本は validate-build-trace.py。"},
+    "script_execution_model": {"type": "object", "description": "28章の script 種別・実行コンテキスト A-E・権限境界。中身の検査の正本は validate-build-trace.py。"},
+    "governance_model": {"type": "object", "description": "Change Governance の判断。中身の検査の正本は validate-build-trace.py。"},
+    "dogfooding_model": {"type": "object", "description": "dogfooding の再帰検査。中身の検査の正本は validate-build-trace.py。"},
+    "rubric_composition_model": {"type": "object", "description": "status=PASS|N/A (N/A なら reason)。中身の検査の正本は validate-build-trace.py の optional_models。"},
+    "paradigm_analogy_model": {"type": "object", "description": "status=PASS|N/A (N/A なら reason)。中身の検査の正本は validate-build-trace.py の optional_models。"},
+    "output_routing_model": {"type": "object", "description": "status=PASS|N/A (N/A なら reason)。中身の検査の正本は validate-build-trace.py の optional_models。"},
     "four_conditions": {
       "type": "object",
       "description": "run-elegant-review の最終4条件。C1=矛盾なし、C2=漏れなし、C3=整合性あり、C4=依存関係整合。content-review / evaluator / trace の意味的最終判定をここへ集約する。",
@@ -142,7 +158,7 @@
               "id": {"type": "string", "pattern": "^(IN|OUT|C)[0-9]+$"},
               "loop_scope": {"type": "string", "enum": ["inner", "outer"]},
               "text": {"type": "string", "minLength": 1},
-              "verify_by": {"type": "string", "enum": ["lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human"]},
+              "verify_by": {"type": "string", "enum": ["lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human", "verification-obligation"]},
               "threshold": {"type": "string"},
               "weight": {"type": "number", "minimum": 0}
             }

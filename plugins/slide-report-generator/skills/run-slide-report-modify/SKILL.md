@@ -50,32 +50,17 @@ feedback_contract: # per-skill 受入基準(purpose-acceptance)。修正後の�
       loop_scope: outer
       text: 指定箇所のみが修正され意匠/技術コアと非対象箇所が不変で、修正後の生成後評価が視覚崩れ0で PASS することを受入テストが確認する
       verify_by: test
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/diagnoseを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 
 # run-slide-report-modify
@@ -97,7 +82,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 - **入力**: 既存成果物 (slide deck ディレクトリ ／ report HTML) と修正指示。任意 `--mode slide|report` (省略時は成果物から自動判定)。
 - **出力**: **修正レポート** (修正箇所一覧 ＋ 変更差分 ＋ 再評価スコア)。
 - **usable handoff条件**: main contextが (1) 修正対象と `output_mode` を特定して `validate-output-mode.py` を通し、(2) 指定箇所だけの最小修正版を実ファイルとして作成し、(3) path/digest/開き方を提示する。accept-as-isならここで完了し、Task/evaluatorは0回。
-- **選択後の改善完了条件**: light/standard/detailed選択時だけ、修正後評価が視覚崩れ0でPASSするまで下記R1→R3を有界実行する。
+- **選択後の改善完了条件**: diagnose選択時だけ、修正後評価が視覚崩れ0でPASSするまで下記R1→R3を有界実行する。
 
 ## mode 判定 (slide / report)
 
@@ -109,7 +94,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 
 ## 選択後ワークフロー (R1 → R2 → R3・worker は Task で name 起動)
 
-> pre-choiceでmain contextが最小修正版を作成・提示済みであることが前提。以下はlight/standard/detailed選択後だけ起動する。各ラウンドの7層実行契約は `prompts/R1-orchestrate.md`、phase activationは `workflow-manifest.json.artifact_delivery_contract` を正本とする。
+> pre-choiceでmain contextが最小修正版を作成・提示済みであることが前提。以下はdiagnose選択後だけ起動する。各ラウンドの7層実行契約は `prompts/R1-orchestrate.md`、phase activationは `workflow-manifest.json.artifact_delivery_contract` を正本とする。
 
 ### R1: 修正対象と指示の確定
 
@@ -152,7 +137,7 @@ mode を先に確定し (`validate-output-mode.py`)、R3 は mode 分岐で実�
 
 ## ゴールシークと受入基準 (combinators)
 
-light/standard/detailed選択後だけ `with-goal-seek`(max_loops 5) + `with-feedback-contract` を有効化する。ループ本体は `Task` でSubAgentへforkし、親へは修正レポートのみ返す。accept-as-isでは両loopを0回のまま完了する。受入基準は当該skillのgoal/checklist由来:
+diagnose選択後だけ `with-goal-seek`(max_loops 5) + `with-feedback-contract` を有効化する。ループ本体は `Task` でSubAgentへforkし、親へは修正レポートのみ返す。accept-as-isでは両loopを0回のまま完了する。受入基準は当該skillのgoal/checklist由来:
 
 - **IN1 (inner・script)**: `validate-output-mode` で既存成果物の `output_mode` を判定し修正対象の mode と `reportType` の値域整合を送信前検証し欠落が 0 件。
 - **OUT1 (outer・test)**: 指定箇所のみが修正され意匠／技術コアと非対象箇所が不変で、修正後の生成後評価が視覚崩れ 0 で PASS することを受入テストが確認する。

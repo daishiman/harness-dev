@@ -1,0 +1,25 @@
+{
+  "responsibility": "R2-delegate",
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "verdict": "PASS",
+  "checklist": [
+    {"item": "正規Skill呼出しだけでcoverage/source/evaluator gate全PASSになる", "status": "achieved",
+     "evidence": "Transcript main-thread Skill calls: run-system-spec-elicit (line 147, --resume), run-system-spec-compile (183), assign-system-spec-completeness-evaluator (232, fork). Re-run now: validate-coverage-matrix --require-complete --require-basis --require-foundation exit 0; validate-source-citation (--targets/--references/--state/--repo-root FX) exit 0. Report verdict PASS, gaps 0, gate_results G-matrix/G-source-citation/G-knowledge-graph all exit 0, 6 aspects PASS, 3 audit delegations PASS. Chapters written by canonical compile-spec-doc.py compile (line 205, exit 0, after 3 gates OK); current chapter sha256 match compile receipt and report artifact_snapshot; report sha256 b3da45a5... unchanged since evaluator run. doc-fetch skip justified: validate-source-citation passes over all spec-state targets (re-verified), so no target lacked an official reference."},
+    {"item": "取込元を生成する本処理のBashごとに固定rootへの移動・照合をし、独立testの書込みは検証済みscratchだけである", "status": "achieved",
+     "evidence": "Elicit/compile main-process Bash (lines 159,163,172,205,209) and helper (229) all start with export CLAUDE_PROJECT_DIR=<receipt repo_root> && cd -- && [ pwd -P = ] check. Only non-prefixed R2-phase Bash: line 195 (cat of plugin prompt files, read-only) and line 216 (pytest of compile tests run with cwd = parent session scratchpad, -p no:cacheprovider, no FX paths; output not used as C05/C02 evidence; FX chapter hashes unchanged). No Write/Edit to system-spec/ by parent; only receipts under eval-log/."},
+    {"item": "elicit・doc-fetch・compile の手順にある Bash の呼出しで、毎回 CLAUDE_PROJECT_DIR に開始時の receipt の repo_root を export している", "status": "achieved",
+     "evidence": "Exported value in each call equals c24-receipt.json repo_root (/private/tmp/.../system-spec2/fx); receipt sha256 dbb97771... equals helper context_sha256. doc-fetch not invoked so no doc-fetch Bash."},
+    {"item": "evaluator の args は helper の成功出力の skill_args で、失敗時には起動していない", "status": "achieved",
+     "evidence": "build-evaluation-context.py --context-receipt <abs receipt> --output eval-log/system-spec-completeness-report.json ran at line 229 with EXIT 0 immediately before the evaluator Skill (232). Programmatic comparison: Skill args == helper skill_args (True). Re-run of helper now: exit 0, identical skill_args."},
+    {"item": "evaluator の report の spec_dir が、--spec-dir に渡したディレクトリ (取込元の章があるディレクトリ) に解決する", "status": "achieved",
+     "evidence": "report.spec_dir == helper spec_dir == FX/system-spec (exact string, realpath-stable, contains index.md and the 10 compiled chapters); no label text mixed in; helper evidence_ref is repo-relative eval-log/system-spec-completeness-report.json."},
+    {"item": "出力を作った委譲先ごとに、その SKILL.md と責務 prompt を全文読んでいる", "status": "achieved",
+     "evidence": "compile: SKILL.md injected in full by Skill tool (line 185, 11980 chars >= 11611-char body) and prompts R1-assemble/R2-render/R3-crosslink cat'd whole (line 195) before compile (205). evaluator (fork agent-a01a89329a3e4427c): SKILL.md injected at fork start, R1-score.md and R2-delegate.md cat'd whole (fork line 24) before scoring. elicit: SKILL.md injected in full (line 149); resume run applied 0 writer ops, spec-state sha256 09380939... unchanged, no R0-R5 responsibility executed, so it is a gate-only --resume call exempt from prompt reading. doc-fetch: not invoked (only sed 1-80 of its SKILL.md for the skip decision, no output produced)."}
+  ],
+  "observations": [
+    "eval-log/run-system-spec-elicit/artifact-delivery.json was authored by the parent as a receipt of the gate-only resume; it records no state change and is consistent with the unchanged spec-state hash.",
+    "Line 640 sed -i on import-report.json is R3 scope, not evaluated here."
+  ],
+  "blockers": []
+}

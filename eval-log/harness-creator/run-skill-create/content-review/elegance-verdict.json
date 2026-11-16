@@ -2,20 +2,22 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-skill-create",
-    "skill_md_sha256": "a70116c49996d261dee106e79423b81f610eb19cbd1ac26ac3cfa200e325dc73"
+    "skill_md_sha256": "53356c55fdb3bed6f3b5e5cd167679451c5569f8ca2e2003798c919bb30bfcde",
+    "reviewed_skill_md_sha256": "53356c55fdb3bed6f3b5e5cd167679451c5569f8ca2e2003798c919bb30bfcde",
+    "skill_dir_digest": "d2803efc7453b0573398dc24adae87f8109d0b06a67b257348dadd9f3ad63b78"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 1,
-    "omission": 4,
-    "inconsistency": 3,
+    "omission": 1,
+    "inconsistency": 0,
     "dependency_break": 1,
-    "smell": 2
+    "smell": 0
   },
-  "reviewer": "independent-content-reviewer-20261114 (Claude subagent, incremental profile, focused combined review of SKILL.md 879ee8a6)",
-  "reviewed_at": "2026-11-14T09:26:15+09:00",
-  "iterations": 1,
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-14T20:29:00+09:00",
+  "iterations": 3,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -27,60 +29,36 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "前回の medium だった NEG0 (artifact-delivery の accept-as-is) は根本から解消した。phase_activation に gated orchestrator 用の \"gate-ordered-phases-with-delegated-choice\" を足し (workflow-manifest.json:18、scripts/lint-entrypoint-artifact-first.py:91 で gate_order が空でないことを要求)、gate_order [\"G1\",\"G2.5\",\"G2\"] (manifest:28) を明示した。SKILL.md:91-98 も書き直し、最小成果物を Gate 1 の skill-brief.json にした。4 択は build Step 12.5 の diagnostic-choice.json を転記するだけにし、accept-as-is でも gate_order・P0 lint・完了レポートを通すと明記した。同じ 4 択を二度聞く問題も消えた。lint-artifact-delivery.py と lint-entrypoint-artifact-first.py はどちらも exit 0。",
-      "前回の medium だった NEG1 (Gate の自動承認) も解消した。schemas/handoff.schema.json:9-14 の allOf if/then で gate_id が数値なら approver を const \"user\" に固定し、prompts/R2-gate-review.md:33・95・114 も「Gate の approver は user だけ」に揃えた。文章と schema の両方で同じ規則を強制しており、横展開できる型になっている。",
-      "build lint の再利用 (workflow-manifest.json:179-187 build_lint_reuse) は、receipt の JSON pointer (eval-log/skill-build-trace.json#/reproducibility_gates/lint)、top-level の lint_target_sha256、skill_name のどれもが run-build-skill/schemas/skill-build-trace.schema.json:91-107 の実際の定義と一致した。stage_receipts (manifest:227-236) の flags.build_stage と stage_gate.deferred_to_release も、validate-build-plan.py:166・183 と plan-verification-obligations.py:655-667 の実装と一致している。重複 lint を消しつつ、別 skill の trace の取り違えを skill_name 一致で防いでいる。",
-      "未使用資産の削除 (pair、resolve-brief-to-category.py、create 独自 schema) のあと、SKILL.md・workflow-manifest.json・schemas/skill-brief.schema.json に、削除済みの物への参照は残っていなかった。p0-lint.commands (lint-dependency-direction・lint-skill-dep-step7・lint-forbidden-deps・lint-manifest-contents・audit-capability-parity) はすべて exit 0 で、依存方向も壊れていない。"
+      "Gate 2.5 の登録 plan が生成先の plugin を読むようになった。Step 3 の command (workflow-manifest.json:64) は build-manifest-registration-plan.py に --plugin \"plugins/<plugin>\" を渡し、script は対象の .claude-plugin/plugin.json を読んで plugin_manifest・name・version と空の proposals を返す (--apply なしで --plugin plugins/harness-creator を実行して status ok・version 1.4.65・exit 0 を確かめた)。<plugin> が未展開のまま、空文字、存在しない plugin なら plugin_not_found で exit 2 になり、manifest-register の fatal_exit_codes [1, 2] で止まる。tests/scripts-plugins/test_skill_governance_automation__build_manifest_registration_plan.py は自身を読む・対象を読む・不正な対象は exit 1・欠けた対象は exit 2・legacy の対象への propose と apply が対象だけに書く、の 5 種類を持つ。R2 の 3.1 も「stdout の JSON。ファイルには書かない」に直り、誰も書かない path を読む指示は消えた。",
+      "Gate 2.5 で承認前に見せる書き込みの一覧 (references/gate-templates.md:27-32) が、manifest の phases 順に legacy の --apply・Step 3.5 --fix・3.55 sync-plugin-platforms.py --apply・3.6 build-local-marketplace.py・3.7 build-plugin-release.py --only <plugin> の 5 件そろった。3.7 には plugin.json の version 行と公開 marketplace.json・.codex-plugin/plugin.json の既存行の書き換え、config-version-lock.json の作り直しが書かれ、SKILL.md の Key Rule 6 が承認後に置く理由と同じ範囲になった。R2 2.2 の名称も「登録確認」でそろった。",
+      "差戻しの戻り先が 4 か所で同じになった。workflow-manifest.json の Gate を持つ 3 phase (elicit:33、manifest-register:68、p0-lint:181) の on_fail_comment が、abort は「この Gate の先へ進めない」という意味であること、戻り先の phase id (Gate 1 は elicit、Gate 2.5 は manifest-register か build、Gate 2 は build)、通算 3 周、詳細は gate-templates.md と書き、gate-templates.md:69 のまとめ、R2 の CONST_004・5.3、SKILL.md の「差し戻し」と一致する。R2 の「同じ Gate で通算最大 3 周まで」は validate-run-model-budget.py の regex が読む形のまま残り、validator は total=80 が 21 個の上限宣言と一致すると返した (exit 0)。",
+      "Gate 1 節 (gate-templates.md:7-19) に前提 (brief の schema PASS、Notion 指定なら validate-intake-publish-ready.py が exit 0) と見せるもの (brief の path・digest・要点、open_questions の escalate、--brief-path で user_request_verbatim が無いこと) が入り、SKILL.md の Pre-choice・起動モード・CL-2 と R1 の 4.1 が Gate 1 に送ったものを全部受けている。R1 の 2.4 は必須フィールドを並べ直さず schema の required と allOf を正本とし、5.3 の先頭を schema 検証 PASS にしたので、schema と停止条件の食い違いが起きない。",
+      "SKILL.md の出力は plugins/<plugin>/skills/<skill_name>/ (run-build-skill の $OUT_BASE) になり、CL-4・CL-4b の「新規 plugin の場合」、CL-14 の --plugin plugins/<plugin>、CL-9 と Step 7 の render の --plugin <plugin>、Step 3.7 の --only <plugin> と表記がそろった。render は plugin 名、audit と登録 plan は plugin dir を受け取る使い分けも、それぞれの script の引数どおりである。",
+      "状態遷移 (diagnosis_delegated → gate_review_started → handoff_complete) は Post-choice 節と scripts/lint-entrypoint-artifact-first.py:75-83 の GATED_CONTRACT で一致したままで、承認語彙 (選択肢「承認」の明示選択だけ) も R2 の CONST_002・7.1、gate-templates.md:3、SKILL.md の Gotchas でそろっている。"
     ],
     "negative_feedback": [
-      "[medium/contradiction・今回の変更で生じた] SKILL.md:159 の Step 4a は今回書き換えたのに「fail→Step 2、最大3周」が残っている。これは自動で最大 3 回やり直す、という読み方になる。一方、SKILL.md:138 (Key Rule 3「停止し findings 提示」)・SKILL.md:204 (差し戻し「自動で再実行しない…利用者が選んだときだけ run-build-skill から 1 回やり直す」)・workflow-manifest.json:195 (max_retry 0)・workflow-manifest.json:198 (on_fail \"abort\"、「自動で build へ戻さない」)・設計書 25-meta-skill-runbook.md:102-106 (「自動の作り直し (retry) はしない」) は、自動では戻らない方針で揃っている。同じ manifest の中でも、workflow-manifest.json:184 の on_missing_or_fail \"build\" と 186 の comment「commands を走らせずに build へ戻す」が、198 の「自動で build へ戻さない」と食い違う。high にしない理由: 機械が読む transition (198) と本文の差し戻し規則 (204) は安全側 (止まる) で一致しており、実行が暴走する経路ではない。直し方の提案: SKILL.md:159 を「fail→停止して findings 提示 (再実行は利用者が選んだときだけ 1 回)」に、manifest:184 を \"abort\" などの停止値に、186 の comment を「build へ戻さず止める」に揃える。",
-      "[low/inconsistency・前回指摘 NEG2 の残り] workflow-manifest.json:182 の required_match.lint_target_sha256 と run-build-skill/SKILL.md:343 は、SKILL.md 1 ファイルの sha256 だけを結び付けている。ところが再利用される covered_scripts (run-build-skill/SKILL.md:329-340 の lint-skill-tree・validate-build-plan --skill-dir など) は skill ディレクトリ全体を検査する。build Step 12.7 の改善が references/ や scripts/ だけを変えた場合、digest は一致したまま古い lint 結果が使い回され得る。直し方の提案: digest の対象を skill ディレクトリの tree hash に広げるか、SKILL.md:189 に「SKILL.md 以外を変えたら再実行」と書く。",
-      "[low/omission・新しい指摘] workflow-manifest.json:185-186 と SKILL.md:189 は、digest が一致しないときに covered_scripts を再実行することだけを決めている。その再実行が fail したときの扱い (198 の abort に入るのか、build へ戻すのか) は書かれていない。1 件目の食い違いを直すときに、合わせて「再実行 fail も停止」と明記するとよい。",
-      "[low/omission・前回指摘 NEG5 の残り] 完了レポートに build_stage と deferred_to_release を載せる仕組み (SKILL.md:195 CL-13、workflow-manifest.json:227-236 stage_receipts) は入った。しかし SKILL.md:182 CL-3 は `--mode` しか渡さず、run-build-skill/SKILL.md:17・299 にある `--stage release` を create から指定する方法がない。draft の後回し分を見た利用者が release 検証を求めたときの続け方も書かれていない。直し方の提案: Step 2 の引数に --stage を通すか、完了レポートに「release が必要なら run-build-skill を --stage release で呼ぶ」と案内を 1 行足す。",
-      "[low/omission・以前から] Gate 2.5 の manifest-register phase (workflow-manifest.json:71-86) だけ handoff の宣言が無い。ほかのゲート付き phase は 51・68・197・212・238 行で handoff を宣言している。SKILL.md:140 (Key Rule 5「各ゲート通過時に handoff 保存」) と SKILL.md:194 (CL-12) を満たす経路が、Gate 2.5 だけ manifest から追えない。",
-      "[low/inconsistency・前回指摘 NEG8 の残り] references/gate-templates.md の確認項目数 (20・22 行の検証1-5 + Layering 4 項目) は直った。ただし 35 行の拒否条件「検証1-5 のうち 3 項目以上が NG」と 38 行の質問「上記5検証 (検証1-5) は全てOKですか?」が食い違う。2 項目 NG なら通るのか分からず、閾値の理由も書かれていない。さらに references/resource-map.yaml:24 の topic は「(Step8 検証 1-3)」のままで、gate-templates.md:20 の「検証1-5」と合わない。",
-      "[low/inconsistency・以前から] schemas/handoff.schema.json:46 の next_phase の説明は「完了時は null」だが、workflow-manifest.json:239 の report phase は on_pass \"complete\" で終わる。最後の handoff-done.json (238 行) の next_phase に null と \"complete\" のどちらを書くかが一意に決まらない。",
-      "[low/dependency_break・今回の変更で生じた] 設計書 25-meta-skill-runbook.md:107 に今回足された行は `elegant-bounded-improvement-executor` を参照している。この agent は commit 740f63f0 で削除され、plugins/harness-creator/agents/ には elegant-improvement-executor.md しか無い。run-build-skill/workflow-manifest.json の Step 12.7 (bounded-improvement) も executor を \"elegant-improvement-executor\" にしている。107 行の agent 名を elegant-improvement-executor に直す。",
-      "[low/smell・前回指摘 NEG7 の残り] 参照する設計書の章のリストが揃っていない。SKILL.md:37 と SKILL.md:214 は 05/06/07/13/23/25 章、SKILL.md:233 (Additional Resources) は 05/06/07/11/13/23/25 章で、11 章が入っている。どちらかに揃える。",
-      "[low/smell・前回指摘 NEG4 の残り] run-build-skill/scripts/lint-goal-seek.py を SKILL.md に当てると exit 0 だが WARN が 3 件出る。内容は「### ゴールシーク配線」節が無いことと、その節で必要な token (intermediate.jsonl / original_goal / merged_directive_for_next、required_keys / original_goal_hash / hashlib.sha256) が無いこと。orchestrator に goal-seek 配線が要らないのであれば、対象外である理由を SKILL.md に 1 行書くと WARN の意味がはっきりする。",
-      "[low/omission・前回指摘 NEG3 の残り (ごく軽微)] 初回依頼の原文 user_request_verbatim は、schemas/skill-brief.schema.json:35 に任意項目として追加された。plugin-dev-planner の render-skill-brief.py:79-92・238 が goal-spec から brief へ写すので、E2 経路でも実質的に届く。ただし SKILL.md:131 の --brief-path 節にはこの項目への言及が無く、既存 brief を持ち込んだときに原文が欠けても気づけない。"
+      "[medium/omission・dependency_break・前回の出力 path の修正で表に出た] `<plugin>` の値をどこで決めるかが書かれていない。今回 SKILL.md の出力 (102 行) を plugins/<plugin>/skills/<skill_name>/ にし、「<plugin> が harness-creator になるのは共通基盤の場合だけ」としたが、<plugin> を受け取る場所が無い。入力 (100 行) と argument-hint は topic / mode / brief_path / handoff だけで、schemas/skill-brief.schema.json にも schemas/handoff.schema.json にも plugin の field は無い。CL-3 は Skill(run-build-skill, args=[skill_name, kind, --mode={mode}]) で plugin も CLAUDE_SKILL_OUT_BASE も渡さず、委譲先の run-build-skill/scripts/resolve-skill-dirs.py:126-129 は CLAUDE_SKILL_OUT_BASE が無ければこの repo では plugins/harness-creator/skills を既定にする。つまり既定の動作では生成先は harness-creator になり、102 行の「共通基盤の場合だけ」と逆になる。一方で Step 3 の --plugin \"plugins/<plugin>\"、Step 3.55・3.56 の plugins/<plugin>/.codex-plugin/plugin.json、Step 3.7 の --only <plugin>、p0-lint の audit-capability-parity.py --plugin plugins/<plugin>、Step 7 の render の --plugin <plugin> は、どれも <plugin> が決まっていることを前提にしている。high にしない理由: Gate 2.5 で登録 plan の name、Gate 2 で git diff を見せるので、利用者は承認前に生成先を見られる。<plugin> が未展開なら Step 3 は exit 2 で止まり、render は skill dir が無ければ error で止まる。ただし Step 3.5〜3.7 の書き込みは Gate 2 より前に走るので、生成先を取り違えたまま Gate 2.5 を承認すると、違う plugin の version を上げることがある。直し方の提案: <plugin> の決め方を 1 か所に書く。brief に plugin field を足す (schema 変更)、build が出した build-trace の skill_path から引く、build を呼ぶ前に CLAUDE_SKILL_OUT_BASE=plugins/<plugin>/skills を設定して Gate 1 で生成先を見せる、のいずれか。どれを選んでも、Gate 1 の確認する成果物に生成先 plugin を加える。",
+      "[low/contradiction・以前から、--plugin を足したことで届く経路になった] legacy manifest.json を持つ plugin の流れが、manifest の fatal_exit_codes に止められて Gate 2.5 に届かない。build-manifest-registration-plan.py は legacy で proposals があると needs_confirmation を出して exit 1 を返す (199-200 行)。ところが manifest-register の fatal_exit_codes は [1, 2] (workflow-manifest.json:66) で、transition.gate (68 行) と gate-templates.md:23 の前提は「登録 plan 検証が PASS」を求める。そのため gate-templates.md:26・28・37、SKILL.md の Key Rule 6 と CL-6 が書く「legacy の提案を Gate 2.5 で見せ、承認後に --apply」は実行されない。承認後の --apply を実行する phase も command も manifest に無い。low にする理由: 今の repo に legacy manifest.json は 1 つも無い (ls plugins/*/manifest.json は空)。前回までは script が自身しか見なかったので届かない経路だったが、--plugin を足したことで、対象を変えれば届く経路になった。直し方の提案: exit 1 の needs_confirmation を「Gate 2.5 へ進む状態」と manifest に書いて fatal から外し (invalid_plugin_manifest と分けたいなら exit code を分けるのは skill-governance-automation 側の変更)、承認後の --apply を phase か bundle-register の前の command に置く。legacy を扱わないと決めるなら、Key Rule 6・CL-6・gate-templates.md の legacy の記述を「legacy は対象外。見つけたら止める」に揃える。"
     ],
-    "iteration": 1,
-    "iteration_limit": 1,
+    "iteration": 3,
+    "iteration_limit": 3,
     "hook_trigger": "manual-incremental-content-review",
     "next_action": "improve"
   },
-  "notes": "独立 content-review (incremental profile。focused combined review を 1 context で 1 回)。判定は PASS。high 0 件・medium 1 件・low 10 件。4 条件の判定: 矛盾 = medium 1 件 (SKILL.md:159 の「最大3周」と、止まる方針の 138・204・manifest:184/186/195/198・設計書 25:102-106) / 漏れ = low 4 件 / 整合 = low 3 件 / 依存 = low 1 件 (設計書 25:107 が削除済み agent を参照)。 前回 verdict (SKILL.md b1aebfba) の指摘ごとの判定: NEG0 medium (accept-as-is) = 解消 / NEG1 medium (Gate 自動承認) = 解消 / NEG2 low (lint digest) = 一部解消 (SKILL.md だけを束縛しているので low で残す) / NEG3 low (user_request_verbatim) = 上流で実質解消、SKILL.md:131 の記載だけ残る / NEG4 low (lint-goal-seek WARN) = 残っている / NEG5 low (build_stage) = 報告は解消、release の続け方は残る / NEG6 low (pair) = 解消 / NEG7 low (章リスト) = 残っている / NEG8 low (gate-templates) = 項目数は解消、閾値と resource-map が残る / NEG9 low (設計書 25 章) = 全体図は解消、ただし 107 行に削除済み agent への参照が新たに入った / NEG10 low (spec-drift-guardian のテスト path) = create の外なので今回は確かめていない。 参考 (指摘には数えない): scripts/validate-intake-publish-ready.py に PEP723 block が無く、lint-script-frontmatter は run-skill-create で exit 1 になる。origin でも同じ結果で、今回の変更とは関係なく、CI の対象 dir の外。",
-  "sha_rebinds": [
-    {
-      "from_sha": "879ee8a627d275afb9d63d42f7457163057233dc32a091f6317afa375658162e",
-      "to_sha": "a70116c49996d261dee106e79423b81f610eb19cbd1ac26ac3cfa200e325dc73",
-      "finding_ids": [
-        "elegance:1",
-        "rubric:1",
-        "elegance:2",
-        "rubric:2",
-        "elegance:3",
-        "rubric:3",
-        "elegance:4",
-        "rubric:4",
-        "elegance:5",
-        "rubric:5",
-        "elegance:6",
-        "rubric:6",
-        "elegance:7",
-        "rubric:7",
-        "elegance:8",
-        "rubric:8",
-        "elegance:9",
-        "rubric:9",
-        "elegance:10",
-        "rubric:10",
-        "elegance:11",
-        "rubric:11"
-      ],
-      "rebound_at": "2026-11-14T00:44:52Z",
-      "tool": "sync-content-review-sha"
+  "notes": "独立 content-review の 3 回目 (incremental profile。content-review-protocol.md の「incremental: unresolved semantic batch」に従い、focused combined review を 1 context で 1 回)。git diff と現在の SKILL.md 全体、workflow-manifest.json、prompts/R1-elicit.md・R2-gate-review.md、references/gate-templates.md・resource-map.yaml、schemas/skill-brief.schema.json・handoff.schema.json、run-build-skill の resolve-skill-dirs.py・skill-build-trace.schema.json、scripts/lint-entrypoint-artifact-first.py の GATED_CONTRACT、plugins/skill-governance-automation/scripts/build-manifest-registration-plan.py とその test を読んだ。script は --apply を付けずに --plugin plugins/harness-creator (exit 0)、存在しない plugin・未展開の <plugin>・空文字 (どれも plugin_not_found で exit 2)、引数なし (exit 0) で実行し、validate-run-model-budget.py も実行した (exit 0)。前回の 6 件はすべて直っていた (positive_feedback)。判定は PASS (high 0 件)。medium 1 件と low 1 件を negative_feedback に残し、next_action は improve。C1 (矛盾なし): 承認語彙、差戻しの戻り先と 3 周、生成先の表記は一致した。legacy の needs_confirmation (exit 1) が fatal で止まり、Gate 2.5 で legacy の提案を見せるという記述に届かない (low)。C2 (漏れなし): Gate 1 と Gate 2.5 の見せるものはそろったが、<plugin> を決める場所が無い (medium)。C3 (整合性): 戻り先は manifest の on_fail_comment・gate-templates.md:69・R2 CONST_004・SKILL.md の差し戻しで一致し、render は plugin 名、audit と登録 plan は plugin dir という使い分けも script の引数どおり。R1 2.4 と schema の関係も正本参照で揃った。C4 (依存関係整合): script と test は合っており、--plugin の fail-closed は manifest の fatal_exit_codes と噛み合う。ただし <plugin> は CL-3 の委譲で run-build-skill へ渡らず、resolve-skill-dirs.py の既定 (harness-creator) と SKILL.md の出力の記述が逆になる (medium、C2 と同じ指摘)。legacy の exit 1 と fatal_exit_codes の噛み合わせ (low、C1 と同じ指摘)。rubric で採点できる規約の違反はここに重ねていない。",
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "Purpose & Output Contract",
+        "起動モード",
+        "完了チェックリスト (Checklist)"
+      ]
+    },
+    "elegance:2": {
+      "sections": [
+        "Key Rules",
+        "完了チェックリスト (Checklist)"
+      ]
     }
-  ]
+  }
 }

@@ -85,12 +85,14 @@
                   "id": { "type": "string", "pattern": "^(IN|OUT|C)[0-9]+$", "$comment": "正本: repo-root scripts/feedback_contract_ssot.py の CRITERIA_ID_RE。値変更時は同モジュールと同期すること(この pattern は再掲)。" },
                   "loop_scope": { "type": "string", "enum": ["inner", "outer"] },
                   "text": { "type": "string", "minLength": 1 },
-                  "verify_by": { "type": "string", "enum": ["lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human"], "$comment": "正本: repo-root scripts/feedback_contract_ssot.py の CRITERIA_VERIFY_BY。値変更時は同モジュールと同期すること(この enum は再掲)。" },
+                  "verify_by": { "type": "string", "enum": ["lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human", "verification-obligation"], "$comment": "正本: repo-root scripts/feedback_contract_ssot.py の CRITERIA_VERIFY_BY。値変更時は同モジュールと同期すること(この enum は再掲)。" },
                   "threshold": { "type": "string" },
-                  "weight": { "type": "number", "minimum": 0 }
+                  "weight": { "type": "number", "minimum": 0 },
+                  "derived_from": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^CL-[0-9]+$" }, "description": "この基準の元になった完了チェックリストの CL-n アンカー。", "$comment": "正本: plugins/skill-governance-lint/scripts/lint-criteria-provenance.py の CL_ID_RE (R2-R4 の被覆検査もそちら)。" }
                 }
               }
             },
+            "activation_state": { "enum": ["semantic_evaluator_started", "gate_review_started"], "description": "改善ループ (max_iterations>0) を有効にする時点。evaluator契約は利用者が診断を選び意味評価が始まった semantic_evaluator_started、gate順序契約 (run-skill-create) は gate_review_started の後だけループする。", "$comment": "正本: repo-root scripts/lint-entrypoint-artifact-first.py の _lint_frontmatter_control_flow (max_iterations>0 なら必須)。" },
             "max_iterations": { "type": "integer", "minimum": 1, "description": "評価→改善→再評価の上限。数値正本は run-elegant-review/references/convergence-policy.json#loop_bounds。" },
             "skip_reason": { "type": "string", "description": "criteria を生成しない場合の N/A 根拠(ref/assign 等の非ループ系)。" },
             "hook_triggers": { "type": "array", "items": { "type": "string" }, "description": "未評価・stale verdict を止める強制点(既定は pre-push / CI の lint-content-review.py)。" }

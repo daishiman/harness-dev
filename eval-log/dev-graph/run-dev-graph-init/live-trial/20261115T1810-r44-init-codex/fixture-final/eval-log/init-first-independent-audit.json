@@ -1,0 +1,80 @@
+{
+  "kind": "independent-semantic-evaluation",
+  "target_skill": "dev-graph:run-dev-graph-init",
+  "phase": "init-first-post-choice",
+  "state": "pending-native-init-second",
+  "recorded_at": "2026-11-15T09:29:07.595538+00:00",
+  "choice_evidence": "eval-log/artifact-delivery-choice.json",
+  "checks": {
+    "C11": {
+      "status": "pass",
+      "exit_code": 0,
+      "violation_count": 0,
+      "canonical_envelope_required": true,
+      "validator": "validate-graph-schema.py",
+      "evidence": ".dev-graph/state/graph.json"
+    },
+    "roots": {
+      "status": "pass",
+      "missing": [],
+      "count": 6,
+      "contained": true
+    },
+    "routing_policy": {
+      "status": "pass",
+      "value": {
+        "layout": "hybrid",
+        "leaf_threshold": 200,
+        "partition_order": [
+          "domain",
+          "project_id",
+          "YYYY/MM"
+        ],
+        "placement": "artifact_kind"
+      }
+    },
+    "templates": {
+      "status": "pass",
+      "plugin_asset_count": 21,
+      "missing": [],
+      "user_modified": [
+        "README.md"
+      ],
+      "note": "README.md の差分は利用者編集として親から通知済み。破損とは判定しない。"
+    },
+    "config_storage": {
+      "status": "pass",
+      "absolute_path_token_node_id_findings": [],
+      "github_enabled": false,
+      "evidence": ".dev-graph/config.json"
+    },
+    "hook_source": {
+      "status": "pass",
+      "source": "plugin",
+      "receipt_hook_source": "plugin",
+      "native_hook_delivery": "未証明",
+      "fallback_applied": false
+    },
+    "preflight": {
+      "status": "pass",
+      "link_state": "absent",
+      "in_use": false,
+      "evidence": ".dev-graph/state/receipts/init-20261115T092657117855Z.json"
+    },
+    "second_init": {
+      "status": "pending",
+      "reason": "controller による native init-second を待つ。再initは実行していない。"
+    },
+    "user_edit_preservation": {
+      "status": "pending",
+      "evidence": "eval-log/init-second-baseline.json"
+    }
+  },
+  "scope_limits": [
+    "repo A/B 分離・故障注入・fallback rollback はこの初回成果物監査では未実走",
+    "Claude Stop / plugin hook の実配達を証明しない"
+  ],
+  "external_connections": 0,
+  "init_reexecutions": 0,
+  "semantic_conclusion": "初回の必要成果物とC11は合格。OUT1全体は二回目native適用とbytes保全比較まで未完了。"
+}

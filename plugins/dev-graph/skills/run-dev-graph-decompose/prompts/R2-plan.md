@@ -29,7 +29,7 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: ReadとAgent macro verifier。
+- 使用資産: Read。Macro flow 2 の独立 auditor は R2 では起動しない。呼び出し元の skill が R2 の返却を受けてから起動する (`../../agents/dev-graph-integrity-auditor.md` の Layer 6)。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層

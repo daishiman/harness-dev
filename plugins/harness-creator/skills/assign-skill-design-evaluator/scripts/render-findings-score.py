@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 # /// script
 # name: render-findings-score
-# purpose: L0〜Ln の rubric を compose-rubrics で合成し、1 つの skill を rule ごとに機械採点して findings・coverage・pending_human を JSON で出す（読むだけで書かない）
+# purpose: L0〜Ln の rubric を compose-rubrics で合成し、1 つの skill を rule ごとに機械採点して findings・coverage・pending_human を JSON で出す。--write-rubric-verdict のときは、機械で判定できない rule の LLM 判定 (--judgments) と合わせて content-review の rubric-verdict.json を書く
 # inputs:
-#   - argv: --rubric-refs L0 [L1 ...] Ln | --rubric PATH（legacy）, --target <skill-dir|SKILL.md>, [--kind K] [--merge-strategy S] [--conflict-policy P] [--emit-hash]
-#   - files: rubric.json 群、<skill>/SKILL.md と周辺（knowledge/・prompts/・agents/・scripts/）
+#   - argv: --rubric-refs L0 [L1 ...] Ln | --rubric PATH（legacy）, --target <skill-dir|SKILL.md>, [--kind K] [--merge-strategy S] [--conflict-policy P] [--emit-hash] [--write-rubric-verdict <.../rubric-verdict.json> --judgments <judgments.json>]
+#   - files: rubric.json 群、<skill>/SKILL.md と周辺（knowledge/・prompts/・agents/・scripts/）、--judgments の判定 JSON、<repo>/scripts/lint-content-review.py (--print-target で target を得る)
 # outputs:
-#   - stdout: 採点結果 JSON（rubric_hash は常に含む。passed が合否）
+#   - stdout: 採点結果 JSON（rubric_hash は常に含む。passed が合否。verdict を書いたら rubric_verdict {path, verdict} も含む）
 #   - stderr: 入力エラーの説明
-#   - exit: 0=採点できた（合否は JSON の passed）/ 1=--rubric-refs の先頭が L0 でない / 2=入力エラー（rubric や SKILL.md が無い・読めない・JSON でない、rubric の必須キーが無い・型が違う、compose-rubrics の失敗）
+#   - exit: 0=採点できた（合否は JSON の passed。--write-rubric-verdict なら verdict も書いた）/ 1=--rubric-refs の先頭が L0 でない / 2=入力エラー（rubric や SKILL.md や --judgments が無い・読めない・JSON でない、rubric の必須キーが無い・型が違う、compose-rubrics の失敗、repo root か lint-content-review.py が見つからない）/ 3=--judgments が採点の穴を埋めきれていない（判定の欠け・余分・形の誤り。何も書かない）
 # contexts: [C, E]
 # network: false
-# write-scope: none
-# dependencies: [../../../scripts/compose-rubrics.py]
+# write-scope: --write-rubric-verdict で渡した rubric-verdict.json 1 ファイルだけ (一時ファイル + os.replace)。それ以外は書かない
+# dependencies: [../../../scripts/compose-rubrics.py, ../../../scripts/feedback_contract_ssot.py]
 # requires-python: ">=3.10"
 # ///
 """Score a skill against rubric.json. Emits JSON to stdout.
@@ -20,12 +20,35 @@
 Usage:
   render-findings-score.py --rubric-refs <L0> [<L1> ...] <L2> --target <skill-dir-or-SKILL.md> [--kind K]
   render-findings-score.py --rubric <path> --target <skill-dir-or-SKILL.md>   # legacy
+  render-findings-score.py --rubric-refs <L0> ... --target <skill-dir> \\
+      --write-rubric-verdict eval-log/<plugin>/<skill>/content-review/rubric-verdict.json \\
+      --judgments judgments.json
 
 exit codes:
   0  採点できた。合否は出力 JSON の passed を見る
   1  --rubric-refs の先頭が L0 の rubric でない (合成順序の契約違反)
   2  入力エラー (rubric や SKILL.md が無い・読めない・JSON object でない、rubric の必須キー
-     (rules・各 rule の id) が無い・採点が読むキーの型が違う、compose-rubrics の失敗)
+     (rules・各 rule の id) が無い・採点が読むキーの型が違う、compose-rubrics の失敗、
+     --judgments を JSON として読めない、repo root か scripts/lint-content-review.py が無い)
+  3  --judgments が採点の穴を埋めきれていない。欠けた判定・余分な判定・形の誤りを全部
+     stderr に並べ、verdict は書かない
+
+rubric verdict の転記 (--write-rubric-verdict PATH --judgments FILE):
+  focused combined review は、機械採点の結果を rubric-verdict.json へ手で写していた。写し間違い・
+  採点し忘れた rule・機械の結果と違う合否が入りうるので、本 script が機械採点と LLM 判定から
+  verdict を組み立てて書く。LLM が書くのは機械で判定できない rule の判定だけである。
+    {"reviewer": "assign-skill-design-evaluator",
+     "judgments": {"BD-004": {"verdict": "PASS" | "FAIL", "reason": "<根拠>"}, ...},
+     "positive_feedback": ["<良い点>", ...],
+     "criteria_evaluated": ["IN1", ...],   # 任意。省くと frontmatter の feedback_contract.criteria の id
+     "notes": "<任意のメモ>"}
+  - judgments は pending_human の rule と、判定実装の無い high rule (unscored の high) の全部に要る。
+    機械で採点した rule の判定は受け付けない (機械の結果を上書きさせない)。
+  - reviewer は変更した本人ではない評価者 (root / self / elegant-improvement-executor は不可)。
+  - criteria_evaluated は frontmatter の criteria の id をすべて含む。
+  - verdict は、score >= threshold・機械の high 違反なし・判定がすべて PASS のときだけ PASS。
+    negative_feedback には機械の指摘 ("[<severity>] <id>: <message>") と FAIL の判定
+    ("[judgment] <id>: <reason>") を並べる。target は lint-content-review.py --print-target の出力。
 
 --emit-hash は互換のために受け付けるだけで、出力は変わらない。rubric_hash は常に出す (RG-001)。
 
@@ -37,10 +60,14 @@ Implementation notes:
 from __future__ import annotations
 import argparse
 import hashlib
+import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
+import tempfile
+from datetime import datetime, timezone
 from pathlib import Path
 
 SEVERITY_WEIGHTS = {"high": -20, "medium": -10, "low": -3}
@@ -79,6 +106,21 @@ IMPLEMENTED_RULES = frozenset({
 LLM_JUDGE_RULES = {
     "BD-004": "description の trigger と body の手順の 1:1 対応は意味判断が要る (LLM judge)",
 }
+
+# --write-rubric-verdict の判定が欠けているときの exit code (何も書かない)。
+EXIT_JUDGMENTS_INCOMPLETE = 3
+JUDGMENT_VERDICTS = ("PASS", "FAIL")
+RUBRIC_VERDICT_NAME = "rubric-verdict.json"
+SSOT_PATH = Path(__file__).resolve().parents[3] / "scripts" / "feedback_contract_ssot.py"
+
+
+class InputError(Exception):
+    """入力を読めない (exit 2)。"""
+
+
+class JudgmentsIncomplete(Exception):
+    """判定が採点の穴を埋めきれていない (exit 3)。args[0] は問題の一覧。"""
+
 
 # rubric 記述が repo 実態と一致せず機械判定できないときの退避用。
 # silent pass を避け、pending_human へ明示する。現在は該当 rule なし。
@@ -873,6 +915,184 @@ def compose_rubrics(refs: list[Path], strategy: str, policy: str) -> dict:
     return composed
 
 
+def _load_ssot():
+    spec = importlib.util.spec_from_file_location("feedback_contract_ssot", SSOT_PATH)
+    if spec is None or spec.loader is None:
+        raise InputError(f"feedback_contract_ssot を読めない: {SSOT_PATH}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _print_target(skill_dir: Path, plugin: str, skill: str) -> dict:
+    """lint-content-review.py --print-target の target をそのまま使う (target の定義は lint だけが持つ)。"""
+    root = find_repo_root(skill_dir)
+    lint = root / "scripts" / "lint-content-review.py" if root else None
+    if lint is None or not lint.is_file():
+        raise InputError(f"repo root の scripts/lint-content-review.py が見つからない (skill: {skill_dir})")
+    proc = subprocess.run(
+        [sys.executable, str(lint), "--print-target", f"{plugin}/{skill}"],
+        capture_output=True, text=True, cwd=root,
+    )
+    if proc.returncode != 0:
+        raise InputError(f"lint-content-review.py --print-target {plugin}/{skill} が失敗した: {proc.stderr.strip()}")
+    try:
+        target = json.loads(proc.stdout)
+    except ValueError as exc:
+        raise InputError(f"--print-target の出力が JSON でない: {exc}") from exc
+    if not isinstance(target, dict) or target.get("plugin") != plugin or target.get("skill") != skill:
+        raise InputError(f"--print-target の target が {plugin}/{skill} ではない: {target!r}")
+    return target
+
+
+def _nonempty_strings(value: object) -> bool:
+    return isinstance(value, list) and bool(value) and all(isinstance(v, str) and v.strip() for v in value)
+
+
+def build_rubric_verdict(
+    out: dict,
+    judgments_doc: object,
+    *,
+    target: dict,
+    criteria_ids: set[str],
+    non_independent: frozenset[str],
+    reviewed_at: str,
+) -> dict:
+    """機械採点 (out) と LLM 判定 (judgments_doc) から rubric verdict を組み立てる。
+
+    判定が穴を埋めきれていなければ、問題を全部集めて JudgmentsIncomplete を投げる
+    (1 件ずつ直して呼び直す往復を避ける)。
+    """
+    problems: list[str] = []
+    if not isinstance(judgments_doc, dict):
+        raise JudgmentsIncomplete(["--judgments の最上位が object ではない"])
+    required = list(dict.fromkeys(
+        [p["id"] for p in out["pending_human"]]
+        + [u["id"] for u in out["unscored"] if u.get("severity") == "high"]
+    ))
+    judgments = judgments_doc.get("judgments")
+    if not isinstance(judgments, dict):
+        problems.append("judgments が object ではない ({rule id: {verdict, reason}})")
+        judgments = {}
+    for rid in required:
+        entry = judgments.get(rid)
+        if entry is None:
+            problems.append(f"{rid}: 判定が無い (機械で判定できない rule。LLM が PASS/FAIL と根拠を書く)")
+        elif not isinstance(entry, dict) or entry.get("verdict") not in JUDGMENT_VERDICTS:
+            problems.append(f"{rid}: verdict は {'/'.join(JUDGMENT_VERDICTS)} のどちらか")
+        elif not isinstance(entry.get("reason"), str) or not entry["reason"].strip():
+            problems.append(f"{rid}: reason (判定の根拠) が無い")
+    for rid in sorted(set(judgments) - set(required)):
+        problems.append(f"{rid}: 機械で採点した rule か適用外の rule。判定で上書きできない")
+
+    reviewer = judgments_doc.get("reviewer")
+    if not isinstance(reviewer, str) or not reviewer.strip():
+        problems.append("reviewer が無い")
+    elif reviewer.strip() in non_independent:
+        problems.append(f"reviewer={reviewer!r} は変更した本人と同じ context。独立した評価者が書く")
+    positive = judgments_doc.get("positive_feedback")
+    if not _nonempty_strings(positive):
+        problems.append("positive_feedback が空 (良い点を 1 つ以上書く)")
+    criteria = judgments_doc.get("criteria_evaluated")
+    if criteria is None:
+        criteria = sorted(criteria_ids)
+    elif not _nonempty_strings(criteria) or len(set(criteria)) != len(criteria):
+        problems.append("criteria_evaluated は重複の無い id の配列")
+        criteria = []
+    elif criteria_ids - set(criteria):
+        problems.append(f"criteria_evaluated に frontmatter の criteria {sorted(criteria_ids - set(criteria))} が無い")
+    if not criteria and not any(p.startswith("criteria_evaluated") for p in problems):
+        problems.append("評価した criteria が無い (frontmatter の feedback_contract.criteria も criteria_evaluated も空)")
+    notes = judgments_doc.get("notes")
+    if notes is not None and not isinstance(notes, str):
+        problems.append("notes は文字列")
+    if problems:
+        raise JudgmentsIncomplete(problems)
+
+    failed = [rid for rid in required if judgments[rid]["verdict"] == "FAIL"]
+    passed = (
+        out["score"] >= out["threshold"]
+        and not any(f["severity"] == "high" for f in out["findings"])
+        and not failed
+    )
+    negative = [
+        f"[{f['severity']}] {f['id']}: {f['message']}" + (f" ({f['loc']})" if f.get("loc") else "")
+        for f in out["findings"]
+    ] + [f"[judgment] {rid}: {judgments[rid]['reason'].strip()}" for rid in failed]
+    summary = (
+        f"render-findings-score が機械採点 (score {out['score']}/threshold {out['threshold']},"
+        f" {out['rubric_hash']}, scored {out['coverage']['scored']}/{out['coverage']['applicable_rules']})"
+        f" と LLM 判定 {len(required)} 件 ({', '.join(required) or 'なし'}) から生成した。"
+    )
+    return {
+        "target": target,
+        "review_kind": "rubric",
+        "verdict": "PASS" if passed else "FAIL",
+        # rubric の指摘は 4 分類 (elegance の矛盾・漏れ・不整合・依存切れ) に当てはめず、件数を smell に数える
+        "findings_summary": {
+            "contradiction": 0, "omission": 0, "inconsistency": 0, "dependency_break": 0,
+            "smell": len(negative),
+        },
+        "reviewer": reviewer.strip(),
+        "reviewed_at": reviewed_at,
+        "iterations": 1,
+        "human_review_required": False,
+        "feedback_loop": {
+            "loop_scope": "both",
+            "criteria_evaluated": list(criteria),
+            "positive_feedback": list(positive),
+            "negative_feedback": negative,
+            "iteration": 1,
+            "iteration_limit": 3,
+            "hook_trigger": "manual",
+            "next_action": "none" if passed else "improve",
+        },
+        "notes": summary + (f" {notes.strip()}" if notes and notes.strip() else ""),
+    }
+
+
+def _write_json_atomic(path: Path, data: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="") as handle:
+            handle.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+        os.chmod(tmp, 0o644)
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
+def write_rubric_verdict(args: argparse.Namespace, out: dict, skill_md: Path, skill_dir: Path) -> int:
+    """--write-rubric-verdict の本体。書いたら 0、判定の欠けは 3 (書かない)。"""
+    try:
+        judgments_doc = json.loads(Path(args.judgments).read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, ValueError) as exc:
+        raise InputError(f"--judgments {args.judgments} を JSON として読めない: {exc}") from exc
+    ssot = _load_ssot()
+    contract = ssot.extract_frontmatter_feedback_contract(skill_md.read_text(encoding="utf-8"))
+    criteria_ids = ssot.criteria_ids(contract.get("criteria")) if isinstance(contract, dict) else set()
+    target = _print_target(skill_dir, out["plugin"], out["skill"])
+    try:
+        verdict = build_rubric_verdict(
+            out, judgments_doc,
+            target=target,
+            criteria_ids=set(criteria_ids),
+            non_independent=frozenset(ssot.SCOPED_REVIEW_NON_INDEPENDENT),
+            reviewed_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        )
+    except JudgmentsIncomplete as exc:
+        print("REJECT: --judgments が採点の穴を埋めきれていません (rubric-verdict.json は書いていない):", file=sys.stderr)
+        for problem in exc.args[0]:
+            print(f"  - {problem}", file=sys.stderr)
+        return EXIT_JUDGMENTS_INCOMPLETE
+    path = Path(args.write_rubric_verdict)
+    _write_json_atomic(path, verdict)
+    out["rubric_verdict"] = {"path": str(path), "verdict": verdict["verdict"]}
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--rubric", required=False,
@@ -889,9 +1109,20 @@ def main() -> int:
     ap.add_argument("--kind", default="skill",
                     help="採点対象の capability kind。rubric の applies_to_kinds と "
                          "突き合わせて非適用 rule を被覆率の分母から外す")
+    ap.add_argument("--write-rubric-verdict", metavar="PATH",
+                    help="機械採点と --judgments から content-review の rubric-verdict.json を書く")
+    ap.add_argument("--judgments", metavar="FILE",
+                    help="機械で判定できない rule の LLM 判定 JSON (--write-rubric-verdict と一緒に使う)")
     args = ap.parse_args()
+    if bool(args.write_rubric_verdict) != bool(args.judgments):
+        ap.error("--write-rubric-verdict と --judgments は一緒に指定する")
+    if args.write_rubric_verdict and Path(args.write_rubric_verdict).name != RUBRIC_VERDICT_NAME:
+        ap.error(f"--write-rubric-verdict のファイル名は {RUBRIC_VERDICT_NAME} (lint-content-review.py が読む名前)")
     try:
         return _score(args)
+    except InputError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
     except (OSError, ValueError, RecursionError) as exc:
         # 壊れた rubric・非 UTF-8 の SKILL.md などを traceback (rc1) にせず、入力エラー (2) にする
         print(f"error: 入力を読めない: {type(exc).__name__}: {exc}", file=sys.stderr)
@@ -1051,9 +1282,12 @@ def _score(args: argparse.Namespace) -> int:
             "applicable high-severity rules without a checker implementation: "
             + ", ".join(unscored_high)
         )
+    rc = 0
+    if args.write_rubric_verdict:
+        rc = write_rubric_verdict(args, out, skill_md, skill_dir)
     sys.stdout.write(json.dumps(out, ensure_ascii=False))
     sys.stdout.write("\n")
-    return 0
+    return rc
 
 
 if __name__ == "__main__":

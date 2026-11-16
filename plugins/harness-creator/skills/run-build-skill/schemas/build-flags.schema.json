@@ -121,7 +121,7 @@
               "id": {"type": "string", "pattern": "^(IN|OUT|C)[0-9]+$"},
               "loop_scope": {"type": "string", "enum": ["inner", "outer"]},
               "text": {"type": "string"},
-              "verify_by": {"type": "string", "enum": ["lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human"]},
+              "verify_by": {"type": "string", "enum": ["lint", "test", "script", "evaluator", "elegant-review", "live-trial", "human", "verification-obligation"]},
               "threshold": {"type": "string", "description": "score>=80 / high=0 / C1-C4=PASS 等の観測可能なしきい値。"},
               "weight": {"type": "number", "minimum": 0, "default": 1},
               "derived_from": {
@@ -168,7 +168,7 @@
     },
     "with_goal_seek": {
       "type": "object",
-      "description": "loop 実行系 (run/wrap/delegate) にゴールシークの実行可能機構 (goal-spec ロード / 周回 progress JSON / 打ち切り規約 / 任意で run-goal-seek への fork 委譲) を配線する横断 combinator。default-ON。--no-goal-seek が外すのは render 時の配線だけで、lint の合否は変えない。repo 外の生成物では warning のままだが、repo 内に入った配線の無い loop 系スキルは plugin を問わず lint-goal-seek.py の ratchet が exit 1 で落とす (harness-creator のスキルは GRANDFATHERED_WARNINGS へ根拠付きで登録するか配線を戻す。ほかの plugin のスキルは baseline が追記禁止なので配線を戻す)。ループ本体は inline (本 Skill 内 AI 推論) で自己完結し外部依存ゼロ (with-knowledge と対称)。正本仕様は references/goal-seek-paradigm.md。",
+      "description": "loop 実行系 (run/wrap/delegate) にゴールシークの実行可能機構 (goal-spec ロード / 周回 progress JSON / 打ち切り規約 / 任意で run-goal-seek への fork 委譲) を配線する横断 combinator。default-ON。--no-goal-seek が外すのは render 時の配線だけで、lint の合否は変えない。repo 外の生成物では warning のままだが、repo 内に入った配線の無い loop 系スキルは plugin を問わず lint-goal-seek.py の ratchet が exit 1 で落とす (通すには配線を戻すか、### ゴールシーク配線を持たない理由 の見出しの下に理由を書いて宣言する。GRANDFATHERED_WARNINGS は既存負債の台帳で、ほかの plugin の baseline は追記禁止)。ループ本体は inline (本 Skill 内 AI 推論) で自己完結し外部依存ゼロ (with-knowledge と対称)。正本仕様は references/goal-seek-paradigm.md。",
       "additionalProperties": false,
       "properties": {
         "enabled": {"type": "boolean", "default": true, "description": "loop 実行系では既定 true。assign/ref は対象外。"},

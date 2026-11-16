@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import hashlib
 import json
+import shutil
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -48,6 +49,11 @@ def _write_runtime(root: Path, name: str, version: str) -> None:
     )
 
 
+def _copy_runtime(source_plugin: Path, root: Path) -> None:
+    """Codex が source を写した runtime を作る (source と runtime の digest が一致する)。"""
+    shutil.copytree(source_plugin, root)
+
+
 def _write_hook(root: Path, command: str = "true") -> str:
     path = root / "hooks" / "hooks.json"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -71,7 +77,7 @@ def test_local_install_registers_installs_and_verifies(monkeypatch, tmp_path):
     source = tmp_path / "repo"
     _write_local_source(source, {"sample": ("1.2.3", [])})
     runtime = tmp_path / "runtime" / "sample"
-    _write_runtime(runtime, "sample", "1.2.3")
+    _copy_runtime(source / "plugins" / "sample", runtime)
     _fake_cli_identity(monkeypatch)
     calls = []
 
@@ -109,7 +115,9 @@ def test_local_install_registers_installs_and_verifies(monkeypatch, tmp_path):
     assert report["artifact_mode"] == "copy"
     assert report["manifest_version"] == "1.2.3"
     assert len(report["source_digest"]) == 64
-    assert len(report["runtime_digest"]) == 64
+    assert report["runtime_digest"] == report["source_digest"]
+    assert report["phase"] == "done"
+    assert report["added_plugins"] == ["sample@fixture"]
     assert report["activation"] == {
         "installed": "verified",
         "enabled": "verified",
@@ -194,6 +202,181 @@ def test_git_install_upgrades_snapshot_before_install(monkeypatch, tmp_path):
     assert ["codex", "plugin", "marketplace", "upgrade", "fixture", "--json"] in [
         [Path(command[0]).name, *command[1:]] for command in calls
     ]
+    # branch の ref は固定しないが、snapshot から読めた commit は無いので None と書く
+    assert report["resolved_revision"] is None
+    assert report["approved_plugins"] is None
+
+
+PINNED = "0123456789abcdef0123456789abcdef01234567"
+OTHER = "fedcba9876543210fedcba9876543210fedcba98"
+
+
+def _write_install_metadata(snapshot: Path, revision: str) -> None:
+    (snapshot / ".codex-marketplace-install.json").write_text(
+        json.dumps({"source_type": "git", "ref_name": PINNED, "revision": revision}),
+        encoding="utf-8",
+    )
+
+
+def _git_fake_cli(snapshot: Path, runtimes: dict[str, Path], *, calls: list,
+                  upgrade_to: str | None = None):
+    def fake_run(command, *, env):
+        calls.append(command)
+        if command[2:4] == ["marketplace", "add"]:
+            return {"marketplaceName": "fixture", "alreadyAdded": True}
+        if command[2:4] == ["marketplace", "upgrade"]:
+            if upgrade_to is not None:
+                _write_install_metadata(snapshot, upgrade_to)
+            return {"marketplaceName": "fixture", "status": "upgraded"}
+        if command[2:4] == ["marketplace", "list"]:
+            return {"marketplaces": [{"name": "fixture", "root": str(snapshot)}]}
+        if command[2] == "add":
+            name = command[3].split("@", 1)[0]
+            return {"pluginId": command[3], "version": "2.0.0",
+                    "installedPath": str(runtimes[name])}
+        if command[2] == "list":
+            return {"installed": [
+                {"pluginId": f"{name}@fixture", "installed": True, "enabled": True,
+                 "version": "2.0.0", "source": {"source": "local", "path": str(path)}}
+                for name, path in runtimes.items()
+            ]}
+        raise AssertionError(command)
+
+    return fake_run
+
+
+def _plugin_adds(calls: list) -> list:
+    return [command for command in calls if command[2] == "add"]
+
+
+def test_git_pinned_snapshot_already_at_sha_is_not_upgraded(monkeypatch, tmp_path):
+    snapshot = tmp_path / "git-snapshot"
+    _write_local_source(snapshot, {"sample": ("2.0.0", [])})
+    _write_install_metadata(snapshot, PINNED)
+    runtime = tmp_path / "runtime" / "sample"
+    _copy_runtime(snapshot / "plugins" / "sample", runtime)
+    _fake_cli_identity(monkeypatch)
+    calls: list = []
+    monkeypatch.setattr(mod, "_run_json", _git_fake_cli(snapshot, {"sample": runtime}, calls=calls))
+
+    report = mod.install(source="owner/repo", ref=PINNED.upper(), plugin="sample",
+                         codex_home=None, approved_plugins=["sample"])
+
+    assert all(command[2:4] != ["marketplace", "upgrade"] for command in calls)
+    assert report["status"] == "installed"
+    assert report["resolved_revision"] == PINNED
+    assert report["revision_evidence"]["install_metadata_revision"] == PINNED
+    assert report["approved_plugins"] == ["sample"]
+
+
+def test_git_pinned_snapshot_is_upgraded_then_verified(monkeypatch, tmp_path):
+    snapshot = tmp_path / "git-snapshot"
+    _write_local_source(snapshot, {"sample": ("2.0.0", [])})
+    _write_install_metadata(snapshot, OTHER)
+    runtime = tmp_path / "runtime" / "sample"
+    _write_runtime(runtime, "sample", "2.0.0")
+    _fake_cli_identity(monkeypatch)
+    calls: list = []
+    monkeypatch.setattr(mod, "_run_json", _git_fake_cli(
+        snapshot, {"sample": runtime}, calls=calls, upgrade_to=PINNED,
+    ))
+
+    report = mod.install(source="owner/repo", ref=PINNED, plugin="sample",
+                         codex_home=None, approved_plugins=["sample"])
+
+    assert any(command[2:4] == ["marketplace", "upgrade"] for command in calls)
+    assert report["resolved_revision"] == PINNED
+
+
+def test_git_snapshot_drift_stops_before_any_plugin_add(monkeypatch, tmp_path):
+    snapshot = tmp_path / "git-snapshot"
+    _write_local_source(snapshot, {"sample": ("2.0.0", [])})
+    _write_install_metadata(snapshot, OTHER)
+    runtime = tmp_path / "runtime" / "sample"
+    _write_runtime(runtime, "sample", "2.0.0")
+    _fake_cli_identity(monkeypatch)
+    calls: list = []
+    # upgrade しても固定した SHA に来ない (CLI が pin を守らない場合)
+    monkeypatch.setattr(mod, "_run_json", _git_fake_cli(
+        snapshot, {"sample": runtime}, calls=calls, upgrade_to=OTHER,
+    ))
+
+    with pytest.raises(mod.InstallError, match="not at the pinned commit"):
+        mod.install(source="owner/repo", ref=PINNED, plugin="sample",
+                    codex_home=None, approved_plugins=["sample"])
+    assert _plugin_adds(calls) == []
+
+
+def test_git_closure_outside_approved_set_stops_before_any_plugin_add(monkeypatch, tmp_path):
+    snapshot = tmp_path / "git-snapshot"
+    # 承認の後に snapshot の closure が base を含むようになった
+    _write_local_source(snapshot, {"base": ("2.0.0", []), "app": ("2.0.0", ["base"])})
+    _write_install_metadata(snapshot, PINNED)
+    runtimes = {}
+    for name in ("base", "app"):
+        runtimes[name] = tmp_path / "runtime" / name
+        _write_runtime(runtimes[name], name, "2.0.0")
+    _fake_cli_identity(monkeypatch)
+    calls: list = []
+    monkeypatch.setattr(mod, "_run_json", _git_fake_cli(snapshot, runtimes, calls=calls))
+
+    with pytest.raises(mod.InstallError, match=r"unapproved=\['base'\]"):
+        mod.install(source="owner/repo", ref=PINNED, plugin="app",
+                    codex_home=None, approved_plugins=["app"])
+    assert _plugin_adds(calls) == []
+
+
+def test_git_approved_set_requires_pinned_sha_before_any_cli_call(monkeypatch):
+    calls: list = []
+    monkeypatch.setattr(mod, "_run_json", lambda command, *, env: calls.append(command))
+    monkeypatch.setattr(mod, "_cli_identity", lambda env: calls.append("identity"))
+    for ref in ("main", None, PINNED[:12]):
+        with pytest.raises(mod.InstallError, match="40-hex commit SHA"):
+            mod.install(source="owner/repo", ref=ref, plugin="sample",
+                        codex_home=None, approved_plugins=["sample"])
+    with pytest.raises(mod.InstallError, match="duplicate"):
+        mod.install(source="owner/repo", ref=PINNED, plugin="sample",
+                    codex_home=None, approved_plugins=["sample", "sample"])
+    assert calls == []
+
+
+def test_local_closure_outside_approved_set_stops_before_any_cli_call(monkeypatch, tmp_path):
+    source = tmp_path / "repo"
+    _write_local_source(source, {"base": ("1.0.0", []), "app": ("1.0.0", ["base"])})
+    calls: list = []
+    monkeypatch.setattr(mod, "_run_json", lambda command, *, env: calls.append(command))
+    monkeypatch.setattr(mod, "_cli_identity", lambda env: calls.append("identity"))
+
+    with pytest.raises(mod.InstallError, match=r"unapproved=\['base'\]"):
+        mod.install(source=str(source), ref=None, plugin="app",
+                    codex_home=None, approved_plugins=["app"])
+    with pytest.raises(mod.InstallError, match=r"approved_but_not_in_closure=\['extra'\]"):
+        mod.install(source=str(source), ref=None, plugin="app",
+                    codex_home=None, approved_plugins=["app", "base", "extra"])
+    assert calls == []
+
+
+def test_snapshot_revision_reads_metadata_and_own_checkout_only(monkeypatch, tmp_path):
+    snapshot = tmp_path / "snapshot"
+    snapshot.mkdir()
+    monkeypatch.setattr(mod, "_git_snapshot", lambda root, **kwargs: {
+        "repository": str(snapshot), "commit": PINNED, "dirty": False,
+    })
+    assert mod._snapshot_revision(snapshot) == {
+        "revision": PINNED, "install_metadata_revision": None, "git_head": PINNED,
+        "git_dirty": False,
+    }
+    _write_install_metadata(snapshot, OTHER)
+    with pytest.raises(mod.InstallError, match="revision disagrees"):
+        mod._snapshot_revision(snapshot)
+    # snapshot root より上の repository の HEAD は使わない
+    monkeypatch.setattr(mod, "_git_snapshot", lambda root, **kwargs: {
+        "repository": str(tmp_path), "commit": PINNED, "dirty": True,
+    })
+    outer = mod._snapshot_revision(snapshot)
+    assert outer["revision"] == OTHER
+    # 外側の repository の dirty は snapshot の dirty として扱わない
+    assert outer["git_dirty"] is None
 
 
 def test_ref_is_rejected_for_local_source(tmp_path):
@@ -402,7 +585,8 @@ def test_dependency_cycle_is_installed_as_a_deterministic_scc(monkeypatch, tmp_p
 
 
 def test_cli_process_helpers_and_identity_fail_closed(monkeypatch, tmp_path):
-    success = SimpleNamespace(returncode=0, stdout='{"ok": true}\n', stderr="")
+    # subprocess.run は text=False で走らせるので、stdout と stderr は bytes で返る
+    success = SimpleNamespace(returncode=0, stdout=b'{"ok": true}\n', stderr=b"")
     monkeypatch.setattr(mod.subprocess, "run", lambda *args, **kwargs: success)
     assert mod._run_json(["codex", "x"], env={}) == {"ok": True}
     assert mod._run_text(["codex", "--version"], env={}) == '{"ok": true}'
@@ -411,7 +595,7 @@ def test_cli_process_helpers_and_identity_fail_closed(monkeypatch, tmp_path):
         mod.subprocess,
         "run",
         lambda *args, **kwargs: SimpleNamespace(
-            returncode=2, stdout="", stderr="bad input"
+            returncode=2, stdout=b"", stderr=b"bad input \xff"
         ),
     )
     with pytest.raises(mod.InstallError, match=r"command failed \(2\)"):
@@ -423,7 +607,7 @@ def test_cli_process_helpers_and_identity_fail_closed(monkeypatch, tmp_path):
         mod.subprocess,
         "run",
         lambda *args, **kwargs: SimpleNamespace(
-            returncode=0, stdout="not-json", stderr=""
+            returncode=0, stdout=b"not-json", stderr=b""
         ),
     )
     with pytest.raises(mod.InstallError, match="did not return JSON"):
@@ -432,10 +616,37 @@ def test_cli_process_helpers_and_identity_fail_closed(monkeypatch, tmp_path):
         mod.subprocess,
         "run",
         lambda *args, **kwargs: SimpleNamespace(
-            returncode=0, stdout="[]", stderr=""
+            returncode=0, stdout=b"[]", stderr=b""
         ),
     )
     with pytest.raises(mod.InstallError, match="must be an object"):
+        mod._run_json(["codex"], env={})
+    # 非 UTF-8 のバイトは traceback ではなく InstallError (exit 3) になる
+    monkeypatch.setattr(
+        mod.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(
+            returncode=0, stdout=b'{"ok": "\xff"}', stderr=b""
+        ),
+    )
+    with pytest.raises(mod.InstallError, match="not UTF-8"):
+        mod._run_json(["codex"], env={})
+    # 深すぎる JSON の RecursionError も InstallError になる
+    monkeypatch.setattr(
+        mod.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(
+            returncode=0, stdout=b"[" * 100000, stderr=b""
+        ),
+    )
+    with pytest.raises(mod.InstallError, match="did not return JSON"):
+        mod._run_json(["codex"], env={})
+
+    def null_argument(*args, **kwargs):
+        raise ValueError("embedded null byte")
+
+    monkeypatch.setattr(mod.subprocess, "run", null_argument)
+    with pytest.raises(mod.InstallError, match="cannot execute"):
         mod._run_json(["codex"], env={})
 
     def unavailable(*args, **kwargs):
@@ -559,9 +770,22 @@ def test_snapshot_root_and_artifact_details_fail_closed(tmp_path):
 
 
 def test_main_prints_success_and_fail_closed_receipts(monkeypatch, capsys):
-    monkeypatch.setattr(mod, "install", lambda **kwargs: {"status": "installed"})
+    seen = []
+
+    def installed(**kwargs):
+        seen.append(kwargs)
+        return {"status": "installed"}
+
+    monkeypatch.setattr(mod, "install", installed)
     assert mod.main(["--source", "owner/repo", "--plugin", "sample"]) == 0
     assert json.loads(capsys.readouterr().out)["status"] == "installed"
+    assert seen[-1]["approved_plugins"] is None
+    assert mod.main([
+        "--source", "owner/repo", "--ref", PINNED, "--plugin", "app",
+        "--approved-plugin", "base", "--approved-plugin", "app",
+    ]) == 0
+    capsys.readouterr()
+    assert seen[-1]["approved_plugins"] == ["base", "app"]
 
     def invalid(**kwargs):
         raise mod.InstallError("broken")

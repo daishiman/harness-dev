@@ -1,0 +1,148 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-schedule",
+  "args": "--repo-root /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/cases/run-dev-graph-schedule/fx2 --max-parallel 4",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "native Codex run stopped: TOKEN_CAP"
+    ]
+  },
+  "goal_evaluation": null,
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-schedule"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "FAIL",
+    "goal_fit": "NOT_EVALUATED",
+    "verdict": "BLOCKED"
+  },
+  "skill_dir_tree_sha": "4ae295c3e6ebcbcca21227881ce1794bb7eb5c56c93270cb9ffee8c2fd787082",
+  "transcript_sha256": "678ce925954167fec800d8bd9a466162e54c782565d568d1f77ca1d9a8f40f4c",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/orca/workspaces/harness/harness-creatorの改善/eval-log/dev-graph/run-dev-graph-schedule/live-trial/20261115T1835-r44-schedule-codex/out",
+          "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/cases/run-dev-graph-schedule/fx2"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 0,
+    "single_input_autonomous": false,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "cc85342a9927573e750b7d7d9e57970ab031cae8d5d18fd20ffa60527b3be52d"
+  },
+  "tier": "live",
+  "downgrade_reason": "TOKEN_CAP: scenario の token 予算到達 (fail-closed)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "TOKEN_CAP",
+    "wall_clock_s": 294.0
+  },
+  "scenario_id": "schedule-positive-ready-set-fixture-standard-v2-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-codex-scenarios.json",
+    "scenario_id": "schedule-positive-ready-set-fixture-standard-v2-codex-v1",
+    "required_observations": [
+      "every recommended task has all depends_on satisfied (ready)",
+      "blocked, draft, unconfirmed, evaluation non-pass, and readiness non-complete tasks appear 0 times in the ready-set",
+      "no resource_scope overlaps inside a parallel batch and the active lease is respected",
+      "suggested_branch and the worktree claim command are unique per recommended task"
+    ],
+    "observed": [],
+    "unobserved": [
+      {
+        "index": 1,
+        "observation": "every recommended task has all depends_on satisfied (ready)"
+      },
+      {
+        "index": 2,
+        "observation": "blocked, draft, unconfirmed, evaluation non-pass, and readiness non-complete tasks appear 0 times in the ready-set"
+      },
+      {
+        "index": 3,
+        "observation": "no resource_scope overlaps inside a parallel batch and the active lease is respected"
+      },
+      {
+        "index": 4,
+        "observation": "suggested_branch and the worktree claim command are unique per recommended task"
+      }
+    ],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --max-parallel 4",
+      "template_flags": [
+        "--max-parallel",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--max-parallel",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 5000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 294.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "1a0f02466e4f95ac78aa75842c2373b65c70c69e8967e4ff2e04f4330d1e55e5",
+      "tokens": {
+        "input_tokens": 5018091,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 19636,
+        "total_tokens": 5037727,
+        "assistant_messages": 54,
+        "transcript_files": 4,
+        "measured": true
+      },
+      "violations": [
+        "token-budget-exceeded:5037727>5000000"
+      ]
+    }
+  }
+}

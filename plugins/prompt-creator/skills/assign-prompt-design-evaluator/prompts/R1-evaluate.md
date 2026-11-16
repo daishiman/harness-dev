@@ -102,7 +102,7 @@
 
 ### 6.1 上位接続
 - 呼び出し元: run-prompt-create (Step 3b)
-- 後続: Gate 3 (elegant-review 起動可否判定) / Step 5 governance
+- 後続: Gate 3 (findings の記録) / release を明示したときだけ Step 5 governance (elegant-review は自動では起動しない)
 
 ### 6.2 並列性
 - 単発 (1 prompt = 1 評価)

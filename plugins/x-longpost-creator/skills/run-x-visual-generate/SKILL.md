@@ -77,22 +77,7 @@ feedback_contract:
       loop_scope: outer
       text: "生成された図解が本文の論理構造を表しており diagram-style-canon.md §5 の退化が無いこと、およびサムネイル2種に thumbnail-style-canon.md §5 の退化（人物の混入・情報商材化・図解化・アクセント散乱）が無いと書き手が判断できること"
       verify_by: human
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 runtime_root_policy: host-skill-path
 ---
 
@@ -102,7 +87,7 @@ runtime_root_policy: host-skill-path
 
 ## Post-choice selected improvement execution
 
-このゲートの対象は**サムネイルの画風の作り直し・構造の組み替え・追加案の生成**の3種である。light / standard / detailed では選択範囲だけ改善し、再検証・再表示・review receipt の再記録後に2枚を embed する。図解はこの選択ゲートと独立した optional 成果物で、明示指定時に `--only diagram` で作る。
+このゲートの対象は**サムネイルの画風の作り直し・構造の組み替え・追加案の生成**の3種である。diagnose では選択範囲だけ改善し、再検証・再表示・review receipt の再記録後に2枚を embed する。図解はこの選択ゲートと独立した optional 成果物で、明示指定時に `--only diagram` で作る。
 
 # X長文投稿のサムネイル・図解生成
 
@@ -266,7 +251,7 @@ node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-visual-assets.js" -
 ### Step 3: 選択ゲート
 
 - `accept-as-is`: 提示した2枚を採用し、`--only x-thumb,note-thumb` で embed する
-- `light / standard / detailed`: 選ばれた範囲で2枚を改善し、再検証・再表示・receipt 更新後に embed する
+- `diagnose`: 選ばれた範囲で2枚を改善し、再検証・再表示・receipt 更新後に embed する
 
 ### Step 4: review receipt と最終 embed
 

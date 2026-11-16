@@ -2,7 +2,8 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-goal-setting",
-    "skill_md_sha256": "6669733741cca3d61c211b3dae091cda35f6843123151f19ffa59a915479dafc"
+    "skill_md_sha256": "bf1af2fa20cfa02a17b3adb5eeaf33d408ac583e310f42998f245d8a7596b03c",
+    "reviewed_skill_md_sha256": "6669733741cca3d61c211b3dae091cda35f6843123151f19ffa59a915479dafc"
   },
   "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
   "reviewed_at": "2026-11-03T13:30:01Z",
@@ -40,5 +41,21 @@
     "hook_trigger": "manual:ci-stale-sha",
     "next_action": "none"
   },
-  "notes": "[rubric] rubric 1.6.0 の機械採点と、手順と参照見出しの突き合わせ。render-findings-score.py の結果は score 100、findings 0、high 0、pending_human は BD-004 と KL-002。BD-004 は description と本文の起動条件が対応すると判断した。KL-002 の quality level は knowledge 本文の意味判断で、このレビューの high には数えない。live trial（OUT2 の verify_by: live-trial）はしていない。OUT2 は静的確認だけ。OUT1 の受入テストはこのレビューでは再実行していない。SKILL.md の sha256 は 6669733741cca3d61c211b3dae091cda35f6843123151f19ffa59a915479dafc（python3 の hashlib.sha256 で対象ファイルのバイト列を計算）。判定: (a) 矛盾 0。(b) 漏れ 0。(c) 低い不一致 1件（N1。採点スクリプトの finding ではない）。(d) dependency_break 0。(e) rubric high 0。IN1 は --type の4層と rc の記録先が validation-gates に揃う。IN2 は管理用だけを照合し rc=3 を合格にしない。IN3 は1年層の引数を validation-gates に任せ、--no-yearly のとき未照合件数を記録する。OUT1 は生成物を validate-goal-output で見て5周まで、という手順の対応だけを見た。OUT2 は実走していない。"
+  "notes": "[rubric] rubric 1.6.0 の機械採点と、手順と参照見出しの突き合わせ。render-findings-score.py の結果は score 100、findings 0、high 0、pending_human は BD-004 と KL-002。BD-004 は description と本文の起動条件が対応すると判断した。KL-002 の quality level は knowledge 本文の意味判断で、このレビューの high には数えない。live trial（OUT2 の verify_by: live-trial）はしていない。OUT2 は静的確認だけ。OUT1 の受入テストはこのレビューでは再実行していない。SKILL.md の sha256 は 6669733741cca3d61c211b3dae091cda35f6843123151f19ffa59a915479dafc（python3 の hashlib.sha256 で対象ファイルのバイト列を計算）。判定: (a) 矛盾 0。(b) 漏れ 0。(c) 低い不一致 1件（N1。採点スクリプトの finding ではない）。(d) dependency_break 0。(e) rubric high 0。IN1 は --type の4層と rc の記録先が validation-gates に揃う。IN2 は管理用だけを照合し rc=3 を合格にしない。IN3 は1年層の引数を validation-gates に任せ、--no-yearly のとき未照合件数を記録する。OUT1 は生成物を validate-goal-output で見て5周まで、という手順の対応だけを見た。OUT2 は実走していない。",
+  "sha_rebinds": [
+    {
+      "from_sha": "6669733741cca3d61c211b3dae091cda35f6843123151f19ffa59a915479dafc",
+      "to_sha": "9be43dbaf11de84c76368d72ee7f74e56d2438f4f93d9270e90966d86fa8fd4d",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:51Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "9be43dbaf11de84c76368d72ee7f74e56d2438f4f93d9270e90966d86fa8fd4d",
+      "to_sha": "bf1af2fa20cfa02a17b3adb5eeaf33d408ac583e310f42998f245d8a7596b03c",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:43:00Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

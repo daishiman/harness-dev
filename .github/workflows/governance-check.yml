@@ -58,17 +58,17 @@ jobs:
         env:
           NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
         run: python3 scripts/lint-notion-relations.py
-      - name: check plugin external refs
-        run: >
-          python3 scripts/lint-external-refs.py
-          --skills-dir plugins/harness-creator/skills
-          --allowed-prefix .claude/
-          --allowed-prefix eval-log/
-          --allowed-prefix references/
-          --allowed-prefix plugins/
-          --allowed-prefix scripts/
-          --allowed-prefix doc/
-          --fail-on-external
+      - name: check plugin external refs (PKG-009)
+        # 正本は skill-governance-lint の lint-external-refs.py。許可は各 plugin の
+        # references/package-contract.json (depends_on・owned-vendored・repo_refs) から読み、
+        # repo_refs は参照ごとに実在を確かめる。--allowed-prefix で広く許可しない。
+        run: |
+          status=0
+          for skills in plugins/*/skills; do
+            python3 plugins/skill-governance-lint/scripts/lint-external-refs.py \
+              --skills-dir "$skills" --fail-on-external || status=1
+          done
+          exit "$status"
         continue-on-error: false
       - name: check script drift
         run: bash scripts/check-scripts-drift.sh
@@ -108,15 +108,20 @@ jobs:
             (.interface.defaultPrompt | type == "array" and length > 0) and
             .hooks == "./hooks/hooks.json" and (has("x_harness") | not)
           ' plugins/harness-creator/.codex-plugin/plugin.json
+          # observe hook は成功と失敗の 2 つの入口で縛る。observe の項目は matcher ではなく command で選ぶ。
+          # Claude の Bash の成功応答には exit code が無く、PostToolUse で拾っても 1 件も記録されない
+          # (起動の費用だけ掛かる)。そのため Bash は PostToolUse に入れず、失敗を PostToolUseFailure で拾う。
           jq -e '
-            (.hooks.PostToolUse) as $p |
+            def observers: [.[]? | select(any(.hooks[]?; (.command // "") | contains("external-intelligence-observe.py")))];
+            def tokens: .matcher | split("|");
+            (.hooks.PostToolUse | observers) as $ok |
+            (.hooks.PostToolUseFailure | observers) as $ng |
             (.hooks | has("SessionStart") | not) and
-            ($p | type == "array" and length >= 1) and
-            ([$p[] | select(.matcher | contains("Bash") and contains("apply_patch"))]) as $obs |
-            ($obs | length == 1) and
-            ($obs[0].hooks | type == "array" and length == 1) and
-            ($obs[0].hooks[0].type == "command") and
-            ($obs[0].hooks[0].command | contains("external-intelligence-observe.py"))
+            ($ok | length == 1) and
+            ($ng | length == 1) and
+            ($ok[0] | tokens | (index("Skill") != null) and (index("apply_patch") != null) and (index("Bash") == null)) and
+            ($ng[0] | tokens | (index("Bash") != null) and (index("apply_patch") != null)) and
+            ([$ok[0], $ng[0]] | all(.hooks | type == "array" and length == 1 and .[0].type == "command"))
           ' plugins/harness-creator/hooks/hooks.json
           # 記録器は observe hook からの間接呼出しなので、配線だけでなく到達先の実在も縛る。
           # command 文字列だけを見ていると、observer が記録器を呼ばなくなっても気付けない。

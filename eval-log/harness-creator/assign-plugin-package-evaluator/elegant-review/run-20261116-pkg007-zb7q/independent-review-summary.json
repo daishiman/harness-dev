@@ -1,0 +1,58 @@
+{
+  "reviewer": "/root/system_analyst",
+  "independent_of_ape_implementation": true,
+  "reviewed_at": "2026-11-16T03:12:34.320018Z",
+  "review_profile": "今回承認範囲の限定再評価1回。前回30思考分析を再利用",
+  "target_before": {
+    "plugin": "harness-creator",
+    "skill": "assign-plugin-package-evaluator",
+    "skill_md_sha256": "4223a15837e5b3400560be61b43909ea1a5f4958ecfdf89d01424b8a9b54b57c",
+    "reviewed_skill_md_sha256": "4223a15837e5b3400560be61b43909ea1a5f4958ecfdf89d01424b8a9b54b57c",
+    "skill_dir_digest": "b02da22c3670c0fcb24b93f149f58b2eea75ac7093d744c8919d72f4b085bd06"
+  },
+  "target_after": {
+    "plugin": "harness-creator",
+    "skill": "assign-plugin-package-evaluator",
+    "skill_md_sha256": "4223a15837e5b3400560be61b43909ea1a5f4958ecfdf89d01424b8a9b54b57c",
+    "reviewed_skill_md_sha256": "4223a15837e5b3400560be61b43909ea1a5f4958ecfdf89d01424b8a9b54b57c",
+    "skill_dir_digest": "b02da22c3670c0fcb24b93f149f58b2eea75ac7093d744c8919d72f4b085bd06"
+  },
+  "target_unchanged": true,
+  "reviewed_context_hashes": {
+    "plugins/harness-creator/skills/assign-plugin-package-evaluator/SKILL.md": "4223a15837e5b3400560be61b43909ea1a5f4958ecfdf89d01424b8a9b54b57c",
+    "plugins/harness-creator/skills/assign-plugin-package-evaluator/prompts/R1-run-pkg-check.md": "5e99541bb28cf5451e3ef2ad5e7f6cfb585987a1955357b104d6d9a86564d44e",
+    "plugins/harness-creator/skills/assign-plugin-package-evaluator/references/evaluator-contract.md": "50a60e459c612de72851892903a1070a1014a5a13acf2f0e65cc3162172073c2",
+    "plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py": "88516515999f8eb57ac99bbd3cbff3fbae59570b3b436a76ad953f8daf6650f9",
+    "plugins/harness-creator/skills/ref-pkg-contract/references/pkg-id-catalog.yaml": "c572096abd562c797a84d2f4ecb81b05fc92d926f0bb56179f3a15507d667c4f",
+    "doc/ClaudeCodeスキルの設計書/36-plugin-package-harness-contract.md": "8a41d4dba99fa81530a4000109148f4b08eb3cdc459eaf78168205eb56d97958"
+  },
+  "conditions": {
+    "C1": "PASS",
+    "C2": "PASS",
+    "C3": "PASS",
+    "C4": "PASS",
+    "C5": "PASS"
+  },
+  "new_findings": [],
+  "reuse": {
+    "phase2_observations": {
+      "logical": 9,
+      "system": 12,
+      "meta": 9
+    },
+    "validation_log": "validation/phase3-worker-final-green.log:199 passed in 2.18s",
+    "parent_report": "23plugin package gate、VENDORED330、feedback lint PASS。評価者による全体再走ではない。"
+  },
+  "history": "independent-review-history/before-authorized-pkg007-scope",
+  "judgments": "eval-log/harness-creator/assign-plugin-package-evaluator/elegant-review/run-20261116-pkg007-zb7q/independent-review-judgments.json",
+  "generated_verdicts": [
+    "eval-log/harness-creator/assign-plugin-package-evaluator/content-review/elegance-verdict.json",
+    "eval-log/harness-creator/assign-plugin-package-evaluator/content-review/rubric-verdict.json"
+  ],
+  "limits": [
+    "他の*_refs/本文由来scriptの実在・実行属性は今回PKG007 PASSの保証外",
+    "behavioral acceptance/live/releaseを本design reviewから推定しない",
+    "全30分析・live試行・全plugin再走は追加しない"
+  ],
+  "notes": "独立評価者 /root/system_analyst（APE実装者とは別）が、今回ユーザー承認の明示script_refs＋既存root検査という限定変更を再評価した。旧reviewは上限到達INCOMPLETEとしてindependent-review-history/before-authorized-pkg007-scopeへ両verdictを原本byteのまま凍結保存した。今回の承認はuser-authorization.jsonのscopeと実行コスト条件に対応し、以前の上限を黙って延長したものではない。今回の限定再評価は1回で終了する。前回の30思考法9+12+9件の観測を再利用したが、30思考分析やlive trialを新たに走らせたとは申告しない。変更hunkとその契約節、check_pkg_007とhelper/YAML解析、関連テスト名・既存199 passedログを確認した。親から報告された23plugin package gate PASSとVENDORED330/feedback lint PASSは補助証拠であり、本評価者が全pluginの再走を行った証拠ではない。C1: scopeがcatalogと36章で一致し、SKILL/R1が実行規則を複製せずcheck_pkg_007を参照する。単発採点・入力エラーexit2・subprocess異常skipも整合。C2: 明示script_refsとroot scriptsが機械検査され、YAML型/重複key/解決先の先勝ち/外部・broken symlink/実体単位集約/属性とI/O失敗が実装・テストで定まる。他の*_refsと本文は今回のPKG007から除外する明示scopeであり、それらの存在・実行属性まで本PASSが保証するとは主張しない。C3: field名evidence/suggested_fix・catalogへの参照・構造化fork入力が契約に一致し、規約採点は機械rubricへ委ねた。C4: PKG009の例外はPKG007の配布内解決を免除しない。helperにはAST機械判定と006の追加意味判断がある。開発時検査と通常起動を分離し、この変更は通常のskill起動へ追加LLM/追加repo走査/検査ループを持ち込まない。旧レビューの適用内6指摘は、scope明文化・機械化・実体単位finding・AST判定・R1再列挙除去により解消。旧対象外のhook/slug指摘には後続実装とテストがあり、007手動追加201参照という前提も解消した。C5: rubricはrender-findings-score.pyが100/80、機械high違反0でPASS生成し、pending BD-004のみ独立に判断した。targetは評価前後ともprint-targetから採取して一致し、実ファイルSHAも一致した。sha_rebindsは作らずgenuine新規生成。"
+}

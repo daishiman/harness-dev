@@ -1,0 +1,1 @@
+PKG-007はcatalogの一文、SKILLの機械／評価者分担、実装のroot直下走査で構成される。「参照される」はSKILLでscript_refsへ具体化。配布内実在は評価者が確認する。import専用とshebangの併存例も現物にある。現段階は観測のみ。

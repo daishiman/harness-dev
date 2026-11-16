@@ -13,26 +13,23 @@ resources:
     topic: run-prompt-creator-7layer が emit する prompt-build-trace.json の Layer 別 coverage 検査
     read_when: Step 2 後に Gate 2 前提を確認するとき
   - file: ../schemas/findings.schema.json
-    topic: evaluator / elegant-review が返す findings 共通形式 (C1-C4 verdict)
-    read_when: Step 3b/4 出力を検証・集約するとき
+    topic: design-evaluate (assign-prompt-design-evaluator) が返す findings 形式 (C1-C4 verdict)
+    read_when: 利用者が診断を選んだ後、Step 4 の出力を検証するとき
   - file: ../schemas/handoff.schema.json
-    topic: Gate 通過時の handoff JSON 共通スキーマ
-    read_when: eval-log/handoff-<step>.json を生成・検証するとき
+    topic: 各 phase の handoff JSON 共通スキーマ
+    read_when: manifest phases[].handoff の path へ handoff を生成・検証するとき
   - file: ../prompts/R1-elicit.md
-    topic: Step 1 ヒアリング委譲プロンプト (R1)
-    read_when: run-prompt-elicit へ渡す context を組み立てるとき
+    topic: Step 1 依頼から brief を推定し run-prompt-elicit を --batch で呼ぶプロンプト (R1)
+    read_when: run-prompt-elicit へ渡す 3 引数を推定するとき
   - file: ../prompts/R2-gate-review.md
-    topic: Gate 1-4 共通 AskUserQuestion テンプレ (R2)
-    read_when: ゲート前にユーザー承認を取るとき
+    topic: Gate 2 (p0-lint) の判定と、提示後の診断選択・改善の深さの質問を handoff に残す (R2)
+    read_when: build・p0-lint・提示・診断選択・design-evaluate・report の handoff を書くとき
   - file: ../prompts/R3-governance-decide.md
-    topic: Step 5 governance 自動承認判定プロンプト (R3。preconditions=solo_operator_mode/stable_frozen は環境前提)
+    topic: Step 5 governance 判定プロンプト (R3。Agent tool の subagent_type=general-purpose で起動した subagent だけが読み、main context は読まない。preconditions=solo_operator_mode/stable_frozen は環境前提)
     read_when: governance 承認条件を機械評価するとき
   - file: governance-params.json
     topic: governance 自動承認しきい値パラメーター
     read_when: governance 承認条件を機械評価するとき
-  - file: ../scripts/evaluate-create-gates.py
-    topic: elegant-review 起動可否 / --fast skip 判定
-    read_when: Step 4 (elegant-review) の起動可否を判定するとき
   - file: ../../run-prompt-creator-7layer/scripts/verify-completeness.py
     topic: Layer 充足検証 (Step 3a P0 lint で実行)
     read_when: p0-lint で生成物の充足度を確認するとき

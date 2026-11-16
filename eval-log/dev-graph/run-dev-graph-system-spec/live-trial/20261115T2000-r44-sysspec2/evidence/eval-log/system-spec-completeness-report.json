@@ -1,0 +1,183 @@
+{
+  "evaluator": {"name": "assign-system-spec-completeness-evaluator", "version": "0.1.0", "context": "fork"},
+  "spec_dir": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/system-spec2/fx/system-spec",
+  "verdict": "PASS",
+  "artifact_snapshot": {"schema_version":"system-spec-artifact-snapshot/v1","artifacts":{"system-spec/00-requirements-definition.md":"22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd","system-spec/auth.md":"2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548","system-spec/backend.md":"c29d7550d1a8190eab992b8cb3c3b5ed0fb1e81f8045012242e755b6726415e3","system-spec/database.md":"953c8eb428bbae121bd3476bf057cd1b019c05b758b803dd56cb36e6344fac3d","system-spec/fetched-references.json":"7b5ab47eee32c0189dbe0bb23bb9bf73740ce91d7630cd39b6dc1de96ef0e2e4","system-spec/frontend.md":"c484d04806221660ed4fbdaef737d009258ba3426fc45f075de0f1a1f7fbe663","system-spec/index.md":"f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2","system-spec/infrastructure.md":"6ffdbecdd8cb2c02c6f12f95d45adb8081f12415c23b2535a2717f2207435c5d","system-spec/maintenance-ops.md":"5e01010b07b37c9adf84e45251c80a0b19567671372684b379ef7ea8a87b8cdd","system-spec/security.md":"39742c55afbb70d166d862520989acdad9699722a67fbc094bb83f312f095546","system-spec/spec-state.json":"09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2","system-spec/ui-ux.md":"f7061be71fe248d19a389dff0e196a0e05145997870afd342d2c7d1647b29444"}},
+  "aspects": {
+    "foundation_trace": {
+      "verdict": "PASS", "score": 92, "auditor": "assign-system-spec-completeness-evaluator", "component": "C05",
+      "summary": "U1-U9 は値で確定し、appr-foundation-v2 (qa-033) の承認を受けている。validate-coverage-matrix --require-foundation は exit 0。全章が serves_goals を持ち、I1-I3 も章へ写像されて dangling は無い。C06 の軸5 でも、qa-foundation-u1〜u9 が利用者一次入力へ逐語で遡れることを確認した。",
+      "evidence": ["validate-coverage-matrix.py --require-foundation exit0", "spec-state.json requirements_foundation confirmed=true approval_ref=appr-foundation-v2", "C06 notes 軸5 (foundation-trace findings 0)"]
+    },
+    "decision_guidance": {
+      "verdict": "PASS", "score": 82, "auditor": "assign-system-spec-completeness-evaluator", "component": "C05",
+      "summary": "D1-D4 はそれぞれ 2 案を持ち、cost_model / free_tier_limits / goal_fit / security_fit / ops / lock_in / 公式 evidence がそろう。推奨には理由・注意点・confidence がある。採択は qa-031 / qa-032 / qa-034 / qa-job-choice-fixture-v3 の user-decision に接地しており、AI 推奨だけで確定したものは無い。ただし章の decisions 表は security_fit を描画していない (medium)。",
+      "evidence": ["spec-state.json decisions[] D1-D4", "00-requirements-definition.md decisions table (security_fit 列 0 件)"]
+    },
+    "matrix_coverage": {
+      "verdict": "PASS", "score": 90, "auditor": "system-spec-matrix-auditor", "component": "C07",
+      "summary": "G-matrix は exit 0 (未収集 0)。48 セルの内訳は確定 8 (各カテゴリ web) と対象外 40 (appr-001 / qa-000)。C07 の AUDIT_VERDICT は PASS で、集約真理値表は整合し、対象外理由も具体的である。C06 sub-input の --hearing 判定は PASS (blocking 0、notes 3、closed 3)。required-info の subgate も exit 0。",
+      "evidence": ["G-matrix exit0", "C07 receipt PASS", "aggregate-completeness.py --hearing eval-log/hearing-audit.json → verdict PASS blocking=[]", "G-knowledge-graph required-info exit0"]
+    },
+    "design_knowledge_reflection": {
+      "verdict": "PASS", "score": 80, "auditor": "assign-system-spec-completeness-evaluator", "component": "C05",
+      "summary": "全章に設計知識の具体的な適用がある。auth: 最小権限 / CSRF / セッション。database: DDD 集約。backend: Clean Architecture / ETag / 冪等性。ui-ux: 情報設計 / WCAG。infrastructure・maintenance-ops: SRE。doctrine anchor が本文に反映され、HIG は非該当である理由を明記している。pointer の存在だけで判定したのではなく、本文の適用内容で判定した。軽微な不整合は low として記録した。",
+      "evidence": ["system-spec/*.md doctrine・適用・判断原則節", "G-knowledge-graph knowledge/doctrine/cross exit0"]
+    },
+    "doc_freshness": {
+      "verdict": "PASS", "score": 95, "auditor": "system-spec-doc-freshness-auditor", "component": "C08",
+      "summary": "G-source-citation は exit 0。C08 は許可された 5 host の公式ページを再取得して突合し、postgres 16.16 / react 19.3 / fastapi 0.163.1 / typescript 7.0 / kubernetes last_updated 2026-10-31 のすべてが現行と一致した。欠落・非公式 host・世代落ち・確認時刻欠落は 0 件で、AUDIT_VERDICT は PASS。",
+      "evidence": ["G-source-citation exit0", "C08 receipt PASS"]
+    },
+    "prompt_quality": {
+      "verdict": "PASS", "score": 88, "auditor": "assign-system-spec-completeness-evaluator", "component": "C05",
+      "summary": "plugins/system-spec-harness/skills/*/prompts/*.md の 18 件すべてで、prompt-creator の verify-completeness.py (L1-L7、goal-seek、l5-contract v2.0.0) と validate-prompt.py (phase=prompt layers=7) が OK。各 prompt は停止条件・上限・判定条件を持つ (62-164 行で実質深度がある)。独立 design findings に high は無い。",
+      "evidence": ["plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py ×18 OK", "validate-prompt.py ×18 OK"]
+    }
+  },
+  "audit_delegations": [
+    {
+      "aspect": "matrix_coverage", "role": "primary", "auditor": "system-spec-matrix-auditor", "component": "C07",
+      "dispatch": {"tool": "Agent", "subagent_type": "system-spec-matrix-auditor", "session_id": "9c9125ce-44dd-41aa-b56c-823227eab2eb", "tool_use_id": "toolu_01B771F9ahEy5jpaCkqCWf5g", "response_sha256": "bd1179c92ee1d1e6243255b3c038f869a203b63f5c5243dcb1938b08d96c779e"},
+      "verdict": "PASS",
+      "evidence": ["validate-coverage-matrix 両モード exit0", "48 セル = 確定 8 + 対象外 40、集約整合"]
+    },
+    {
+      "aspect": "matrix_coverage", "role": "sub_input", "auditor": "system-spec-hearing-auditor", "component": "C06",
+      "dispatch": {"tool": "Agent", "subagent_type": "system-spec-hearing-auditor", "session_id": "9c9125ce-44dd-41aa-b56c-823227eab2eb", "tool_use_id": "toolu_01JmjEz9vec8faFhfayXp9b9", "response_sha256": "24ca67a58a1024d42060b70007750f5499944f5efa2419d3aa1b4e5f65bcba22"},
+      "verdict": "PASS",
+      "evidence": ["eval-log/hearing-audit.json", "aggregate-completeness.py --hearing → PASS blocking=[]"]
+    },
+    {
+      "aspect": "doc_freshness", "role": "primary", "auditor": "system-spec-doc-freshness-auditor", "component": "C08",
+      "dispatch": {"tool": "Agent", "subagent_type": "system-spec-doc-freshness-auditor", "session_id": "9c9125ce-44dd-41aa-b56c-823227eab2eb", "tool_use_id": "toolu_015DeUSsJkuyZLsZGXpjVgqh", "response_sha256": "9a21f872b2a2d6287180d41c177c8ccc33ef84ae0238d95ae2d6b14405f37fed"},
+      "verdict": "PASS",
+      "evidence": ["C13 exit0", "5 target の公式現行版と一致"]
+    }
+  ],
+  "gate_results": [
+{
+  "id": "G-matrix",
+  "name": "validate-coverage-matrix",
+  "conditions": [
+    "matrix_coverage"
+  ],
+  "command": [
+    "/Users/dm/miniconda3/bin/python3",
+    "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/system-spec-harness/scripts/validate-coverage-matrix.py",
+    "--matrix",
+    "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/system-spec2/fx/system-spec/spec-state.json",
+    "--require-complete"
+  ],
+  "exit_code": 0,
+  "stdout": "OK: 収集マトリクス網羅性 (final(未収集0)) を満たす",
+  "stderr": ""
+},
+{
+  "id": "G-source-citation",
+  "name": "validate-source-citation",
+  "conditions": [
+    "doc_freshness"
+  ],
+  "command": [
+    "/Users/dm/miniconda3/bin/python3",
+    "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/system-spec-harness/scripts/validate-source-citation.py",
+    "--targets",
+    "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/system-spec2/fx/system-spec/spec-state.json",
+    "--references",
+    "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/system-spec2/fx/system-spec/fetched-references.json",
+    "--state",
+    "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/system-spec2/fx/system-spec/spec-state.json",
+    "--repo-root",
+    "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/system-spec2/fx"
+  ],
+  "exit_code": 0,
+  "stdout": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす",
+  "stderr": ""
+},
+{
+  "id": "G-knowledge-graph",
+  "name": "validate-knowledge-graph",
+  "conditions": [
+    "design_knowledge_reflection",
+    "matrix_coverage"
+  ],
+  "exit_code": 0,
+  "subgates": [
+    {
+      "profile": "knowledge",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/system-spec-harness/scripts/validate-knowledge-graph.py",
+        "--profile",
+        "knowledge",
+        "--input",
+        "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/knowledge-catalog.json"
+      ],
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "profile": "doctrine",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/system-spec-harness/scripts/validate-knowledge-graph.py",
+        "--profile",
+        "doctrine",
+        "--input",
+        "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/doctrine-anchor-registry.json"
+      ],
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "profile": "required-info",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/system-spec-harness/scripts/validate-knowledge-graph.py",
+        "--profile",
+        "required-info",
+        "--input",
+        "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json"
+      ],
+      "exit_code": 0,
+      "stderr": ""
+    },
+    {
+      "profile": "cross",
+      "command": [
+        "/Users/dm/miniconda3/bin/python3",
+        "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/system-spec-harness/scripts/validate-knowledge-graph.py",
+        "--profile",
+        "cross",
+        "--taxonomy",
+        "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/system-category-taxonomy.json",
+        "--doctrine",
+        "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/system-spec-harness/skills/ref-system-design-knowledge/references/doctrine-anchor-registry.json",
+        "--required-info",
+        "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/system-spec-harness/skills/run-system-spec-elicit/references/required-info-catalog.json"
+      ],
+      "exit_code": 0,
+      "stderr": ""
+    }
+  ]
+}
+  ],
+  "findings": [
+    {"severity": "medium", "bucket": "decision_guidance", "observation": "00-requirements-definition.md の decisions 表が security_fit を描画していない (出現 0 件)。spec-state.json の D1-D4 には security_fit がある。", "suggested_fix": "C03 run-system-spec-compile の decisions 表 render に security_fit 列を追加する。", "evidence": ["system-spec/00-requirements-definition.md", "system-spec/spec-state.json decisions[]"]},
+    {"severity": "medium", "bucket": "matrix_coverage", "observation": "C06 note (未閉): qa-033 は U1-U9 の 9 論点を 1 問の確定確認に束ねている (N4)。primary_ground=false で、approval_ref の根拠にあたる。", "suggested_fix": "C01 は次回の確定確認を U ごとに分ける。", "evidence": ["eval-log/hearing-audit.json"]},
+    {"severity": "medium", "bucket": "matrix_coverage", "observation": "C06 note (未閉): qa-o1-fixture-v3 は定義・検知タイミング・提示先・計測データの 4 論点を 1 問に並べている (N4)。qa_refs (裏付け) にだけあり、主たる接地根拠ではない。", "suggested_fix": "C01 は O1 関連の問を論点ごとに分ける。", "evidence": ["eval-log/hearing-audit.json"]},
+    {"severity": "low", "bucket": "matrix_coverage", "observation": "C06 note (未閉): qa-job-choice-fixture-v3 は選択に加えて運用条件も求めており、軽微な束ねがある (N4)。", "evidence": ["eval-log/hearing-audit.json"]},
+    {"severity": "info", "bucket": "matrix_coverage", "observation": "C06 closed findings 3 件: qa-009→qa-019、qa-037→qa-csrf-written-v7、qa-038→qa-session-written-v7。どれも supersession_valid=true で、active consumer は 0 件。", "evidence": ["eval-log/hearing-audit.json"]},
+    {"severity": "low", "bucket": "matrix_coverage", "observation": "ui-ux×web の qa_refs に、置き換え済みの qa-009 (後継 qa-019) が残っている (C07 note)。", "suggested_fix": "C01 が qa_refs から qa-009 を除去する。"},
+    {"severity": "info", "bucket": "matrix_coverage", "observation": "infrastructure の qa_refs に周辺的な qa-000 が含まれる (C07 note)。"},
+    {"severity": "low", "bucket": "design_knowledge_reflection", "observation": "security 章の適用本文は qa_ref qa-csrf-written-v7 の内容を反映していない (CSRF は auth 章にしか無い)。", "suggested_fix": "security 章から auth の CSRF 方針へ相互参照を置く。"},
+    {"severity": "low", "bucket": "design_knowledge_reflection", "observation": "security 章の章固有理由に、qa-030 に無い『情報漏えい』が含まれる。", "suggested_fix": "qa-030 の回答語彙へ揃えるか、根拠 qa を追加する。"},
+    {"severity": "low", "bucket": "design_knowledge_reflection", "observation": "D4 の追加解釈段落が、database / backend / infrastructure の複数の doctrine concern 行に逐語で重複している。", "suggested_fix": "concern ごとの固有の適用文に置き換える。"},
+    {"severity": "low", "bucket": "design_knowledge_reflection", "observation": "auth / security 章で、書面で与えられた (written-given) 一次 qa の記録経路が dialogue と表示されている。", "suggested_fix": "記録経路を written source-index と表示する。"},
+    {"severity": "info", "bucket": "design_knowledge_reflection", "observation": "written-v7 の qa entry の basis 表記が『利用者が代替案を見たうえで明示選択』になっているが、実体は書面で与えられたもの。C06 は書面の逐語・SHA-256 一致を確認しており、確定の接地には影響しない。"},
+    {"severity": "info", "bucket": "prompt_quality", "observation": "system-spec-harness の 18 prompt すべてで verify-completeness.py と validate-prompt.py が OK。"},
+    {"severity": "info", "bucket": "doc_freshness", "observation": "C08: fastapi / typescript の host は catalog に例示が無く、WebSearch 禁止のため publisher の所有関係を外部検索では裏取りしていない。公式ページ本体を取得でき、記録版と一致した。"}
+  ],
+  "gaps": []
+}

@@ -191,7 +191,7 @@ plugin 名が `harness-creator` (総体) でも、**単体スキルを作る入�
 
 依存は二層に分ける。Harness Creator が plugin を組み立てる順序（component DAG）と、完成後の各 Skill が実行中に消費する順序（runtime profile）は別契約である。出力として `task-graph.json` を作るだけの Skill は `engine:inline` のままでよい。`python3 plugins/harness-creator/scripts/lint-skill-runtime-profiles.py --repo-root .` が `plugins/*/skills/*/SKILL.md` 全件の profile、workflow 依存、委譲先実在、Task Graph 資産の正本一致を fail-closed で検査する。
 
-標準フローは **第1稿の現物 → class別最小guard(parse/open・secret・不可逆・破損) → path/試し方を提示 → 利用者が診断深度を選択 → 選択時だけsemantic評価・有界改善**。`現状で試す`はevaluator 0 / improver 0。今回のように30思考法監査が明示済みな場合は、現物提示後に現在turn限定choiceとして実行できるが、将来の毎draft自動診断へ流用しない。release / exhaustiveは明示選択なしに自動昇格しない。
+標準フローは **第1稿の現物 → class別最小guard(parse/open・secret・不可逆・破損) → path/試し方を提示 → 利用者が現状で試すか診断するかを選択 → 診断時だけsemantic評価 → 所見を見て改善の深さを1回だけ選択 → 選んだ範囲だけ有界改善**。`現状で試す`はevaluator 0 / improver 0。今回のように30思考法監査が明示済みな場合は、現物提示後に現在turn限定choiceとして実行できるが、将来の毎draft自動診断へ流用しない。release / exhaustiveは明示選択なしに自動昇格しない。
 
 **前提**（満たさないと再実行が非決定に落ちる）: cwd = clone した repo root ／ `make native-surfaces` 済（C01 apply→check が PASS）／ `harness-creator` と `plugin-dev-planner` の両方が有効化・信頼済 ／ python3。全コマンドは project-local（unprefixed）で起動する（`<plugin>:` 形式の namespaced prefix は付けない — Claude 経路では本 plugin は `distributable:false` で public marketplace 経由の呼称は存在しない）。
 
@@ -211,9 +211,9 @@ plugin 名が `harness-creator` (総体) でも、**単体スキルを作る入�
      単一 route だけ消費する段階 build / デバッグは --route-id <Cxx> を明示する（escape hatch）。
      分岐正本: commands/capability-build.md。詳細運用正本: references/capability-build-runtime-contract.md の「task-graph route モード」節。
 
-2D. 現物提示と診断深度選択（Step2 が自動的に導くのは提示まで）:
+2D. 現物提示と診断選択（Step2 が自動的に導くのは提示まで）:
      全7 Capabilityを共通gateへ渡し、build-review-launch.pyがclaimをatomic consumeして共通payloadを1件生成。
-     実artifactのpath・hash・開き方を提示し、その後に診断深度を質問。
+     実artifactのpath・hash・開き方を提示し、その後に現状で試すか診断するかだけを質問 (改善の深さは診断所見の提示後に1回だけ聞く)。
      診断選択時のみ Claude Code Task / Codex subagentへのfresh-context、read-only、1 context launchを最大1回認可。
      「現状で試す」は無編集で停止、軽微=critical/high・1周、標準=+目的影響medium・2周、
      詳細=全所見・3周、リリース=全所見改善+繰越し検証。exhaustiveは別確認。
@@ -257,7 +257,7 @@ Step4 だけ入口の命名が他と異なる: command ラッパを持たない 
      → plugins/contract-generator/ の計画一式 + routes[]（例: skill×2 / agent×1 / hook×1）
 2. /capability-build --handoff plugin-plans/contract-generator/handoff-run-plugin-dev-plan.json
      （既定draft。試用できる生成物+最小guardを先に提示）
-   → 現物を確認し診断深度を選ぶ。診断と改善は選択範囲だけ実行
+   → 現物を確認し診断するかを選ぶ。改善の深さは所見を見てから選び、選択範囲だけ実行
 2R. /capability-build --handoff plugin-plans/contract-generator/handoff-run-plugin-dev-plan.json --stage release
      （draft証拠を再利用し、繰越した出荷義務だけを回収）
 2.5 envelope-draft/plugin.json を plugins/contract-generator/.claude-plugin/ へ適用

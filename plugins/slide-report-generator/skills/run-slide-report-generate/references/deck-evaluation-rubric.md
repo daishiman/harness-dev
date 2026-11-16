@@ -1,6 +1,6 @@
 # 生成後評価 rubric（deck-evaluator 手続き知識 SSOT）
 
-> **正本**: このファイルは deck-evaluator から抽出した手続き知識/規範の SSOT。run-slide-report-generate の SKILL.md と agent 本体（agents/deck-evaluator.md）の双方がこれを参照する。生成後評価サブシステムの上位正本（評価次元 Dx/D1〜D5・30種思考法マッピング・4条件の機械判定）は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/post-generation-evaluation.md` を辿る。フック `hooks/hook-postgen-eval.py` も同サブシステムの消費者（consumers≥2）。
+> **正本**: このファイルは deck-evaluator から抽出した手続き知識/規範の SSOT。run-slide-report-generate の SKILL.md と agent 本体（agents/deck-evaluator.md）の双方がこれを参照する。生成後評価サブシステムの上位正本（評価次元 Dx/D1〜D5・30種思考法マッピング・4条件の機械判定）は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/post-generation-evaluation.md` を辿る。フック `hooks/hook-postgen-eval.py` も同サブシステムの消費者（consumers≥2）。
 
 **責務**: mode-aware 生成後評価のドメイン定義（用語集・評価基準・制約カタログ CONST_001-005）と評価 rubric（30種思考法カバレッジ・思考法群と主担当次元・D5評価観点・D1〜D3視覚裏取り・mode 別 rubric 次元 slide/report・判定リファレンス 4条件と改善優先度・評価レポート出力テンプレート）の逐語正本。deck-evaluator（薄化アダプタ）は役割・起動条件・I/O契約に専念し、詳細規範は本 reference を SSOT とする。
 
@@ -26,7 +26,7 @@
 | output_mode 判定 | `slide`（index.html / structure.* 存在）/ `report`（report.html / report-structure.* 存在）。対象ファイルから一意に判定できること |
 | rubric 次元の切替 | slide=視覚崩れ/1スライド1メッセージ/chip/16:9 崩れ、report=可読性/図解適合/情報密度/セクション論理構造。判定した mode の次元のみ適用（CONST_005） |
 | 機械 verdict | PASS（D1〜D4 が静的に合格）/ FAIL（error あり）。本エージェントの入力 |
-| coverage 判定 | `PASS_NO_FINDING`（問題なし）/ `FINDING`（問題発見）/ `ESCALATE`（要エスカレーション） |
+| coverage 判定 | `PASS_NO_FINDING`（問題なし）/ `FINDING`（問題発見）/ `ESCALATE`（自動修正では収束しない見込み。要望の矛盾・仕様外要件など。所見として主 skill へ返し、未達指摘一覧に載せる。利用者には聞かない） |
 | finding 優先度 | P0 即時（error / 要望機能の未実装 / 崩れ）/ P1 要判断（warn / 配置最適化 / 上部インデックス要否）/ P2 将来（info / 軽微な統一） |
 | 4条件最終判定 | 4条件すべて PASS かつ機械 `verdict=PASS` なら合格。いずれか FAIL なら改善へ |
 | dynamic 実行 | `ran`（chromium）/ `skipped(no-chromium)`。動的検証の可否を把握 |
@@ -36,12 +36,12 @@
 - **CONST_001 (30種省略禁止)**: 30種思考法はすべてカバレッジ表に行として記載する。finding が無い思考法も `PASS_NO_FINDING` として記録し省略しない。
   - 目的: 評価観点の抜け漏れを防ぎ、多角性を機械的に保証する。
   - 背景: 一部思考法を省くと特定種類の欠陥（例: if思考での印刷崩れ）を見落とす。全件記録で第三者がカバレッジを検証できる。
-- **CONST_002 (ui-quality-reviewer 重複禁止)**: 視覚崩れの詳細チェック S1〜S26 は本エージェントで再実装せず `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/agents/ui-quality-reviewer.md` を参照する。本エージェントは要望適合・仕様適合・矛盾検出・エレガンスの統合判定に専念する。
+- **CONST_002 (ui-quality-reviewer 重複禁止)**: 視覚崩れの詳細チェック S1〜S26 は本エージェントで再実装せず `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/agents/ui-quality-reviewer.md` を参照する。本エージェントは要望適合・仕様適合・矛盾検出・エレガンスの統合判定に専念する。
   - 目的: 同一チェックの二重実装による基準のずれ・保守コスト増を防ぐ。
-  - 背景: 本エージェントは Phase 3.5 の置き換えではなく上位の最終ゲート。責務分離により各層が単一の正本を持つ。
-- **CONST_003 (最大3周ループ)**: 改善→再評価（`evaluate-deck.js`）のループは最大3周まで。3周で4条件が PASS に収束しなければユーザーにエスカレーションする。
-  - 目的: 無限ループ・過剰修正による消耗を防ぎ、判断をユーザーに戻す。
-  - 背景: 自動修正が収束しないのは要望自体の矛盾や仕様外要件が原因のことが多く、人間の判断が必要。
+  - 背景: 本エージェントは R6 の ① で ui-quality-reviewer（S1〜S26）と並んで所見を返すが、その置き換えではなく上位の統合判定を受け持つ。責務分離により各層が単一の正本を持つ。
+- **CONST_003 (R6 の周回上限)**: 周回の上限は R6 で選んだ深さ（0〜3 周・R6 全体で共有）。上限で PASS に届かなければ未達指摘一覧に載せて主 skill へ返す。周回の途中で利用者に聞かない。
+  - 目的: 無限ループ・過剰修正による消耗を防ぎ、収束しなかった所見を生成レポートの未達指摘一覧として利用者に見せる。
+  - 背景: 自動修正が収束しないのは要望自体の矛盾や仕様外要件が原因のことが多い。その判断は周回の途中で聞かず、R6 の後に未達指摘一覧を見た利用者に委ねる（深さは R6 で 1 回だけ聞いてあるので、それが適用の範囲と承認にあたる）。
 - **CONST_004 (要望照合による昇降格)**: 機械評価の warn（例 `nav.topIndex`）は、元の要望と照合して「要望にあるのに無い＝error級へ昇格」「要望に無く任意＝info へ降格」する。
   - 目的: 機械の一律判定を要望基準で補正し、過不足ない優先度を付ける。
   - 背景: 機械は要望を知らない。同じ warn でも要望次第で致命度が変わるため、D5 で再評価する必要がある。
@@ -53,7 +53,7 @@
 
 ## 30種思考法カバレッジ（出力必須・全30種）
 
-評価レポートには以下の30種すべてを含むカバレッジ表を出す。finding が無い思考法も `coverage` に `PASS_NO_FINDING` として記録し省略しない（CONST_001）。詳細マッピングは `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/post-generation-evaluation.md` §30種思考法マッピングを正本とする。
+評価レポートには以下の30種すべてを含むカバレッジ表を出す。finding が無い思考法も `coverage` に `PASS_NO_FINDING` として記録し省略しない（CONST_001）。詳細マッピングは `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/post-generation-evaluation.md` §30種思考法マッピングを正本とする。
 
 | カテゴリ | 思考法 |
 |---------|--------|
@@ -84,11 +84,11 @@
 - 要望↔構成の矛盾: ユーザー要望の各点が structure / index.html に矛盾なく反映されているか。
 - 仕組みの反映: 要望で指定された仕組み（例: 両サイド左右送り・上部インデックス・ページネーション・特定の構成順）が実際に実装されているか。機械評価で `nav.topIndex` warn 等が出ていれば、要望と照合し「要望にあるのに無い＝error級」「要望に無く任意＝info」へ昇格/降格する（CONST_004）。
 - 構成順の意図適合: 目的→背景→手段→結論 等の意図した順序か（背景→質問の順序など）。
-- 読者フック（入口ホリゾンタル）: 入口（slide=タイトルスライド・冒頭キーメッセージ / report=タイトル・throughLine・冒頭要約）が、想定読者・聴衆の範囲内で共有される課題と「得たい変化（Before→After・根拠があれば数字）」を先に渡しているか。入口が書き手・発表者の資格/専門の自己紹介から始まっていないか（自己紹介スライドの存在自体は FINDING にせず、入口の主役化のみ FINDING とする）。各主要セクションに自分へ移す橋（兆候・問い・選択肢・次の行動）があるか。本論の深さ（確認済みの数字・手順・失敗・適用条件・限界）が入口の広さの代償に薄まっていないか。tech-doc・社内定型・監査/契約/仕様の正式名称や検索語は維持し、subtitle/keyMessage/summary で読者価値を補えていれば FINDING にしない。素材にない数字・実績を作った入口は FINDING。正本: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-narrative-logic.md` §7（slide=CONST_008 / report=RCONST_007）。
+- 読者フック（入口ホリゾンタル）: 入口（slide=タイトルスライド・冒頭キーメッセージ / report=タイトル・throughLine・冒頭要約）が、想定読者・聴衆の範囲内で共有される課題と「得たい変化（Before→After・根拠があれば数字）」を先に渡しているか。入口が書き手・発表者の資格/専門の自己紹介から始まっていないか（自己紹介スライドの存在自体は FINDING にせず、入口の主役化のみ FINDING とする）。各主要セクションに自分へ移す橋（兆候・問い・選択肢・次の行動）があるか。本論の深さ（確認済みの数字・手順・失敗・適用条件・限界）が入口の広さの代償に薄まっていないか。tech-doc・社内定型・監査/契約/仕様の正式名称や検索語は維持し、subtitle/keyMessage/summary で読者価値を補えていれば FINDING にしない。素材にない数字・実績を作った入口は FINDING。正本: `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/report-narrative-logic.md` §7（slide=CONST_008 / report=RCONST_007）。
 
 ## D1〜D3（機械findingの視覚的裏取り）
 
-- evaluation-report.json の D1〜D3 findingを、必要に応じスクリーンショットで裏取りする（slide=`node "${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/verify-slides.js" <index.html> <out>` / report=`… <report.html> <out>` でスクショ撮影 → 目視。chromium要）。
+- evaluation-report.json の D1〜D3 findingを、必要に応じスクリーンショットで裏取りする（slide=`node "${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/verify-slides.js" <index.html> <out>` / report=`… <report.html> <out>` でスクショ撮影 → 目視。chromium要）。
 - 「両サイドの左右送り」配置・「ページネーションの位置」・「上部インデックスの位置」は機械では存在のみ判定。配置の妥当性は本エージェントが視覚評価する。
 
 ### 図の可読性と関係の一致（両モード共通・機械findingが 1 件も無くても必ず見る）
@@ -102,7 +102,7 @@
 
 **この 4 点はどのゲートも検出しない。**幾何も語彙も契約どおりなので鳴らない。実測でも、`validate-structure.js` / `validate-slide-layout.js` / `validate-svg-diagram.py` / `validate-diagram-information.py` / `evaluate-deck.js` が全て error 0 の状態で、矢印が逆順を指す図と、順序の無い集合を手順として描いた図が同時に残っていた（どちらも目視で発見・2026-08-14）。**機械 finding が 0 件であることを、この節を省略してよい理由にしない。**
 
-実測された症状と型の対応は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` §10「描画してみないと分からない食い違い」が正本。ここへ症状表を写さない。
+実測された症状と型の対応は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/diagram-type-crosswalk.md` §10「描画してみないと分からない食い違い」が正本。ここへ症状表を写さない。
 
 ## mode 別 rubric 次元（CONST_005・30種思考法とは別軸で必ず評価）
 
@@ -132,7 +132,7 @@
 
 ## 判定リファレンス（4条件と改善優先度）
 
-4条件の最終判定は機械レポートの `conditions` を起点に、D5 を加味して判定する（4条件すべて PASS かつ機械 `verdict=PASS` なら合格。いずれか FAIL なら改善へ）。改善指示は finding を KJ法でグルーピングし why思考で根本原因へ遡って優先度を付け、実装は `harness-creator:elegant-improvement-executor` 相当 or `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/agents/slide-modifier.md` に委譲する（修正後は `evaluate-deck.js` を再実行して再評価。ループは最大3周・CONST_003）。
+4条件の最終判定は機械レポートの `conditions` を起点に、D5 を加味して判定する（4条件すべて PASS かつ機械 `verdict=PASS` なら合格。いずれか FAIL なら改善へ）。改善指示は finding を KJ法でグルーピングし why思考で根本原因へ遡って優先度を付け、実装は主 skill が所見の宛先ごとに振り分ける（レイアウト崩れは layout-optimizer、それ以外の slide HTML/CSS は R3 の生成担当、report は report-composer。run-slide-report-modify では slide-report-modifier）。修正後は `evaluate-deck.js` を再実行して再評価する。周回は R6 で選んだ深さまで（0〜3 周・R6 全体で 1 つを共有。CONST_003）。1 周の順番は SKILL.md「R4–R6」節の「R6 の 1 周の順番 (正本)」に従う。
 
 | 条件 | 定義 | 不合格の例 |
 |------|------|-----------|
@@ -143,8 +143,8 @@
 
 | 優先度 | 基準 | 対応 |
 |--------|------|------|
-| P0 即時 | error / 要望機能の未実装 / 崩れ | 即修正（slide-modifier or 直接Edit） |
-| P1 要判断 | warn / 配置の最適化 / 上部インデックスの要否 | ユーザー確認の上で対応 |
+| P0 即時 | error / 要望機能の未実装 / 崩れ | 選んだ深さが findings-only でなければ最初の周で直す（主 skill が宛先ごとに振り分ける）。findings-only では未達指摘一覧に載せる |
+| P1 要判断 | warn / 配置の最適化 / 上部インデックスの要否 | 主 skill が R6 の所見の提示で P1 と分かる形で載せ、深さの質問（1 回だけ）で選ばれた範囲で対応する（周回中に別に聞かない） |
 | P2 将来 | info / 軽微な統一 | 記録のみ |
 
 ## 出力テンプレート（評価レポート）

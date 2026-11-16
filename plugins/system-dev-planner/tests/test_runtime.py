@@ -443,6 +443,391 @@ class RemoteParsingTests(unittest.TestCase):
         self.assertIsNone(C09._parse_github_remote("ssh://git@github.com.evil/owner/repo.git"))
 
 
+def _c09_cli(args: list[str], root: Path) -> tuple[int, str, str]:
+    """C09 の CLI (main) を host 宣言つきで動かし、(exit, stdout, stderr) を返す。"""
+    out, err = io.StringIO(), io.StringIO()
+    with mock.patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(root)}), \
+            contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        code = C09.main(args)
+    return code, out.getvalue(), err.getvalue()
+
+
+def _feature_context(root: Path) -> dict:
+    (root / "architecture" / "a.md").write_text("# A\n", encoding="utf-8")
+    return {
+        "graph_node_id": "F1", "artifact_kind": "feature", "purpose": "purpose", "goal": "goal",
+        "scope_in": ["in"], "scope_out": ["out"], "acceptance": ["accepted"],
+        "architecture_refs": ["architecture/a.md"], "updated_at": "2026-11-14T00:00:00Z",
+    }
+
+
+class ResolverReviewRegressionTests(unittest.TestCase):
+    """独立レビュー (FAIL 79) の指摘ごとの回帰。exit は 0=OK / 1=usage or IO / 2=policy のまま。"""
+
+    def setUp(self):
+        self._td = tempfile.TemporaryDirectory()
+        self.root = Path(self._td.name).resolve()
+        make_repo(self.root)
+        self.config_path = self.root / ".dev-graph" / "config.json"
+        self.config = json.loads(self.config_path.read_text(encoding="utf-8"))
+
+    def tearDown(self):
+        self._td.cleanup()
+
+    def cli(self, *extra: str) -> tuple[int, str, str]:
+        return _c09_cli(["--repo-root", str(self.root), *extra], self.root)
+
+    # [中] 非 UTF-8 の config / feature context は traceback にせず IO error (exit 1)
+    def test_non_utf8_config_is_io_error_exit_one(self):
+        self.config_path.write_bytes(b'{"a":"\xff"}')
+        code, _, err = self.cli()
+        self.assertEqual(code, 1, err)
+        self.assertIn("UnicodeDecodeError", err)
+
+    def test_non_utf8_feature_context_is_io_error_exit_one(self):
+        (self.root / "fc.json").write_bytes(b'{"graph_node_id":"\xff"}')
+        code, _, err = self.cli("--feature-id", "F1", "--feature-context", "fc.json")
+        self.assertEqual(code, 1, err)
+        self.assertIn("feature context を読めない", err)
+
+    # [中] object でない config は AttributeError の traceback ではなく policy (exit 2)
+    def test_non_object_config_is_policy_exit_two(self):
+        self.config_path.write_text("[]", encoding="utf-8")
+        code, _, err = self.cli()
+        self.assertEqual(code, 2, err)
+        self.assertIn("JSON object", err)
+
+    # [低] 使い方の誤りは宣言どおり 1 (policy の 2 と重ねない)
+    def test_unknown_option_is_usage_exit_one(self):
+        code, _, err = self.cli("--bogus")
+        self.assertEqual(code, 1, err)
+        self.assertIn("--bogus", err)
+        with self.assertRaises(C09.UsageError):
+            C09.build_context(["--bogus"], {"CLAUDE_PROJECT_DIR": str(self.root)})
+
+    def test_help_still_exits_zero(self):
+        with self.assertRaises(SystemExit) as info, contextlib.redirect_stdout(io.StringIO()):
+            C09.build_context(["--help"], {})
+        self.assertEqual(info.exception.code, 0)
+
+    # [低] section の値は文字列だけ (["a","b"] や null を「['a', 'b']」「None」という path にしない)
+    def test_non_string_section_values_are_policy_exit_two(self):
+        for bad in (["a", "b"], None, 3):
+            with self.subTest(value=bad):
+                config = dict(self.config, content_roots={"g3": bad})
+                dump(self.config_path, config)
+                code, out, err = self.cli()
+                self.assertEqual(code, 2, err)
+                self.assertIn("config.content_roots.g3", err)
+                self.assertEqual(out, "")
+
+    # [低] 途中の壊れた symlink も見逃さない
+    def test_intermediate_broken_symlink_to_outside_is_rejected(self):
+        with tempfile.TemporaryDirectory() as other:
+            (self.root / "blink").symlink_to(Path(other).resolve() / "gone")
+            code, _, err = self.cli("--path", "blink/sub")
+            self.assertEqual(code, 2, err)
+            self.assertIn("containment", err)
+            with self.assertRaises(C09.PolicyError):
+                C09.guard_relative_path(self.root, "blink/sub")
+
+    def test_intermediate_broken_symlink_inside_repo_is_diagnosed(self):
+        (self.root / "blink").symlink_to(self.root / "missing")
+        code, out, err = self.cli("--path", "blink/sub")
+        self.assertEqual(code, 2, err)
+        diag = json.loads(out)["diagnostics"]
+        self.assertEqual(diag, [{
+            "kind": "broken-content-symlink", "path": "blink/sub",
+            "detail": "symlink が解決先を失っている (broken/moved)。C09 起動後の検査で拒否対象",
+            "broken_component": "blink",
+        }])
+
+    def test_leaf_broken_symlink_diagnostic_is_unchanged(self):
+        (self.root / "leaf").symlink_to(self.root / "missing")
+        code, out, _ = self.cli("--path", "leaf")
+        self.assertEqual(code, 2)
+        self.assertEqual(json.loads(out)["diagnostics"], [{
+            "kind": "broken-content-symlink", "path": "leaf",
+            "detail": "symlink が解決先を失っている (broken/moved)。C09 起動後の検査で拒否対象",
+        }])
+
+    def test_uncreated_path_under_real_dirs_has_no_diagnostic(self):
+        code, out, err = self.cli("--path", "docs/new/deep.md")
+        self.assertEqual(code, 0, err)
+        self.assertEqual(json.loads(out)["checked_path"]["absolute"], str(self.root / "docs/new/deep.md"))
+
+    # [低] 「a:b」は POSIX の正しい相対名。drive つきの絶対 path だけを拒否する (schema と同じ)
+    def test_colon_in_relative_name_is_accepted_but_drive_paths_are_rejected(self):
+        self.assertEqual(C09.guard_relative_path(self.root, "a:b"), self.root / "a:b")
+        code, _, err = self.cli("--path", "a:b")
+        self.assertEqual(code, 0, err)
+        for bad in ("C:/x", "C:\\x", "c:/x"):
+            with self.subTest(path=bad), self.assertRaises(C09.PolicyError):
+                C09.guard_relative_path(self.root, bad)
+
+    # [低] feature context は一度だけ読み、検査した bytes の sha256 を返す (TOCTOU)
+    def test_feature_context_sha_is_of_the_bytes_that_were_validated(self):
+        validated = json.dumps(_feature_context(self.root)).encode("utf-8")
+        target = self.root / "fc.json"
+        target.write_bytes(validated)
+        real = {"read_bytes": Path.read_bytes, "read_text": Path.read_text}
+        reads: list[str] = []
+
+        def reader(kind):
+            def read(path, *args, **kwargs):
+                if path != target:
+                    return real[kind](path, *args, **kwargs)
+                reads.append(kind)
+                # 最初の読みの後で誰かが書き換えた、を再現する (2 回目以降は別の中身)
+                data = validated if len(reads) == 1 else b'{"swapped": true}'
+                return data if kind == "read_bytes" else data.decode("utf-8")
+            return read
+
+        with mock.patch.object(Path, "read_bytes", reader("read_bytes")), \
+                mock.patch.object(Path, "read_text", reader("read_text")):
+            context = C09.build_context(
+                ["--repo-root", str(self.root), "--feature-id", "F1", "--feature-context", "fc.json"],
+                {"CLAUDE_PROJECT_DIR": str(self.root)},
+            )
+        self.assertEqual(reads, ["read_bytes"])
+        self.assertEqual(context["feature_context"]["sha256"], hashlib.sha256(validated).hexdigest())
+
+
+class ResolverLeafSymlinkAndInputTests(unittest.TestCase):
+    """harness-r3g の回帰。先の無い葉の symlink は in-process でも realpath で確かめ、入力の端も断る。"""
+
+    DEEP_JSON = "[" * 200000 + "]" * 200000
+
+    def setUp(self):
+        self._td = tempfile.TemporaryDirectory()
+        base = Path(self._td.name).resolve()
+        self.root = base / "repo"
+        self.outside = base / "outside"
+        self.root.mkdir()
+        self.outside.mkdir()
+        make_repo(self.root)
+        self.config_path = self.root / ".dev-graph" / "config.json"
+
+    def tearDown(self):
+        self._td.cleanup()
+
+    def cli(self, *extra: str) -> tuple[int, str, str]:
+        return _c09_cli(["--repo-root", str(self.root), *extra], self.root)
+
+    # [中] 葉が先の無い symlink で、その先が repo の外なら、呼ぶ側に例外を返す (CLI の診断に頼らない)
+    def test_dangling_leaf_symlink_to_outside_is_rejected_in_process(self):
+        (self.root / "docs" / "dl2").symlink_to(self.outside / "escaped2.txt")
+        with self.assertRaises(C09.PolicyError) as info:
+            C09.guard_relative_path(self.root, "docs/dl2")
+        self.assertIn("containment", str(info.exception))
+        code, _, err = self.cli("--path", "docs/dl2")
+        self.assertEqual(code, 2, err)
+        self.assertFalse((self.outside / "escaped2.txt").exists())
+
+    def test_dangling_leaf_symlink_inside_repo_still_passes_in_process(self):
+        (self.root / "docs" / "dl3").symlink_to(self.root / "docs" / "later.md")
+        self.assertEqual(C09.guard_relative_path(self.root, "docs/dl3"), self.root / "docs" / "later.md")
+        code, out, _ = self.cli("--path", "docs/dl3")
+        self.assertEqual(code, 2)  # CLI は今までどおり broken-content-symlink の診断で止める
+        self.assertEqual([d["kind"] for d in json.loads(out)["diagnostics"]], ["broken-content-symlink"])
+
+    # [低] (a) 深い入れ子の JSON は、ほかの壊れた JSON と同じく読めない入力 (exit 1) にする
+    def test_deeply_nested_json_is_unreadable_input_not_a_traceback(self):
+        self.config_path.write_text(self.DEEP_JSON, encoding="utf-8")
+        code, _, err = self.cli()
+        self.assertEqual(code, 1, err)
+        self.assertIn("RecursionError", err)
+        make_repo(self.root)
+        (self.root / "fc.json").write_text(self.DEEP_JSON, encoding="utf-8")
+        code, _, err = self.cli("--feature-id", "F1", "--feature-context", "fc.json")
+        self.assertEqual(code, 1, err)
+        self.assertIn("feature context を読めない", err)
+
+    # [低] (b) 空の --path は飛ばさず断る
+    def test_empty_extra_path_is_refused(self):
+        code, out, err = self.cli("--path", "")
+        self.assertNotEqual(code, 0, out)
+        self.assertIn("空の path", err)
+
+    # [低] (c) 引数の組は、root・config・section より先に確かめる
+    def test_feature_argument_pair_is_checked_before_the_root(self):
+        missing_root = str(self.root / "no-such-root")
+        with self.assertRaises(C09.UsageError) as info:
+            C09.build_context(["--repo-root", missing_root, "--feature-id", "F1"], {})
+        self.assertIn("同時指定必須", str(info.exception))
+
+    # [低] (d) 明示した root は「git や marker から拾った」とは書かない
+    def test_explicit_root_is_not_reported_as_git_or_marker(self):
+        for arg, env in ((str(self.root), {}), (None, {"SYSTEM_DEV_PROJECT_ROOT": str(self.root)})):
+            with self.subTest(arg=arg, env=env):
+                _, source, evidence = C09.resolve_repo_root(arg, env)
+                self.assertNotEqual(evidence["host_boundary_match"], "undeclared-git-or-marker-accepted")
+                self.assertEqual(evidence["host_boundary_match"], "undeclared-explicit-root-accepted", source)
+        with mock.patch.object(C09, "_git", return_value=str(self.root)):
+            _, source, evidence = C09.resolve_repo_root(None, {})
+        self.assertEqual((source, evidence["host_boundary_match"]),
+                         ("git-toplevel", "undeclared-git-or-marker-accepted"))
+
+    # 再レビューの [低] 2 件: 空の値は黙って既定に倒さず、使い方の誤り (exit 1) にする
+    def test_empty_feature_pair_is_a_usage_error(self):
+        code, out, err = self.cli("--feature-id", "", "--feature-context", "")
+        self.assertEqual(code, 1, out)
+        self.assertIn("空の値", err)
+
+    def test_empty_repo_root_does_not_fall_back_to_other_candidates(self):
+        with self.assertRaises(C09.UsageError):
+            C09.resolve_repo_root("", {"SYSTEM_DEV_PROJECT_ROOT": str(self.root)})
+        with mock.patch.object(C09, "_git", return_value=str(self.root)):
+            with self.assertRaises(C09.UsageError):
+                C09.resolve_repo_root("", {})
+        code, out, err = _c09_cli(["--repo-root", ""], self.root)
+        self.assertEqual(code, 1, out)
+        self.assertIn("--repo-root", err)
+
+
+class ResolverIoAndArgumentOrderTests(unittest.TestCase):
+    """coverage 再レビュー (FAIL 74) の回帰。traceback を出さず、引数だけで決まる誤りは repo の状態に依らない。"""
+
+    LONG = "a" * 300  # NAME_MAX (255) を超える 1 component。stat は ENAMETOOLONG になる
+
+    def setUp(self):
+        self._td = tempfile.TemporaryDirectory()
+        self.root = Path(self._td.name).resolve()
+        make_repo(self.root)
+        self.config_path = self.root / ".dev-graph" / "config.json"
+
+    def tearDown(self):
+        self._td.cleanup()
+
+    def cli(self, *extra: str) -> tuple[int, str, str]:
+        return _c09_cli(["--repo-root", str(self.root), *extra], self.root)
+
+    # 指摘 1: stat できない path (ENAMETOOLONG・EACCES) は IO error (exit 1) で、どの path かを名指す
+    def test_unstatable_paths_are_io_errors_not_tracebacks(self):
+        (self.root / "fc.json").write_text("{}", encoding="utf-8")
+        cases = {
+            "repo root": ["--repo-root", str(self.root / self.LONG)],
+            "repo-local config": ["--repo-root", str(self.root), "--config", self.LONG],
+            "content path": ["--repo-root", str(self.root), "--path", self.LONG],
+            "feature context": ["--repo-root", str(self.root), "--feature-id", "F1", "--feature-context", self.LONG],
+        }
+        for what, argv in cases.items():
+            with self.subTest(what=what):
+                code, out, err = _c09_cli(argv, self.root)
+                self.assertEqual(code, 1, err)
+                self.assertIn(f"{what} を確かめられない", err)
+                self.assertEqual(out, "")
+
+    def test_permission_denied_while_diagnosing_is_an_io_error(self):
+        real = os.lstat
+
+        def denied(path, *args, **kwargs):
+            if os.fspath(path).endswith("locked"):
+                raise PermissionError(13, "Permission denied", os.fspath(path))
+            return real(path, *args, **kwargs)
+
+        (self.root / "docs" / "locked").symlink_to(self.root / "missing")
+        with mock.patch.object(C09.os, "lstat", denied):
+            code, _, err = self.cli("--path", "docs/locked")
+        self.assertEqual(code, 1, err)
+        self.assertIn("content path を確かめられない", err)
+        self.assertIn("PermissionError", err)
+
+    # 指摘 2: UTF-8 でない git の出力は、git が無いとき (None) と同じにせず IO error で止める
+    def test_non_utf8_git_output_is_an_io_error_not_a_silent_fallback(self):
+        bad = UnicodeDecodeError("utf-8", b"git@github.com:acme/fix\xffture.git", 23, 24, "invalid start byte")
+        with mock.patch.object(C09.subprocess, "run", side_effect=bad):
+            with self.assertRaises(C09.UsageError) as info:
+                C09._git(self.root, "remote", "get-url", "origin")
+            self.assertIn("UTF-8 でない", str(info.exception))
+            code, out, err = self.cli()
+        self.assertEqual(code, 1, err)  # fingerprint に倒れた repository_id 不一致 (exit 2) ではない
+        self.assertIn("git remote get-url origin の出力が UTF-8 でない", err)
+        self.assertEqual(out, "")
+
+    # 指摘 3: 4300 桁を超える int の JSON は、ほかの壊れた JSON と同じく読めない入力 (exit 1)
+    def test_oversized_int_json_is_unreadable_input(self):
+        if not hasattr(sys, "get_int_max_str_digits"):
+            self.skipTest("この Python には int の桁の上限が無い")
+        huge = "9" * (sys.get_int_max_str_digits() + 700)
+        self.config_path.write_text('{"repository_id": ' + huge + "}", encoding="utf-8")
+        code, _, err = self.cli()
+        self.assertEqual(code, 1, err)
+        self.assertIn("config を読めない", err)
+        make_repo(self.root)
+        (self.root / "fc.json").write_text('{"graph_node_id": ' + huge + "}", encoding="utf-8")
+        code, _, err = self.cli("--feature-id", "F1", "--feature-context", "fc.json")
+        self.assertEqual(code, 1, err)
+        self.assertIn("feature context を読めない", err)
+
+    # 指摘 5 (M1): 片方だけ空でも、組の片側を空として名指して断る
+    def test_one_sided_empty_feature_value_is_named(self):
+        (self.root / "fc.json").write_text("{}", encoding="utf-8")
+        for argv, flag in ((["--feature-id", "", "--feature-context", "fc.json"], "--feature-id"),
+                           (["--feature-id", "F1", "--feature-context", ""], "--feature-context")):
+            with self.subTest(flag=flag):
+                code, _, err = self.cli(*argv)
+                self.assertEqual(code, 1, err)
+                self.assertIn(f"{flag} に空の値は渡せない", err)
+
+    # 指摘 5 (M2): 空の値の検査は root と config より先 (root が無くても、config が壊れていても同じ答え)
+    def test_empty_feature_value_is_checked_before_root_and_config(self):
+        argv = ["--feature-id", "", "--feature-context", "fc.json"]
+        with self.assertRaises(C09.UsageError) as info:
+            C09.build_context(["--repo-root", str(self.root / "no-such-root"), *argv], {})
+        self.assertIn("--feature-id に空の値は渡せない", str(info.exception))
+        self.config_path.write_text("[]", encoding="utf-8")
+        code, _, err = self.cli(*argv)
+        self.assertEqual(code, 1, err)
+        self.assertIn("--feature-id に空の値は渡せない", err)
+
+    # 指摘 6: path の字面の誤りは、root・config の状態に依らず同じ exit と理由になる
+    def test_path_literal_errors_do_not_depend_on_repo_state(self):
+        reasons = {"": "空の path", "/abs": "absolute path", "../x": ".. traversal", "C:/x": "absolute path"}
+
+        def states():
+            yield "valid", str(self.root)
+            self.config_path.write_text("[]", encoding="utf-8")
+            yield "config-not-object", str(self.root)
+            self.config_path.unlink()
+            yield "config-missing", str(self.root)
+            yield "root-missing", str(self.root / "no-such-root")
+
+        for flag in ("--path", "--config", "--feature-context"):
+            for bad, reason in reasons.items():
+                if flag == "--feature-context" and bad == "":
+                    continue  # 空の --feature-context は使い方の誤り (exit 1)。上の test で見る
+                extra = ["--feature-id", "F1"] if flag == "--feature-context" else []
+                make_repo(self.root)
+                for state, root in states():
+                    with self.subTest(flag=flag, value=bad, state=state):
+                        with self.assertRaises(C09.PolicyError) as info:
+                            C09.build_context(["--repo-root", root, flag, bad, *extra], {})
+                        self.assertIn(reason, str(info.exception))
+
+    # 指摘 8: updated_at は RFC 3339 の date-time だけ (fromisoformat が通す別の形は断る)
+    def test_updated_at_must_be_rfc3339_date_time(self):
+        def run(updated_at):
+            context = dict(_feature_context(self.root), updated_at=updated_at)
+            (self.root / "fc.json").write_text(json.dumps(context), encoding="utf-8")
+            return self.cli("--feature-id", "F1", "--feature-context", "fc.json")
+
+        for good in ("2026-11-14T00:00:00Z", "2026-11-14t09:00:00.1z", "2026-11-14T09:00:00.123456789+09:00",
+                     "2026-11-14T23:59:59-23:59"):
+            with self.subTest(good=good):
+                code, out, err = run(good)
+                self.assertEqual(code, 0, err)
+                self.assertEqual(json.loads(out)["feature_context"]["graph_node_id"], "F1")
+        for bad in ("2026-11-14T00:00:00\x00Z", "2026-11-14T00+00:00", "2026-W46-6T00:00:00Z",
+                    "20261114T000000Z", "2026-11-14T00:00:00", "2026-11-14 00:00:00Z",
+                    "２０２６-11-14T00:00:00Z", "2026-13-01T00:00:00Z", "2026-11-14T24:00:00Z",
+                    "2026-11-14T00:00:00+24:00", "2026-11-14T00:00:00+09:60", 20261114):
+            with self.subTest(bad=bad):
+                code, _, err = run(bad)
+                self.assertEqual(code, 2, err)
+                self.assertIn("updated_at は timezone 付き RFC3339 必須", err)
+
+
 class SchemaValidationTests(unittest.TestCase):
     def test_required_const_pattern_and_additional_properties(self):
         schema = VALIDATOR._load_schema("feature-execution-package.schema.json")

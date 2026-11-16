@@ -52,7 +52,7 @@ responsibility_id: R6-audit-hearing
 ### 2.2 ドメインルール (検出条件)
 - **検出条件は SSOT に従う**: 各軸の検出条件、置き換え済みの問 (supersession) の扱い、重大度の付け方は `../skills/run-system-spec-elicit/prompts/R6-audit-hearing.md` Layer 2 が正本。本ファイルに条件の要約を置かない (要約が SSOT とずれると、監査のたびに差分を明示する手間が生じ、ずれた側で判定される)。
 - **誘導質問 (軸 2) は N1-N4 で判定する**: 推奨の印・片側だけの不利な点・前提の埋め込みと決めない道の欠如・多論点の束ね。決定を求めない開いた問が束ねに当たるかは `../skills/run-system-spec-elicit/references/neutral-question-criteria.md` の「N4 と開いた問」で判定する。推奨を提示したこと自体 (推奨が問の文面の外にあり `provenance` に記録されている) は検出しない。
-- **置き換え済みの問は判定の対象から外す**: `superseded_by` を持つ qa は、置き換えの有効性 (a) 置き換え先が中立 (b) 同じ論点 (c) 利用者の回答あり、だけを照合する。有効なら「閉じた検出」として `supersession_valid: true` で報告に残し、無効なら通常の検出として重大度どおりに報告する。置き換え済み (retired) の qa を active consumer (確定セルの `qa_ref`、または `requirements_foundation.effective_source_refs` の `qa_ref`) がまだ参照していれば、閉じた検出にせず軸 4 または軸 5 の通常の検出とする。
+- **置き換え済みの問は判定の対象から外す**: `superseded_by` を持つ qa は、置き換えの有効性 (a) 置き換え先が中立 (b) 同じ論点 (c) 利用者の回答あり、だけを照合する。有効なら「閉じた検出」として `supersession_valid: true` で報告に残し、無効なら通常の検出として重大度どおりに報告する。置き換え済み (retired) の qa を active consumer (確定セルの `qa_ref`、または `requirements_foundation.effective_source_refs` の `qa_ref`) がまだ参照していれば、閉じた検出にせず軸 4 または軸 5 の通常の検出とする。確定セルの裏付け (`qa_refs`) は active consumer に数えない (境界の正本は SSOT の「active consumer」)。
 - **対象範囲外の非干渉**: マトリクスの対象外理由の妥当性 (C07)、ドキュメント鮮度 (C08)、最終完了ゲート (C05) には踏み込まない。境界に触れる場合は検出でなく「他 auditor の担当」として明示する。
 
 ### 2.3 入力契約
@@ -112,7 +112,7 @@ responsibility_id: R6-audit-hearing
 - [ ] 未収集セルが残るのに `next_question=null` かつ未完了で停止している聞き漏れを検出した
 - [ ] 置き換え済みでない `qa_log[].question` を N1-N4 で評価し誘導質問を検出した
 - [ ] `superseded_by` を持つ qa の全てで置き換えの有効性 (a)(b)(c) を照合し、有効なら閉じた検出 (`supersession_valid: true`)、無効なら通常の検出として報告した
-- [ ] 置き換え済み (retired) の qa を active consumer (確定セルの `qa_ref` / `effective_source_refs`) が参照していないことを確認し、参照があれば閉じた検出にしなかった
+- [ ] 置き換え済み (retired) の qa を active consumer (確定セルの `qa_ref` / `effective_source_refs`) が参照していないことを確認し、参照があれば閉じた検出にしなかった (裏付けの `qa_refs` からの参照は数えなかった)
 - [ ] 未収集セルがあるのに `complete=true`、または `max_loops` の実値 (`hearing_progress.max_loops`) 到達で状態未保存・resume 不能の早期停止を検出した (`max_loops` が無い state では上限到達を推測せず判定不能と明示した)
 - [ ] `state=確定` セルの `qa_ref` が `qa_log[].id` に実在し当該 Q&A へ遡れることを確認し、欠落/dangling を検出した
 - [ ] `requirements_foundation.confirmed=true` なら schema 1.1 は U1-U9 の `effective_source_refs`、schema 1.0 だけ canonical `qa-foundation-u1`〜`u9` から利用者の対話回答または書面要件へ遡れること・`approval_ref` の実在・U1/U2/U3 が値であることを照合し、書面は `source.section` の逐語原文と digest を確認した (軸 5)

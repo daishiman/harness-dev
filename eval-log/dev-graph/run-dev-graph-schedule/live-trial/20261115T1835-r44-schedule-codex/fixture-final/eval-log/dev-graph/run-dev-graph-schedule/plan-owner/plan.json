@@ -1,0 +1,331 @@
+{
+  "responsibility_id": "R2-plan",
+  "candidate_source": "self",
+  "binding_parity": "全nodeのtracker_binding=none。C28/beads ready receiptは不要。lease上のtracker_binding githubは候補sourceの変更根拠にしない。",
+  "eligibility_predicates": [
+    "status=active",
+    "confirmation_status=confirmed",
+    "evaluation_status=pass",
+    "implementation_readiness.status=complete",
+    "全depends_onが推移的にdone",
+    "active leaseの同node/resource_scope衝突なし"
+  ],
+  "partition_policy": {
+    "max_parallel": 4,
+    "features_tasks_separate": true,
+    "resource_intersection": "同batch内にpath同一または祖先/子孫の重複なし",
+    "selection_order": "mvp-first/v1: direct→enabling→未設定→deferred、同rankはnode ID順"
+  },
+  "command": {
+    "script": "plugin:dev-graph/scripts/schedule-graph.py",
+    "args": [
+      "--graph",
+      ".dev-graph/state/graph.json",
+      "--ready-source",
+      "self",
+      "--leases",
+      "eval-log/dev-graph/run-dev-graph-schedule/leases.json",
+      "--max-parallel",
+      "4"
+    ],
+    "process_env_binding": {
+      "PLUGIN_ROOT": "C24 context.plugin_source",
+      "CLAUDE_PROJECT_DIR": "C24 context.repo_root"
+    }
+  },
+  "node_decisions": [
+    {
+      "graph_node_id": "task-base-schema",
+      "source": "self",
+      "eligibility_gates": {
+        "status_active": false,
+        "confirmation_confirmed": true,
+        "evaluation_pass": true,
+        "readiness_complete": true
+      },
+      "depends_on": [],
+      "resource_scope": [
+        "src/db/"
+      ],
+      "decision": "eligibility_gate_excluded",
+      "reasons": [
+        "status_active"
+      ]
+    },
+    {
+      "graph_node_id": "task-base-auth",
+      "source": "self",
+      "eligibility_gates": {
+        "status_active": false,
+        "confirmation_confirmed": true,
+        "evaluation_pass": true,
+        "readiness_complete": true
+      },
+      "depends_on": [],
+      "resource_scope": [
+        "src/auth/"
+      ],
+      "decision": "eligibility_gate_excluded",
+      "reasons": [
+        "status_active"
+      ]
+    },
+    {
+      "graph_node_id": "task-api-users",
+      "source": "self",
+      "eligibility_gates": {
+        "status_active": true,
+        "confirmation_confirmed": true,
+        "evaluation_pass": true,
+        "readiness_complete": true
+      },
+      "depends_on": [
+        "task-base-schema"
+      ],
+      "resource_scope": [
+        "src/api/users/"
+      ],
+      "decision": "lease_conflict",
+      "reasons": [
+        "active lease task-api-usersのresource_scope src/api/users/と重複"
+      ]
+    },
+    {
+      "graph_node_id": "task-api-orders",
+      "source": "self",
+      "eligibility_gates": {
+        "status_active": true,
+        "confirmation_confirmed": true,
+        "evaluation_pass": true,
+        "readiness_complete": true
+      },
+      "depends_on": [
+        "task-base-schema"
+      ],
+      "resource_scope": [
+        "src/api/orders/"
+      ],
+      "decision": "recommended",
+      "reasons": []
+    },
+    {
+      "graph_node_id": "task-api-users-cache",
+      "source": "self",
+      "eligibility_gates": {
+        "status_active": true,
+        "confirmation_confirmed": true,
+        "evaluation_pass": true,
+        "readiness_complete": true
+      },
+      "depends_on": [
+        "task-base-schema"
+      ],
+      "resource_scope": [
+        "src/api/users/",
+        "src/cache/"
+      ],
+      "decision": "lease_conflict",
+      "reasons": [
+        "active lease task-api-usersのresource_scope src/api/users/と重複"
+      ]
+    },
+    {
+      "graph_node_id": "task-cache-warmup",
+      "source": "self",
+      "eligibility_gates": {
+        "status_active": true,
+        "confirmation_confirmed": true,
+        "evaluation_pass": true,
+        "readiness_complete": true
+      },
+      "depends_on": [
+        "task-base-auth"
+      ],
+      "resource_scope": [
+        "src/cache/"
+      ],
+      "decision": "recommended",
+      "reasons": []
+    },
+    {
+      "graph_node_id": "task-docs-runbook",
+      "source": "self",
+      "eligibility_gates": {
+        "status_active": true,
+        "confirmation_confirmed": true,
+        "evaluation_pass": true,
+        "readiness_complete": true
+      },
+      "depends_on": [],
+      "resource_scope": [
+        "docs/runbook/"
+      ],
+      "decision": "recommended",
+      "reasons": []
+    },
+    {
+      "graph_node_id": "task-api-users-e2e",
+      "source": "self",
+      "eligibility_gates": {
+        "status_active": true,
+        "confirmation_confirmed": true,
+        "evaluation_pass": true,
+        "readiness_complete": true
+      },
+      "depends_on": [
+        "task-api-users"
+      ],
+      "resource_scope": [
+        "tests/e2e/users/"
+      ],
+      "decision": "dependency_unsatisfied",
+      "reasons": [
+        "task-api-usersがactiveで未完了"
+      ]
+    },
+    {
+      "graph_node_id": "task-release-gate",
+      "source": "self",
+      "eligibility_gates": {
+        "status_active": false,
+        "confirmation_confirmed": true,
+        "evaluation_pass": true,
+        "readiness_complete": true
+      },
+      "depends_on": [
+        "task-api-orders"
+      ],
+      "resource_scope": [
+        "release/"
+      ],
+      "decision": "eligibility_gate_excluded",
+      "reasons": [
+        "status_active"
+      ]
+    },
+    {
+      "graph_node_id": "task-draft-idea",
+      "source": "self",
+      "eligibility_gates": {
+        "status_active": false,
+        "confirmation_confirmed": false,
+        "evaluation_pass": false,
+        "readiness_complete": false
+      },
+      "depends_on": [],
+      "resource_scope": [
+        "src/api/users/"
+      ],
+      "decision": "eligibility_gate_excluded",
+      "reasons": [
+        "status_active",
+        "confirmation_confirmed",
+        "evaluation_pass",
+        "readiness_complete"
+      ]
+    },
+    {
+      "graph_node_id": "task-unconfirmed-migration",
+      "source": "self",
+      "eligibility_gates": {
+        "status_active": false,
+        "confirmation_confirmed": false,
+        "evaluation_pass": false,
+        "readiness_complete": true
+      },
+      "depends_on": [],
+      "resource_scope": [
+        "src/db/migrations/"
+      ],
+      "decision": "eligibility_gate_excluded",
+      "reasons": [
+        "status_active",
+        "confirmation_confirmed",
+        "evaluation_pass"
+      ]
+    },
+    {
+      "graph_node_id": "task-eval-failed-report",
+      "source": "self",
+      "eligibility_gates": {
+        "status_active": false,
+        "confirmation_confirmed": true,
+        "evaluation_pass": false,
+        "readiness_complete": true
+      },
+      "depends_on": [],
+      "resource_scope": [
+        "reports/"
+      ],
+      "decision": "eligibility_gate_excluded",
+      "reasons": [
+        "status_active",
+        "evaluation_pass"
+      ]
+    },
+    {
+      "graph_node_id": "task-readiness-incomplete-ui",
+      "source": "self",
+      "eligibility_gates": {
+        "status_active": false,
+        "confirmation_confirmed": true,
+        "evaluation_pass": false,
+        "readiness_complete": false
+      },
+      "depends_on": [],
+      "resource_scope": [
+        "src/ui/"
+      ],
+      "decision": "eligibility_gate_excluded",
+      "reasons": [
+        "status_active",
+        "evaluation_pass",
+        "readiness_complete"
+      ]
+    }
+  ],
+  "conflict_pairs": [
+    {
+      "kind": "ready_pair",
+      "left": "task-api-users",
+      "resources": [
+        "src/api/users"
+      ],
+      "right": "task-api-users-cache"
+    },
+    {
+      "kind": "ready_pair",
+      "left": "task-api-users-cache",
+      "resources": [
+        "src/cache"
+      ],
+      "right": "task-cache-warmup"
+    },
+    {
+      "kind": "lease",
+      "left": "task-api-users",
+      "resources": [
+        "src/api/users"
+      ],
+      "right": "active-lease"
+    },
+    {
+      "kind": "lease",
+      "left": "task-api-users-cache",
+      "resources": [
+        "src/api/users"
+      ],
+      "right": "active-lease"
+    }
+  ],
+  "read_only_evidence": {
+    "graph_before": "2ca637a84eda9717b0d61bb684f77d4d83d8cd07d3c55217610b20382dd88a7c",
+    "graph_after": "2ca637a84eda9717b0d61bb684f77d4d83d8cd07d3c55217610b20382dd88a7c",
+    "lease_snapshot_before": "33e12890410aa4a7a8841f4c00862f33dbbf4626f4de8015b377650ff8de25a0",
+    "lease_snapshot_after": "33e12890410aa4a7a8841f4c00862f33dbbf4626f4de8015b377650ff8de25a0",
+    "tracker_before": null,
+    "tracker_after": null,
+    "read_only": true
+  },
+  "independent_verifier": "別C17担当がfresh read/recomputeを実施。これはR1/R2入力と計画の責務判定である。"
+}

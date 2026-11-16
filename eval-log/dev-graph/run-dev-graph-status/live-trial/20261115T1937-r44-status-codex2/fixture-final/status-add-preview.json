@@ -1,0 +1,90 @@
+{
+  "applied_count": 0,
+  "artifacts": [
+    {
+      "classification": {
+        "confidence": 0.99,
+        "decision": "auto",
+        "margin": 0.98
+      },
+      "file_path": "tasks/lt-task-dep.md",
+      "graph_node_id": "task-lt-task-dep",
+      "implementation_readiness": "complete",
+      "missing_sections": [],
+      "readiness_fill": [],
+      "sha256_after": "5dff569b1ccb8f24e08e339f717bed2e58f2d010fbd4037f413f31f7e76c1351",
+      "sha256_before": null
+    },
+    {
+      "classification": {
+        "confidence": 0.99,
+        "decision": "auto",
+        "margin": 0.98
+      },
+      "file_path": "tasks/lt-task-001.md",
+      "graph_node_id": "task-lt-task-001",
+      "implementation_readiness": "complete",
+      "missing_sections": [],
+      "readiness_fill": [],
+      "sha256_after": "5e8d85daab887bc62738173493f61cea06a78d95c97aafbc8bd896a3a78bf29f",
+      "sha256_before": null
+    }
+  ],
+  "dry_run": true,
+  "graph_digest_after": "sha256:80348f75f36b13c1b40fa1aacf73824a5deb3d2a7bb9591d927644497418ce96",
+  "graph_path": ".dev-graph/state/graph.json",
+  "graph_revision_after": 1,
+  "graph_revision_before": 0,
+  "input_sha256": "5f3a64085688720ee7d57879730e910d4ea72f8bce3ce86d1f340a1619a10ced",
+  "node_ids": [
+    "task-lt-task-dep",
+    "task-lt-task-001"
+  ],
+  "operation": "add",
+  "owner": "C02/run-dev-graph-node",
+  "planned_count": 2,
+  "planned_nodes": [
+    {
+      "artifact_kind": "task",
+      "confirmation_status": "draft",
+      "depends_on": [],
+      "evaluation_status": "pending",
+      "graph_node_id": "task-lt-task-dep",
+      "implementation_readiness": {
+        "status": "complete"
+      },
+      "parent_feature": null,
+      "status": "draft",
+      "tracker_binding": "none"
+    },
+    {
+      "artifact_kind": "task",
+      "confirmation_status": "draft",
+      "depends_on": [
+        "task-lt-task-dep"
+      ],
+      "evaluation_status": "pending",
+      "graph_node_id": "task-lt-task-001",
+      "implementation_readiness": {
+        "status": "complete"
+      },
+      "parent_feature": null,
+      "status": "draft",
+      "tracker_binding": "none"
+    }
+  ],
+  "pre_write_validation": {
+    "findings": 0,
+    "validator": "validate-graph-schema.py"
+  },
+  "receipt_path": ".dev-graph/state/receipts/node-r000001-add.json",
+  "recorded_at": "2026-11-15T10:37:56.762807Z",
+  "repository_id": "local:sha256:f0efcf6c247da7fc545895615ef8757d8c743b77f09d4a933e4a0dc62aed4c4b",
+  "schema_version": "1.0.0",
+  "status": "preview",
+  "template_sources": [
+    "repository:task.md"
+  ],
+  "valid": true,
+  "write_count": 0
+}

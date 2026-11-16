@@ -1,6 +1,6 @@
 ---
 name: assign-briefing-evaluator
-description: 確認点で利用者が見る深さを選んだあと打ち合わせ資料を作り手とは別の目で確かめたいとき、正確さ・言葉・見た目・シンプルさの指摘を資料の編集なしで受け取りたいときに使う。
+description: 確認点で利用者が診断 (diagnose) を選んだあと打ち合わせ資料を作り手とは別の目でレビューしたいとき、正確さ・言葉・見た目・シンプルさの指摘を資料の編集なしで受け取りたいときに使う。
 version: 0.1.0
 owner: harness maintainers
 source: plugins/system-briefing-book/plugin-composition.yaml#skills/assign-briefing-evaluator
@@ -52,8 +52,8 @@ runtime_root_policy: host-skill-path
 
 ## Purpose & Output Contract
 
-確認点で利用者が light / standard / detailed を選んだときだけ、run-briefing から呼ばれる。
-資料を作った文脈とは別の文脈 (briefing-reviewer) に、正確さ・言葉・見た目・シンプルさを確かめさせ、指摘を返す。資料は編集しない。
+確認点で利用者が diagnose を選んだときだけ、run-briefing から呼ばれる。
+資料を作った文脈とは別の文脈 (briefing-reviewer) に、正確さ・言葉・見た目・シンプルさを確かめさせ、指摘を返す。資料の編集は禁止する (Key Rules)。
 
 ### 受け取るもの
 
@@ -67,7 +67,7 @@ runtime_root_policy: host-skill-path
 | `--dir` | 資料フォルダ | |
 | `--materials` | 素材フォルダ | 正確さの突き合わせ先 |
 
-`boards` は確認点ではない。確認点3 で light 以上が選ばれていたとき、run-briefing が工程5 のあとに同じ深さで呼ぶ。
+`boards` は確認点ではない。確認点3 で diagnose が選ばれていたとき、run-briefing が工程5 のあとに同じ深さで呼ぶ。
 
 ### 深さ
 
@@ -100,7 +100,7 @@ briefing-reviewer が返す指摘 JSON 1 個。
 node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-briefing-docs.mjs" --dir "<資料フォルダ>" --stage <stage>
 ```
 
-`stage` が `boards` のときは `--stage all` を通す (`--stage all` が足すのはボード HTML の有無と言い換えの検査だけで、まとめ HTML は見ない)。続けて見た目の検査を PNG を作り直さずに通す。
+`stage` が `boards` のときは `--stage all` を通す (`--stage all` が足すのは、ボード HTML の有無、ボードの文字の言い換え、素材の使い残し (MATERIAL-UNUSED の warn) の検査で、まとめ HTML は見ない)。続けて見た目の検査を PNG を作り直さずに通す。
 
 ```bash
 node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/render-board-png.mjs" --dir "<資料フォルダ>" --check-only --allow-warn
@@ -123,7 +123,7 @@ validate の exit 3 は [execution-contract.md](../../references/execution-contr
 ## Gotchas
 
 - render の exit 3 で止まらずに進めるのは、このスキルだけの例外 (手順 1)。
-- 素材に Excel しか無く CSV が無いときは、正確さの突き合わせができなかった範囲を finding (low) として返す。
+- 素材に Excel しか無く CSV が無いときは、briefing-reviewer が、正確さを突き合わせられなかった範囲を `low` の finding で返す ([briefing-reviewer.md](../../agents/briefing-reviewer.md) の Layer 4)。このスキルは finding を足さない (手順 4)。
 - detailed は素材が多いと長くかかる。
 
 ## Additional Resources

@@ -24,7 +24,17 @@ def _phase_index(manifest: dict, phase_id: str) -> int:
     return [phase["id"] for phase in manifest["phases"]].index(phase_id)
 
 
+def _lint_module():
+    spec = importlib.util.spec_from_file_location(
+        "lint_entrypoint_artifact_first_for_phase3", ROOT / "scripts/lint-entrypoint-artifact-first.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 def test_all_owned_workflows_publish_the_same_delivery_event_order():
+    """3 本の workflow は同じ契約 id を参照し、その state machine は lint の正本 1 か所にある (harness-vvd)。"""
     paths = (
         "plugins/harness-creator/skills/run-build-skill/workflow-manifest.json",
         "plugins/slide-report-generator/skills/run-slide-report-generate/workflow-manifest.json",
@@ -38,13 +48,16 @@ def test_all_owned_workflows_publish_the_same_delivery_event_order():
         "semantic_evaluator_started",
         "handoff_complete",
     ]
+    canonical = _lint_module().CANONICAL_CONTRACT
     for path in paths:
         contract = _manifest(path)["artifact_delivery_contract"]
-        machine = contract["state_machine"]
-        assert machine["states"] == expected_states, path
-        assert machine["accept_contexts"] == {"evaluator": 0, "improver": 0}, path
-        assert contract["release"] == "explicit-only", path
-        assert contract["exhaustive"] == "explicit-only", path
+        assert set(contract) == {"contract", "phase_activation"}, path
+        assert contract["contract"] == canonical["contract"], path
+    machine = canonical["state_machine"]
+    assert machine["states"] == expected_states
+    assert machine["accept_contexts"] == {"evaluator": 0, "improver": 0}
+    assert canonical["release"] == "explicit-only"
+    assert canonical["exhaustive"] == "explicit-only"
 
 
 def test_harness_creator_presents_before_choice_and_optional_30_method_review():
@@ -100,7 +113,10 @@ def test_prompt_handoff_does_not_depend_on_semantic_or_governance_review():
     ]
     assert phases["design-evaluate"]["dependsOn"] == ["diagnostic-choice"]
     assert phases["design-evaluate"]["default_on"] is False
-    assert phases["elegant-review"]["post_choice_only"] is True
+    # C1-C4 の評価は design-evaluate だけで行い、elegant-review を自動で重ねない
+    assert "elegant-review" not in phases
+    assert "fast_mode" not in manifest
+    assert phases["governance"]["dependsOn"] == ["design-evaluate"]
     assert phases["governance"]["post_choice_only"] is True
     assert phases["diagnostic-choice"]["accept_as_is_evaluator_contexts"] == 0
     assert phases["diagnostic-choice"]["accept_as_is_improver_contexts"] == 0
@@ -145,7 +161,8 @@ def test_slide_postgen_hook_prompts_presentation_and_choice_not_auto_evaluator(
     assert "user_choice_recorded" in context
     assert "deck-evaluator" not in context
     assert "30 種思考法" not in context
-    assert "accept-as-is / light / standard / detailed" in context
+    assert "accept-as-is / diagnose" in context
+    assert "light" not in context
     assert "focused" not in context
     assert "release" not in context.split("user_choice_recorded:", 1)[1].splitlines()[0]
 
@@ -195,11 +212,11 @@ def test_slide_runtime_docs_composition_and_workflow_share_post_choice_contract(
         in composition
     )
     choice = phases["R5-diagnostic-choice"]
-    assert choice["choices"] == ["accept-as-is", "light", "standard", "detailed"]
+    assert choice["choices"] == ["accept-as-is", "diagnose"]
     assert choice["release_event"] == "explicit-only"
     assert choice["exhaustive_event"] == "explicit-only"
     review = phases["R6-selected-semantic-review"]
-    assert review["condition"] == "user_choice_recorded in [light,standard,detailed]"
+    assert review["condition"] == "user_choice_recorded == diagnose"
     post_choice_resources = {
         "ref-deck-evaluation-rubric",
         "ref-ui-quality-checklist",

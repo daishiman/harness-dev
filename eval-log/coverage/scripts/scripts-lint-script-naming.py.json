@@ -4,10 +4,10 @@
   "mechanical": true,
   "llm_eval": {
     "verdict": "PASS",
-    "score": 96,
-    "notes": "genuine independent delta review; sha256 40b5e35d06971afbe280c1dc177adf0d80588487b6433fc4c18f311616c29f20。meta_analystが実装したHEADからの差分と分類・stale検査の隣接契約、追加testsを親が独立に読んだ。変更はPERMANENT_EXCEPTION_PATHSへ46具体path、PENDING_RENAME_PATHSへ23具体pathのみ。ASTでこの2定数以外の全文・許可動詞・判定ロジック不変を照合。23配布先の実importをtestで照合し、未知underscoreは引き続きVIOLATION。canonicalと同名維持のための具体登録であり一般除外無し。76unit PASS、全域lint VIOLATION0/stale0を実行。過去の既存課題と96点を改善済みと主張せず維持、旧評価全文は docs/pkg007-runtime/review-history/naming-ledger-before.json に保全。今回差分にblocking問題なし。"
+    "score": 94,
+    "notes": "genuine independent delta review、sourceSHA=c876aa8c11dbe08d639955511fa518d2bf955a17e9999d6eb55f69ee7a555269。実装者meta_analystと別の親が統合差分・AST・既存契約を確認。元snapshotからの差分は命名2台帳だけで、その他の全ASTは同一。main由来69具体path登録を保持し、元r44で削除済みevaluate-create-gatesの不要登録を除去する。許可動詞・分類・staleロジックは変更しない。 元のfull評価scoreと既存課題は維持、今回差分にblocking懸念なし。full再評価とは扱わない。元recordは docs/remaining-publication/review-history/scripts-lint-script-naming.py.json に保全。最終対象unit/CLI結果はquality-gates受領書を参照。"
   },
-  "reviewed_by": "independent-delta-review-20261116-root-pkg007",
+  "reviewed_by": "independent-integration-delta-review-20261116-root-esj6",
   "checked": [
     "soundness",
     "responsibility",

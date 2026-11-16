@@ -1,0 +1,180 @@
+{
+  "run_id": "20261115T2000-r44-sysspec2",
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "fixture_root": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/system-spec2/fx",
+  "template_run": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261115T1805-r44-sysspec",
+  "reason_rebuilt": "1 本目 (20261115T1805-r44-sysspec) は doc_freshness で FAIL した。seed の fetched-references.json の取得日は 2026-10-31 (kubernetes は 2026-11-01) で、その後に公式が更新された (postgres 16.16、fastapi 0.163.1 など)。seed が日付に依存して古くなったため、同じ seed から fixture を作り直し、trial の直前に同じ日の正規の doc-fetch で出典だけを取り直した。",
+  "seed": {
+    "path": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T010423-ci-full/fixture-final/system-spec",
+    "match_basis": "1 本目と同じ seed。build の後に system-spec/ の 18 ファイルが seed と bytes で一致することを fixture-summary.json (all_byte_identical=true) で確かめた。doc-fetch の後に seed と違うのは、下の docfetch_prep.fx_diff_vs_seed の 6 ファイルだけ。",
+    "readme_included": false,
+    "readme_reason": "1 本目と同じ (fixture-final/README.md は入れていない)。"
+  },
+  "factory": {
+    "path": "fixture/build-fixture.py",
+    "sha256": "e10b15bcb36d7398b73837ec2999004585a305c0b7de4d3414dff0b799d1baed",
+    "original_path": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/system-spec2/build-fixture.py",
+    "diff_vs_template": "1 本目の fixture/build-fixture.py との差は 24 行目の出力先 (scratchpad/lt/system-spec → scratchpad/lt/system-spec2) だけ。docstring の run 名は 1 本目のまま残っている。",
+    "steps": [
+      "git init -b main (core.hooksPath=/dev/null, GIT_CONFIG_GLOBAL=/dev/null)",
+      "空 commit 'fixture: canonical resume inputs' (user live-trial / live-trial@example.invalid)",
+      ".git/info/exclude に .claude/",
+      "種の system-spec/ を copytree (copy2、bytes 保存)",
+      "CLAUDE_PROJECT_DIR を外した env で ROOT の plugins/dev-graph/scripts/build-init-scaffold.py --repo-root FX --hook-source plugin (C01 正規 builder)",
+      "graph.nodes == [] を assert",
+      "読取専用の preflight: validate-graph-schema.py / validate-source-lineage.py (checked=0, pass)"
+    ],
+    "result": "init exit 0、graph.nodes 0、preflight はすべて exit 0。"
+  },
+  "machine_records": {
+    "summary_with_sha256": "fixture/fixture-summary.json",
+    "summary_sha256": "e6f72ebbc7f2b8fdb1c5c26eba4b5ea978de326798f1ce4e15649783085ebd60",
+    "init_receipt": "fixture/fixture-init-receipt.json",
+    "init_receipt_sha256": "9ce396a47262ec4d7935ca60553bb580ae2bb04fa6dabd4b378f7683d52e428b",
+    "preflight": "fixture/fixture-preflight.json",
+    "preflight_sha256": "d69fbc3be9f2dbfcb807eb4b71f8d1ec75b95d7f5dbf87cc36f31f0aab75f1e8",
+    "claude_local_md_copy": "fixture/CLAUDE.local.md",
+    "claude_local_md_sha256": "38f7dc8e3af78c0a022c7e38c88feacca008a22373d43766dadf81fa0e1ada6c",
+    "note": "fixture-summary.json の sha256 一覧は build の直後 (doc-fetch の前) の状態を表す。"
+  },
+  "claude_local_md": {
+    "path_in_fixture": "CLAUDE.local.md",
+    "basis": "1 本目の fixture/CLAUDE.local.md。差は fixture path (2 か所: fixture root の文と Bash の前置き) と監査 fork 台帳の path (本 run の fork-ledger/) だけ。",
+    "written_after_docfetch": true,
+    "auto_loaded": false,
+    "auto_loaded_reason": "session の cwd は ROOT なので fixture の CLAUDE.local.md は自動では読み込まれない。task.md で開始時に Read させる。"
+  },
+  "audit_fork_ledger": {
+    "path": "fork-ledger/audit-fork-ledger.jsonl",
+    "passed_to_boot": "--audit-fork-ledger <workdir>/fork-ledger/audit-fork-ledger.jsonl",
+    "reason": "1 本目と同じ理由 (cwd が ROOT のため、hook の既定の書き先は ROOT/eval-log/system-spec-harness/ になる。boot の resolve_audit_fork_ledger は cwd の中に限るので、本 run の証跡 dir の下を env SYSTEM_SPEC_AUDIT_FORK_LEDGER で hook と aggregator の両方に渡す)。",
+    "seeded_rows": 0,
+    "separate_from_docfetch": "doc-fetch の準備の台帳は fixture/docfetch-fork-ledger/audit-fork-ledger.jsonl に分けた。trial の台帳は空から始まる。"
+  },
+  "docfetch_prep": {
+    "purpose": "fixture の準備。trial ではない。応答は verdict に数えない。",
+    "session": "lt-20261115T2000-r44-sysspec2-docfetch",
+    "run_id": "20261115T2000-r44-sysspec2-docfetch",
+    "owner_pid": 65213,
+    "session_id": "fc76d3a7-c11d-487b-aa27-04d8ad38a346",
+    "boot": "live-trial-boot.py lt-20261115T2000-r44-sysspec2-docfetch <ROOT> --run-id 20261115T2000-r44-sysspec2-docfetch --target-skill system-spec-harness:run-system-spec-doc-fetch --audit-fork-ledger <workdir>/fixture/docfetch-fork-ledger/audit-fork-ledger.jsonl",
+    "boot_ready": "READY: lt-20261115T2000-r44-sysspec2-docfetch (3s) MODEL:default OWNER_PID:65213 SESSION_ID:fc76d3a7-c11d-487b-aa27-04d8ad38a346",
+    "task": {
+      "path": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/system-spec2/docfetch/task.md",
+      "sha256": "0c3ebea1f825932eb75237a98d42f334f788221da05c2119a5449b7e0fea7896",
+      "skill_call": "Skill({skill: \"system-spec-harness:run-system-spec-doc-fetch\", args: \"--spec-dir <FX>/system-spec\"})"
+    },
+    "poll": {
+      "last_exit": 0,
+      "result": "DONE",
+      "elapsed_s": 240,
+      "started_at": "2026-11-15T11:02:14Z",
+      "observed_at": "2026-11-15T11:06:14Z",
+      "gate_ticks": 0,
+      "stall": 0,
+      "scenario": "なし (brief どおり)"
+    },
+    "responses_sent": [],
+    "responses_sent_note": "送ったのは task.md の 1 回だけ。GATE も深さの質問も出なかったので、応答は 0 回。nudge も 0 回。",
+    "status_json": {
+      "path": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/system-spec2/docfetch/out/status.json",
+      "content": "{\"status\":\"PASS\"}",
+      "sha256": "423b0a945a73ecb5ab748c7c796af9328a4639bf6921af982e71ad00924f46e9"
+    },
+    "assemble_exit": 0,
+    "in1_exit": 0,
+    "in1_output": "OK: 出典記録が全件対応・必須フィールド・公式 host・時刻・取得証跡の一致を満たす",
+    "artifact_presentation": "assemble と IN1 の後、main が fetched-references.json の現物 (sha256 7b5ab47e…、開き方 cat / python3 -m json.tool) を提示してから R4 を起動した (docfetch-pane.txt)。",
+    "artifact_choice": {
+      "pre_answer_in_task": "初回 diagnose、深さを聞かれたら standard",
+      "visible_choice_record": false,
+      "note": "main は提示の後に R4 (diagnose の後続の独立監査) へ進んだが、diagnose を選んだという記録は、見える発言にもファイルにも残していない。goal-seek を回したという見える記録も無い。深さの質問は出なかった。"
+    },
+    "r4": {
+      "agent": "system-spec-harness:system-spec-doc-freshness-auditor",
+      "launch_shape": "background (Agent の入力に run_in_background の指定は無いが、meta.json の requestShape は background。main は完了通知を待ってから status を書いた)",
+      "duration_ms": 29650,
+      "tool_uses": 10,
+      "webfetch_hosts": ["www.postgresql.org", "react.dev", "fastapi.tiangolo.com", "www.typescriptlang.org", "kubernetes.io"],
+      "websearch_used": false,
+      "final_line": "AUDIT_VERDICT: PASS",
+      "findings": 0,
+      "summary": "欠落 0、非公式 host 0、古い version・更新日 0、確認時刻・出典の欠落 0、鮮度未確認 0。留意点として、fastapi の release-notes は先頭 10 万文字だけを読んだ (新しい順で先頭が 0.163.1)。",
+      "ledger_rows": [
+        "dispatch (verdict_state pending, ts 2026-11-15T11:04:57Z)",
+        "completion (audit_verdict PASS, verdict_state resolved, ts 2026-11-15T11:05:27Z)"
+      ]
+    },
+    "main_webfetch_hosts": ["www.postgresql.org", "react.dev", "fastapi.tiangolo.com", "www.typescriptlang.org", "kubernetes.io"],
+    "main_websearch_used": false,
+    "hook_blocks": 0,
+    "refreshed_targets": {
+      "count": 5,
+      "records": [
+        {"target_id": "postgres", "version": "16.16", "retrieved_at": "2026-11-15T11:03:07Z", "latest_checked_at": "2026-11-15T11:03:07Z", "source_url": "https://www.postgresql.org/docs/16/"},
+        {"target_id": "react", "version": "19.3", "retrieved_at": "2026-11-15T11:03:14Z", "latest_checked_at": "2026-11-15T11:03:14Z", "source_url": "https://react.dev/versions"},
+        {"target_id": "fastapi", "version": "0.163.1", "retrieved_at": "2026-11-15T11:03:23Z", "latest_checked_at": "2026-11-15T11:03:23Z", "source_url": "https://fastapi.tiangolo.com/release-notes/"},
+        {"target_id": "typescript", "version": "7.0", "retrieved_at": "2026-11-15T11:03:30Z", "latest_checked_at": "2026-11-15T11:03:30Z", "source_url": "https://www.typescriptlang.org/download/"},
+        {"target_id": "kubernetes", "last_updated": "2026-10-31T17:08:00-08:00", "retrieved_at": "2026-11-15T11:03:46Z", "latest_checked_at": "2026-11-15T11:03:46Z", "source_url": "https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/"}
+      ],
+      "all_dated_today": true
+    },
+    "fx_diff_vs_seed": {
+      "changed": [
+        "system-spec/fetched-references.json",
+        "system-spec/retrieval-evidence/postgres.json",
+        "system-spec/retrieval-evidence/react.json",
+        "system-spec/retrieval-evidence/fastapi.json",
+        "system-spec/retrieval-evidence/typescript.json"
+      ],
+      "added": ["system-spec/retrieval-evidence/kubernetes.json"],
+      "kept_unchanged": "spec-state.json・確定済みの章 (*.md)・fixture-requirements-v7.txt は seed と bytes で一致。seed の retrieval-evidence/kubernetes.html は消さずに残っている (新しい record の evidence_ref は kubernetes.json を指す)。",
+      "note": "確定済みの章の「最新ドキュメント出典」の表は、まだ seed の版 (postgres 16.15、fastapi 0.162.0、kubernetes 2026-05-13 など) を示している。この表は compile-spec-doc.py が fetched-references.json から描く部分で、doc-fetch の書き換えの範囲の外なので触っていない。"
+    },
+    "pre_refresh_sha256": {
+      "system-spec/fetched-references.json": "471b0103e0faf92ccbdbc45c519314e4cd6d10975e5cd5bc03cb991474c8b594",
+      "system-spec/spec-state.json": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2"
+    },
+    "post_refresh_sha256": {
+      "system-spec/fetched-references.json": "7b5ab47eee32c0189dbe0bb23bb9bf73740ce91d7630cd39b6dc1de96ef0e2e4",
+      "system-spec/retrieval-evidence/postgres.json": "3b6ccb2cc94a8aaab817ed143c0c8c729deb021c4800e3acae336a12bffe9819",
+      "system-spec/retrieval-evidence/react.json": "8869d5ddaf7f3ed951b42b4fae77a82e48b62fe4e2703c3ac5f730c015d3d353",
+      "system-spec/retrieval-evidence/fastapi.json": "196eb749d91fa65c633ec0b3b96ff5cbd76789ad4eb548e56c0bfe582f32e9fc",
+      "system-spec/retrieval-evidence/typescript.json": "078d4c15603f518c06ae78f9cf414be1766ec0b38c4a63c4d82e7d91e13c8ea3",
+      "system-spec/retrieval-evidence/kubernetes.json": "14205a53b6f0becfb948402614481d5beb656f6271f7dd8ff89bb103216e9843",
+      "system-spec/spec-state.json": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2"
+    },
+    "intermediates": {
+      "dir": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/system-spec2/docfetch/work/",
+      "records.json": "6fc01b306efcb26c6fddc2dca085da1d4c7e60ea93746fe9f78296ec6e3adadc",
+      "targets.json": "9a219a5969b1f306cc76aa4183c9810034bbe4f03b0f96e1500221e5a0cd7cd7"
+    },
+    "evidence_copies": {
+      "transcript": {"path": "fixture/docfetch-transcript.jsonl", "sha256": "226e289aa086724d88914b587937e55418b17f94fee84f197cbd4f8d5ba461d9"},
+      "r4_auditor_transcript": {"path": "fixture/docfetch-r4-auditor-transcript.jsonl", "sha256": "5cc6f27504c4b3ca38f57dc719e09d621ef01e19d696e5daf1fc2d8e4861c39b"},
+      "r4_auditor_meta": {"path": "fixture/docfetch-r4-auditor-transcript.meta.json", "sha256": "a100fac65f410d0986ef0eb049960f69d9e1d8891b78c718e81c7af893c81e3c"},
+      "pane": {"path": "fixture/docfetch-pane.txt", "sha256": "2e02d8b77d1efb451a4ae369189406bb4ac5d4efd682a34a67ec95fd03a88f5d", "note": "reap の前に capture-pane --scrollback で取った。"},
+      "ledger": {"path": "fixture/docfetch-fork-ledger/audit-fork-ledger.jsonl", "sha256": "43cf87388e43095f14cf6cae4fa1b683cd4ba365d7b8debadf7eb343387784cb", "rows": 2}
+    },
+    "reaped": true,
+    "reap_call": "python3 -I で live-trial-backend.py を importlib から読み、reap(run_id=\"20261115T2000-r44-sysspec2-docfetch\", owner_pid=65213) を呼んだ。戻り値 ['lt-20261115T2000-r44-sysspec2-docfetch']。その後 list_sessions() にこの session が無いことを確かめた。"
+  },
+  "differences_from_brief": [
+    "doc-fetch の初回の選択は brief の accept-as-is ではなく diagnose にした。診断の所見の後に深さを聞かれたら standard と決めた (team-lead の指示。R4 の独立監査を正規の経路で走らせるため)。",
+    "doc-fetch の監査 fork 台帳を trial の台帳と分け、boot に --audit-fork-ledger <workdir>/fixture/docfetch-fork-ledger/audit-fork-ledger.jsonl を渡した。",
+    "hook の規則の文は、1 本目の task.md に無かったので、req2 (eval-log/dev-graph/run-dev-graph-requirements/live-trial/20261115T1830-r44-req2/task.md) の 28 行目を逐語で使った。doc-fetch の task と trial の task の両方に入れた。",
+    "doc-fetch の args は SKILL.md に argument-hint が無いので、同じ plugin の兄弟 skill と同じ --spec-dir <FX>/system-spec にした。",
+    "assembler に渡す中間の素材 (targets・records) は FX の外 (scratchpad/lt/system-spec2/docfetch/work/) に置いた。"
+  ],
+  "seeded": {
+    "evaluation_report": false,
+    "pass_result": false,
+    "registered_nodes": false,
+    "import_payload": false,
+    "audit_ledger_rows": false,
+    "resume_receipt": false,
+    "plugin_copy_in_fixture": false
+  },
+  "graph_nodes_initial": 0,
+  "inputs_are_resume_inputs_only": "system-spec/ の確定問答・出典・compiled 章は再開入力であり、今回の compile・evaluator・登録の証拠には使わない。fetched-references.json と retrieval-evidence/ は trial の直前に同じ日の正規の doc-fetch で取り直した再開入力である。"
+}

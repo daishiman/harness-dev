@@ -2,19 +2,21 @@
   "target": {
     "plugin": "system-briefing-book",
     "skill": "assign-briefing-evaluator",
-    "skill_md_sha256": "1c0b819b3812bab071b2623a342f7db4ebf4ffc4644392971f97f7a8ea545c7c"
+    "skill_md_sha256": "3b8276173a561569b2f4354408db891a4b4e2d1a679ff0a6ec8d94edf9b5ea60",
+    "reviewed_skill_md_sha256": "3b8276173a561569b2f4354408db891a4b4e2d1a679ff0a6ec8d94edf9b5ea60",
+    "skill_dir_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 1,
-    "dependency_break": 0,
+    "inconsistency": 0,
+    "dependency_break": 2,
     "smell": 0
   },
-  "reviewer": "cr-briefing-batch-v4 (focused combined content review, incremental profile, harness-evr 最終レビュー)の elegance 投影",
-  "reviewed_at": "2026-10-02T05:46:09Z",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-14T08:37:12Z",
   "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
@@ -27,17 +29,31 @@
       "rubric-high-severity-zero"
     ],
     "positive_feedback": [
-      "Runtime root contract (SKILL.md:43-51) が、execution-contract.md の「1. どちらのホストでも同じ呼び方」を正本とする委譲文と、scripts/build-artifact-delivery.py の RUNTIME_ROOT_CONTRACT_SECTION と同じ定型 5 箇条に戻った。audit-capability-parity.py の 9 個の語句 (:48-58) がそろい、`--repo-root . --plugin system-briefing-book --json` は exit 0・fail_count 0、`--all` も exit 0 (runtime_root_contract_missing なし)。5 箇条の中身は execution-contract.md §1 の PLUGIN_ROOT の表と食い違わない。 この skill の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` を使う行 (:100・:106) に対する監査の条件を満たす。",
-      "baseline との差分は Runtime root contract 節だけで、受け取るもの (:58-70)、深さ (:72-85)、返すもの (:87-93) と手順 (:95-114) は変わっていない。呼び出し元 run-briefing の確認点の手順 5 (run-briefing/SKILL.md:219-224) が渡すもの (確認点・深さ・資料フォルダ・素材フォルダ)、保存先 `_check/review-<確認点>.json` を呼び出し元が書くこと、形の誤りの一覧が返ったら保存せずに相談することと、このスキルの :93・:113 が合う。",
-      "独立を保つ決まり (:118 作り手の意図・前の指摘・回数を渡さない、:120 指摘の数と重さを変えない) と、render の exit 3 だけを例外にする説明 (:109・:125) がexecution-contract.md §3 を正本としたうえで違いだけを書く形になっており、例外の範囲がはっきりしている。"
+      "発動の前提が 4 か所でそろった。description (:3)「確認点で利用者が診断 (diagnose) を選んだあと」、Purpose & Output Contract (:55)「diagnose を選んだときだけ」、受け取るもの (:70)「確認点3 で diagnose が選ばれていたとき」、plugin-composition.yaml:22 の invariant「diagnose を選んだあとだけ動き」。どれも呼び出し元 run-briefing の確認点の手順 3 (:197-204 の 2 択と「深さを聞くための質問は足さない」)・手順 5 (:209)・工程5 (:169) と execution-contract.md §6 (:120-121「深さは診断を選んだあとに決め」「親が渡した深さを使う」) に合い、深さを親が決めて --depth で渡す形とも食い違わない。",
+      "Excel だけの素材の決まりは briefing-reviewer.md の Layer 4 (:47「突き合わせられなかった範囲 (表と行) を low で 1 件にまとめて返す。突き合わせたことにはしない」) に移り、Codex でも briefing-reviewer.md の内容として届く (execution-contract.md §1 の表 :36)。SKILL.md の Gotchas (:126) は参照と「このスキルは finding を足さない (手順 4)」だけになり、R1 の summary (:34「無加工で」)・手順 4 (:114)・Key Rules (:120) と合う。指摘を作る決まりを指摘を作る側に置き、受け渡す側は参照だけにする形は、ほかの assign スキルにも使える。",
+      "手順 1 の括弧書き (:103) は、validate-briefing-docs.mjs で ctx.at(\"all\") に掛かる 3 つ (BOARD-MISSING :1247-1248、ボード本文の言い換え PLAIN-TERM :1323、素材の使い残し MATERIAL-UNUSED の warn :1178・:1444) と過不足なく合う。「まとめ HTML は見ない」も、validate が book を検査しないことと合う。render の exit 3 を「validate を通ったあとなのでブラウザが無いとき」と絞る説明も、validate の exit 3 (Node・しきい値) と render の exit 3 (ブラウザ・Node・しきい値) の定義 (validate-briefing-docs.mjs:21、render-board-png.mjs:24) と合う。"
     ],
     "negative_feedback": [
-      "[low / 不整合。改善前からある] :103 の括弧書き「`--stage all` が足すのはボード HTML の有無と言い換えの検査だけ」は、validate-briefing-docs.mjs で `ctx.at(\"all\")` に掛かる検査が BOARD-MISSING (:1129-1130)、ボードの文字の PLAIN-TERM (:1205) に加えて MATERIAL-UNUSED の warn (:1052-1061・:1326) もあるのと合わない。括弧書きの狙いは「まとめ HTML は見ない」ことの説明で、reviewer へは終了コードと `_check/docs.json` の場所を渡す (:111) ので、判定には効かない (low の理由)。baseline でも同じ文で、今回の修正で入ったものではない。直し方: 「だけ」を外すか、「素材の使い残し (MATERIAL-UNUSED の warn)」を並べる。"
+      "[low / C4 依存関係。改善前からある] 深さ (:72-78) の「素材との突き合わせ」の列 (light は「見出しと表の先頭だけ」、standard は「名前・数字・列名を抜き取りで」) は、このスキルにしか書かれておらず、指摘を作る側に届かない。手順 2 (:111) が渡すのは stage・depth・資料フォルダ・素材フォルダ・終了コード・light の観点だけで、briefing-reviewer.md が決めているのは detailed の「表の全行」(:67・:84) だけである (「抜き取り」「表の先頭」は plugin の中でこの SKILL.md :76-77 にしか無い)。Codex では briefing-reviewer.md の内容だけを別のエージェントへ渡す (execution-contract.md §1 の表 :36) ので、既定の standard で素材をどこまで突き合わせるかが reviewer ごとに揺れる。揺れるのは指摘の正しさではなく、かかる時間と見る範囲なので low。前回の Excel の決まり (elegance:3) と同じ形の届かなさである。直し方: この列の中身を briefing-reviewer.md の 5.3 か 5.4 (実行方式) に移して SKILL.md 側は参照にするか、手順 2 の渡すものに「深さごとの突き合わせの幅」を足す。",
+      "[low / C4 依存関係。改善前からある] 手順 1 (:103-107) は render-board-png.mjs --check-only を boards の文の続きで通すだけで、boards 以外で通すかを書いていない。一方、briefing-reviewer.md の Prompt Templates の「検査結果:」の行 (:126) は stage を問わず `render exit=<n>` を求める (前後の :125・:127 には「(light のときだけ)」「(boards のときだけ)」が付くが、:126 の render の部分には無い)。requirements・spec でこの行を埋めようとして render を通すと、pages が空なので使い方の誤りの exit 2 (render-board-png.mjs:501) になり、execution-contract.md §3 の exit 2 (直せないときは止まって伝える) に当たって止まりうる。pages でもボード HTML がまだ無ければ BOARD-MISSING で exit 1 になる。手順 1 の段落の流れから boards だけと読むのが自然なので low。直し方: 手順 1 に「render は boards のときだけ通す」と書くか、briefing-reviewer.md の :126 の render の部分に「(boards のときだけ)」を付ける。"
     ],
     "iteration": 2,
     "iteration_limit": 2,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "harness-evr の改善後の再評価 (iteration 2)。前回 (iteration 1) の FAIL の指摘を直したあとの、1 回だけの再評価。sha だけを書き換えたのではなく、今の SKILL.md (sha256 1c0b819b3812bab071b2623a342f7db4ebf4ffc4644392971f97f7a8ea545c7c) を読み直し、baseline (eval-log/system-briefing-book/run-briefing/elegant-review/20261002-harness-evr/baseline/skills/assign-briefing-evaluator/SKILL.md) との差分で、変わったのが報告どおりの箇所だけであることを確かめたうえで判定した。読んだもの: 今の SKILL.md、baseline との差分、execution-contract.md §1・§3・§6、呼び出し元 run-briefing の確認点の手順 (:185-224)、validate-briefing-docs.mjs の stage ごとの検査 (:1052-1061・:1129-1130・:1205・:1318-1326)。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、1 つの文脈で (a) 矛盾 (b) 漏れ (c) 規約整合 (d) 依存関係整合 (e) rubric の high 0 を同時に見た。修正後の再評価はこの 1 回だけ。30 種の思考法は使っていない。数値の score は出していない。評価スキル (assign-skill-design-evaluator など) は呼んでおらず、eval-log/system-briefing-book/2026-10-02-score.jsonl には手を付けていない。elegance 投影: (a) 矛盾 (b) 漏れ (d) 依存関係の見方で読んだ結果を、rubric 投影と同じ指摘のまま載せた。前回の指摘: 前回の high (Runtime root contract の退行) は解消。前回はほかの指摘が無かった。今回読み直して、改善前からある :103 の括弧書きの不正確さを low で残した。判定: PASS。high 0、medium 0。low 1 件を findings に残す。"
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "深さ",
+        "手順"
+      ]
+    },
+    "elegance:2": {
+      "sections": [
+        "手順"
+      ]
+    }
+  },
+  "notes": "前回 (iteration 1, FAIL) の指摘を直したあとの全体の再レビュー (iteration 2)。target は lint-content-review.py --print-target の出力をそのまま写した。読んだもの: 現在の SKILL.md 全体、HEAD との差分、briefing-reviewer.md 全体、execution-contract.md 全体、quality-rules.md の「重さの決め方 (独立レビュー)」、呼び出し元 run-briefing の Pre-choice・Post-choice の節と工程5・確認点の進め方 (:71-77・:163-169・:176-214)、plugin-composition.yaml (invariant と dependencies)、EVALS.json の記録、validate-briefing-docs.mjs の STAGES と ctx.at ごとの検査、render-board-png.mjs の --check-only・loadBoards・終了コード。やり方: content-review-protocol の「incremental: unresolved semantic batch」に沿い、1 つの文脈で C1 矛盾なし / C2 漏れなし / C3 整合性 / C4 依存関係整合を見た。C3 のうち rubric の rule で採点できる規約整合 (FM-005・PD-002 など) は rubric-verdict に任せて重ねていない。rubric は render-findings-score.py で score 100 / threshold 80、機械の high 違反 0、BD-004 は PASS。前回の指摘: elegance:1 (description の前提句、C1 medium) は直った。plugin-composition.yaml:22 もそろった。elegance:2 (手順 1 の括弧書き、C3 low) は直った。elegance:3 (Excel だけの素材の決まり、C4 low) は直った。rubric の FM-005 と PD-002 は機械採点で消えた。EVALS.json:11 は run-briefing の 2026-10-01 の baseline の記録で、ほかの baseline の note (run-briefing-boards の「10 種類のページの型」、今は 7 種類) も当時の状態を残し、変更は 2026-10-02 の updated のように新しい記録を足す形なので、書き換えないのは正しい。今の状態を残したいなら、run-briefing の updated の記録を足す。指摘にしなかったもの: validate の exit 1 の扱いは、手順 1 の「結果の数だけを控える」と手順 2 で reviewer へ渡り、Key Rules の「資料を編集しない」と execution-contract.md §3 :65 の「独立レビューで検査だけするとき」に合うので指摘にしない。手順 3 の「形の誤りの一覧を添えて」と run-briefing:211 の「指摘 JSON の代わりに」は、どちらも保存せずに利用者へ見せる動きになるので指摘にしない。この skill の外で見えたこと (判定には入れていない): validate-briefing-docs.mjs の先頭の説明 (:13) と run-briefing-boards/SKILL.md:165 の括弧書きは、--stage all が足す検査に MATERIAL-UNUSED を挙げていない。判定: PASS。high 0、medium 0、low 2 (どちらも改善前からある C4 で、指摘を作る側への受け渡しの抜け)。"
 }

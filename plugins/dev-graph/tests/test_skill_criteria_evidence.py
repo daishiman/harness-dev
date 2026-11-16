@@ -16,6 +16,7 @@ REPO = PLUGIN.parents[1]
 INVENTORY = REPO / "plugin-plans" / "dev-graph" / "component-inventory.json"
 EVALS = PLUGIN / "EVALS.json"
 LINT = REPO / "scripts" / "lint-content-review.py"
+LIVE_TRIAL_LINT = REPO / "scripts" / "lint-live-trial-verdict.py"
 CRITERIA_SCHEMA = PLUGIN / "schemas" / "criteria-scenario-verdict.schema.json"
 LIVE_TRIAL_ROOT = (
     REPO / "plugins" / "harness-creator" / "skills" / "run-skill-live-trial"
@@ -33,6 +34,15 @@ CONTENT_REVIEW_POLICY = (
 
 def _load_content_lint():
     spec = importlib.util.spec_from_file_location("dev_graph_content_review_lint", LINT)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_live_trial_lint():
+    """古い閉包の本文照合を CI の lint と同じ判定で扱うため、lint の実装を読む。"""
+    spec = importlib.util.spec_from_file_location("dev_graph_live_trial_lint", LIVE_TRIAL_LINT)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -235,7 +245,8 @@ def test_independent_scenario_receipt_covers_exact_criteria(
         runtime = verdict.get("environment", {}).get("runtime", "claude")
         digest = (live_verdict_module.skill_dir_tree_sha(skill_path.parent, runtime=runtime)
                   if runtime == "codex" else live_verdict_module.skill_dir_tree_sha(skill_path.parent))
-        if verdict["skill_dir_tree_sha"] != digest:
+        closure_stale = verdict["skill_dir_tree_sha"] != digest
+        if closure_stale:
             _report_stale(live_verdict_module, (
                 f"{component_id}/{criterion_id}: stale behavior closure digest "
                 f"(recorded={verdict['skill_dir_tree_sha']} current={digest})。"
@@ -244,9 +255,21 @@ def test_independent_scenario_receipt_covers_exact_criteria(
                 f"{drift}"
             ))
         if runtime == "codex":
-            assert not live_verdict_module.validate_runtime_evidence(
+            errors = live_verdict_module.validate_runtime_evidence(
                 verdict, verdict_path.parent / "transcript.jsonl", skill_path.parent,
-            ), f"{component_id}/{criterion_id}: invalid native runtime evidence"
+            )
+            if closure_stale:
+                # 古い閉包では今の本文との照合は必ず外れる。CI の lint と同じく、受領
+                # commit の本文で照合し直して通るときだけ古さ (上の _report_stale) として
+                # 扱う。通らないものは起動の証明が無いので、ここでも FAIL のまま残す。
+                live_lint = _load_live_trial_lint()
+                source_errors = [e for e in errors if e.startswith(live_lint.STALE_SOURCE_ERRORS)]
+                commit = live_verdict_module.verdict_baseline_commit(REPO, verdict_path)
+                if source_errors and live_lint.stale_source_explained(
+                    live_verdict_module, verdict, verdict_path, skill_path.parent, errors, commit,
+                ):
+                    errors = [e for e in errors if e not in source_errors]
+            assert not errors, f"{component_id}/{criterion_id}: invalid native runtime evidence {errors}"
 
 
 def _synthetic_scenario_receipt(verdict: str, statuses: tuple[str, ...]) -> dict:

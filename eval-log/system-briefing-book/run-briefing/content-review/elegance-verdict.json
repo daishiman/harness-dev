@@ -2,19 +2,21 @@
   "target": {
     "plugin": "system-briefing-book",
     "skill": "run-briefing",
-    "skill_md_sha256": "d922473f4cd7c3c4fbc374d4e811535990c549b96662454f3f24f4b633b9a6c2"
+    "skill_md_sha256": "385bd4c31b784f0d9e97c47feb66c893b21d29deaeff58b5d3bcdea1b36f975b",
+    "reviewed_skill_md_sha256": "385bd4c31b784f0d9e97c47feb66c893b21d29deaeff58b5d3bcdea1b36f975b",
+    "skill_dir_digest": "c60a0fdfff815b689e3554f1b03000d7b2384dac8e8a9ee097fb7b1e936fe6f4"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
-    "contradiction": 0,
-    "omission": 3,
-    "inconsistency": 0,
+    "contradiction": 1,
+    "omission": 4,
+    "inconsistency": 1,
     "dependency_break": 1,
     "smell": 0
   },
-  "reviewer": "cr-briefing-kfs-nss-v1 (focused combined content review, incremental profile, 既定の見た目と配色の検査、ヒアリングの組み直しの差分)",
-  "reviewed_at": "2026-10-02T13:56:38Z",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-14T07:26:56Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -27,20 +29,60 @@
       "OUT2"
     ],
     "positive_feedback": [
-      ":31 の reference_refs と :117 で design-contract.md を指し、リンク先は実在する。指定が無いときの見た目が標準カラーになることは、quality-thresholds.json の palette_default が standard であることと、お手本の briefing.json:9 (\"palette\": \"standard\") で確かめた。工程0 の init (:151-154) は --palette を渡さないので既定の標準カラーになり、design-contract.md:3 の「配色名の聞き取りは追加しない」と合う。",
-      "持ち場の表がそろった。workflow.md:35 が run-briefing を palette と data_policy の持ち主にし、:38 で init が作る tokens.css と common.css を run-briefing-boards の持ち場から外した。init は palette を資料フォルダからの相対で記録し (build-briefing-scaffold.mjs:19-20、design-contract.md:39)、--refresh-css の付け忘れを stale_css で知らせる (:240・:255)。これで、前回 run-briefing-boards の判定にあった low 3 件 (palette の絶対パス、--refresh-css の付け忘れ、workflow.md の `_src/`) は解消した。",
-      "工程1〜6 の呼び方と --stage の名前は、各スキルの SKILL.md と合う。お手本の写しで validate-briefing-docs.mjs --stage all が exit 0 (error 0、warn 0)。関係するテスト 211 件が通った。"
+      "確認点の選択を accept-as-is と diagnose の 2 択にした変更が、本文 (確認点の進め方の手順 3、:197-207)、Post-choice 節 (:77)、frontmatter の IN2、workflow-manifest.json の description、execution-contract.md 6節、workflow.md の出力フォルダの表 (:40)、assign-briefing-evaluator の Purpose (:55) でそろっている。旧い 4 択の選択肢の値 (light / standard / detailed を選ばせる表) は本文に残っていない。",
+      "深さを聞く質問を足さず、diagnose の深さを既定の standard に寄せた設計は、確認点で止まる回数を増やさない。choices.json の例 (:207) も diagnose のときだけ depth を持つ形で、IN2 の「diagnose を選んだ確認点だけ深さが残る」と合う。工程5 の :169 で boards のレビューを確認点3 と同じ深さで続ける決まりも、boards を確認点にしない assign-briefing-evaluator:70 と合う。",
+      "工程0〜6 と revise の呼び方、--stage の名前、スクリプトの引数、compare-briefing-profile の 3 行のラベルは、各担当スキルの SKILL.md と実装に合う。お手本の写しで validate-briefing-docs.mjs --stage all が exit 0 (error 0、warn 0)。SKILL.md のリンクと reference_refs・script_refs・responsibility_refs の切れは 0。前回の low (resource-map.yaml に design-contract.md が無い) は解消した。"
     ],
     "negative_feedback": [
-      "[medium / 漏れ。今回の差分の受け手。前回 run-briefing-boards の判定の medium の持ち越し・未解決] 配色の返事と TOKENS-* の error を受ける手順が無い。工程5 (:178-184) は run-briefing-boards から返るもの (残った error と warn :181、9 章に無い 決めること :182、仕様書の足りない章 :183) を受けるが、run-briefing-boards/SKILL.md:190 の「案件の色が要る」は受けない。工程6 の :189 は book の exit 1 を「book が示した担当スキル」へ渡すが、run-briefing-book/SKILL.md:114 は TOKENS-MISSING・TOKENS-INVALID を run-briefing-boards に渡す。一方 run-briefing-boards/SKILL.md:190 と workflow.md:35・:38 は、init を回し直すのは run-briefing だとしている。このスキルの本文で配色に触れるのは :117 だけで、palette・--refresh-css・TOKENS の語は無い (grep で確かめた)。2 回目の exit 1 で利用者に相談する (:189) ので、まちがった色のまま進むことはない。まとめも別の色で成功扱いにならない (build-briefing-book.mjs:599・:604 が error)。手順は design-contract.md:25・:32 からたどれるので high にはしない。直し方: 工程5 に「boards が案件の色が要ると返したら、色を変えるかを利用者に聞く。変えるなら design-contract.md の「案件の配色を指定する場合」どおりに CSS を用意して briefing.json の palette を直し、工程0 の 3 と同じ引数に --refresh-css を付けて init を回し直し、boards の「3. PNG にして検査する」から通し直す」を足す。工程6 に「book が TOKENS-MISSING か TOKENS-INVALID を返したら、同じく --refresh-css を付けて init を回し直し、boards の PNG を通し直してから book を通し直す」を足す。あわせて run-briefing-book/SKILL.md:114 の担当を run-briefing にする (run-briefing-book の判定を参照)。",
-      "[low / 漏れ。今回の差分] references/resource-map.yaml に design-contract.md が登録されていない。resource-map.yaml:3 は、スキルをまたぐ reference を「いつ読むか / 誰が読むか」で機械が読める形にすると書く。workflow・quality-rules・page-patterns・execution-contract などは載っていて、今回 hearing-catalog も足された。しかし、今回足した design-contract.md (このスキルの :31、run-briefing-boards の :24、run-briefing-book の :24 の reference_refs) は載っていない (grep で 0 件)。いつ読むかは各 SKILL.md の本文 (:117、run-briefing-boards:137、run-briefing-book:93) で分かるので low。直し方: id design-contract のエントリを足す。consumed_by は run-briefing・run-briefing-boards・run-briefing-book、relates_to は page-patterns・workflow・execution-contract。",
-      "[low / 漏れ。持ち越し・未解決] :124 は、参考を再現するときの版・全機能の対応・初版範囲・画像比較の結果を「既存の確認点と最終報告に残す」とするが、確認点の手順 1 (:196-205) の見せるものにその行が無い (前回は :122)。",
-      "[low / 依存関係。持ち越し・未解決] :183 (boards が仕様書の足りない章と画面番号を返したら run-briefing-docs に書き足してもらう) の受け手は工程5 にだけある。run-briefing-boards/SKILL.md:113 は Purpose 節にあり pages モードにも掛かるが、工程4 (:175-176) が受けるのは「ボード:」行の番号のずれだけ (前回は :181)。"
+      "[low / C3 不整合] 2 択にしたあとも、旧い「深さを選ぶ」言い方が 2 か所に残る。報告 (:247) の「選んだ確認の深さ」と、workflow-manifest.json の P2〜P4 の title「確認点N で現物を見せて深さを記録する」。いま利用者が選ぶのは accept-as-is か diagnose で、深さは diagnose のときだけ決まる (:204・:207)。直し方: :247 を「確認点ごとの選択 (accept-as-is / diagnose) と、診断したときの深さ」にし、manifest の 3 つの title を「…現物を見せて選択を記録する」にする (manifest は skill_dir_digest に入るので、直すと再評価が要る)。",
+      "[low / C2 漏れ] :204 の「利用者が「軽く」と書き添えたら light、「詳しく」と書き添えたら detailed」が、どこにいつ書き添えるのかを書いていない。AskUserQuestion の 2 択には深さの選択肢が無いので、書き添える先は自由入力しかない。ところが :206 は、自由入力に書かれたものを「直したい点」として扱い、担当スキルで直して同じ確認点を見せ直す。「詳しく見て」とだけ書かれたとき、diagnose + detailed なのか直したい点なのかを決められない。直し方: 書き添える経路を 1 つ決める (例: 「診断する」を選んだときのメモ欄、または自由入力で「詳しく」「軽く」だけが書かれたときは diagnose とみなす) と書き、:206 の直したい点と分ける。",
+      "[low / C2 漏れ] 手順 5 (:211) で形の誤りの一覧が返り、利用者が accept-as-is を選んだとき、_check/choices.json をどうするかが書かれていない。手順 3 (:207) ですでに diagnose と深さが記録されているので、そのままだと「diagnose なのに review-<確認点>.json が無い」状態が残り、IN2 (diagnose を選んだ確認点だけ深さと review が残る) と食い違う。直し方: :211 に「accept-as-is にしたら choices.json のその確認点を accept-as-is で上書きする (形の誤りがあったことは depth を消して残すか、notes に書く)」を足す。「見直す」を選んだときに 3 回の数に入るかも書く。",
+      "[low / C1 矛盾] :104 は「このスキルが自分で書くのは 変更点.md、_check/choices.json、_check/review-<確認点>.json だけ」とするが、同じ文書の :133 は briefing.json の data_policy を直すよう指示し、workflow.md:35 は briefing.json の palette と data_policy の持ち主を run-briefing にしている。また :169 の保存先 _check/review-boards.json は、boards が確認点ではない (assign-briefing-evaluator/SKILL.md:70) ので「review-<確認点>」に入らない。直し方: :104 を「変更点.md、briefing.json の palette と data_policy、_check/choices.json、_check/review-<stage>.json (stage は 3 つの確認点と boards)」にし、workflow.md の表 (:35・:40) と同じ言葉にそろえる。",
+      "[low / C2 漏れ。前回 medium の持ち越し、一部解消] 工程5 (:165-169) は run-briefing-boards から返るもの (残った error と warn、9 章に無い 決めること、仕様書の足りない章) を受けるが、run-briefing-boards/SKILL.md:176 の「案件の色が要るときは、そのことを呼び出し元へ返す (palette を書いて init を回し直すのは run-briefing)」は受けない。この SKILL.md には palette・--refresh-css の語が無い (grep で 0 件)。TOKENS-MISSING・TOKENS-INVALID の担当は run-briefing-book/SKILL.md:100 で run-briefing になり手順も書かれたので、前回の medium のうちその部分は解消した。残りは色の返事の受け手だけで、手順は design-contract.md からたどれるので low にした。直し方: 工程5 に「boards が案件の色が要ると返したら、色を変えるかを利用者に聞き、変えるなら design-contract.md のとおりに palette を直して、工程0 の 3 と同じ引数に --refresh-css を付けて init を回し直し、boards を通し直す」を足す。",
+      "[low / C2 漏れ。持ち越し・未解決] 再現の測り方 (:109) は、参考を再現するときの版・全機能の対応・初版範囲・画像比較の結果を「既存の確認点と最終報告に残す」とする。最終報告は :244 にあるが、確認点の手順 1 (:181-190) の見せるものにその行が無い。直し方: 手順 1 に「参考を再現するときは、どの確認点でも workflow.md の「再現の測り方」の 1〜4 のうち、その工程で分かったもの (確認点1・2 は参考版と対応表、確認点3 は画面のボードの対応) を添える」を足す。",
+      "[low / C4 依存関係。持ち越し・未解決] run-briefing-boards/SKILL.md:98 の「仕様書に足りない章や画面があれば、その章と画面番号を呼び出し元へ返す」は Purpose 節にあり、pages モードにも掛かる。しかし工程4 (:160-161) が受けるのは「ボード:」行の番号のずれだけで、足りない章の受け手は工程5 (:168) にしか無い。直し方: 工程4 に「pages が仕様書の足りない章と画面番号を返したら、Skill run-briefing-docs にその箇所だけ書き足してもらい、pages を通し直してから確認点3 へ進む」を足す (工程5 の :168 と同じ頼み方)。"
     ],
     "iteration": 1,
-    "iteration_limit": 2,
+    "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "今回の評価対象は 2 つの差分。1 つは、既定の見た目を jp-web-design の標準カラーにし、配色の正を briefing.json の palette にして、design-tokens.mjs で tokens.css を検査する差分 (TOKENS-MISSING・TOKENS-INVALID のときは init --refresh-css で作り直す)。もう 1 つは、ヒアリングの質問を assets/data/hearing-catalog.json と hearing-catalog.mjs に組み直した差分。前回の verdict (cr-briefing-goal-seek-v1、iteration 2) とは別の差分なので、iteration 1 (上限 2) から数える。今の SKILL.md を shasum -a 256 で取り直した (d922473f4cd7c3c4fbc374d4e811535990c549b96662454f3f24f4b633b9a6c2)。git diff --cached HEAD でこのスキルの差分を読み、SKILL.md がリンクする範囲だけを読んだ。読んだもの: このスキルの差分 (reference_refs の design-contract.md と :117 の 1 行)、design-contract.md、workflow.md の出力フォルダの表 (:33-40)、run-briefing-boards/SKILL.md:190、run-briefing-book/SKILL.md:114、build-briefing-scaffold.mjs の init の説明 (:11-26)。やり方: incremental profile の 1 つの文脈で、(a) 矛盾 (b) 漏れ (c) 規約 (d) 依存関係 (e) rubric の high を、差分に関わる点だけ見た。5 つの SKILL.md の Markdown リンクと reference_refs・script_refs を python で全部解き、切れは 0 だった。design-contract.md・hearing-guide.md・document-structure.md・quality-rules.md・workflow.md・page-patterns.md のリンクも切れ 0。コード名と引数は grep と sed で実装の行と照らした。お手本 (examples/sample-haisha) を作業用フォルダに写して validate-briefing-docs.mjs --stage all を回し、exit 0・error 0・warn 0 だった。関係するテスト 211 件 (test_design_tokens、test_hearing_catalog、test_palette、test_build_briefing_scaffold、test_build_briefing_book、test_validate_briefing_docs、test_render_board_png) が pytest で通った。validate-frontmatter.py と lint-skill-description.py も exit 0。判定ファイルのほかは、リポジトリのファイルを変えていない。elegance 投影: (a) 矛盾 (b) 漏れ (d) 依存関係の見方で読んだ結果を、rubric 投影と同じ指摘のまま載せた。判定: PASS。high は 0。新しい指摘は medium 1 (配色の返事と TOKENS-* の error の受け手が無い。前回 run-briefing-boards の判定で挙げた medium が未解決のまま、今回の差分で受けるものが増えた) と low 1 (resource-map.yaml に design-contract.md が無い)。前回の low 2 件 (:124、:183) は今回の差分と関係なく、持ち越し・未解決 (findings_summary の omission 3 は medium と resource-map と :124、dependency_break 1 は :183)。next_action は none。medium を直すとこの SKILL.md の sha が変わり、この判定の再評価が要る。"
+  "notes": "reviewer は assign-skill-design-evaluator。content-review-protocol.md の「incremental: unresolved semantic batch」に従い、focused combined review を incremental profile の 1 context で行った。frontmatter の criteria の文言が変わったので範囲つき再レビューは使わず、現在の SKILL.md 全体 (sha 385bd4c3…) を読んで全体を判定し直した。前回の版の写しは差分の手がかりにだけ使った。 読んだもの: この SKILL.md の全文、workflow-manifest.json、references の workflow.md・execution-contract.md 6節・design-contract.md・quality-rules.md の該当節・resource-map.yaml、担当スキル (run-briefing-hearing・run-briefing-docs・run-briefing-boards・run-briefing-book・assign-briefing-evaluator) の SKILL.md の受け渡しの節、scripts の build-briefing-scaffold.mjs と compare-briefing-profile.mjs の引数と出力。 確かめた手段: お手本 examples/sample-haisha を作業用フォルダに写して validate-briefing-docs.mjs --stage all を回し exit 0 (error 0、warn 0)。validate-frontmatter.py は ok、lint-skill-description.py は VIOLATION 0、artifact-first の lint は OK。リンクは python で全部解いて切れ 0。語の有無は grep で確かめた。 判定: PASS。high・medium は 0、low 7 (矛盾 1、漏れ 4、不整合 1、依存関係 1)。そのうち 3 件 (5〜7) は前回からの持ち越しで、前回の medium は TOKENS の部分が解消して low に下げた。C3 のうち rubric で採点できる規約 (PD-001 references/ が空、PD-002 冒頭 30 行に禁則が無い) は rubric verdict に任せ、ここには重ねていない。 対象外の気づき (この verdict では採点しない): assign-briefing-evaluator/SKILL.md の description (:3) に「確認点で利用者が見る深さを選んだあと」が残り、2 択化の後の言い方とずれている。 判定ファイルのほかは、リポジトリのファイルを変えていない。指摘を直すとこの SKILL.md の sha (manifest を直すときは skill_dir_digest) が変わり、再評価が要る。",
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "報告"
+      ]
+    },
+    "elegance:2": {
+      "sections": [
+        "確認点の進め方"
+      ]
+    },
+    "elegance:3": {
+      "sections": [
+        "確認点の進め方"
+      ]
+    },
+    "elegance:4": {
+      "sections": [
+        "Purpose & Output Contract"
+      ]
+    },
+    "elegance:5": {
+      "sections": [
+        "工程5 ボードと PNG (自動)"
+      ]
+    },
+    "elegance:6": {
+      "sections": [
+        "確認点の進め方"
+      ]
+    },
+    "elegance:7": {
+      "sections": [
+        "工程4 ページ構成 → 確認点3"
+      ]
+    }
+  }
 }

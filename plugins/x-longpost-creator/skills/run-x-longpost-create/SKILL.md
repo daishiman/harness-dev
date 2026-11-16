@@ -73,38 +73,23 @@ feedback_contract:
       verify_by: script
     - id: OUT1
       loop_scope: outer
-      text: "キャッチコピーと文字起こしだけを与えた実起動で、長文 A/B の 2 パターンが実ファイルとして出力され、現物パスと検証結果を提示した時点で停止し、利用者が light/standard/detailed を選ぶまで評価もリライトも走らないこと"
+      text: "キャッチコピーと文字起こしだけを与えた実起動で、長文 A/B の 2 パターンが実ファイルとして出力され、現物パスと検証結果を提示した時点で停止し、利用者が diagnose を選ぶまで評価もリライトも走らないこと"
       verify_by: live-trial
     - id: OUT2
       loop_scope: outer
       text: "出力された投稿が style-genome.md の 8 レベルの文体特徴を保ち、anti-ai-writing-guide.md の AI 臭 6 分類に該当する表現が残っていないと書き手が判断できること"
       verify_by: human
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
 
-最小の実成果物 (長文パターン A/B と タイトル を含む 1 ファイル) を main context で作成する。作成の具体的な段取りは後述の「実行手順」節にあり、これは pre-choice の作業として選択を待たずに進める。この段階で通すのは絵文字ゼロ・タイトル 50 文字以内・見出し構造・A/B本文同値（F4）・B本文に1行2文が無いこと（F5）・B見出しの `【】` 表記とAの見出し2との一致（F6）・文字数という数えられる機械検証だけとし、`check-no-emoji.js --file <成果物パス>` / `validate-title.js --title "<確定タイトル>"` / `validate-headings.js --file <成果物パス> --title "<確定タイトル>" --strict-h2-count` / `count-chars.js --text "<パターンA本文>" --min 1800 --max 2200` が終了コード 0 を返した時点で、現物のファイルパスと検証結果を提示して accept-as-is / light / standard / detailed を記録する。accept-as-is の場合はその場で handoff 完了とし、後続 section へ進まない。
+最小の実成果物 (長文パターン A/B と タイトル を含む 1 ファイル) を main context で作成する。作成の具体的な段取りは後述の「実行手順」節にあり、これは pre-choice の作業として選択を待たずに進める。この段階で通すのは絵文字ゼロ・タイトル 50 文字以内・見出し構造・A/B本文同値（F4）・B本文に1行2文が無いこと（F5）・B見出しの `【】` 表記とAの見出し2との一致（F6）・文字数という数えられる機械検証だけとし、`check-no-emoji.js --file <成果物パス>` / `validate-title.js --title "<確定タイトル>"` / `validate-headings.js --file <成果物パス> --title "<確定タイトル>" --strict-h2-count` / `count-chars.js --text "<パターンA本文>" --min 1800 --max 2200` が終了コード 0 を返した時点で、現物のファイルパスと検証結果を提示して accept-as-is / diagnose を記録する。accept-as-is の場合はその場で handoff 完了とし、後続 section へ進まない。
 
 ## Post-choice selected improvement execution
 
-このゲートの対象は、意味評価・リライト・追加パターン生成という、実成果物ができあがった後に走る改善の 3 種だけである。light / standard / detailed が記録されて `semantic_evaluator_started` へ遷移した場合にだけ、この 3 種を動かす。release と exhaustive は別の明示 event を必要とする。
+このゲートの対象は、意味評価・リライト・追加パターン生成という、実成果物ができあがった後に走る改善の 3 種だけである。diagnose が記録されて `semantic_evaluator_started` へ遷移した場合にだけ、この 3 種を動かす。release と exhaustive は別の明示 event を必要とする。
 
 後続の「実行手順」節はこのゲートの対象ではない。あれは pre-choice で提示する実成果物そのものを組み立てる段取りであり、利用者の判断を待たずに main context で通す。段取りの順番は 実行手順 → 機械検証 → 現物提示 → 選択記録 → 選択された改善 であり、この並びの先頭 2 つだけが pre-choice に属する。
 
@@ -318,7 +303,7 @@ node "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-headings.js" --text
 
 ### Step 8: サムネイル・optional 図解生成（Phase 4・別スキルへ引き継ぐ）
 
-成果物テンプレートの `図解` / `Xサムネイル（5:2）` / `noteサムネイル（1280×670px）` の 3 欄は、本スキルでは空のまま残す。長文成果物を提示して accept-as-is / light / standard / detailed の選択を完了し、本セッションを handoff_complete にした後、ユーザーが画像生成を明示したときだけ `run-x-visual-generate` を**別セッション**として起動する。引き継ぐのは検証済み投稿ファイルの絶対パス 1 つだけである。引き継ぎ先の標準成果物は X 5:2 と note 実 PNG 1280x670 の2枚で、図解は明示指定時のみ optional である。
+成果物テンプレートの `図解` / `Xサムネイル（5:2）` / `noteサムネイル（1280×670px）` の 3 欄は、本スキルでは空のまま残す。長文成果物を提示して accept-as-is / diagnose の選択を完了し、本セッションを handoff_complete にした後、ユーザーが画像生成を明示したときだけ `run-x-visual-generate` を**別セッション**として起動する。引き継ぐのは検証済み投稿ファイルの絶対パス 1 つだけである。引き継ぎ先の標準成果物は X 5:2 と note 実 PNG 1280x670 の2枚で、図解は明示指定時のみ optional である。
 
 - Step 7 の検証（`validate-headings.js` と `check-no-emoji.js`）が PASS し、パターン A が確定していることを引き継ぎの前提とする。**確定前に引き継がない**（本文を直すと図解が本文とずれるため）
 - 画像生成は課金される。本スキルは起動も課金実行も自動で行わない

@@ -1,6 +1,6 @@
 # harness-creator 完全解剖 — 何をどう構築し、何が出来上がるのか
 
-> 対象: `plugins/harness-creator/`（version 1.4.69 / skills 31 + agents 7 + commands 6）
+> 対象: `plugins/harness-creator/`（version 1.4.70 / skills 31 + agents 7 + commands 6）
 > 目的: (A) ハーネスをどう構築しているか (B) 出来上がったハーネスがどんな要素で構成されるか — を漏れなく抽出する
 > 位置づけ: 本書は**解説文書**であり正本ではない。正本は各章末の「正本」欄に示すファイル。
 > 配置理由: plugin 配下は `lint-ssot-duplication.py` が正本の再掲を violation 判定するため、解説は `doc/` 配下に置く。
@@ -334,8 +334,10 @@ reference_refs:      # 本文から外へ出した references/
 schema_refs:         # 入出力スキーマ
 script_refs:         # 同梱 script 一覧
 feedback_contract:   # ↓ 次節
-artifact_delivery:   # 成果物の渡し方
+artifact_delivery: artifact-delivery-v1   # 成果物の渡し方 (契約 id の参照)
 ```
+
+`artifact_delivery` は契約 id を 1 行書くだけで、状態機械は写さない。状態機械の正本は `scripts/lint-entrypoint-artifact-first.py` の定数と `references/artifact-delivery-policy.json` の 2 か所にあり、両者が食い違うと lint が止まる。解決済みの中身は `python3 scripts/lint-entrypoint-artifact-first.py --print-contract` で見られる。以前は 105 本の SKILL.md と 61 本の workflow-manifest.json が同じ状態機械を丸ごと写していた。写しは正本と完全一致しか許されず持ち主ごとの情報が無かったので、参照に置き換えた。
 
 この実例は `rubric_refs` を持たない。`rubric_refs` は採点軸を参照する skill（`assign-skill-design-evaluator` や `run-contract-generate` など）だけが書く任意項目である（§3.2 の commonCore.optional）。
 
@@ -419,7 +421,7 @@ knowledge を指定したときは、`knowledge/` に選んだパターンの se
 
 | 機構 | 注入 Step | 既定 | 実体 |
 |---|---|---|---|
-| **goal-seek 配線** | Step 2 | **default-ON**（`--no-goal-seek` が外すのは render 時の配線だけで、lint の合否は変えない。repo 内に入った配線の無い loop 系スキルは、plugin を問わず `lint-goal-seek.py` の ratchet が落とす。harness-creator のスキルは `GRANDFATHERED_WARNINGS` へ根拠付きで登録するか配線を戻し、ほかの plugin のスキルは baseline が追記禁止なので配線を戻す） | `with-goal-seek.patch` combinator |
+| **goal-seek 配線** | Step 2 | **default-ON**（`--no-goal-seek` が外すのは render 時の配線だけで、lint の合否は変えない。repo 内に入った配線の無い loop 系スキルは、plugin を問わず `lint-goal-seek.py` の ratchet が落とす。通すには配線を戻すか、`### ゴールシーク配線を持たない理由` で理由を宣言する） | `with-goal-seek.patch` combinator |
 | **feedback ループ** | Step 11.5 | **default-ON**（`--no-feedback-loop` か `brief.no_feedback_loop: true` で opt-out） | `run-skill-feedback` を**実体コピー**で冪等配備（symlink 禁止） |
 | **knowledge ループ** | Step 10 | `--with-knowledge` か `brief.knowledge_loop` を**指定したときだけ**（`validate-build-plan.py` は `with_knowledge` を `brief.knowledge_loop` から決める） | `knowledge/` 雛形（curated seed）+ 5 script + `## ナレッジループ` 節 + `consult_at: ["runtime"]` / `runtime_store: external-intelligence-v1` |
 | **task-graph engine** | Step 10.6 | brief が `goal_seek.engine: task-graph` を**明示したときだけ**（無指定の既定は `inline` で、資産を持ち込まない） | ENG-C01/C02/C06/C07 を byte 一致でコピー。`engine_profile: checklist-graph` / `full_task_spec_graph: false` |

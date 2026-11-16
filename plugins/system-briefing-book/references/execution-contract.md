@@ -117,7 +117,7 @@ $env:BRIEFING_BROWSER = "C:\Program Files (x86)\Microsoft\Edge\Application\msedg
 
 - L1 `run-briefing` が確認点1〜3の現物提示と `_check/choices.json` の選択を所有する。状態遷移は確認点ごとに適用する。`accept-as-is` はその確認点のレビューを完了し、次の通常工程へ進む。資料全体の生成を打ち切らない。
 - L2 `run-briefing-hearing`・`run-briefing-docs`・`run-briefing-boards`・`run-briefing-book` は、呼ばれた通常生成と既存の検査を選択前から実行する。main context で順に進める。単独呼出しでは成果物と検査結果を報告して終了し、確認の深さを独自に聞かない。必要な入力の聞き取りは通常生成に含む。
-- `light` / `standard` / `detailed` の選択で開始するのは独立レビューとその指摘に基づく改善だけ。確認点の選択前に evaluator・task fork・subagent・multi-worker・評価起点の反復を開始しない。通常の検査エラー修正や明示された revise を独立レビュー扱いにしない。
+- `diagnose` の選択で開始するのは独立レビューとその指摘に基づく改善だけ。深さは診断を選んだあとに決め、既定は `standard` とする。確認点の選択前に evaluator・task fork・subagent・multi-worker・評価起点の反復を開始しない。通常の検査エラー修正や明示された revise を独立レビュー扱いにしない。
 - L2 は選択を保存・再要求しない。親が選んだレビューの対象として呼ばれた場合だけ、その対象範囲の指摘を直して親に返す。`assign-briefing-evaluator` は親が渡した深さを使う。
 - 工程5の描画と工程6のまとめは、既存検査を通れば自動で進む。release / exhaustive の自動昇格は行わない。
 

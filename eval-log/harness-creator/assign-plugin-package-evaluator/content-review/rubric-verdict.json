@@ -2,30 +2,40 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "assign-plugin-package-evaluator",
-    "skill_md_sha256": "acbd5ab1c12f03d6e20cd8b3e8b477e8cde839fef5b18291ae08564ae6e51078"
+    "skill_md_sha256": "4223a15837e5b3400560be61b43909ea1a5f4958ecfdf89d01424b8a9b54b57c",
+    "reviewed_skill_md_sha256": "4223a15837e5b3400560be61b43909ea1a5f4958ecfdf89d01424b8a9b54b57c",
+    "skill_dir_digest": "b02da22c3670c0fcb24b93f149f58b2eea75ac7093d744c8919d72f4b085bd06"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
-  "reviewer": "reset-observer-publication-independent",
-  "reviewed_at": "2026-11-16T03:44:06.958025Z",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-16T03:12:34Z",
   "iterations": 1,
+  "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
     "criteria_evaluated": [
       "C1",
       "C2",
       "C3",
-      "C4"
+      "C4",
+      "C5"
     ],
     "positive_feedback": [
-      "PKG007の対象集合と実行規則を別の正本へ分け、説明の重複を減らしている。",
-      "read-only単発評価で全指定IDを採点し、入力エラーとfail findingsを分離する。"
+      "機械判定できるscript_refsの実行規則をcheck_pkg_007へ集約し、catalogが対象範囲、意味判断表が機械化できない残条件を担当する。"
     ],
     "negative_feedback": [],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual-incremental-publication-content-review",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "公開base実物の選択変更に対する新規独立review。全30思考法・liveを主張しない。 機械score=100, threshold=80; 自動23ruleとBD004の独立judgmentから新規投影。公開base scorerはverdict出力機能を持たないため、scoreと判断を履歴へ保存。"
+  "notes": "render-findings-score が機械採点 (score 100/threshold 80, sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9, scored 19/20) と LLM 判定 1 件 (BD-004) から生成した。 独立reviewer /root/system_analystがAPEの実装者と分離してpending BD-004のみを判断。2026-11-16に利用者が明示scope＋配布修復を承認した限定変更に対する新しい1回の評価。旧INCOMPLETEはrunのindependent-review-historyへ原本byteで保存し、旧targetのSHA付替えは行わない。rubricのscore/high違反/threshold/target/loop fieldsはrender-findings-score.pyが生成する。"
 }

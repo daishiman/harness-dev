@@ -10,10 +10,13 @@ resources:
     read_when: brief の必須フィールドや型を検証するとき
   - file: ../schemas/handoff.schema.json
     topic: Gate 通過時の handoff JSON 共通スキーマ
-    read_when: eval-log/handoff-<step>.json を生成・検証するとき
+    read_when: 各 phase の handoff JSON (path は workflow-manifest.json の phases[].handoff) を生成・検証するとき
   - file: ../../run-build-skill/schemas/skill-build-trace.schema.json
     topic: run-build-skill が emit する skill-build-trace.json の正本 schema (章別 coverage と reproducibility_gates.lint)
     read_when: Step 2 後に Gate 2 前提を確認するとき
+  - file: ../scripts/render-c1-c4-section.py
+    topic: Step 7 完了レポートの C1-C4 節を run-build-skill の初稿診断 receipt から描画する script (評価はしない。receipt が無い・壊れている・今の成果物と合わない場合は未診断と出す)
+    read_when: 完了レポートの build_evaluation_receipt を書くとき (出力をそのまま貼る)
   - file: ../prompts/R1-elicit.md
     topic: Step 1 ヒアリング委譲プロンプト (R1)
     read_when: run-skill-elicit へ渡す context を組み立てるとき
@@ -21,7 +24,7 @@ resources:
     topic: Gate 1 / 2.5 / 2 共通 AskUserQuestion テンプレ (R2)
     read_when: ゲート前にユーザー承認を取るとき
   - file: gate-templates.md
-    topic: Gate 1 / 2 の確認質問テンプレートと手動チェックリスト (01a Step8 検証1-5 と 05 Layering Review)
+    topic: Gate 1 / 2.5 / 2 の確認質問テンプレートと手動チェックリスト (01a Step8 検証1-5 と 05 Layering Review)
     read_when: 各ゲートで何を確認すべきか迷ったとき (詳細手順、人間向け)
   - file: handoff-schema.json
     topic: redirect stub ($ref のみ、正本は schemas/handoff.schema.json)

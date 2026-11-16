@@ -1,0 +1,58 @@
+{
+  "dry_run": true,
+  "planner_invocations": 0,
+  "new_ready_features": 0,
+  "new_feature_readiness": [
+    {
+      "graph_node_id": "feature-render-diff",
+      "ready": false,
+      "dependency_states": [
+        {
+          "graph_node_id": "LT-FEATURE-001",
+          "status": "active",
+          "required_statuses": [
+            "done",
+            "closed"
+          ]
+        }
+      ],
+      "promotion_state": {
+        "confirmation_status": "draft",
+        "evaluation_status": "pending"
+      },
+      "publication_blockers": [
+        "promotion_gate",
+        "cross_binding_dependency"
+      ]
+    },
+    {
+      "graph_node_id": "feature-render-diff-summary",
+      "ready": false,
+      "dependency_states": [
+        {
+          "graph_node_id": "feature-render-diff",
+          "status": "draft",
+          "required_statuses": [
+            "done",
+            "closed"
+          ]
+        }
+      ],
+      "promotion_state": {
+        "confirmation_status": "draft",
+        "evaluation_status": "pending"
+      },
+      "publication_blockers": [
+        "promotion_gate",
+        "cross_binding_dependency"
+      ]
+    }
+  ],
+  "package_input": {
+    "status": "既存登録済みpackageを読み取り検査",
+    "operation": "登録なし",
+    "parent_feature": "LT-FEATURE-001",
+    "registration_receipt": ".dev-graph/state/package-registration-receipt-LT-FEATURE-001.json",
+    "exact_13": "P01..P13を確認。既存taskの状態は保持。"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "result": "FAIL",
+  "blockers": [
+    "required_observations 2 を観測できない: 取り込まれた specification・architecture の node が 1 件も無い。fixture の .dev-graph/state/graph.json は nodes 0 件のままで、transcript に C02 (dev-graph:run-dev-graph-node) の Skill 呼び出しが無い。node が無いので、source lineage も evaluator evidence も確かめる対象が存在しない。",
+    "required_observations 3 の前半 (registration occurs only through C02) を観測できない: 登録が 1 件も起きていない。dev-graph 側に elicit や compile のロジックを複製していないこと (後半) は transcript で確認できたが、登録の経路そのものが空である。",
+    "required_observations 1 の後半 (canonical flow completes) を満たしていない: elicit (--resume)・compile・completeness evaluator は Skill 経由で動いた (transcript [177][260][325])。しかし evaluator の report (fixture の eval-log/system-spec-completeness-report.json) は verdict=FAIL で、matrix_coverage と doc_freshness が FAIL。aggregate-completeness.py --report も exit 1 だった (transcript [390])。flow は PASS で閉じていない。",
+    "原因 1 doc_freshness FAIL は (b) fixture が古くなったこと (seed の日付) に分類する: seed の fetched-references.json の取得日は 2026-10-31 (k8s は 2026-11-01)。その後、公式ページが更新された。WebFetch で確認すると、postgres は 16.16 (2026-11-12 リリース)、fastapi は 0.163.0 (2026-11-14) のあと 0.163.1 (2026-11-15) まで進み、k8s CronJob ページの最終更新は 2026-10-31 太平洋時間。2026-11-03 の ci12 では同じ k8s ページが 2026-05-13 と照合されていたので、表示が変わったのは 11-03 より後である。git diff 64daafdb (0.1.26) と作業ツリー (0.1.28) の間で、鮮度の判定ロジックは変わっていない。呼び出し元の見立てのうち「日付」は当たっているが、「版上げ」は当たらない。",
+    "原因 2 C06 (hearing auditor) の qa-009 traceability high は (a)(b)(c) のどれにも当たらず、依存 plugin system-spec-harness の監査の判定揺れに分類する。見立てとは違う: seed の ui-ux/web は qa_ref=qa-003、qa_refs に置き換え済みの qa-009 と置き換え先の qa-019 を持つ。この形は契約どおりである。spec-state-contract.md の 403 行目は「裏付け (qa_refs) からの参照は残してよい」と定め、neutral-question-criteria.md の 64-66 行目は qa_refs の場合は reopen せず add-qa-ref で結ぶと定める。R6-audit-hearing.md の 40 行目と system-spec-hearing-auditor.md の 55 行目も、active consumer を確定セルの qa_ref と effective_source_refs に限っている。決定論の validate-coverage-matrix.py も 342-355 行目で qa_ref だけを調べ、coverage gate は exit 0 だった。同じ seed を ci12 (0.1.26) の auditor は info とした。今回の auditor は qa_refs を active consumer とみなして high とし、SSOT の文言から外れている。R6・auditor 定義・spec-state-contract・validate-coverage-matrix・aggregate-completeness は 0.1.26 から変わっていない (git diff --quiet が exit 0)。版上げが原因ではない。",
+    "原因 3 aggregate-completeness.py --report の exit 1 は、依存 plugin system-spec-harness の内部の矛盾に分類する (被験の (a) ではない)。assign-system-spec-completeness-evaluator の SKILL.md (91 行目・119-123 行目) では、matrix_coverage は C07 primary に C06 sub-input を加えて判定する。一方、audit_fork_attribution.py の 658-664 行目は primary の delegation verdict が観点の verdict と一致することを求める。そのため C07=PASS・C06=FAIL のとき、観点が FAIL になると必ず validator の違反になる。C06 が FAIL したときだけ表に出る潜在欠陥で、原因 2 に連鎖している。"
+  ],
+  "evaluator": {
+    "mode": "fresh-independent-context",
+    "id": "fresh-evaluator-sysspec-r44-20261115"
+  },
+  "transcript_sha256": "c2648d54f4feb718348e8c35321323740477164afcb714fc76483c4089649953",
+  "evidence_refs": [
+    "transcript.jsonl",
+    "task.md",
+    "out/status.json",
+    "fixture-provenance.json",
+    "fixture/fixture-summary.json",
+    "fixture/fixture-preflight.json",
+    "fixture/CLAUDE.local.md",
+    "fork-ledger/audit-fork-ledger.jsonl"
+  ]
+}

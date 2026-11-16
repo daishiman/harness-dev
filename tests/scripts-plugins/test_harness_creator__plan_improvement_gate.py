@@ -4,6 +4,8 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
+import re
 import subprocess
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -181,7 +183,7 @@ def _presentation_and_prechoice(
     plan: dict,
     proof: dict,
     manifest: list[dict],
-    diagnostic_level: str = "detailed",
+    diagnostic_level: str = "diagnose",
 ) -> tuple[dict, dict]:
     binding = mod.contract_binding(manifest)
     proof_time = mod._parse_datetime(proof["generated_at"], "proof generated_at")
@@ -230,7 +232,7 @@ def _cli_pre_diagnostic_args(
     proof_path: Path,
     target_paths: list[Path],
     state_dir: Path,
-    diagnostic_level: str = "detailed",
+    diagnostic_level: str = "diagnose",
 ) -> tuple[list[str], dict, dict]:
     proof = json.loads(proof_path.read_text(encoding="utf-8"))
     scope = mod.build_target_scope(target_paths, root=tmp_path, state_dir=state_dir)
@@ -1588,16 +1590,16 @@ def test_cli_e2e_requires_presentation_then_prechoice_and_accept_is_zero_context
     assert accepted_result["improvement"]["improver_contexts"] == 0
     assert not list(state_dir.glob("initial-draft-review-*.json"))
 
-    detailed_args, _, _ = _cli_pre_diagnostic_args(
+    diagnose_args, _, _ = _cli_pre_diagnostic_args(
         mod,
         tmp_path,
         plan=plan,
         proof_path=proof_path,
         target_paths=[target],
         state_dir=state_dir,
-        diagnostic_level="detailed",
+        diagnostic_level="diagnose",
     )
-    claimed = subprocess.run(base + detailed_args, cwd=REPO_ROOT, capture_output=True, text=True)
+    claimed = subprocess.run(base + diagnose_args, cwd=REPO_ROOT, capture_output=True, text=True)
     assert claimed.returncode == 0, claimed.stderr
     claimed_result = json.loads(claimed.stdout)
     assert claimed_result["status"] == "initial-review-required"
@@ -1814,3 +1816,481 @@ def test_presentation_and_prechoice_fail_closed_on_tamper_or_invalid_order(
             levels_path=LEVELS,
         )
     assert not list(state_dir.glob("initial-draft-review-*.json"))
+
+
+# --- run-level model-action budget (convergence-policy.json#/run_model_action_budget) ---
+
+BUDGET_SCRIPT = RUN_BUILD / "scripts/validate-run-model-budget.py"
+BUDGET_POLICY = REPO_ROOT / "plugins/harness-creator/skills/run-elegant-review/references/convergence-policy.json"
+
+
+def _budget():
+    spec = importlib.util.spec_from_file_location("validate_run_model_budget_for_gate_test", BUDGET_SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+    return module, module.load_budget(BUDGET_POLICY)["total"]
+
+
+def _spend(state_dir: Path, run_id: str, count: int, *, action_id: str = "prefill") -> None:
+    budget_mod, total = _budget()
+    budget_mod.reserve(state_dir, run_id, action_id=action_id, component="bounded_improvement", count=count, total=total)
+
+
+def test_claim_reserves_one_evaluator_context_in_the_run_ledger(mod, tmp_path: Path):
+    env = _claim(mod, tmp_path)
+    budget_mod, total = _budget()
+    ledger = budget_mod.read_ledger(env["state_dir"], env["plan"]["run_id"])
+    assert [(e["action_id"], e["component"], e["count"]) for e in ledger["entries"]] == [
+        (env["claim"]["initial_review"]["claim_id"], "initial_diagnosis", 1)
+    ]
+    assert env["claim"]["run_budget"]["remaining"] == total - 1
+
+
+def test_exhausted_run_budget_refuses_the_claim_without_state(mod, tmp_path: Path):
+    _, total = _budget()
+    _spend(tmp_path / "review-state", "build-20260820-01", total)
+    env = _claim(mod, tmp_path)
+    claim = env["claim"]
+    assert claim["status"] == "run-budget-exhausted"
+    assert claim["initial_review"]["authorized"] is False
+    assert claim["initial_review"]["evaluator_contexts"] == 0
+    assert claim["improvement"] == {"authorized": False, "improver_contexts": 0}
+    assert claim["run_budget"]["remaining"] == 0 and claim["run_budget"]["requested"] == 1
+    assert not Path(claim["state_ref"]).exists()
+
+
+def test_verification_spend_in_the_plan_counts_against_the_claim(mod, tmp_path: Path):
+    _, total = _budget()
+    plan = _verification_plan()
+    plan["cost_summary"] = {"consumed_model_actions": total - 1, "planned_model_actions": 1}
+    env = _claim(mod, tmp_path, plan=plan)
+    assert env["claim"]["status"] == "run-budget-exhausted"
+
+
+def test_improvement_needing_more_rounds_than_remain_is_refused_then_a_lighter_level_fits(mod, tmp_path: Path):
+    env = _claim(mod, tmp_path)
+    _, completed = _complete(mod, env)
+    _, total = _budget()
+    # 初回診断の 1 を除いて、残りを 1 にする。standard (max_rounds 2) は入らず light (1) は入る
+    _spend(env["state_dir"], env["plan"]["run_id"], total - 2)
+    refused = _select(mod, env, completed, "standard")
+    assert refused["status"] == "run-budget-exhausted"
+    assert refused["improvement"] == {"authorized": False, "improver_contexts": 0}
+    assert refused["run_budget"]["requested"] == 2 and refused["run_budget"]["remaining"] == 1
+    state = json.loads(Path(completed["state_ref"]).read_text(encoding="utf-8"))
+    assert env["plan"]["run_id"] not in state["decisions"]
+
+    light = _select(mod, env, completed, "light")
+    assert light["status"] == "improvement-authorized"
+    assert light["run_budget"]["remaining"] == 0
+    # 同じ決定の再提出は二重に引かない
+    again = _select(mod, env, completed, "light", choice=_event(env, completed, "improvement-level-selected", event_id="turn-choice-light", selected_level="light"))
+    assert again["status"] == "improvement-authorized"
+    budget_mod, _ = _budget()
+    assert budget_mod.ledger_consumed(budget_mod.read_ledger(env["state_dir"], env["plan"]["run_id"])) == total
+
+
+def test_reused_review_in_a_later_run_launches_no_evaluator_and_reserves_nothing(mod, tmp_path: Path):
+    env = _claim(mod, tmp_path)
+    _complete(mod, env)
+    second_plan = _verification_plan(run_id="build-20260820-02")
+    second_proof = _usable_draft_proof(tmp_path, second_plan, capability_artifact=tmp_path / env["proof"]["capability_artifact"]["path"])
+    presentation, pre_choice = _presentation_and_prechoice(mod, plan=second_plan, proof=second_proof, manifest=env["manifest"])
+    reused = mod.build_gate(second_plan, target_manifest=env["manifest"], target_scope=env["scope"], usable_draft_proof=second_proof, artifact_presentation_receipt=presentation, pre_diagnostic_choice_event=pre_choice, state_dir=env["state_dir"], methods_path=METHODS, levels_path=LEVELS)
+    assert reused["status"] == "awaiting-improvement-choice"
+    budget_mod, _ = _budget()
+    assert budget_mod.read_ledger(env["state_dir"], "build-20260820-02")["entries"] == []
+
+
+def _fail_once(monkeypatch, mod, predicate) -> dict:
+    """Make the first state write matching ``predicate`` raise, like a full disk between reserve and write."""
+    original = mod._atomic_write_json
+    calls = {"failed": 0}
+
+    def flaky(path, value):
+        if calls["failed"] == 0 and predicate(Path(path), value):
+            calls["failed"] += 1
+            raise OSError(28, "No space left on device (injected)")
+        return original(path, value)
+
+    monkeypatch.setattr(mod, "_atomic_write_json", flaky)
+    return calls
+
+
+def _is_state(path: Path) -> bool:
+    return path.name.startswith("initial-draft-review-") and not path.name.endswith(".launch.json")
+
+
+def test_claim_retry_after_a_failed_state_write_reuses_the_same_reservation(mod, tmp_path: Path, monkeypatch):
+    calls = _fail_once(monkeypatch, mod, lambda path, value: _is_state(path))
+    seen = {}
+    original_gate = mod.build_gate
+
+    def spy(*args, **kwargs):
+        seen.update(args=args, kwargs=kwargs)
+        return original_gate(*args, **kwargs)
+
+    monkeypatch.setattr(mod, "build_gate", spy)
+    with pytest.raises(OSError):
+        _claim(mod, tmp_path)
+    assert calls["failed"] == 1
+    budget_mod, _ = _budget()
+    run_id = _verification_plan()["run_id"]
+    orphan = budget_mod.read_ledger(tmp_path / "review-state", run_id)["entries"]
+    assert len(orphan) == 1 and re.fullmatch(r"IRC-[0-9a-f]{32}", orphan[0]["action_id"])
+    # 同じ入力 (同じ提示・選択イベント) での再試行は同じ claim id に着地し、1 context を二度引かない
+    claim = original_gate(*seen["args"], **seen["kwargs"])
+    assert claim["status"] == "initial-review-required"
+    assert claim["initial_review"]["claim_id"] == orphan[0]["action_id"]
+    assert claim["run_budget"]["reserved"] is False
+    assert budget_mod.ledger_consumed(budget_mod.read_ledger(tmp_path / "review-state", run_id)) == 1
+
+
+def test_reselecting_a_level_after_a_failed_decision_write_reuses_or_tops_up(mod, tmp_path: Path, monkeypatch):
+    env = _claim(mod, tmp_path)
+    _, completed = _complete(mod, env)
+    run_id = env["plan"]["run_id"]
+    budget_mod, _ = _budget()
+    has_decision = lambda path, value: _is_state(path) and isinstance(value, dict) and run_id in value.get("decisions", {})
+    calls = _fail_once(monkeypatch, mod, has_decision)
+    with pytest.raises(OSError):
+        _select(mod, env, completed, "light")
+    assert calls["failed"] == 1
+    assert budget_mod.ledger_consumed(budget_mod.read_ledger(env["state_dir"], run_id)) == 1 + 1
+    # 書き込みが落ちたあと、もっと深い detailed (max_rounds 3) を選び直すと、差分 2 だけ足す
+    detailed = _select(mod, env, completed, "detailed")
+    assert detailed["status"] == "improvement-authorized"
+    assert detailed["run_budget"]["held"] == 3
+    ledger = budget_mod.read_ledger(env["state_dir"], run_id)
+    assert budget_mod.ledger_consumed(ledger) == 1 + 3
+    improve = ledger["entries"][1]
+    assert [(e["action_id"], e["count"]) for e in ledger["entries"][1:]] == [
+        (improve["action_id"], 1),
+        (improve["action_id"] + "#topup-3", 2),
+    ]
+
+
+def test_reselecting_a_shallower_level_reuses_the_larger_reservation(mod, tmp_path: Path, monkeypatch):
+    env = _claim(mod, tmp_path)
+    _, completed = _complete(mod, env)
+    run_id = env["plan"]["run_id"]
+    budget_mod, _ = _budget()
+    _fail_once(monkeypatch, mod, lambda path, value: _is_state(path) and isinstance(value, dict) and run_id in value.get("decisions", {}))
+    with pytest.raises(OSError):
+        _select(mod, env, completed, "detailed")
+    light = _select(mod, env, completed, "light")
+    # 以前は「count が違う」で恒久的に GateError だった。予約済みの 3 で足りるので新しく引かない
+    assert light["status"] == "improvement-authorized"
+    assert light["run_budget"]["reserved"] is False and light["run_budget"]["held"] == 3
+    assert budget_mod.ledger_consumed(budget_mod.read_ledger(env["state_dir"], run_id)) == 1 + 3
+
+
+def test_claim_reserves_the_verification_spend_in_the_ledger(mod, tmp_path: Path):
+    # by_subject の無い古い plan は、consumed をすべて今の subject の分とみなす
+    plan = _verification_plan()
+    plan["cost_summary"] = {"consumed_model_actions": 2, "planned_model_actions": 1}
+    env = _claim(mod, tmp_path, plan=plan)
+    budget = env["claim"]["run_budget"]
+    # 検証は台帳の component になったので、台帳の外から足す数は 0
+    assert budget["verification_model_actions"] == 0
+    assert budget["verification_required"] == {"demo-plugin": 3}
+    assert budget["verification_added"] == 3
+    budget_mod, total = _budget()
+    assert budget["remaining"] == total - 1 - 3
+    ledger = budget_mod.read_ledger(env["state_dir"], plan["run_id"])
+    assert [(e["action_id"], e["component"], e["count"]) for e in ledger["entries"]
+            if e["component"] == "verification"] == [("verification:demo-plugin", "verification", 3)]
+
+
+def test_gate_does_not_double_count_what_the_planner_already_reserved(mod, tmp_path: Path):
+    budget_mod, total = _budget()
+    plan = _verification_plan()
+    plan["cost_summary"] = {"consumed_model_actions": 1, "planned_model_actions": 2,
+                            "consumed_model_actions_by_subject": {"other-skill": 1}}
+    # planner が同じ plan から同じ量を先に予約した状態
+    state_dir = tmp_path / "review-state"
+    state_dir.mkdir()
+    budget_mod.reserve_verification(state_dir, plan["run_id"],
+                                    required={"other-skill": 1, "demo-plugin": 2}, total=total)
+    env = _claim(mod, tmp_path, plan=plan)
+    budget = env["claim"]["run_budget"]
+    assert budget["verification_required"] == {"other-skill": 1, "demo-plugin": 2}
+    assert budget["verification_added"] == 0
+    assert budget["remaining"] == total - 1 - 3
+    assert budget_mod.ledger_consumed(budget_mod.read_ledger(state_dir, plan["run_id"])) == 1 + 3
+
+
+def test_gate_rejects_a_by_subject_breakdown_that_does_not_add_up(mod, tmp_path: Path):
+    plan = _verification_plan()
+    plan["cost_summary"] = {"consumed_model_actions": 2, "planned_model_actions": 0,
+                            "consumed_model_actions_by_subject": {"demo-plugin": 1}}
+    with pytest.raises(mod.GateError, match="consumed_model_actions"):
+        _claim(mod, tmp_path, plan=plan)
+
+
+# --- 独立レビューの指摘 (G1/G3-G6/G9/G10/D1) の再現。どれも exit 2 で止まり、claim も予約も残さない。
+
+_NON_UTF8 = b"\xff\xfe{}"
+_DEEP_JSON = b"[" * 100000 + b"]" * 100000
+
+
+def _run_cli(argv: list[str]) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(argv, cwd=REPO_ROOT, capture_output=True, text=True)
+
+
+def _assert_rejected_without_traceback(proc: subprocess.CompletedProcess[str]) -> None:
+    assert proc.returncode == 2, proc.stderr
+    assert "[ERROR]" in proc.stderr
+    assert "Traceback" not in proc.stderr
+    assert proc.stdout == ""
+
+
+def _durable_states(state_dir: Path) -> list[Path]:
+    if not state_dir.is_dir():
+        return []
+    return sorted(
+        path for path in state_dir.iterdir()
+        if path.name.startswith("initial-draft-review-") and path.suffix == ".json" and not path.name.endswith(".launch.json")
+    )
+
+
+def test_cli_out_to_a_directory_fails_before_the_claim_so_a_rerun_still_launches(tmp_path: Path):
+    """G1: 以前は state と予約を書いた後に IsADirectoryError で落ち、再実行は in-progress で二度と起動できなかった。"""
+    mod = _load_module()
+    launch_mod = _load_launch_module()
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    out_dir = tmp_path / "runtime" / "out-is-a-directory"
+    out_dir.mkdir(parents=True)
+    proc = _run_cli(argv + ["--out", str(out_dir)])
+    _assert_rejected_without_traceback(proc)
+    assert "--out must be a regular file path" in proc.stderr
+    assert _durable_states(state_dir) == []
+    budget_mod, _ = _budget()
+    assert budget_mod.read_ledger(state_dir, _verification_plan()["run_id"])["entries"] == []
+
+    out = tmp_path / "runtime" / "gate-plan.json"
+    rerun = _run_cli(argv + ["--out", str(out)])
+    assert rerun.returncode == 0, rerun.stderr
+    gate_plan = json.loads(rerun.stdout)
+    assert gate_plan["status"] == "initial-review-required" and gate_plan["initial_review"]["authorized"] is True
+    assert json.loads(out.read_text(encoding="utf-8")) == gate_plan
+    request = launch_mod.build_launch_request(gate_plan, runtime="codex")
+    assert request["runtime_neutral_request"]
+
+
+@pytest.mark.parametrize("make_bad_out", ["symlink", "under-a-file"])
+def test_cli_out_that_cannot_be_written_is_refused_before_the_claim(tmp_path: Path, make_bad_out: str):
+    mod = _load_module()
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    if make_bad_out == "symlink":
+        out = tmp_path / "runtime" / "gate-plan-link.json"
+        out.symlink_to(tmp_path / "runtime" / "elsewhere.json")
+    else:
+        blocker = tmp_path / "runtime" / "a-file"
+        blocker.write_text("x\n", encoding="utf-8")
+        out = blocker / "gate-plan.json"
+    _assert_rejected_without_traceback(_run_cli(argv + ["--out", str(out)]))
+    assert _durable_states(state_dir) == []
+    assert not (tmp_path / "runtime" / "elsewhere.json").exists()
+
+
+def test_cli_claim_writes_out_before_the_state_so_a_failed_out_write_leaves_no_claim(mod, tmp_path: Path, monkeypatch, capsys):
+    """G1 の事前検査をすり抜けた書き込み失敗 (disk full など) でも、claim の state は書かれず再実行で抜け出せる。"""
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    out = tmp_path / "runtime" / "gate-plan.json"
+    calls = _fail_once(monkeypatch, mod, lambda path, value: path == out)
+    assert mod.main(argv[2:] + ["--out", str(out)]) == 2
+    captured = capsys.readouterr()
+    assert calls["failed"] == 1 and "[ERROR]" in captured.err and captured.out == ""
+    assert _durable_states(state_dir) == [] and not out.exists()
+    budget_mod, _ = _budget()
+    run_id = _verification_plan()["run_id"]
+    orphan = budget_mod.read_ledger(state_dir, run_id)["entries"]
+    assert len(orphan) == 1
+
+    assert mod.main(argv[2:] + ["--out", str(out)]) == 0
+    gate_plan = json.loads(capsys.readouterr().out)
+    assert gate_plan["status"] == "initial-review-required"
+    assert gate_plan["initial_review"]["claim_id"] == orphan[0]["action_id"]
+    assert json.loads(out.read_text(encoding="utf-8")) == gate_plan
+    assert len(_durable_states(state_dir)) == 1
+    assert budget_mod.ledger_consumed(budget_mod.read_ledger(state_dir, run_id)) == 1
+
+
+def test_cli_decision_out_without_a_selection_is_refused_before_the_claim(tmp_path: Path):
+    """--decision-out は選択の無い呼び出しで必ず落ちる。以前は claim を書いてから落ち、再実行が in-progress になった。"""
+    mod = _load_module()
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    decision = tmp_path / "runtime" / "decision.json"
+    proc = _run_cli(argv + ["--decision-out", str(decision)])
+    _assert_rejected_without_traceback(proc)
+    assert "--decision-out requires a validated user decision" in proc.stderr
+    assert _durable_states(state_dir) == [] and not decision.exists()
+    again = _run_cli(argv)
+    assert again.returncode == 0, again.stderr
+    assert json.loads(again.stdout)["status"] == "initial-review-required"
+
+
+@pytest.mark.parametrize(
+    ("flag", "payload"),
+    [
+        ("--verification-plan", _NON_UTF8),
+        ("--verification-plan", _DEEP_JSON),
+        ("--usable-draft-proof", _NON_UTF8),
+        ("--artifact-presentation-receipt", _NON_UTF8),
+        ("--levels", b"\xff"),
+        ("--methods", b"\xff"),
+        ("--budget-policy", _DEEP_JSON),
+    ],
+    ids=["G3-plan-non-utf8", "plan-deeply-nested", "proof-non-utf8", "presentation-non-utf8", "G9-levels-non-utf8", "methods-non-utf8", "budget-policy-deeply-nested"],
+)
+def test_cli_unreadable_inputs_exit_2_without_traceback_or_claim(tmp_path: Path, flag: str, payload: bytes):
+    mod = _load_module()
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    bad = tmp_path / "runtime" / "unreadable-input"
+    bad.write_bytes(payload)
+    if flag in argv:
+        argv[argv.index(flag) + 1] = str(bad)
+    else:
+        argv += [flag, str(bad)]
+    _assert_rejected_without_traceback(_run_cli(argv))
+    assert _durable_states(state_dir) == []
+
+
+@pytest.mark.parametrize("ref", ["state_ref", "launch_receipt_ref"], ids=["G6-state", "launch-receipt"])
+def test_cli_non_utf8_durable_file_exits_2_without_traceback(tmp_path: Path, ref: str):
+    mod = _load_module()
+    argv, _ = _cli_claim_argv(mod, tmp_path)
+    first = _run_cli(argv)
+    assert first.returncode == 0, first.stderr
+    Path(json.loads(first.stdout)[ref]).write_bytes(b"\xff\xfe")
+    _assert_rejected_without_traceback(_run_cli(argv))
+
+
+@pytest.mark.parametrize("which", ["verification-plan", "upstream-receipt"])
+def test_non_utf8_usable_draft_proof_files_are_gate_errors(mod, tmp_path: Path, which: str):
+    plan = _verification_plan()
+    proof = _usable_draft_proof(tmp_path, plan)
+    scope = _scope_with_proof(mod, tmp_path, [], tmp_path / "review-state", proof)
+    digest = hashlib.sha256(b"\xff\xfe").hexdigest()
+    if which == "verification-plan":
+        (tmp_path / proof["verification_plan_ref"]).write_bytes(b"\xff\xfe")
+        proof["verification_plan_sha256"] = digest
+    else:
+        (tmp_path / proof["upstream_receipts"][0]["path"]).write_bytes(b"\xff\xfe")
+        proof["upstream_receipts"][0]["sha256"] = digest
+    with pytest.raises(mod.GateError, match="unreadable"):
+        mod._validate_usable_draft_proof(proof, plan=plan, target_scope=scope)
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root は directory の書き込み権を無視する")
+def test_cli_read_only_state_dir_exits_2_without_traceback(tmp_path: Path):
+    """G5"""
+    mod = _load_module()
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    state_dir.mkdir()
+    state_dir.chmod(0o555)
+    try:
+        proc = _run_cli(argv)
+    finally:
+        state_dir.chmod(0o755)
+    _assert_rejected_without_traceback(proc)
+    assert "cannot lock durable review state" in proc.stderr
+    assert list(state_dir.iterdir()) == []
+
+
+def test_cli_state_dir_that_is_a_file_exits_2_without_traceback(tmp_path: Path):
+    """G10"""
+    mod = _load_module()
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    state_dir.write_text("not a directory\n", encoding="utf-8")
+    _assert_rejected_without_traceback(_run_cli(argv))
+    assert state_dir.read_text(encoding="utf-8") == "not a directory\n"
+
+
+def test_cli_symlinked_state_lock_is_refused_and_creates_nothing_outside(tmp_path: Path):
+    """G4: 以前は lock の symlink を辿って state_dir の外にファイルを作り、exit 0 で claim まで進んだ。"""
+    mod = _load_module()
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    scope = mod.build_target_scope([tmp_path / "target.md"], root=tmp_path, state_dir=state_dir)
+    state_path = mod._state_path(state_dir, mod.baseline_fingerprint(_verification_plan(), scope["target_manifest"]))
+    state_dir.mkdir()
+    outside = tmp_path / "outside" / "created-through-the-lock-symlink"
+    outside.parent.mkdir()
+    os.symlink(outside, str(state_path) + ".lock")
+    proc = _run_cli(argv)
+    _assert_rejected_without_traceback(proc)
+    assert "cannot lock durable review state" in proc.stderr
+    assert not outside.exists()
+    assert _durable_states(state_dir) == []
+    budget_mod, _ = _budget()
+    assert budget_mod.read_ledger(state_dir, _verification_plan()["run_id"])["entries"] == []
+
+
+def test_cli_symlinked_state_dir_is_refused_before_anything_is_written(tmp_path: Path):
+    mod = _load_module()
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    outside = tmp_path / "outside-state"
+    outside.mkdir()
+    state_dir.symlink_to(outside, target_is_directory=True)
+    proc = _run_cli(argv)
+    _assert_rejected_without_traceback(proc)
+    assert "--state-dir must not be a symlink" in proc.stderr
+    assert list(outside.iterdir()) == []
+
+
+def test_cli_symlinked_durable_state_is_refused(tmp_path: Path):
+    mod = _load_module()
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    first = _run_cli(argv)
+    assert first.returncode == 0, first.stderr
+    state_path = Path(json.loads(first.stdout)["state_ref"])
+    copy = tmp_path / "outside-state.json"
+    copy.write_bytes(state_path.read_bytes())
+    link = state_dir / "state-link"
+    os.symlink(copy, link)
+    os.replace(link, state_path)
+    proc = _run_cli(argv)
+    _assert_rejected_without_traceback(proc)
+    assert "durable review state must not be a symlink" in proc.stderr
+
+
+def test_cli_deeply_nested_run_ledger_exits_2_without_traceback(tmp_path: Path):
+    """D1: validate-run-model-budget の読み込みは RecursionError を捕まえない。gate が読めない台帳として止める。"""
+    mod = _load_module()
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    budget_mod, _ = _budget()
+    state_dir.mkdir()
+    budget_mod.ledger_path(state_dir, _verification_plan()["run_id"]).write_bytes(_DEEP_JSON)
+    proc = _run_cli(argv)
+    _assert_rejected_without_traceback(proc)
+    assert "nested too deeply" in proc.stderr
+    assert _durable_states(state_dir) == []
+
+
+def test_cli_unloadable_budget_script_exits_2_and_claims_nothing(mod, tmp_path: Path, monkeypatch, capsys):
+    argv, state_dir = _cli_claim_argv(mod, tmp_path)
+    broken = tmp_path / "broken-budget.py"
+    broken.write_text("raise RuntimeError('budget script import failed (injected)')\n", encoding="utf-8")
+    monkeypatch.setattr(mod, "BUDGET_SCRIPT_PATH", broken)
+    monkeypatch.setattr(mod, "_BUDGET_MODULE", None)
+    assert mod.main(argv[2:]) == 2
+    assert "cannot load run model-action budget script" in capsys.readouterr().err
+    assert _durable_states(state_dir) == []
+
+
+def test_cli_missing_repo_root_exits_2_without_traceback(tmp_path: Path):
+    mod = _load_module()
+    argv, _ = _cli_claim_argv(mod, tmp_path)
+    argv[argv.index("--repo-root") + 1] = str(tmp_path / "missing-root")
+    _assert_rejected_without_traceback(_run_cli(argv))
+
+
+def test_frontmatter_declares_the_exit_contract_and_every_cli_option():
+    text = SCRIPT.read_text(encoding="utf-8")
+    header = text.split("# ///")[1]
+    options = set(re.findall(r'parser\.add_argument\("(--[a-z-]+)"', text))
+    assert len(options) >= 20
+    assert sorted(option for option in options if not re.search(re.escape(option) + r"(?![a-z-])", header)) == []
+    assert re.search(r"^# exit:\n#   - 0: .+\n#   - 2: .+", header, flags=re.MULTILINE)

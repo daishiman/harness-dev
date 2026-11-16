@@ -50,9 +50,9 @@ FIX の分類と戻り先、cycle（改善の 1 往復）の数え方と停止�
 
 ## 深さの選択と戻り
 
-intake・analyze・create・learn は、選ぶ前の実成果物を見せてから、現状で試す／軽微／標準／詳細のどれにするかを利用者に選んでもらう。深さが変えるのは、各 SKILL が書いた手間の量だけである。独立性・停止条件・cycleBudget は変えない。選んだ深さは型に欄が無いので、[記録の残し方](#記録の残し方)どおり返却文へ書く。
+intake・analyze・create・learn は、選ぶ前の実成果物を見せてから、現状で試すか診断するかを利用者に選んでもらう。診断する（`diagnose`）を選んだ stage の深さは既定で標準とし、利用者が軽微・詳細と言ったときだけそれを記録する。深さが変えるのは、各 SKILL が書いた手間の量だけである。独立性・停止条件・cycleBudget は変えない。選んだ深さは型に欄が無いので、[記録の残し方](#記録の残し方)どおり返却文へ書く。
 
-- 現状で試す（`accept-as-is`）を選んだ stage は、その場で終わる。後続の stage が読む成果物（brief.json・essence-baseline.json・PASS した analysis-review・delivery.json）は作られないので、次の stage へは進めない。進めるには、その stage に入り直して軽微・標準・詳細のどれかを選ぶ。
+- 現状で試す（`accept-as-is`）を選んだ stage は、その場で終わる。後続の stage が読む成果物（brief.json・essence-baseline.json・PASS した analysis-review・delivery.json）は作られないので、次の stage へは進めない。進めるには、その stage に入り直して診断するを選ぶ。
 - 評価の FIX や premise の戻し（[workflow の改善と納品](workflow.md#改善と納品)）で同じ案件の stage に入り直したときは、直す対象の現物（パスとハッシュ値）を示し、その stage で前に記録した深さをそのまま記録する。選び直しは求めない。前に記録した深さが無い stage と、別の会話で入り直して前の返却文が読めない stage だけ、1 回選んでもらう。
 
 ## 知識の読み込み

@@ -78,7 +78,7 @@
     },
     "score_delta": {
       "type": "number",
-      "description": "前 iter との avg overall score 差分 (iter 1 は baseline 比)。急変時は independent_check.required=true (allOf で機械強制)。"
+      "description": "前 iter の score との avg overall score 差分。iter 1 はこの run の中に比べる前の状態が無いので 0。前 iter の commit が revert だけのときは、target が前々 iter の採点した状態に戻っているので前々 iter の score と比べる (revert は前 iter の commit を全部戻し、1 本だけ戻すことはしないので、比べる相手はいつも 1 つに決まる)。急変時は independent_check.required=true (allOf で機械強制)。急変で判定させるのは急変を起こした前 iter の commit で、今回の edit ではない (前 iter が commit しなかったか revert だけなら今回の edit。SKILL.md 局面「独立判定と審問ログの確定」)。"
     },
     "independent_check": {
       "type": "object",
@@ -91,17 +91,65 @@
         },
         "verdict": {
           "enum": ["generator", "loosening", null],
-          "description": "独立判定の結論。generator=真の generator 改善 / loosening=評価を緩める操作 (破棄必須)。未実施 (required=false) は null。required=true なら非 null 必須 (allOf)。"
+          "description": "独立判定の結論で、judgments の集約。generator=真の generator 改善 / loosening=評価を緩める操作 (破棄必須)。judgments のどれかが loosening なら loosening、全部 generator なら generator (allOf)。未実施 (required=false) は null。required=true なら非 null 必須 (allOf)。"
         },
         "agent_independent": {
           "type": "boolean",
           "description": "判定 agent が GOAL VERIFICATION agent と別個体・履歴非共有か (D11 判定者独立性)。verdict 非 null なら true 必須 (allOf)。"
+        },
+        "judgments": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "description": "独立判定 agent に判定させた diff ごとの結論 (SKILL.md 局面「独立判定と審問ログの確定」)。current_edit = この iter の edit の diff (commit 前なので commit_sha は null)、prior_commit = 前 iter の commit の diff (git diff <commit_sha>~1 <commit_sha>。sha は前 iter の commit item が intermediate.jsonl の commits に記録したもの)。verdict が非 null の行では必須: 判定した diff が書かれていない verdict は、どの変更を緩めと判定したか、どの commit を戻したかを残せないため。verdict が null の行には書かない (この field を足す前の形の行も、verdict が null ならそのまま通る)。prior_commit が 1 つでも loosening なら、ここに並ぶ prior_commit の commit を全部 revert したと読む (1 本だけ戻すことはしない)。戻したことは前 iter の行を書き換えずにこの行に残す。",
+          "items": {
+            "type": "object",
+            "required": ["subject", "commit_sha", "verdict"],
+            "additionalProperties": false,
+            "properties": {
+              "subject": {
+                "enum": ["current_edit", "prior_commit"],
+                "description": "判定させた diff の出どころ。current_edit=この iter の edit / prior_commit=前 iter の commit。"
+              },
+              "commit_sha": {
+                "type": ["string", "null"],
+                "pattern": "^[0-9a-f]{7,40}$",
+                "description": "prior_commit なら判定させた commit の sha (wrap-git-commit-safe の commit_sha)。current_edit は commit 前なので null。"
+              },
+              "verdict": {
+                "enum": ["generator", "loosening"],
+                "description": "この diff の判定。"
+              }
+            },
+            "allOf": [
+              {
+                "$comment": "前 iter の commit の判定は、どの commit を判定したかを sha で残す",
+                "if": {
+                  "properties": { "subject": { "const": "prior_commit" } },
+                  "required": ["subject"]
+                },
+                "then": {
+                  "properties": { "commit_sha": { "type": "string" } }
+                }
+              },
+              {
+                "$comment": "今回の edit は commit 前なので sha を持たない",
+                "if": {
+                  "properties": { "subject": { "const": "current_edit" } },
+                  "required": ["subject"]
+                },
+                "then": {
+                  "properties": { "commit_sha": { "type": "null" } }
+                }
+              }
+            ]
+          }
         }
       }
     },
     "discarded": {
       "type": "boolean",
-      "description": "この iter の改善案を破棄したか。緩め禁止抵触 / 独立判定 loosening なら true 必須 (allOf)。"
+      "description": "この iter の改善案 (proposed_changes) を破棄したか。緩め禁止抵触 / 独立判定 loosening なら true 必須 (allOf)。前 iter の commit を戻したかは independent_check.judgments で読む。"
     }
   },
   "allOf": [
@@ -220,6 +268,120 @@
       },
       "then": {
         "properties": { "discarded": { "const": true } }
+      }
+    },
+    {
+      "$comment": "verdict を出した独立判定は、判定した diff ごとの結論 (judgments) が必須",
+      "if": {
+        "properties": {
+          "independent_check": {
+            "properties": { "verdict": { "type": "string" } },
+            "required": ["verdict"]
+          }
+        },
+        "required": ["independent_check"]
+      },
+      "then": {
+        "properties": {
+          "independent_check": { "required": ["judgments"] }
+        }
+      }
+    },
+    {
+      "$comment": "独立判定を行っていない (verdict=null) 行は judgments を持たない",
+      "if": {
+        "properties": {
+          "independent_check": {
+            "properties": { "verdict": { "type": "null" } },
+            "required": ["verdict"]
+          }
+        },
+        "required": ["independent_check"]
+      },
+      "then": {
+        "properties": {
+          "independent_check": { "not": { "required": ["judgments"] } }
+        }
+      }
+    },
+    {
+      "$comment": "judgments に loosening が 1 つでもあれば verdict は loosening (集約が食い違わない)",
+      "if": {
+        "properties": {
+          "independent_check": {
+            "properties": {
+              "judgments": {
+                "contains": {
+                  "properties": { "verdict": { "const": "loosening" } },
+                  "required": ["verdict"]
+                }
+              }
+            },
+            "required": ["judgments"]
+          }
+        },
+        "required": ["independent_check"]
+      },
+      "then": {
+        "properties": {
+          "independent_check": {
+            "properties": { "verdict": { "const": "loosening" } }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "verdict が loosening なら judgments のどれかが loosening (判定の根拠が無い loosening を許さない)",
+      "if": {
+        "properties": {
+          "independent_check": {
+            "properties": { "verdict": { "const": "loosening" } },
+            "required": ["verdict"]
+          }
+        },
+        "required": ["independent_check"]
+      },
+      "then": {
+        "properties": {
+          "independent_check": {
+            "properties": {
+              "judgments": {
+                "contains": {
+                  "properties": { "verdict": { "const": "loosening" } },
+                  "required": ["verdict"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "$comment": "評価経路接触の iter は、今回の edit の diff を判定した結論 (subject=current_edit) が必須",
+      "if": {
+        "properties": {
+          "proposed_changes": {
+            "contains": {
+              "properties": { "touches_evaluation_path": { "const": true } },
+              "required": ["touches_evaluation_path"]
+            }
+          }
+        },
+        "required": ["proposed_changes"]
+      },
+      "then": {
+        "properties": {
+          "independent_check": {
+            "properties": {
+              "judgments": {
+                "contains": {
+                  "properties": { "subject": { "const": "current_edit" } },
+                  "required": ["subject"]
+                }
+              }
+            }
+          }
+        }
       }
     }
   ]

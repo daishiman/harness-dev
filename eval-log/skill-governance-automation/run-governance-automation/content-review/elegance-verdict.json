@@ -2,7 +2,9 @@
   "target": {
     "plugin": "skill-governance-automation",
     "skill": "run-governance-automation",
-    "skill_md_sha256": "6947515c26ccf2a39e6f3d92e37c0e86c5f62fa7b8153c7297cc284ed54c076b"
+    "skill_md_sha256": "d7e435195d27d34e58ae83cd37bc4fdc21bebeed0f5bde7b08719a87d5d2284c",
+    "reviewed_skill_md_sha256": "d7e435195d27d34e58ae83cd37bc4fdc21bebeed0f5bde7b08719a87d5d2284c",
+    "skill_dir_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,11 +13,11 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 3
   },
-  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
-  "reviewed_at": "2026-10-11T21:46:59Z",
-  "iterations": 3,
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-14T22:15:44Z",
+  "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -24,22 +26,39 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "4 条件の観点では、表の 11 行それぞれが「既定の動き（exit を含む）」と「書き込み」を実物どおりに持ち、76 行目の preflight の規則、92 行目の receipt、107 行目の停止条件とつながった。どの entrypoint を、どの preflight で呼び、どの exit で止め、何を receipt に残すかを、本文だけから決められる。",
-      "差分の範囲: iteration 2 の版からの変更は 80・84・88・89 行目だけ（git diff HEAD -U0 の hunk は節の移動と 76・80・84・88〜89 行目で、76 行目は iteration 2 から変わっていない）。見出しの並びと Runtime root contract の位置（67〜72 行目）は同じで、lint-entrypoint-artifact-first.py は rc 0（127 inventory、101 enforced、26 mechanically exempt）。",
-      "iteration 2 の low-1（76 行目と表のラベル、解消）: 表で **既定で書き込む** のラベルが付く行は 82・87・88・89 行目の 4 行になり、76 行目の「4本」と数・顔ぶれがそろった。88 行目に足した「`--out` は必須」は実物と合う（scratchpad で、--out を省くと argparse の exit 2、--doc のファイルが無いと exit 1 で --out は作られない、正常に呼ぶと exit 0 で --out に brief JSON を書く）。",
-      "iteration 2 の low-2（89 行目の log root、解消）: 書き込み欄の順序は実物どおり。scratchpad の偽の plugin に複製した script（repo の 2 本の写しと同じ sha256 8d53156d…）で、CLAUDE_LOG_ROOT はその直下に <日付>.jsonl を書き（.claude/logs は付かない）、無ければ $PROJECT_ROOT/.claude/logs、どちらも無ければ <偽の plugin>/.claude/logs に書くことを確かめた。ファイル名の日付は UTC（ローカルの日付 2026-10-12 に対して 2026-10-11.jsonl）。",
-      "iteration 2 の low-3（80 行目、解消）: この plugin での実際の動き（proposals 空の exit 0、何も登録しない）が先に書かれ、legacy の分岐は「legacy の manifest.json 形式の plugin に置いたときだけ」に限られた。scratchpad の legacy 形式の偽の plugin（manifest.json と未登録の skills/foo/SKILL.md）で、--apply なしは needs_confirmation の exit 1、--apply ありは applied の exit 0 で manifest.json が変わることを確かめ、この限定が正しいことを確認した。plugin.json 形式の偽の plugin では --apply を付けてもどのファイルも変わらない。書き込み欄の「しない（この plugin では --apply を付けても変えない）」と、登録の担い手として示した repo の scripts/validate-plugin-completeness.py --fix（docstring の 33 行目: 未登録 plugin を marketplace.json・bundles.json へ追記する）も実物と合う。",
-      "iteration 2 の info-1（84 行目、解消）: 「`--versions-md` に渡したファイルが無いと exit 1（option そのものを省くと argparse の exit 2）」は、iteration 2 の fixture（nope.md で exit 1、--versions-md を省くと exit 2。required=True は 354 行目）と合う。rollback-to-stable.py は iteration 2 から変わっていない。",
-      "iteration 2 の info-2（89 行目、解消）: 「hook の入力では exit 0（UTF-8 として読めない stdin だけは exit 1）」は、通常の環境での実物と合う（壊れた JSON・JSON の配列・空の stdin は exit 0、0xff の stdin は exit 1）。script の側の修正は後続の Beads に回すという判断で、SKILL.md は今の動きを正しく書いている。",
-      "rubric の機械採点は 100/100（threshold 80、findings 0、passed）。指定のコマンド（--rubric-refs に L0 だけ）で rubric 1.6.0、rubric_hash sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9、composition_hash sha256:2713eeaf2ead46a2760bc5f1e4195f429883a8cd14cecdf0e7f7a8323655ec98、applicable 20・scored 19・pending_human 1（BD-004）・unscored 0。L0+L2（assign-skill-design-evaluator）の合成でも 100/100（applicable 24・scored 23、composition_hash sha256:cebbd0864fda5cf07c2104c31ab4bdad5e160b8d7d1ad8a2ee8bd1f4b597299c）。check-rubric-sync.py は OK（1.6.0、exit 0）。BD-004 は PASS: description の「登録」は 80 行目へ対応し、80 行目はこの plugin では何もしないことと登録の担い手を示すので、発動条件から本文の手順へたどれる。rubric の high は 0 件。",
-      "OUT1: 今回の変更は外部作用の境界を変えていない。rollback・manifest登録の書き込み欄は「しない」で、apply・rollback・通知は明示承認なしに実行しない（100・107 行目）。",
-      "関係するテスト（grep で見つかった tests/scripts-plugins/test_skill_governance_automation__rollback_to_stable.py と tests/criteria/criteria_roster.py）は 99 passed、pytest の rc 0。"
+      "前のループは iteration 3 で PASS して終わっており、今回は build-manifest-registration-plan.py の変更（--plugin を受け取る・壊れた入力と plugin が見つからないときの exit が変わる）に合わせた 65 行目の書き直しを受けた、1 回だけの全体再レビューである。",
+      "65 行目は現物と一致する。scratchpad の偽の plugin と repo の現物で 35 通りを回した（git status は前後で同じ）: legacy で候補あり → needs_confirmation・exit 1・書き込みなし、--apply → applied・exit 0 で manifest.json だけが変わる（1 行の JSON が indent=2 の全体に書き直される。末尾への追記ではない）、その再実行 → ok・exit 0。legacy で候補なし（--apply の有無とも）→ ok・exit 0・書き込みなし。plugin.json 形式（--apply の有無とも）→ ok・exit 0・proposals は {}・書き込みなし。両方を持つ → plugin.json を壊しておいても legacy の分岐に入り、plugin.json を読まない。どちらも無い・存在しない dir・空文字・未展開の $PLUGIN_ROOT → plugin_not_found・exit 2。壊れた JSON（両形式、--apply 付きも）と object でない JSON（list・string・null・number、両形式）→ traceback・exit 1・stdout 空・書き込みなし。必須キーの欠け・空・{}（--apply の有無とも）→ invalid_plugin_manifest・exit 1・書き込みなし。--plugin の省略 → script を置いた plugin 自身を見て、repo の現物はこの plugin の plugin.json で ok・exit 0。",
+      "65 行目の書き直しは周りと食い違わない。61 行目（「既定で書き込む」4 本に入らず、--dry-run は argparse の exit 2 になる。実際に exit 2）、77 行目（stdout の要点は status と proposals、--apply のときの変わった path は対象の manifest.json）、85・92 行目（needs_confirmation の exit 1 で止めて報告し、承認の後だけ --apply）、IN1（--help と --apply なしの実行が read-only な preflight になる）、OUT1（apply の外部作用は承認の後だけ）とつながる。「exit 1 はこの 3 通りなので status で見分ける」は、停止条件で止めたときに何を報告するかを決められるようにしている。",
+      "表のほかの行も現物で確かめた。61 行目の --dry-run の主張: compose-rubrics・re-evaluate-on-rubric-bump・guard-change-category・notify-if-governance-trigger・extract-plugin-root は必須引数を渡しても unrecognized arguments の exit 2、rollback-to-stable は --dry-run を受け付ける。10 本の --help は exit 0。extract-session-events.py は --help を event の種類として扱い、WARN を出して exit 0 で、何も読まず何も書かない（main の 104〜106 行目）。extract-plugin-root.py は skill-governance-config で絶対 path・exit 0、無い名前で exit 1（75・83 行目どおり）。notify-if-governance-trigger.py と extract-session-events.py はどの hooks.json にも登録されていない（71・74 行目どおり）。前のレビューの後に 0.4.3 へ変わった rollback-to-stable.py の docstring と exit の一覧は 69 行目（正式版だけを選ぶ、exit 1・2 の条件、承認後に compute-rubric-hash.py --dry-run で hash を計算）と合う。83 行目の skill-governance-config への依存は plugin-composition.yaml の external_dependencies に宣言されている。",
+      "4 条件の判定（SKILL.md 全体）: C1 矛盾なし（表の 4 本の「既定で書き込む」と 61 行目、承認の規則と停止条件、rollback と hash の手順が同じことを言う）。C2 漏れなし（11 本の entrypoint のそれぞれに既定の動き・exit・書き込みがあり、receipt の 4 項目と停止条件がある）。C3 整合性（用語・exit・status の書き方が表とほかの節でそろう。rubric で採点できる規約は rubric 側に任せた）。C4 依存関係整合（Runtime root contract → extract-plugin-root → --policy、rollback → compute-rubric-hash --dry-run、登録の担い手 → validate-plugin-completeness.py --fix がどれも実在して、書かれたとおりに動く）。",
+      "関係するテスト（build-manifest-registration-plan の 2 本と rollback-to-stable）は 189 passed。lint-entrypoint-artifact-first.py は OK（133 inventory、105 enforced、28 mechanically exempt）。rubric は L0 だけで 100/100（threshold 80、high 違反 0、BD-004 は PASS）。"
     ],
-    "negative_feedback": [],
-    "iteration": 3,
+    "negative_feedback": [
+      "[low・読みやすさ] 65 行目の「既定の動き」の欄は、対象の渡し方、plugin_not_found、形式の決め方、結果の出る場所、plugin.json 形式の 2 通り、legacy の 2 通り、traceback、exit 1 の見分け方を 1 つのセルに詰めていて、表のほかの行より読み取りにくい（内容は現物と一致する）。改善案: セルは「対象の plugin（--plugin、省略時はこの plugin）の形式を見て、legacy なら未登録ファイルの追加候補を、plugin.json 形式なら必須キーの検査結果を stdout の JSON に出す」くらいに縮め、status と exit の対応（ok=0・applied=0・needs_confirmation=1・invalid_plugin_manifest=1・traceback（stdout 空）=1・plugin_not_found=2）を表のすぐ後の短い箇条書きに移す。",
+      "[low・精度] 65 行目の「結果は stdout の JSON の `status` と、追加候補の一覧 `proposals` に出る」は、proposals がいつもあるように読める。実際に proposals のキーがあるのは ok・needs_confirmation・applied だけで、plugin_not_found と invalid_plugin_manifest の JSON には無く（invalid_plugin_manifest は代わりに missing に欠けたキーを出す）、traceback では stdout が空になる。status を先に見れば誤った動きにはならないので違反ではない。改善案: 「proposals は ok・needs_confirmation・applied のときに出る。invalid_plugin_manifest は missing に欠けたキーを出す」と書き分ける。",
+      "[low・精度] 77 行目の receipt は「変わったpath（`git status --short` で確かめる）」とするが、git status に出ない書き込み先がある。work tree の外を指す --plugin への legacy の --apply（stdout の manifest に path が出る）、extract-session-events.py の既定の $PROJECT_ROOT/.claude/logs（この repo では .gitignore の 21 行目で外している）と CLAUDE_LOG_ROOT、work tree の外を指す doc-to-skill-adapter.py の --out。receipt に要る項目ははっきりしていて、path は表の書き込み欄・command の引数・stdout から分かるので違反ではない。改善案: 括弧の中に「git status に出ない書き込み先は、表の書き込み欄・command の引数・stdout の path（applied の manifest など）で確かめる」と足す。"
+    ],
+    "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:stale-sha-review",
+    "hook_trigger": "manual:script-change-full-review",
     "next_action": "none"
   },
-  "notes": "節の移動だけの差分に対する新しいサイクルの iteration 3（最終）。iteration 1 は SKILL.md sha256 e9c871dd74e8263826ed68ecb98c1c7b009604d176ad8edf976b23fb21402977 を PASS（low 5 件）、iteration 2 は b38c004f1f108f40b575ea1ed1baf1bd8ef35a4f2422a511148967c2e375f0a2 を PASS（low 3 件・info 2 件）と判定した。その前のサイクルの最終 verdict は PASS（iteration 3/3、2026-10-10T09:42:34Z、skill_md_sha256 3ab3e6f7c1eee83d6bf597e66fc07ab9bf3f77dc8fb56f6558c047f6f2524aea）。今回は team-lead が iteration 2 の low 3 件と info 2 件を 80・84・88・89 行目で直した版（sha256 6947515c26ccf2a39e6f3d92e37c0e86c5f62fa7b8153c7297cc284ed54c076b）を評価した。incremental profile の focused combined review。作者とは別の独立レビュアーが 1 つの context で (a) 矛盾 (b) 漏れ (c) 規約整合 (d) 依存関係整合 (e) rubric の high が 0 件、を判定した。30 種の思考法は使っておらず、使ったとも申告しない。評価対象は作業ツリーの現物の SKILL.md と、変更した文が指す scripts（build-manifest-registration-plan.py、doc-to-skill-adapter.py、extract-session-events.py、rollback-to-stable.py 0.4.1、repo の scripts/validate-plugin-completeness.py）。実行したこと（repo に書いたのは verdict の 2 ファイルだけ。書き込みのある実行は scratchpad の fixture か、scratchpad に複製した script だけ）: (1) git diff HEAD -U0 で変更の hunk を確かめ、変更行以外（表のほかの 7 行、receipt、Key Rules、停止条件、Gotchas）を読み直した。(2) build-manifest-registration-plan.py を scratchpad/crauto4 の legacy 形式・両形式（manifest.json と plugin.json の両方）の偽の plugin に複製して実行した（legacy は exit 1 と --apply での書き込み、両方あると legacy の分岐、plugin.json だけは iteration 2 で exit 0・書き込みなし）。(3) doc-to-skill-adapter.py を scratchpad で 3 通り実行した。(4) extract-session-events.py を scratchpad に複製し、CLAUDE_LOG_ROOT・PROJECT_ROOT・どちらも無し・--help・0xff の stdin を試した。(5) render-findings-score.py: L0 だけで 100/100、L0+L2 で 100/100、BD-004 は PASS と判定。check-rubric-sync.py: OK。(6) lint-entrypoint-artifact-first.py: rc 0。(7) pytest: 2 ファイルで 99 passed、rc 0。判定: 指摘は 0 件なので verdict は PASS、human_review_required は false、next_action は none。info（指摘にしない）: (i) 89 行目の「UTF-8 として読めない stdin だけは exit 1」は通常の環境で正しい。Python の UTF-8 mode（-X utf8・PYTHONUTF8=1）では同じ入力が surrogateescape で読まれて exit 0 になり、stdin を閉じて呼ぶと exit 1 になるが、どちらも hook の通常の入力ではない。(ii) read_hook_payload が UnicodeDecodeError を捕まえない点の修正は、team-lead の判断で後続の Beads に回された。写しは scripts/extract-session-events.py と plugins/skill-governance-automation/scripts/extract-session-events.py の 2 本で、どちらも sha256 8d53156d…（同一）。直すときは 2 本を一緒に直し、89 行目の括弧書きを外す必要がある。(iii) 作業ツリーには root の scripts/ の別の差分（build-artifact-delivery.py・lint-script-naming.py など）もあるが、lint-entrypoint-artifact-first.py と lint-content-review.py は変わっておらず、この SKILL.md の判定に関わらない。"
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "目的とentrypointの対応"
+      ]
+    },
+    "elegance:2": {
+      "sections": [
+        "目的とentrypointの対応"
+      ]
+    },
+    "elegance:3": {
+      "sections": [
+        "目的とentrypointの対応"
+      ]
+    }
+  },
+  "notes": "build-manifest-registration-plan.py の変更と 65 行目の書き直しをきっかけにした新しいループの iteration 1。前のループの最終 verdict は PASS（iteration 3/3、2026-10-11T21:46:59Z、レビューした SKILL.md の sha256 6947515c26ccf2a39e6f3d92e37c0e86c5f62fa7b8153c7297cc284ed54c076b。その後 artifact-delivery-v1 と diagnostic-choice-2way の replay で 7c1e8f71… へ結び直された）。範囲つきの再レビューは使わず、作者とは別の独立レビュアーが 1 つの context で SKILL.md の全体（frontmatter、Pre-choice・Post-choice、Purpose & Output Contract、Runtime root contract、目的とentrypointの対応の 11 行と 61 行目と receipt、Key Rules、ゴールシーク実行、検証、Gotchas）を読み、C1〜C4 と rubric の high が 0 件かを判定した（focused combined review）。変更前の本文（scratchpad/cr-before/governance-automation.before.md）との差は 65 行目だけであることを diff で確かめた。repo に書いたのは content-review の 2 つの verdict だけで、--apply は scratchpad の偽の plugin にだけ使った。確かめ用のファイル: scratchpad/coverage-review/gov-full-v5/（tools/run_matrix.py、fixtures/run1/ の偽の plugin、matrix-run1.txt の結果）。判定: C1〜C4 の違反は 0 件、low 3 件は読みやすさと精度の改善提案なので PASS、human_review_required は false、next_action は none。指摘にしない info: (i) --plugin を省き、script を置いた plugin に manifest.json も plugin.json も無いときは FileNotFoundError の traceback で exit 1 になる（plugin_not_found ではない）。65 行目の plugin_not_found は「渡した先」に限って書いており、この plugin は plugin.json を持つので、省略時にこの経路へは入らない。(ii) legacy の manifest.json が scripts.adapters か scripts.secrets を持たず、対応するディレクトリにファイルがあると KeyError の traceback で exit 1 になる（コードの 102・108 行目から読める。試してはいない）。65 行目の「などは traceback」に入る。(iii) 85・92 行目と OUT1 の「通知」は、招集文を人へ届けることを指すと読める。notify-if-governance-trigger.py は stdout に出すだけで、表の書き込み欄は「しない」。安全側に読めるので指摘にしない。"
 }

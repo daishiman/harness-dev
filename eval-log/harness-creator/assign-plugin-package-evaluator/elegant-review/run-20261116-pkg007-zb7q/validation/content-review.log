@@ -1,0 +1,12 @@
+[FAIL] content-review lint: 2 violation(s)
+  - harness-creator/assign-plugin-package-evaluator: elegance-verdict.json verdict=INCOMPLETE
+  - harness-creator/assign-plugin-package-evaluator: rubric-verdict.json stale-sha: 3423ba3cfe03538c54b972be2c4c28387033f5a70a37a794c4f905ba958cd4a6 != current 001034e37ce5962984d520d10647eea7d14df613b7efb77c9d363674396b751c
+
+Fix: ローカル Claude Code で assign-skill-design-evaluator の focused combined review を
+     1 context 実行してください。4 条件は elegance-verdict.json に書き、rubric-verdict.json は
+     render-findings-score.py --write-rubric-verdict <path> --judgments <判定> に書かせます。
+     完全な run-elegant-review + rubric evaluator は exhaustive 明示時だけです。
+     target は --print-target <plugin>/<skill> の出力を写し、指摘には finding_locations を書きます。
+     指摘を当てただけの stale-sha は sync-content-review-sha.py --finding-ids で、節の外の小さな
+     手直しは --scoped-review で結び直せます (rebind-chain は手で直さない)。
+     手順詳細: plugins/harness-creator/skills/run-build-skill/references/content-review-protocol.md

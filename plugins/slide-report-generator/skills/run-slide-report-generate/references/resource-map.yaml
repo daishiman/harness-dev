@@ -1,7 +1,7 @@
 version: 1
 # run-slide-report-generate 私有 references の帰属 + progressive disclosure マップ。
 # 各 reference は所有 skill の起動系 (agents/*.md thin-adapter) と SKILL.md の双方から
-# ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/<file> で参照される SSOT。
+# ${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/skills/run-slide-report-generate/references/<file> で参照される SSOT。
 # lint-reference-attribution.py が本 map の網羅性 (orphan/dangling 0) を検査する (CI governance glue)。
 read_when:
   - file: references/structure-design-rules.md
@@ -30,10 +30,13 @@ read_when:
     when: UI 品質チェックリスト (S 系観点定義・判定基準) を確認するとき
   - file: references/deck-evaluation-rubric.md
     owner_agent: deck-evaluator
-    when: 利用者がlight/standard/detailedを選択した後、生成後評価 (30 種思考法 mode-aware rubric・評価次元) の規範を確認するとき。hook-postgen-eval は消費しない
+    when: 利用者がdiagnoseを選択した後、生成後評価 (30 種思考法 mode-aware rubric・評価次元) の規範を確認するとき。hook-postgen-eval は消費しない
   - file: references/ai-image-pipeline.md
     owner_agent: ai-image-diagram-producer
     when: Codex Image2 全面画像/差替パイプライン規範を確認するとき
+  - file: references/visual-generation-rules.md
+    owner_agent: structure-designer
+    when: 視覚生成の規約 (E1-E6・カードの分岐・§4.1 図解被覆 DC1-DC6) を確認するとき。R2 の構成段階の被覆判定と diagnose 後の R6 の成果物判定の両方で使う。E1-E6 の閾値は validate-visual-generation.py が実行時にこの本文から読み、validate-diagram-coverage.py は §4.1 を正本として実装する
   - file: references/report-quality-checklist.md
     owner_agent: report-quality-reviewer
     when: report の品質補正 (読み物文体・段落密度・1項目1ビジュアル整合・reportType 骨格・読者中心入口・印刷) の検証観点 必須 RQ1〜RQ34 と図解節のみの RQ35〜RQ37 を確認するとき。validate-report-visual.py の決定論ゲートと対で機械/意味を分離

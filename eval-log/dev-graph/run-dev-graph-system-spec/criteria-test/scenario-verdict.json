@@ -4,10 +4,10 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-system-spec",
     "component_id": "C19",
-    "skill_md_sha256": "10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049"
+    "skill_md_sha256": "bfabcc221ea2295fdf78cbaf197eac7d4a0a302d057770b4c4c3188767c1e68d"
   },
   "verdict": "PASS",
-  "reviewer": "grok-fresh-evaluator-system-spec-ci12",
+  "reviewer": "fresh-receipt-evaluator-run-dev-graph-system-spec-r44-20261116",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -27,13 +27,14 @@
         "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/independent-evaluation.json",
         "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/fx-eval-log/system-spec-completeness-report.json"
       ],
-      "observed": "現行SKILL 10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049、実走閉包 ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef を対象とした今回の独立評価。正本: system-spec-harnessのcoverage/source citation gateとdev-graph schema gateがすべてexit0になる。観測: C19全3周回で3CLIがそれぞれ実exit0（main167/443/721）。空graph周回もschemaを省略せず、最終graphは2node/readiness complete。C05 actual aggregateも親再実行を含めexit0。"
+      "observed": "現行SKILL 10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049、実走閉包 ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef を対象とした今回の独立評価。正本: system-spec-harnessのcoverage/source citation gateとdev-graph schema gateがすべてexit0になる。観測: C19全3周回で3CLIがそれぞれ実exit0（main167/443/721）。空graph周回もschemaを省略せず、最終graphは2node/readiness complete。C05 actual aggregateも親再実行を含めexit0。\n2026-11-16再評価: 現行SKILL bfabcc221ea2295fdf78cbaf197eac7d4a0a302d057770b4c4c3188767c1e68d (HEAD 10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049 からの差分は artifact_delivery を artifact-delivery-v1 参照へ置き換え、選択肢を accept-as-is/diagnose の2択にしただけで、IN1 の正本文は不変)、実走閉包 5da6d8f18d474025ec54c850d79fea74f02ee9cb8fe289a7b0bfab29b085112b (177 file、python3 -I で再計算して一致) を対象とした独立評価。plugins/dev-graph/tests/test_system_spec_evaluation_paths.py は 14 passed。live-trial 20261115T2000-r44-sysspec2 の transcript (sha256 7cbd0bc7a96bdc3343dd0fde76cfbab6739688bbbcfbfbd578859f58f18a977d) で、elicit の coverage gate exit0 (L160→161)・source citation gate exit0 (L173→180)、compile の gate 全 OK (L206→207)、C05 aggregate の fork grounding exit0 (L276→277)、登録後の lineage=0・schema=0 (L508→509)、C19 の cov=0・cit=0・schema=0 (L653→660) を実測した。evaluator fresh-receipt-evaluator-run-dev-graph-system-spec-r44-20261116。"
     },
     "OUT1": {
       "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "test_refs": [
+        "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261115T2000-r44-sysspec2/verdict.json",
         "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261103T065037-claude-ci12-sysspec/verdict.json",
         "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/verdict.json",
         "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/transcript.jsonl",
@@ -46,9 +47,9 @@
         "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/fx-eval-log/run-dev-graph-system-spec-progress.json",
         "plugins/dev-graph/scripts/build-graph-node.py"
       ],
-      "observed": "現行SKILL 10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049、実走閉包 ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef を対象とした今回の独立評価。正本: 仕様書/architecture要求がsystem-spec-harness成果物をsource lineage付きで引用し、同等ヒアリング/compileロジックがdev-graph内に複製されていないことを受入テストが確認する。観測: elicit resume/必要性判断doc-fetch/actual compile/新規fork C05を正規Skill経由で完了し、C05 .24の全6観点PASSと独立3監査の実final/台帳を得た後だけC02経由でspecification/architecture2nodeを登録。source_lineage全field・source bytes SHA・evaluated_digest・C05 snapshotが一致、confirmed/pass/readiness complete、receipt owner=C02、複製0をR1/R2/R3の実走とsource閉包不変で確認。 2026-11-03 再評価: Claude 正規 runner の live-trial 20261103T065037-claude-ci12-sysspec は overall 4 PASS、goal PASS、blockers なし、downgrade なし。閉包 ac549b4e03476f5685d27e1a46d42e879595b1c3debf3547ff5c2979179ecbfe。fresh evaluator grok-fresh-evaluator-system-spec-ci12。",
+      "observed": "現行SKILL 10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049、実走閉包 ebec0c4771f30cd2be8260f9871ad0e4d42112e7f03ebed8c04a0326bf13a5ef を対象とした今回の独立評価。正本: 仕様書/architecture要求がsystem-spec-harness成果物をsource lineage付きで引用し、同等ヒアリング/compileロジックがdev-graph内に複製されていないことを受入テストが確認する。観測: elicit resume/必要性判断doc-fetch/actual compile/新規fork C05を正規Skill経由で完了し、C05 .24の全6観点PASSと独立3監査の実final/台帳を得た後だけC02経由でspecification/architecture2nodeを登録。source_lineage全field・source bytes SHA・evaluated_digest・C05 snapshotが一致、confirmed/pass/readiness complete、receipt owner=C02、複製0をR1/R2/R3の実走とsource閉包不変で確認。 2026-11-03 再評価: Claude 正規 runner の live-trial 20261103T065037-claude-ci12-sysspec は overall 4 PASS、goal PASS、blockers なし、downgrade なし。閉包 ac549b4e03476f5685d27e1a46d42e879595b1c3debf3547ff5c2979179ecbfe。fresh evaluator grok-fresh-evaluator-system-spec-ci12。\n2026-11-16再評価: Claude 正規 runner の live-trial 20261115T2000-r44-sysspec2 (scenario C19-OUT1-positive-system-spec-lineage-r2) は overall launch/completion/goal_fit/verdict が 4 PASS、downgrade_reason null、nudge 0、gate 0、tier live、wall 2124.8s/3300s、tokens 10,103,307/23,000,000。transcript sha256 7cbd0bc7a96bdc3343dd0fde76cfbab6739688bbbcfbfbd578859f58f18a977d は verdict と一致。閉包 5da6d8f18d474025ec54c850d79fea74f02ee9cb8fe289a7b0bfab29b085112b (177 file) を python3 -I で再計算して一致。閉包は 11-15 夕方に変更された system-spec-harness agents/system-spec-hearing-auditor.md (ccd99850bfe8afd0a03742d372ccf27d9e5e25056bcdba7a8d0e52656d26c53d) と run-system-spec-elicit prompts/R6-audit-hearing.md (3425f98c3ddec69ec60955c6bcd216a64da2d9a793d3d7821c8d4d21bd6c7653) を含み、閉包内の最新 mtime 19:51 が task.md 20:01・boot 20:12 より前なので、変更後の bytes で実走している。transcript を本人が確認: C19 Skill 起動 (L45)、elicit・compile・fork evaluator を Skill 経由で実行 (L148/L184/L233)、completeness report PASS (L267)、その後にだけ C02 Skill (L281)。登録は build-graph-node.py add だけで、dry-run exit0・findings 0 (L479→480)、apply exit0・applied 2・revision 0→1・digest sha256:893011d98c3cfea6552c050cb69024a73f55471c1044a9fffc8dd064133caaf6・receipt node-r000001-add.json (L484→491)。specification node の source_lineage は system-spec/index.md f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2、architecture node は system-spec/00-requirements-definition.md 22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd で、evidence の実 bytes の sha・confirmation_evidence.evaluated_digest・C05 artifact_snapshot の三者と一致。両 node とも confirmed/pass/readiness complete、origin_kind と source_plugin は system-spec-harness、source_version 0.1.28。integrity-auditor Agent PASS (L516)、独立 R0-R3 Agent (L687-779)、c19-verify exit0 (L800)、status PASS (L806)。監査 fork 台帳は matrix 11:16:08-11:16:39・hearing 11:16:59-11:18:20・freshness 11:19:36-11:20:17 の3行で、すべて PASS。plugins/dev-graph の *.py に elicit/compile 相当の writer は無い (grep 0 件)。DEGRADED だった初回 20261115T1805-r44-sysspec は判定に使っていない。注記: 被験者は fixture 内の自分の import-report.json を sed -i で書き換え (L641)、hook に止められた python heredoc の同一書込を2回試してから Write の道具で書いた (L544/L591→L622)。どちらも graph authority ではないので判定は変えない。evaluator fresh-receipt-evaluator-run-dev-graph-system-spec-r44-20261116。",
       "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261103T065037-claude-ci12-sysspec/verdict.json"
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261115T2000-r44-sysspec2/verdict.json"
     }
   }
 }

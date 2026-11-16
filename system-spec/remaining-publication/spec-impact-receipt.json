@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "beads_id": "harness-esj6",
+  "graph_node_id": "task-remaining-publication",
+  "impact": "あり",
+  "judgment": "run予算・cache節Read・検証再利用・artifact delivery選択/guard・runtime保留・profile/context境界・証跡鮮度の仕様と依存に影響。未公開実装を最新mainへ統合し7群を正規5文書へ反映。",
+  "no_impact": [
+    {
+      "area": "業務データ/API/DB/認証の提供方式",
+      "reason": "新たな業務API/DB/認証方式は追加せず、生成/評価/配布の開発支援契約を改善する。guardの秘密鍵はcheckout固有へ分離し旧キー削除を公開する。"
+    },
+    {
+      "area": "通常pluginの追加LLM評価・全repo走査",
+      "reason": "通常起動へ追加しない。YAMLは必要節だけReadし、byte一致証拠と既存レビューの再利用を保持。"
+    }
+  ],
+  "flow": {
+    "writer": "dev-graph C02 build-graph-node.py",
+    "operation": "add preview/apply r26→27",
+    "receipt": ".dev-graph/state/receipts/node-r000027-add.json",
+    "existing_nodes_unchanged": 25,
+    "new_nodes": 5,
+    "completion": "draft/pending/manual"
+  },
+  "documents": [
+    "specs/remaining-publication.md",
+    "architecture/remaining-publication.md",
+    "features/remaining-publication.md",
+    "docs/remaining-publication.md",
+    "tasks/remaining-publication.md"
+  ],
+  "source_commit": "1bf6fa8f9b19129c40b265109b1a5a6b760ca80a",
+  "source_status_paths": 2284,
+  "source_manifest": "docs/remaining-publication/manifest.json",
+  "quality_gates": "system-spec/remaining-publication/quality-gates.json",
+  "normalization": "docs/remaining-publication/source-normalization.json",
+  "privacy_receipt": "docs/remaining-publication/privacy/transcript-sanitization-receipt.json",
+  "related_task_policy": "harness-s7d等の既存残課題や旧live受入れをdoneへ昇格しない。今回harness-esj6は全残存公開の範囲。",
+  "evidence": [
+    {
+      "path": "specs/remaining-publication.md",
+      "sha256": "861951e81a0521f94ba00b3e8d8301f2cf8f711a906f8afcb2104b848ae0983f"
+    },
+    {
+      "path": "architecture/remaining-publication.md",
+      "sha256": "a4147aaf682ab7c25146e9fa3e2117054cdd4cb5f70039a8cad47ce1c99348bd"
+    },
+    {
+      "path": "features/remaining-publication.md",
+      "sha256": "5c535607f92f1db59ee32192f4e63ccfb65b8de62d7c711f2b5513407eb1d261"
+    },
+    {
+      "path": "docs/remaining-publication.md",
+      "sha256": "1539bd0efd5d859a473f86dbbd1134b08a3fa8f1424fc11053cad0fe5b96495d"
+    },
+    {
+      "path": "tasks/remaining-publication.md",
+      "sha256": "4eff1d55ca875449a4ef1d55eb891a841b8a0248aa1558683861ec392a7f2664"
+    },
+    {
+      "path": ".dev-graph/state/graph.json",
+      "sha256": "5bcfcd74a40aa4f3cc1c0ce40cd21e9f45b4607834c3bd289c7431f39be42f02"
+    },
+    {
+      "path": ".dev-graph/state/receipts/node-r000027-add.json",
+      "sha256": "2d811399b309427845481e05ca897206ceaf2386d2a3229425ab85e7b3d4f550"
+    },
+    {
+      "path": "docs/remaining-publication/source-normalization.json",
+      "sha256": "234d397f31f59306016be8eadbece63034715b2bb787ef3ddf2579d4211d936d"
+    },
+    {
+      "path": "docs/remaining-publication/privacy/transcript-sanitization-receipt.json",
+      "sha256": "071166713adb0b066acc6cc545b56337986248803f59e439acec1a519c4ed9b1"
+    },
+    {
+      "path": "system-spec/remaining-publication/quality-gates.json",
+      "sha256": "77b790dac77931e0deaf8624e585a1a6d956b895718a92db759de1760cef3093"
+    },
+    {
+      "path": "docs/remaining-publication/integration-code-review.json",
+      "sha256": "e5f27c3e0a5c241b496ef071000842c81e8e557d8b5bc5ff60216b11e6de32b3"
+    }
+  ]
+}
