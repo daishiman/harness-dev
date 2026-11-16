@@ -10,7 +10,24 @@
    - The first word is a bare `python3` (or `python3.X`) looked up through `PATH`; an interpreter path or wrapper such as `env` fails closed.
    - The second word is a literal path: it must not start with `-` (a Python option such as `-c…` or `-X…`), `~` or `=` (shell expansions), and must not contain `$` (the hook cannot see the shell's value). Resolved from the hook payload's `cwd`, its real path must equal one of the trusted copies: the running guard's own plugin `scripts/` or `hooks/` copy, or `plugins/skill-governance-adapters/{scripts,hooks}/build-external-mutation-guard.py` under that `cwd`. Use the absolute path printed by `extract-plugin-root.py skill-governance-adapters`.
    - The basename alone proves nothing. `python3 '-c…;1/build-external-mutation-guard.py'`, `python3 -Xdev/build-external-mutation-guard.py` and a same-named file anywhere else fail closed even when byte-identical, because Python puts the script's directory first on `sys.path`.
-6. The hook blocks recognized direct remote-mutation commands. Once a live preview creates project-local pending guard context, it blocks every other Bash command until the bound flow completes successfully or the preview expires; this includes otherwise-unrecognized mutation programs.
+6. The hook blocks recognized direct remote-mutation commands. Once a live preview creates project-local pending guard context, it blocks every other Bash command until the bound flow completes successfully, is cancelled, or the preview expires; this includes otherwise-unrecognized mutation programs. A preview retired by a key rotation (see 署名の鍵) is no longer pending.
+
+## 署名の鍵
+
+receipt の封は `.artifact-delivery/external-mutation/.guard-key-local` の 32 byte の鍵で作る HMAC-SHA256 である。鍵は checkout ごとに作る秘密で、`.gitignore` の `.artifact-delivery/external-mutation/.guard-key*` により repo にも plugin の配布物にも載らない。鍵は利用者ごとの directory ではなく project の状態 directory に置く。Codex の workspace-write sandbox は workspace の外へ書けないので、外に置くと Codex から preview を作れないためである。
+
+- 旧名 `.guard-key` の鍵は commit `cf93ab33` で公開 repo に載ったため、誰でもその鍵で封を作れる。guard は旧名を一切読まない。名前を変えたので、公開済みの鍵を信用しないことが読み込み処理の形で決まり、旧ファイルを消し忘れても信用は戻らない。
+- 鍵を作れるのは `preview` と意図の付与 (`hook-confirm` が intent receipt を封じるとき) だけである。初回は `mkstemp` で 0600 の一時ファイルに書いて fsync し、`os.link` で置く。同時に作ろうとした process は先に置かれた鍵を読み直すので、鍵は常に 1 つに決まる。
+- 鍵を作る直前に、その時点の `preview-*.json` 全部の名前と sha256 を `key-rotation-<id>.json` に記録し、新しい鍵で封じる。この記録は `expires_at == issued_at` で発行するので、許可としては決して通らない。pending の判定は、新しい鍵で検証できない preview のうち、名前と sha256 が退役記録と一致するものだけを飛ばす。記録の後で書き換えた preview や、記録に無い preview は今までどおり Bash を止める。
+- 鍵が無いときは、検証できる未解決の preview も存在し得ないので pending ではない。`authorize`・`authorize-intent`・`execute`・`cancel` と確認の受付は鍵を作らず、`guard key is missing` で exit 2 の fail closed になる。直接の remote mutation の遮断は鍵の有無と関係なく効く。
+
+### 移行
+
+更新前の guard (skill-governance-adapters 0.1.17 以前) は、状態 directory があって `.guard-key` を読めないと、すべての Bash を止める。この変更を pull すると git が他の checkout の `.guard-key` を作業ツリーから消すので、古い guard が動いているセッションでは Bash が止まる。
+
+1. pull したら、開いている Claude Code / Codex のセッションを閉じる。新しいセッションの起動時に plugin が更新される。自動更新を切っている場合は、利用者の端末で `claude plugin update skill-governance-adapters@harness-local` を実行する。
+2. 古いセッションが止まった場合は、利用者の端末から `git show <pull 前の commit>:.artifact-delivery/external-mutation/.guard-key > .artifact-delivery/external-mutation/.guard-key` で旧鍵を一時的に戻し、上の 1 を行う。新しい guard は旧鍵を読まないので、戻しても信用は広がらない。
+3. 更新前に作った未完了の preview は、新しい鍵では確認できない。最初の preview で退役し、Bash を止めなくなる。必要な操作は preview から作り直す。
 
 ## 実行元の指定
 

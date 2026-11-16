@@ -1,0 +1,79 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-build-skill",
+    "skill_md_sha256": "fe8b01a4a26960fb48d45770b4b19e7fb1e003a78b31d8d90ec6489509b5d429",
+    "reviewed_skill_md_sha256": "fe8b01a4a26960fb48d45770b4b19e7fb1e003a78b31d8d90ec6489509b5d429",
+    "skill_dir_digest": "ca2b0209cf1989e12c0fca8f21e06f52feebfcee95c39f4de4568b8d552ceaff"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 1,
+    "inconsistency": 3,
+    "dependency_break": 0,
+    "smell": 1
+  },
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-16T00:10:47Z",
+  "iterations": 2,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "lint=PASS と 2 つの digest (lint_target_sha256・lint_brief_sha256) を書く担当と時点が、読んだ 7 か所で揃った。SKILL.md Step 3.5 (L302: 初回記入は N/A、PASS にするのは Step 4)、Step 4 (L330: lint が全て exit 0 のときだけ PASS と 2 digest、brief 無しでは lint_brief_sha256 を書かない)、Step 12 (L401: 2 つの値と build_mode が今と一致する unit だけ derive が再利用)、workflow-manifest.json の scripts の note (L72: 初回記入は Step 3.5 がこの phase より先に行う) と trace-write の note (L127: 最終記入は scripts が書いた lint=PASS と 2 digest を書き換えない)、prompts/R4-trace-write.md (L26: 書くのは Step 4、最終記入は 3 つを書き換えない。L29・L144-145: validate-build-trace は最終記入の後の 1 回だけ)、references/verification-obligation-protocol.md の T1 (Step 4 の検査) と T2 (L82: Step 4 が書き、最終記入は書き換えない)。検査の回数も「初回記入は Step 4 が検査し、最終記入の後に R4 が 1 回」で、R4 の Layer 3.2 (L75)・4.1 (L80)・5.3 (L106)・5.4 (L113) まで同じことを言っている。",
+      "前回 low #1 は解消した。R4 の L23 (Layer 1.1)・L101 (5.3 完了チェックリスト)・L140 (Output Contract) がどれも「PASS か N/A。通っていないゲートは PASS にせず止める」になり、L25 の背景に「validate-build-trace.py は FAIL を受理しない」と理由も書かれた。scripts/validate-build-trace.py L1812-1815 は gate が PASS と N/A 以外なら invalid にするので、LLM が実行する層の指示と validator が一致する。",
+      "Step 4 の後の再利用は、書き手を Step 4 に固定したことで意味が通るようになった。derive-verification-contract.py の _step4_reuse_blocker (L304-331) は lint PASS・skill_name・build_mode・directory digest・lint_brief_sha256 (64 桁の小文字 hex で、今の brief の sha256 と一致) を照合し、どれかが違えば理由を返して再利用しない。最終記入が digest を書き換えないので、Step 4 の後に変わった skill ディレクトリや brief が lint 済みに見えることは無い (R4 L28 の背景と同じ)。",
+      "R4 の変更は 7 層の形を崩していない。lint-agent-prompt-content.py --mode prompt --plugins-dir plugins/harness-creator が scanned=35 で exit 0。Layer 6.2 の「単発実行 (最終フェーズ)」は並列性の話で、初回記入と最終記入の分け方とは食い違わない。"
+    ],
+    "negative_feedback": [
+      "[low/inconsistency・新規。前回 low #1 と同じ食い違いが R4 の外に残っている] schemas/skill-build-trace.schema.json L97-100 の reproducibility_gates の各値の enum は、今も [\"PASS\", \"FAIL\", \"N/A\"] である。references/reproducibility-trace-schema.md L78 も「validate-build-trace.py が上記キーの存在と PASS/FAIL/N/A 理由を検証する」と書く。一方、validate-build-trace.py L1812-1815 は PASS と N/A しか通さず、SKILL.md Step 3.5 (L302) と R4 L23・L25 も「FAIL は書かない」と決めている。R4 の output_schema と Step 3.5 が「従う」とする schema が FAIL を正しい値として見せるので、schema だけを見て書く担当は FAIL を書きうる。validator が拒むので偽の PASS にはならない (fail-closed)。直し方: schema の reproducibility_gates の 4 つの enum を [\"PASS\", \"N/A\"] にし、reproducibility-trace-schema.md L78 を「reproducibility_gates は PASS か N/A (FAIL は validator が拒む)」と分けて書く (build_flow_coverage・doc_coverage の PASS/FAIL は別の話なので残す)。",
+      "[low/inconsistency・前回 low #2 が残る] Step 3.5 の見出しは `(phase: trace-write)` だが、本文が書くのは scripts より前の初回記入だけである。局面カタログの導入 (L247) は「Step と manifest の対応は各見出しの (phase: <id>) で取る」と決めており、manifest の trace-write は dependsOn [scripts] で Step 4 の後に来る (scripts の note L72 も「Step 3.5 がこの phase より先に行い」と書く)。さらに SKILL.md の本文には「最終記入」という語が 1 度も出てこない (grep で 0 件)。phase trace-write が受け持つ最終記入 (evaluator・elegant_review・governance を埋めて validate-build-trace を 1 回走らせる) をどの Step で行うかは、R4 と manifest を読まないとわからない。直し方: Step 3.5 に「この初回記入は manifest では scripts の前段で行う。phase trace-write が受け持つのは Step 4 の後の R4 の最終記入で、Step 6 のゲート判定の前に行う」と 1 文足す (Step 6 に書いてもよい)。",
+      "[low/omission・前回 low #3 が残る] brief 無しのフラグ明示 build で Step 12 をどう通るかが、まだ書かれていない。Step 1 (L286) は「brief 無しでは build-plan の導出も Step 4 の --check もしない」とし、Step 4 (L330) は「lint_brief_sha256 も書かない」とする。ところが Step 4 の L337 の括弧書きは「どちらかが無いか違えば、Step 12 で validate-build-plan がいつもどおり走る」と書く。derive は unit に brief が無いと ValueError で止まり (derive-verification-contract.py L164-166 `unit requires brief`)、validate-build-plan も brief 無しの --check を exit 2 にする (validate-build-plan.py L19・L40-42)。brief 無しでは「いつもどおり走る」経路が無い。Step 12 の plan-verification-obligations.py --stage <build-plan.flags.build_stage> も build-plan.json を前提にしている。直し方: Step 12 に brief 無しの経路を 1 文足す (例: 証拠 DAG を NOTE 付きで飛ばし、Step 12.4 へは lint の receipt を渡す)。L337 の括弧書きは「brief のある unit で」と範囲を限る。",
+      "[low/inconsistency・前回 low #4 が残る] ゴールシークループ (L238) が `### 局面: 命名・構造 Lint` / `### 局面: フォーク評価` を参照しているが、そういう見出しは無い。実際の見出しは `### Step 4: 命名・構造 Lint (phase: scripts)` と `### Step 5: 出荷用フォーク評価 (phase: trace-write, release のみ)` である。直し方: 参照を今の見出しに直す。",
+      "[low/smell・前回 low #5 が残る] Step 1 (L262) で MANDATORY にした scripts/extract-yaml-spec-section.py (実在する) は、frontmatter の script_refs (L83-102) にも plugin-composition.yaml の components / calls にも無い。同じ時期に足した validate-run-model-budget.py は、script_refs (L101) と plugin-composition.yaml (L117・L144) の両方に登録されている。script_refs は全 script の一覧ではないので lint は通るが、必須手順の script が依存グラフから見えない。直し方: script_refs と plugin-composition.yaml に extract-yaml-spec-section.py を足す (frontmatter の変更になるので、直した後は再レビューの経路を使う)。"
+    ],
+    "iteration": 2,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "elegance 観点: 全体の再レビュー (content-review-protocol.md の「改善後の再レビュー」の表の 4 番) として、1 つの context で C1 矛盾なし / C2 漏れなし / C3 整合性 / C4 依存関係整合を判定した。再レビューの理由は、前回の verdict (skill_dir_digest 519b6869…) の後で prompts/R4-trace-write.md と references/verification-obligation-protocol.md (表の T2 の行) が変わり、lint-content-review --all が 2 verdict を stale-dir-digest にしたこと。SKILL.md (sha fe8b01a4、446 行) は変わっていない。C3 のうち rubric で採点できる規約は rubric-verdict の機械採点 (score 100 / threshold 80 / findings 0、BD-004 は LLM 判定で PASS) に任せ、ここには重ねていない。対象は SKILL.md の全体とモデルが読む文書。読んだもの: SKILL.md、prompts/R4-trace-write.md、references/verification-obligation-protocol.md・content-review-protocol.md・reproducibility-trace-schema.md、workflow-manifest.json (scripts と trace-write の note)、schemas/skill-build-trace.schema.json・content-review-verdict.schema.json、scripts/validate-build-trace.py (gate の検査)・derive-verification-contract.py (unit の必須 key と _step4_reuse_blocker)・validate-build-plan.py (brief 無しの exit 2)・plan-verification-obligations.py (--stage)、plugin-composition.yaml。判定: high 0・medium 0・low 5 なので PASS。C1 に違反は無い (lint=PASS と 2 digest の担当と時点は 7 か所で揃い、前回 #1 の R4 の中の食い違いは解消した)。C2 は brief 無しの Step 12 (low #3)。C3 は schema の enum と reference の記述 (low #1)、Step 3.5 の phase 表記と最終記入の場所 (low #2)、存在しない見出しへの参照 (low #4)。C4 に違反は無い (low #5 は依存グラフに載っていないだけで、実行は壊れない)。前回の low 5 件: #1 は解消 (同じ種類の食い違いが schema と reference に残るので、今回の #1 として新しく書いた)、#2・#3・#4・#5 は残る (今回の #2・#3・#4・#5)。今回の #2 には、SKILL.md の本文に最終記入の場所が書かれていないことを足した。criteria ごとの根拠: IN1 は lint-goal-seek (SKILL.md)・lint-entrypoint-artifact-first・lint-agent-prompt-content --mode prompt がすべて exit 0。IN2 は trace の契約 (Step 3.5 で N/A、Step 4 で PASS と 2 digest、最終記入は書き換えない、validate-build-trace は Step 4 と最終記入の後) が SKILL.md・manifest・R4・protocol・derive・validator で揃う (low #1 の schema の enum は残る)。IN3 は route の一括 build を実行しておらず未実測で、manifest の phase の参照整合の確認にとどめた。OUT1 は render-findings-score が score 100・findings 0。OUT2 は Step 12 の再利用条件が protocol の T2 と derive の _step4_reuse_blocker と一致する (brief 無しの経路は low #3)。回したコマンドと exit code: lint-content-review --print-target=0、render-findings-score (L0+L2)=0、同 --write-rubric-verdict --judgments (BD-004)=0、lint-goal-seek SKILL.md=0、lint-entrypoint-artifact-first=0、lint-agent-prompt-content --mode prompt --plugins-dir plugins/harness-creator=0 (scanned=35)。lint-agent-prompt-content は先に引数を誤って 2 回呼んだ (file を位置引数で渡して exit 2、--plugins-dir plugins で scanned=0 の exit 1)。どちらも呼び方の誤りで、指摘ではない。していないこと: full build、route の一括 build、live trial、全テストスイート、skill のファイルの修正、sha_rebinds の記入 (新しい verdict なので連鎖はここで切れる)。",
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "Step 3.5: 再現性トレース生成 (phase: trace-write)"
+      ]
+    },
+    "elegance:2": {
+      "sections": [
+        "Step 3.5: 再現性トレース生成 (phase: trace-write)",
+        "Step 6: ゲート判定 (phase: trace-write)"
+      ]
+    },
+    "elegance:3": {
+      "sections": [
+        "Step 4: 命名・構造 Lint (phase: scripts)",
+        "Step 12: 証拠DAG解決 (verification obligations, profile 制御)"
+      ]
+    },
+    "elegance:4": {
+      "sections": [
+        "ゴールシークループ"
+      ]
+    },
+    "elegance:5": {
+      "sections": [
+        "Step 1: 要求ヒアリング (phase: init)"
+      ]
+    }
+  }
+}

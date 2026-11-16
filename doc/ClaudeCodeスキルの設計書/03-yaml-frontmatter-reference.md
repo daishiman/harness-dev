@@ -308,3 +308,67 @@ script_refs:
 `pair:` の相方が実在するかは検査しない。
 
 Claude Code 公式が `kind:` / `pair:` に当たるフィールドを採用したときは、本節の独自拡張表から外して `16` の公式項目へ移す。
+
+## `goal_seek` と `artifact_delivery` を誰が読むか
+
+`goal_seek` と `artifact_delivery` も独自のフィールドである。値をどこに書くかは、誰に届けたいかで決まる。
+
+### 前提: Claude Code は frontmatter をモデルに渡さない
+
+- Claude Code が skill を読み込むと、モデルに届くのは「Base directory for this skill: <path>」の 1 行と本文だけである。frontmatter は届かない（2026-11 に、過去の transcript の 3 件で確かめた）。
+- そのため、本文が `goal_seek.max_loops` のように名前だけで書くと、モデルは SKILL.md をファイルとして開き直さない限り値を知らない。
+- Codex では、モデルが SKILL.md をファイルとして開くので、frontmatter も見える。
+- 上の「重要な注意」は、`pair:` などについて「Claude Code ランタイムが直接参照するわけではない」と書く。これは独自フィールドのすべてに当てはまり、`goal_seek` も同じである。
+
+### 3 つの区分
+
+| 区分 | 意味 | 値の書き方 |
+|---|---|---|
+| 実行時に読む | モデルが周回の中で値を使う | 本文に値を書く（例: 「最大 3 周（`goal_seek.max_loops`）」）。名前だけでは Claude Code のモデルに届かない |
+| lint や生成器だけが読む | コードが検査や生成に使う | 本文に書かなくてよい。値がほかの宣言から導けるなら、手で写すより lint が導くほうがよい |
+| 誰も読まない | 本文もコードも参照しない | 置かない。配線するか消す |
+
+### key ごとの読み手
+
+2026-11-16 時点で、`goal_seek` を持つ SKILL.md は 78 本ある（symlink を除く）。本文の列は、本文と skill の dir の .md（references・prompts など）を機械的に数えたものである。
+
+- 「値を書く」は、key の名前のすぐ後に値が続く書き方である。`goal_seek.fork=subagent` や `(max_loops 5)` も含む。path の値なら basename が出ればよい。
+- 「名前だけ」は、値が続かずに `goal_seek.<key>` や「進捗ファイル（`progress`）」のように名前を書く書き方である。
+- ほかの skill のフィールドを語る箇所も拾うので、数は目安である。
+
+| key | 持つ | 本文が値を書く | 名前だけ | 本文は参照しない | 検査で読むコード |
+|---|---|---|---|---|---|
+| `engine` | 78 | 27 | 0 | 51 | `lint-skill-runtime-profiles.py`・`validate-plugin-package.py` |
+| `fork` | 78 | 31 | 0 | 47 | `lint-skill-runtime-profiles.py`（`allowed-tools` との整合）・`validate-plugin-package.py`・`lint-entrypoint-artifact-first.py`（`max_loops` と合わせて重い skill かを決める） |
+| `max_loops` | 38 | 28 | 2 | 8 | `validate-plugin-package.py`・`lint-entrypoint-artifact-first.py`・flyer-studio の `build-local-package.py`（`cycleBudget` との一致） |
+| `activation_state` | 41 | 1 | 0 | 40 | `lint-entrypoint-artifact-first.py` だけ。重い skill で、workflow-manifest の `artifact_delivery_contract.phase_activation` から決まる値と一致するかを見る |
+| `engine_profile` | 5 | 1 | 0 | 4 | `lint-skill-runtime-profiles.py` と、生成した harness を見る run-build-skill の `lint-capability-graph-knowledge.py`。`engine: task-graph` なら `checklist-graph` と決まる |
+| `full_task_spec_graph` | 5 | 1 | 0 | 4 | 上と同じ 2 本。`engine: task-graph` なら `false` と決まる |
+| `progress` | 8 | 4 | 4 | 0 | なし |
+| `intermediate` | 8 | 7 | 1 | 0 | なし |
+| `handoff` | 6 | 4 | 2 | 0 | なし |
+| `spec` | 1 | 1 | 0 | 0 | なし |
+
+path の key（`progress`・`intermediate`・`handoff`・`spec`）は、コードが読まない。本文が値をそのまま書くなら、frontmatter の写しは誰も読まない。そのため `plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md` の規則どおり、path は本文の `### ゴールシーク配線` に書き、frontmatter には重ねない。frontmatter に残すのは、本文が `goal_seek.<key>` の名前で値を読ませる skill だけである。例は ubm-goal-setting の 6 本で、run-ubm-consult は `{{session_id}}` を含む path を、名前で引いて展開させる。
+
+- **生成で書くコード:** `validate-build-plan.py` は brief の `goal_seek` から、生成する SKILL.md が持つべき値（`engine_profile`・`full_task_spec_graph` を含む）を決める。`render-combinators.py` と plugin-dev-planner の `specfm.py` が書き込む。どれも、出来上がった SKILL.md の値は読まない。
+- **`lint-goal-seek.py`:** `engine`・`fork`・`max_loops` について見るのは、生成器の雛形と schema の既定値の食い違いで、各 SKILL.md の値ではない。
+- **`artifact_delivery`:** `scripts/lint-artifact-delivery.py` と `scripts/lint-entrypoint-artifact-first.py` だけが読む。
+
+名前だけで書いている skill は次のとおり。
+
+- `max_loops`: run-handout-build・run-skill-iter-improve（式 `1 + 8 × max_iter` だけを書き、値 41 は書かない）
+- `progress`: run-ubm-challenge・run-ubm-journal・run-ubm-youtube-ingest・run-ubm-consult（「進捗ファイル（`progress`）」）
+- `intermediate`: run-ubm-challenge
+- `handoff`: run-ubm-challenge・run-ubm-journal
+
+### 判断と残る課題
+
+- **誰も読まない path の key を消した。** 本文が値を書き、名前では読ませていない 8 本（run-codex-plugin-install・run-codex-plugin-package・run-elegant-review・run-plugin-dev-plan・run-skill-intake・run-slide-report-status・run-spec-drift-triage・run-blueprint-apply）から、`spec` 7 件・`progress` 8 件・`intermediate` 5 件・`plan_dir` 1 件を消した（2026-11-15〜16）。run-blueprint-apply は、本文に goal-spec の path が無かったので、先に本文へ書き足してから消した。残る path の key には、それぞれ理由がある。
+  - ubm-goal-setting の 6 本: 本文が名前で読ませる（上の規則の例外）。
+  - run-extract-blueprint: 計画の正本（`plugin-plans/extract-system-blueprint/component-inventory.json` の C01）と、それを確かめる test が持つ。goal-spec を skill ごとに持つか共有するかを決める follow-up で、計画ごと扱う。
+  - run-skill-iter-improve: test が frontmatter の path を読む。同じ follow-up の後に、test ごと替える。
+- **engine・fork・max_loops などは lint が読むので残す。** 誰も読まないものではない。
+- **名前だけの参照は、Claude Code では値が届かない。** 上の規則の例外（ubm-goal-setting の 6 本）も同じで、モデルが SKILL.md を開き直さない限り path を知らない。run-ubm-challenge の `references/handoff-format.md` のように「`SKILL.md` の `goal_seek.handoff` を解決する」と読む先まで書けば届くが、「進捗ファイル（`goal_seek.progress`）」だけでは届かない。本文に値も書くか、読む先を書くかを決め、lint で検査する。epic harness-r44 の follow-up で扱う。
+- **値を導けるのに手で写しているフィールドがある。** `activation_state` は `phase_activation` から、`engine_profile` と `full_task_spec_graph` は `engine` から導ける。lint が導いてフィールドを消すのが本筋である。41 本と 5 本を書き換えるので、follow-up で扱う。
+- **live-trial は宣言した path を読まない。** `run-skill-live-trial` の `validate-goal-seek-evidence.py` は、評価用 dir で `<name>-goal-spec.json`・`<name>-progress.json`・`<name>-intermediate.jsonl` という固定の名前を探し、frontmatter の `spec`・`progress`・`intermediate` も本文も読まない。固定の名前の 3 file が揃わない skill は 9 本ある。frontmatter で別の path を宣言するのが 8 本（ubm-goal-setting の 6 本・run-extract-blueprint・run-skill-iter-improve）。run-blueprint-apply は goal-spec を持たない（本文が `spec_ref` を `inferred` にし、共有の `eval-log/goal-spec.json` も読まない。progress と intermediate は固定の名前と同じ）。この 9 本は、live-trial にかけると証跡なしと判定される。検査側が宣言を読むか、9 本を固定の名前に揃えるか（goal-spec を持たない skill をどう扱うかも含む）を、follow-up で決める。

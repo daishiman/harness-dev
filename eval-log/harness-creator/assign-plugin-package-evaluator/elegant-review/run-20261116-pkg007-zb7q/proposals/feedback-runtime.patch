@@ -1,0 +1,36 @@
+--- scripts/notion-submit-improvement.py
++++ scripts/notion-submit-improvement.py
+@@ -21,11 +21,12 @@
+ import argparse, json, os, subprocess, sys, tempfile
+ from pathlib import Path
+ 
+-ROOT = Path(__file__).resolve().parent.parent
+-sys.path.insert(0, str(ROOT / "plugins" / "harness-creator" / "scripts"))
++SCRIPT_DIR = Path(__file__).resolve().parent
++if (SCRIPT_DIR / "notion_config.py").is_file():
++    sys.path.insert(0, str(SCRIPT_DIR))
++else:
++    sys.path.insert(0, str(SCRIPT_DIR.parent / "plugins" / "harness-creator" / "scripts"))
+ import notion_config  # noqa: E402
+-
+-SCHEMA_DIR = ROOT / "doc" / "notion-schema"
+ 
+ REQ_TYPES = ["バグ","機能追加","プロンプト改善","ドキュメント","挙動変更"]
+ PRIORITY  = ["高","中","低"]
+--- plugins/harness-creator/scripts/notion_config.py
++++ plugins/harness-creator/scripts/notion_config.py
+@@ -141,7 +141,13 @@
+     (自 plugin を指す場合のみ) 優先、無ければ本ファイル (plugins/<plugin>/scripts/)
+     の親 = plugin root。repo-root marker が存在しない単独 install 環境でも
+     .notion-config.json を解決可能にする。"""
+-    return _hc_env_root() or Path(__file__).resolve().parents[1]
++    explicit = _hc_env_root()
++    if explicit:
++        return explicit
++    for parent in Path(__file__).resolve().parents:
++        if _manifest_name(parent):
++            return parent
++    return Path(__file__).resolve().parents[1]
+ 
+ 
+ def find_config_path(start: Optional[Path] = None) -> Optional[Path]:

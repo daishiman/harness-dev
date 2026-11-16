@@ -87,7 +87,8 @@ TL-12 は「2 枚のサムネイルの STYLE / TYPOGRAPHY / NEGATIVE が完全�
 
 ## 6. 成果物を先に見せる (artifact-first)
 
-5 skill すべてが `artifact-delivery-v1` の状態機械を持つ。要点は 1 つで、
+5 skill すべてが `artifact-delivery-v1` の契約を参照する (frontmatter に `artifact_delivery: artifact-delivery-v1` の 1 行。状態機械の正本は
+`lint-entrypoint-artifact-first.py` 側に 1 つだけある)。要点は 1 つで、
 **利用者が現物を見て accept-as-is / light / standard / detailed を選ぶまで、
 意味評価もリライトも走らせない**。数えられる機械検証だけを通した実成果物を先に出す。
 

@@ -2,7 +2,9 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-migrate-audit",
-    "skill_md_sha256": "e9ebd695060fce1cfdbb0421bef1935fe6963ed609206a14b71ef45df7ecf4ae"
+    "skill_md_sha256": "bc2f3a9ac8ad8663785b63d307aa11b9b29382085b655c2d2e14ac12199d8bc5",
+    "reviewed_skill_md_sha256": "bc2f3a9ac8ad8663785b63d307aa11b9b29382085b655c2d2e14ac12199d8bc5",
+    "skill_dir_digest": "e3fb28933d3787fdd49e917a63b29885177a88c5c084215d87dd0f9be6a26018"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,9 +15,9 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:09Z",
-  "iterations": 1,
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-15T09:34:38Z",
+  "iterations": 3,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -26,13 +28,15 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "inline/inline がread/write局面を同一制御contextで扱う分類brief生成に適合し、下流run-build-skillとの責務境界も明確である。"
+      "iteration 2 の指摘 1 (初回の移行で lint の項目が満たせない) が解消した。基準線の有無は、lint を回す前に移行先の */SKILL.md の件数で決める。0 件か dir が無いときは「基準線なし」を引き渡しの提示に書き、2 つの lint を N/A にする。1 件以上なら、2 つとも exit 0 を求める。この規則が、ゴール (L143)・目的・背景 (L147)・完了チェックリスト (L158-160)・ゴールシークループ (L171)・局面カタログ (L181-185) と、frontmatter の IN1 (L41) で同じ言い方になっている。局面カタログ L182-183 の終了コードの説明は、委譲先のコードと一致する。step7 は、dir が無い・対象 0 件・Step 7-4 を確かめられないときに 2、条件違反で 1 を返す。dependency-direction は、dir が無い・循環があるときに 2、方向違反で 1 を返す。そのうえで「exit を見て N/A にしない」と書いてあるので、lint の失敗を N/A に言い換えられない。",
+      "IN1 の書き換えは基準を緩めていない。旧文の無条件の「全PASS」は、既存の skill が 0 件のときは step7 が必ず exit 2 になるので、満たせない基準だった。新しい文では、1 件以上のときの要求 (step7 の 5 条件の全 PASS) は旧文と同じままである。N/A になるのは、守るべき既存の依存が無いときだけである。その判定は lint の結果ではなく件数で行う。yaml.safe_load と feedback_contract_ssot で読め、validate_criteria のエラーは 0 件である。",
+      "iteration 2 の指摘 2・3 も解消した。L126 は「validate-frontmatter.py は owner があることしか見ないので止まらない。残っていないことは本 skill の完了チェックリストで確かめる」となり、委譲先の挙動 (required に owner があるだけで、TODO_SET_OWNER を検出する検査はリポジトリのどこにも無い) と一致する。L193 の Additional Resources は、doc/ClaudeCodeスキルの設計書/20-migration-path.md を指す。iteration 1 で直した 4 点 (9 行目の connector-candidate の扱い・古い path・出力 contract の JSON 例と schema の一致・引き渡し brief と to-brief.py の出力形の一致) も、崩れていない。"
     ],
     "negative_feedback": [],
-    "iteration": 1,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
+  "notes": "iteration 3 (max_iter の最後) の全体の再レビュー (focused combined review、1 context)。今の SKILL.md の全体 (sha bc2f3a9a…) を読み、frontmatter の IN1 の差分 (git diff) も確かめた。委譲先として、lint-skill-dep-step7.py と lint-dependency-direction.py の main と終了コード、validate-frontmatter.py の owner の扱い、リポジトリ全体の TODO_SET_OWNER を読んだ。空の dir と無い dir での 2 つの lint の終了コードは、iteration 2 で実際に回して確かめた値と一致する。C1: 矛盾は無い (基準線の規則は 7 節と IN1 で同じ)。C2: 既存の skill が 0 件のときの扱いが入り、漏れは無い。C3: 本文・frontmatter・references・schema がそろっている。C4: 委譲先の挙動の記述 (終了コード・validate-frontmatter が見るもの) が、コードと一致する。判定に影響しない観察が 2 つある。(a) 件数は */SKILL.md で数えるが、lint-dependency-direction.py は rglob で下の階層まで探す。下の階層にだけ SKILL.md がある配置は、標準の .claude/skills/<name>/SKILL.md ではないので、実害は無い。(b) ゴールシークループの「`## 検証`/lint へ寄せ」は goal-seek-paradigm.md の Step 4 の書き方で、本 skill に `## 検証` 節は無い。HEAD 版からある書き方で、局面カタログの lint がその役を担っている。rubric は score 87/threshold 80 で PASS、high 違反は無い (FM-005 low と PD-002 medium は以前からある。BD-004 は judgments で PASS)。"
 }

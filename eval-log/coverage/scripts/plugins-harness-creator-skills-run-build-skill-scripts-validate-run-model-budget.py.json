@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/validate-run-model-budget.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 88,
+    "notes": "genuine review（sha256 5aeb2fcb62b47286187aeb505342da12a2cead86882d4e2f5fdeff1289426f9f をレビュー。実行検証あり）。範囲: validate-run-model-budget.py の全 558 行。正本の run-elegant-review/references/convergence-policy.json（L144-146 の enforced_at を含む）と、呼び手の build-improvement-gate.py L1163-1221 も見た。確かめたこと: pytest を root 側でファイルごとに走らせ、budget の test 38 件が rc0。probe は /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/cov3/ledger/probe_budget.py（結果は probe_budget.out.json）。今回の主張（L67 の LEDGER_COMPONENTS に verification を足した）は確かめた。L409-457 の reserve_verification と L460-515 の reserve は、どちらも _locked（L428・L488）の中で台帳を読み、L445・L499 で total と比べ、書く。並行の検査: verification（3 ずつ）と bounded_improvement（3 ずつ）を 20 本ずつ、計 40 process で並行に呼んだ C1（要求の合計 120 > 80）は、26 件 ok・14 件 exhausted で、consumed は 78 となり上限を越えない（verification 51、improvement 27）。同じ subject に違う量を 30 本並行で予約した C2 は consumed 7 で、at_least の最大値と一致する。top-up の列 2・5・3・5・7（T）は #topup- の id で差分だけを足す。lock が外を指す symlink の L1 は BudgetError で、外のファイルは作らない。古い形の台帳の扱い: budget_total が無く verification の entry も無い O1 は予約でき、budget_total を書き足す。未知の component を持つ O3 は BudgetError。component が衝突する X、subject に #topup- を含む K3、前後に空白がある K4、count が bool の K5、required が list の K6 は BudgetError。空の required の K7 は台帳を作らない。正本との一致: --print-expected は components {4, 12, 64}、total 80 で、convergence-policy.json と合う。repo での CLI（R）は rc0（21 個の宣言）。前回の指摘: (5) --run-id が超過していても exit 0 → 残る（下の 2 件目）。(6) 責務の同居 → 残る。[中] 2 件・[低] L145/L162 の意味の食い違いも残る。指摘: [中] L93-97 の _read_json は (OSError, ValueError) だけを捕まえ、深い入れ子の JSON で起きる RecursionError が漏れる。深い台帳の D1 では、reserve_verification が RecursionError を投げ、--run-id の CLI は traceback が出て rc1 になる。深い --policy の D2 も traceback が出て rc1 になる。rc1 の「食い違い」と区別できず、BudgetError しか包まない呼び手も落ちる。[中] L179-188 の _ints は OSError だけを捕まえる（L182）。bound source が非 UTF-8 の U（R2-gate-review.md の先頭に 0xff を入れ、--skills-root に写しを渡す）は、UnicodeDecodeError の traceback が出て rc1 になる。直し方は 2 件とも同じで、except に RecursionError と UnicodeDecodeError/ValueError を足して BudgetError に包む。[低] L331-336 の read_ledger は、budget_total が無い台帳では超過を検査せず、main の L536-541 は check_ledger_total の後に rc0 を返す。count 500 の entry だけを入れ budget_total を書かない台帳の O2 で、reserve は exhausted になるが、--run-id の CLI は rc0 で remaining -420 を出す。reserve が書く台帳には必ず budget_total が入るので、手で作った台帳か古い形の台帳でだけ起きる。直し方: consumed が total を越えたら、budget_total の有無にかかわらず rc1 にする。[低] L150 と L167 で verification の意味が食い違う。L150 は verification_actions を「planner が 1 run で許す検証用 model action の累積上限」と書くが、L167 はこれを attempts（16）倍して 64 にしている。さらに L445・L499 は total しか比べず、component ごとの上限を見ない。verification 70 の予約（V1）が 64 を越えて通り、その後の bounded_improvement 12 は exhausted になる。initial_diagnosis 40 の予約（V2）も 4 を越えて通る。直し方: 累積で数えるのか試行ごとに数えるのかを決め、docstring と式を揃える。component の上限を守る約束にするなら、lock の中で component ごとの合計も比べる。[低] 責務の同居: 1 本の script が、bound の宣言の照合（CLI）、台帳の読み書き・lock、予約の API を持つ。直し方: 台帳と予約を module に分け、CLI は照合だけにする。参考（減点なし）: required の key の型が混ざる K1 では、L420 の sorted(required) が TypeError を出す。呼び手は str しか渡さないので届かない。DEDUCTION: -3（[中] RecursionError で traceback。L93-97）-2（[中] 非 UTF-8 の bound source で traceback。L179-188）-2（[低] budget_total が無い台帳の超過を見逃す。L331-336・L536-541）-3（[低] L150 と L167 の食い違いと、component の上限を見ないこと。V1・V2）-2（[低] 責務の同居）→ 88。"
+  },
+  "reviewed_by": "independent-code-review-20261115-cov3-ledger",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

@@ -5,21 +5,14 @@
   "llm_eval": {
     "verdict": "PASS",
     "score": 90,
-    "notes": "genuine independent incremental review（公開tree、2026-11-16、sha256 ba55aad7946cfca64c322d08282c662eec268133276f0dc23954625a03c782e2）。前回真正レビューsource SHA256=0aaee857f718009f30f532881e5378f89c60b1288e5bf75a65a9afd282e93558、前回record SHA256=778378858797a8a36b8dadbe8c04ddef4fa4ac0b10957b314f578f7544fbd794。前回レビュー版からの実差分は、先行dirtyから削除されていたGOAL_SEEK_FM_BLOCKのspec/progress/intermediate 3行の公開base復元と、診断深度の文言を公開baseへ戻した分だけ。公開treeのgoal-seek-paradigm.md:82もspec/progress/max_loopsを宣言しており、隣接契約と整合する。explicit refreshのparse_args/main配線・default no-op・skills祖先及びdest subtree symlink preflightは前回真正レビュー済み最終版から不変。追加scanは明示refreshのrglobのみで通常runtimeのLLM/兄弟走査追加なし。 当reviewerは今回この実差分と上記公開tree内隣接契約を読み、SHAだけの置換ではなく意味の差異を評価した。今回差分に新規blocking問題なし。前回評価範囲の残存非blocking課題は前recordを履歴に保持し、今回再採点していない。公開treeのテスト/製品gateは親担当で実行中のため、旧treeの試験結果を公開treeの結果と偽って転記しない。当reviewer自身の文書は承認対象外。"
+    "notes": "genuine independent delta review（2026-11-16、sha256 0aaee857f718009f30f532881e5378f89c60b1288e5bf75a65a9afd282e93558）。今回の対象はexplicit --refresh-feedback-loop、parse_args、main配線、apply_feedback_loopのrefresh及びsymlink preflight hunk。既定の既存実体no-opを保持し、refreshは明示配布時のみ、managed file更新・extra保持・cache除外を実施。初稿のdirs_exist_ok=Trueが外向き既存symlink経由でplugin外を上書きするhigh問題を、製品関数をASTから抽出したtemp probeで実測し著者へ報告した。最終版はskills祖先symlinkをmkdir前に拒否、refresh時dest subtreeのfile/dir symlinkをコピー前に拒否するため当該経路は閉じた。修正コードとfile/directory/skills-parent回帰3例を独立通読。rglob追加は明示refreshのみ、通常skill実行や既定no-opのscan/LLM呼出増加無し。既存の非原子的コピー・旧見出し・error整形・materialize順序等は変更対象外として未解消のまま履歴参照。 検証根拠: 変更hunkと隣接契約・対応testを当reviewerが読んで評価した。親共有のpackage23件PASS、vendored330一致、feedback strict PASS、関連168test/PKG007 201test PASSを参照したが、当reviewer自身はsuiteを再実行していない。rendererの追加回帰7PASSは著者報告であり、当reviewerは修正hunkとtestを再通読した。追加LLMや自己文書の承認はしていない。前recordは今回run-dirのcoverage-history/meta_analystへ内容を保持してコピー済み。今回見た差分に残るblocking問題なし。"
   },
-  "reviewed_by": "independent-incremental-review-20261116-meta-analyst-publication",
+  "reviewed_by": "independent-code-review-20261116-meta-analyst-pkg007",
   "checked": [
     "soundness",
     "responsibility",
     "error-handling",
     "side-effect-safety",
     "frontmatter"
-  ],
-  "provenance": {
-    "method": "genuine-incremental-code-review",
-    "prior_artifact_sha256": "0aaee857f718009f30f532881e5378f89c60b1288e5bf75a65a9afd282e93558",
-    "prior_record_sha256": "778378858797a8a36b8dadbe8c04ddef4fa4ac0b10957b314f578f7544fbd794",
-    "artifact_sha256": "ba55aad7946cfca64c322d08282c662eec268133276f0dc23954625a03c782e2",
-    "reviewed_difference": "前回レビュー版からの実差分は、先行dirtyから削除されていたGOAL_SEEK_FM_BLOCKのspec/progress/intermediate 3行の公開base復元と、診断深度の文言を公開baseへ戻した分だけ。公開treeのgoal-seek-paradigm.md:82もspec/progress/max_loopsを宣言しており、隣接契約と整合する。explicit refreshのparse_args/main配線・default no-op・skills祖先及びdest subtree symlink preflightは前回真正レビュー済み最終版から不変。追加scanは明示refreshのrglobのみで通常runtimeのLLM/兄弟走査追加なし。"
-  }
+  ]
 }

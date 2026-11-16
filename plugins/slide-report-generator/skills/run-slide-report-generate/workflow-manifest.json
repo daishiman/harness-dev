@@ -4,26 +4,7 @@
   "workflowId": "run-slide-report-generate",
   "skill": "run-slide-report-generate",
   "description": "output_mode(slide/report)を推定し、実際に開けるHTMLを生成して最小guard後に先に提示する。利用者が診断/改善を選んだ場合のみ、15 agent・30種思考法・最大3周のsemantic reviewを起動する。",
-  "artifact_delivery_contract": {
-    "contract": "artifact-delivery-v1",
-    "state_machine": {
-      "initial": "artifact_created",
-      "states": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started", "handoff_complete"],
-      "transitions": [
-        {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed"},
-        {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented"},
-        {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded"},
-        {"from": "user_choice_recorded", "event": "accept-as-is", "to": "handoff_complete"},
-        {"from": "user_choice_recorded", "event": "light|standard|detailed", "to": "semantic_evaluator_started"},
-        {"from": "semantic_evaluator_started", "event": "improvement_complete", "to": "handoff_complete"}
-      ],
-      "pre_choice_forbidden": ["semantic-evaluator", "task-fork", "subagent", "multi-worker", "revise-loop"],
-      "accept_contexts": {"evaluator": 0, "improver": 0}
-    },
-    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
-    "release": "explicit-only",
-    "exhaustive": "explicit-only"
-  },
+  "artifact_delivery_contract": {"contract": "artifact-delivery-v1", "phase_activation": "all-legacy-phases-after-semantic_evaluator_started"},
   "phases": [
     {
       "id": "R1-hearing-mode",
@@ -47,7 +28,7 @@
     {
       "id": "R2-structure-gate",
       "step": 2,
-      "title": "構成設計に入る前に情報優先度を確定し(文脈→棚卸し→グループ化→順位→削減→加工→形式選定を information-priority-map.json へ宣言、validate-information-priority.py で順位が装飾に先行することを fail-closed 検証)、確定 mode と読者価値ブリーフで structure-designer/report-structure-designer(+d3/data-visualizer/visual-strategist) が、想定読者内で共有される入口→専門解決→自分ごと化の橋を設計する。正式タイトル制約と根拠完全性を維持し、structure-validator + validate-structure.js の仕様確定ゲートで P3 進入を制御(PASS→R3 / WARN→承認後 R3 / FAIL→R2 差戻し)",
+      "title": "構成設計に入る前に情報優先度を確定し(文脈→棚卸し→グループ化→順位→削減→加工→形式選定を information-priority-map.json へ宣言、validate-information-priority.py で順位が装飾に先行することを fail-closed 検証)、確定 mode と読者価値ブリーフで structure-designer/report-structure-designer(+d3/data-visualizer/visual-strategist) が、想定読者内で共有される入口→専門解決→自分ごと化の橋を設計する。正式タイトル制約と根拠完全性を維持し、structure-validator + validate-structure.js の仕様確定ゲートで R3 進入を制御(PASS→R3 / WARN→仮定として R3 へ進み handoff に明記 / FAIL→R2 差戻し)",
       "gate": "C2",
       "dependsOn": [
         "R1-hearing-mode"
@@ -57,6 +38,8 @@
       "resourceIds": [
         "ref-information-priority-rules",
         "glue-validate-information-priority",
+        "ref-visual-generation-rules",
+        "glue-validate-diagram-coverage",
         "ref-structure-design-rules",
         "ref-report-structure-types",
         "ref-d3-diagram-rules",
@@ -68,8 +51,10 @@
         "schema-structure",
         "schema-report-structure",
         "vendor-validate-structure",
+        "vendor-validate-d3",
         "vendor-workflow-manager",
-        "ref-slide-skeleton-registry"
+        "ref-slide-skeleton-registry",
+        "vendor-phase-gate"
       ],
       "fatal_exit_codes": []
     },
@@ -103,7 +88,9 @@
         "vendor-generate-images-codex",
         "vendor-build-deck-html",
         "glue-validate-slide-skeleton",
-        "vendor-workflow-manager"
+        "vendor-workflow-manager",
+        "schema-generation-report",
+        "vendor-build-single-html"
       ],
       "fatal_exit_codes": [1]
     },
@@ -122,9 +109,9 @@
     {
       "id": "R5-diagnostic-choice",
       "step": 5,
-      "title": "現物提示後に診断・改善の深度を利用者が選択",
+      "title": "現物提示後に現状で試すか診断するかを利用者が選択",
       "dependsOn": ["R4-artifact-present-handoff"],
-      "choices": ["accept-as-is", "light", "standard", "detailed"],
+      "choices": ["accept-as-is", "diagnose"],
       "release_event": "explicit-only",
       "exhaustive_event": "explicit-only",
       "accept_as_is_evaluator_contexts": 0,
@@ -137,15 +124,34 @@
     {
       "id": "R6-selected-semantic-review",
       "step": 6,
-      "title": "利用者選択時のみ15 agent・30種思考法・最大3周の評価改善",
+      "title": "diagnose 記録時のみ15 agent・30種思考法で評価し、所見の提示後に改善の深さを1回だけ聞いて、選んだ深さの周回上限(最大3周)まで改善と再評価を回す",
       "dependsOn": ["R5-diagnostic-choice"],
       "default_on": false,
-      "condition": "user_choice_recorded in [light,standard,detailed]",
+      "condition": "user_choice_recorded == diagnose",
       "evaluator_contexts_when_accept_as_is": 0,
       "improver_contexts_when_accept_as_is": 0,
       "agent_roster_count": 15,
       "thought_method_count": 30,
       "max_iterations": 3,
+      "depth_choice": {
+        "asked": "once-after-findings-presented",
+        "options": ["findings-only", "light", "standard", "detailed"],
+        "default": "standard",
+        "selection": {
+          "findings-only": "none",
+          "light": "high-or-critical",
+          "standard": "goal-impact",
+          "detailed": "all-actionable"
+        },
+        "max_iterations_by_option": {
+          "findings-only": 0,
+          "light": 1,
+          "standard": 2,
+          "detailed": 3
+        },
+        "release_event": "explicit-only",
+        "exhaustive_event": "explicit-only"
+      },
       "entry_gate": "artifact_created_at < artifact_presented_at < semantic_evaluator_started_at",
       "exitHook": "slide:evaluate-deck | report:validate-report-visual",
       "resourceIds": [
@@ -157,6 +163,9 @@
         "glue-validate-report-visual",
         "glue-validate-svg-diagram",
         "glue-validate-diagram-information",
+        "ref-visual-generation-rules",
+        "glue-validate-diagram-coverage",
+        "glue-validate-compare-ratio",
         "glue-validate-slide-layout",
         "glue-validate-report-layout",
         "vendor-verify-slides",
@@ -167,7 +176,23 @@
         "prompt-R3-agent-layout-optimizer",
         "prompt-R3-agent-ui-quality-reviewer",
         "prompt-R3-agent-report-quality-reviewer",
-        "prompt-R3-agent-deck-evaluator"
+        "prompt-R3-agent-deck-evaluator",
+        "prompt-R3-agent-html-generator",
+        "prompt-R3-agent-slide-renderer",
+        "prompt-R3-agent-report-composer",
+        "vendor-render-slide",
+        "vendor-render-report",
+        "ref-html-generation-rules",
+        "schema-structure",
+        "schema-report-structure",
+        "prompt-R3-agent-ai-image-diagram-producer",
+        "ref-ai-image-pipeline",
+        "vendor-build-image-prompts",
+        "vendor-generate-images-codex",
+        "vendor-build-deck-html",
+        "vendor-precheck-layout",
+        "vendor-layout-calculator",
+        "vendor-check-consistency"
       ],
       "fatal_exit_codes": []
     }
@@ -226,7 +251,8 @@
       "kind": "reference",
       "path": "./references/html-generation-rules.md",
       "phaseIds": [
-        "R3-generate-minimal-guard"
+        "R3-generate-minimal-guard",
+        "R6-selected-semantic-review"
       ]
     },
     {
@@ -258,7 +284,8 @@
       "kind": "reference",
       "path": "./references/ai-image-pipeline.md",
       "phaseIds": [
-        "R3-generate-minimal-guard"
+        "R3-generate-minimal-guard",
+        "R6-selected-semantic-review"
       ]
     },
     {
@@ -363,7 +390,8 @@
       "phaseIds": [
         "R1-hearing-mode",
         "R2-structure-gate",
-        "R3-generate-minimal-guard"
+        "R3-generate-minimal-guard",
+        "R6-selected-semantic-review"
       ]
     },
     {
@@ -373,7 +401,8 @@
       "phaseIds": [
         "R1-hearing-mode",
         "R2-structure-gate",
-        "R3-generate-minimal-guard"
+        "R3-generate-minimal-guard",
+        "R6-selected-semantic-review"
       ]
     },
     {
@@ -450,11 +479,20 @@
       ]
     },
     {
+      "id": "vendor-validate-d3",
+      "kind": "script",
+      "path": "../../vendor/scripts/validate-d3.js",
+      "phaseIds": [
+        "R2-structure-gate"
+      ]
+    },
+    {
       "id": "vendor-render-slide",
       "kind": "script",
       "path": "../../vendor/scripts/render-slide.cjs",
       "phaseIds": [
-        "R3-generate-minimal-guard"
+        "R3-generate-minimal-guard",
+        "R6-selected-semantic-review"
       ]
     },
     {
@@ -462,7 +500,8 @@
       "kind": "script",
       "path": "../../vendor/scripts/render-report.js",
       "phaseIds": [
-        "R3-generate-minimal-guard"
+        "R3-generate-minimal-guard",
+        "R6-selected-semantic-review"
       ]
     },
     {
@@ -478,7 +517,8 @@
       "kind": "script",
       "path": "../../vendor/scripts/build-image-prompts.js",
       "phaseIds": [
-        "R3-generate-minimal-guard"
+        "R3-generate-minimal-guard",
+        "R6-selected-semantic-review"
       ]
     },
     {
@@ -486,7 +526,8 @@
       "kind": "script",
       "path": "../../vendor/scripts/generate-images-codex.js",
       "phaseIds": [
-        "R3-generate-minimal-guard"
+        "R3-generate-minimal-guard",
+        "R6-selected-semantic-review"
       ]
     },
     {
@@ -494,7 +535,8 @@
       "kind": "script",
       "path": "../../vendor/scripts/build-deck-html.js",
       "phaseIds": [
-        "R3-generate-minimal-guard"
+        "R3-generate-minimal-guard",
+        "R6-selected-semantic-review"
       ]
     },
     {
@@ -544,6 +586,46 @@
       "phaseIds": [
         "R2-structure-gate",
         "R3-generate-minimal-guard"
+      ]
+    },
+    {
+      "id": "vendor-precheck-layout",
+      "kind": "script",
+      "path": "../../vendor/scripts/precheck-layout.js",
+      "phaseIds": [
+        "R6-selected-semantic-review"
+      ]
+    },
+    {
+      "id": "vendor-layout-calculator",
+      "kind": "script",
+      "path": "../../vendor/scripts/layout-calculator.js",
+      "phaseIds": [
+        "R6-selected-semantic-review"
+      ]
+    },
+    {
+      "id": "vendor-check-consistency",
+      "kind": "script",
+      "path": "../../vendor/scripts/check-consistency.js",
+      "phaseIds": [
+        "R6-selected-semantic-review"
+      ]
+    },
+    {
+      "id": "vendor-build-single-html",
+      "kind": "script",
+      "path": "../../vendor/scripts/build-single-html.js",
+      "phaseIds": [
+        "R3-generate-minimal-guard"
+      ]
+    },
+    {
+      "id": "vendor-phase-gate",
+      "kind": "script",
+      "path": "../../vendor/scripts/phase-gate.js",
+      "phaseIds": [
+        "R2-structure-gate"
       ]
     },
     {
@@ -614,7 +696,8 @@
       "kind": "prompt",
       "path": "./prompts/R3-agent-html-generator.md",
       "phaseIds": [
-        "R3-generate-minimal-guard"
+        "R3-generate-minimal-guard",
+        "R6-selected-semantic-review"
       ],
       "_role": "Detailed 7-layer prompt SSOT for Task agent html-generator; agents/html-generator.md is the 9-section adapter."
     },
@@ -623,7 +706,8 @@
       "kind": "prompt",
       "path": "./prompts/R3-agent-slide-renderer.md",
       "phaseIds": [
-        "R3-generate-minimal-guard"
+        "R3-generate-minimal-guard",
+        "R6-selected-semantic-review"
       ],
       "_role": "Detailed 7-layer prompt SSOT for Task agent slide-renderer; agents/slide-renderer.md is the 9-section adapter."
     },
@@ -632,7 +716,8 @@
       "kind": "prompt",
       "path": "./prompts/R3-agent-report-composer.md",
       "phaseIds": [
-        "R3-generate-minimal-guard"
+        "R3-generate-minimal-guard",
+        "R6-selected-semantic-review"
       ],
       "_role": "Detailed 7-layer prompt SSOT for Task agent report-composer; agents/report-composer.md is the 9-section adapter."
     },
@@ -641,7 +726,8 @@
       "kind": "prompt",
       "path": "./prompts/R3-agent-ai-image-diagram-producer.md",
       "phaseIds": [
-        "R3-generate-minimal-guard"
+        "R3-generate-minimal-guard",
+        "R6-selected-semantic-review"
       ],
       "_role": "Detailed 7-layer prompt SSOT for Task agent ai-image-diagram-producer; agents/ai-image-diagram-producer.md is the 9-section adapter."
     },
@@ -680,6 +766,32 @@
         "R6-selected-semantic-review"
       ],
       "_role": "Detailed 7-layer prompt SSOT for Task agent deck-evaluator; agents/deck-evaluator.md is the 9-section adapter."
+    },
+    {
+      "id": "ref-visual-generation-rules",
+      "kind": "reference",
+      "path": "./references/visual-generation-rules.md",
+      "phaseIds": [
+        "R2-structure-gate",
+        "R6-selected-semantic-review"
+      ]
+    },
+    {
+      "id": "glue-validate-diagram-coverage",
+      "kind": "script",
+      "path": "../../scripts/validate-diagram-coverage.py",
+      "phaseIds": [
+        "R2-structure-gate",
+        "R6-selected-semantic-review"
+      ]
+    },
+    {
+      "id": "glue-validate-compare-ratio",
+      "kind": "script",
+      "path": "../../scripts/validate-compare-ratio.mjs",
+      "phaseIds": [
+        "R6-selected-semantic-review"
+      ]
     }
   ]
 }

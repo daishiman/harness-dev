@@ -41,6 +41,24 @@ def test_r0_and_r6_share_effective_source_and_immutable_history_contract() -> No
     assert "retired" in r6 and "active consumer" in r6
 
 
+def test_supporting_qa_refs_are_not_active_consumers() -> None:
+    """裏付け (qa_refs) に残る置き換え済み entry を、監査が軸 4 の検出にしないこと。
+
+    spec-state-contract.md の supersede-qa は qa_refs からの参照を残してよいと定める。
+    active consumer の定義が数えるものだけを並べていたため、監査が qa_refs まで数えて
+    high とした揺れ (r44 の system-spec live-trial、qa-009) を防ぐ。
+    """
+    contract = (PLUGIN / "skills" / "run-system-spec-elicit" / "references" / "spec-state-contract.md").read_text(encoding="utf-8")
+    r6 = SSOT.read_text(encoding="utf-8")
+    adapter = ADAPTER.read_text(encoding="utf-8")
+
+    assert "裏付け (`qa_refs`) からの参照は残してよい" in contract
+    assert "確定セルの裏付け (`qa_refs`) は active consumer に数えない" in r6
+    assert "軸 4 の検出にしない" in r6
+    assert "`qa_refs` から外すよう指示しない" in r6
+    assert "確定セルの裏付け (`qa_refs`) は active consumer に数えない" in adapter
+
+
 def test_adapter_allows_only_read_and_read_only_bash() -> None:
     text = ADAPTER.read_text(encoding="utf-8")
 

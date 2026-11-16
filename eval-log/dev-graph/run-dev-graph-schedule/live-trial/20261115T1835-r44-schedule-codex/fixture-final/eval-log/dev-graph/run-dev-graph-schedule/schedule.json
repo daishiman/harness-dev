@@ -1,0 +1,138 @@
+{
+  "assignment_hints": [
+    {
+      "claim_command": "/dev-graph worktree claim task-api-orders --branch devgraph/task-api-orders --session-id <session>",
+      "graph_node_id": "task-api-orders",
+      "suggested_branch": "devgraph/task-api-orders"
+    },
+    {
+      "claim_command": "/dev-graph worktree claim task-cache-warmup --branch devgraph/task-cache-warmup --session-id <session>",
+      "graph_node_id": "task-cache-warmup",
+      "suggested_branch": "devgraph/task-cache-warmup"
+    },
+    {
+      "claim_command": "/dev-graph worktree claim task-docs-runbook --branch devgraph/task-docs-runbook --session-id <session>",
+      "graph_node_id": "task-docs-runbook",
+      "suggested_branch": "devgraph/task-docs-runbook"
+    }
+  ],
+  "batches": {
+    "features": [],
+    "tasks": [
+      [
+        "task-api-orders",
+        "task-cache-warmup",
+        "task-docs-runbook"
+      ]
+    ]
+  },
+  "conflict_pairs": [
+    {
+      "kind": "ready_pair",
+      "left": "task-api-users",
+      "resources": [
+        "src/api/users"
+      ],
+      "right": "task-api-users-cache"
+    },
+    {
+      "kind": "ready_pair",
+      "left": "task-api-users-cache",
+      "resources": [
+        "src/cache"
+      ],
+      "right": "task-cache-warmup"
+    },
+    {
+      "kind": "lease",
+      "left": "task-api-users",
+      "resources": [
+        "src/api/users"
+      ],
+      "right": "active-lease"
+    },
+    {
+      "kind": "lease",
+      "left": "task-api-users-cache",
+      "resources": [
+        "src/api/users"
+      ],
+      "right": "active-lease"
+    }
+  ],
+  "conflicts": [
+    "task-api-users",
+    "task-api-users-cache"
+  ],
+  "excluded": [
+    {
+      "blocking_depends_on": [
+        "task-api-users"
+      ],
+      "graph_node_id": "task-api-users-e2e",
+      "reason": "dependency_unsatisfied",
+      "source": "schedule-graph"
+    }
+  ],
+  "graph_digest": "sha256:0356d2a2a46fef84270c136615e002dcc7489c79002c202eab835ca6bc71b101",
+  "graph_sha256_after": "2ca637a84eda9717b0d61bb684f77d4d83d8cd07d3c55217610b20382dd88a7c",
+  "graph_sha256_before": "2ca637a84eda9717b0d61bb684f77d4d83d8cd07d3c55217610b20382dd88a7c",
+  "lease_sha256_after": "33e12890410aa4a7a8841f4c00862f33dbbf4626f4de8015b377650ff8de25a0",
+  "lease_sha256_before": "33e12890410aa4a7a8841f4c00862f33dbbf4626f4de8015b377650ff8de25a0",
+  "max_parallel": 4,
+  "parity_provenance": null,
+  "planned_features": [],
+  "read_only": true,
+  "ready_set": {
+    "features": [],
+    "tasks": [
+      "task-api-orders",
+      "task-cache-warmup",
+      "task-docs-runbook"
+    ]
+  },
+  "ready_source": "self",
+  "scope": null,
+  "selection_receipt": {
+    "entries": [
+      {
+        "artifact_kind": "task",
+        "background": null,
+        "deferral_reason": null,
+        "graph_node_id": "task-api-orders",
+        "mvp_fit": null,
+        "order_index": 0,
+        "purpose": null,
+        "rationale": null,
+        "sort_rank": 2
+      },
+      {
+        "artifact_kind": "task",
+        "background": null,
+        "deferral_reason": null,
+        "graph_node_id": "task-cache-warmup",
+        "mvp_fit": null,
+        "order_index": 1,
+        "purpose": null,
+        "rationale": null,
+        "sort_rank": 2
+      },
+      {
+        "artifact_kind": "task",
+        "background": null,
+        "deferral_reason": null,
+        "graph_node_id": "task-docs-runbook",
+        "mvp_fit": null,
+        "order_index": 2,
+        "purpose": null,
+        "rationale": null,
+        "sort_rank": 2
+      }
+    ],
+    "mvp_established": {},
+    "policy": "mvp-first/v1"
+  },
+  "tracker_sha256_after": null,
+  "tracker_sha256_before": null,
+  "unmapped": []
+}

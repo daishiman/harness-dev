@@ -2,19 +2,21 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-elegant-review",
-    "skill_md_sha256": "53e95693ba8fc07745a27eb7996c4f3cf9ab2215aa45000f376bd788ace608ba"
+    "skill_md_sha256": "e27bc85ecafe032eecc3e4cba4e27099c0ae4b303526af381165626d9fcb3464",
+    "reviewed_skill_md_sha256": "e27bc85ecafe032eecc3e4cba4e27099c0ae4b303526af381165626d9fcb3464",
+    "skill_dir_digest": "66645e64a165a55350f2fcd78cbcd5f3b2e64521d911df0412a950e7773647c4"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 1,
-    "inconsistency": 1,
-    "dependency_break": 1,
-    "smell": 8
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 7
   },
-  "reviewer": "independent-content-reviewer-20261114 (Claude subagent, incremental profile, fresh review of SKILL.md 53e95693)",
-  "reviewed_at": "2026-11-14T02:32:43+09:00",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-15T17:58:59+09:00",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -26,29 +28,63 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "削除済みの資産 (check-review-trigger.py、elegant-review-trigger、review-queue、elegant-bounded-improvement-executor、elegant-4-conditions) を指す参照は、run-elegant-review の配下 (SKILL.md・references・prompts・workflow-manifest.json・schemas) と plugins/harness-creator/agents に 1 件も残っていない (grep で確認)。resource-map.yaml からも該当行が消えている。残っているのは repo 直下 .claude/agents の dangling symlink だけ (negative 1)。",
-      "改善 executor を elegant-improvement-executor の 1 体にまとめ、改善範囲を引数 selected_finding_ids / max_rounds / output_contract (agents/elegant-improvement-executor.md:40-45) で受ける形にしたので、bounded 版との契約の二重管理が消えた。省略時は従来どおりの Phase 3 範囲になるので、run-elegant-review 側の呼び方を変えずに済む。",
-      "新しい scripts/sync-content-review-sha.py は、header と docstring の説明が content-review-protocol.md:130-148 の条件 a/b/c および --help の出力と一致する。scratch の仮 repo で noop (0)、範囲外の id (1)、dry-run (0)、rebound (0)、already-bound (0)、使用済みの id (1)、sha 形式の誤り (2) の各分岐を回し、exit code が header の記述どおりであることを確かめた。書き込みは一時ファイルからの os.replace で、条件を満たさないときは verdict を変えない。",
-      "sha の結び直しを lint-content-review.py の緩和ではなく、監査記録 sha_rebinds[] (content-review-verdict.schema.json。tool は const sync-content-review-sha、finding_ids には pattern がある) として足した。stale-sha 検査そのものは変えていないので、条件を満たさない編集は従来どおり再レビューに回る。executor:77 が exit 1 を『要再レビュー』として residual_risks に載せる規則も、拒否時の扱いとして筋が通っている。",
-      "SKILL.md 本文の差分は L52 のコメントと L74 の script_refs の 2 行だけで、L184 の content_review_outer_reeval.max_iterations=3、halt_conditions の 4 キー、STRICT_SIGNAL_FROM=20260809 はいずれも references/convergence-policy.json と scripts の実物に一致する。"
+      "frontmatter の goal_seek から progress / intermediate の 2 キーを消しても、path は何も失われていない。本文「ゴールシーク配線（task-graph 変種）」が eval-log/run-elegant-review-progress.json と eval-log/run-elegant-review-intermediate.jsonl を、checklist の射影先・extract-ready-set-from-checklist.py の引数・周回トレースの追記先・--task-graph-trace の検証コマンドの 4 か所で名指し、workflow-manifest.json の phase3-execute.completion_signal.task_graph_trace_command も同じ 2 path を持つ。消したキーを読む箇所は repo に無い (git grep で SKILL.md 本文と manifest の 6 行だけ)。lint-goal-seek は本文の bash fence を、lint-skill-runtime-profiles は engine / fork / engine_profile / full_task_spec_graph だけを、validate-paradigm-coverage.py は argv の 2 path と progress.json の max_loops を読む。共通正本 goal-seek-paradigm.md の『path は本文の ゴールシーク配線 に書き、frontmatter には同じ値を重ねない。本文が goal_seek.<key> の名前で読ませる key だけを残す』のとおり、本文が名前で読む goal_seek.max_loops (=12) だけが残っている。path の形も正本の eval-log/<skill>-progress.json / eval-log/<skill>-intermediate.jsonl と一致する。",
+      "残った goal_seek の 6 キーは本文とすべて対応する。activation_state=semantic_evaluator_started は「Post-choice selected improvement execution」と「ゴールシーク配線（task-graph 変種）」冒頭の起動条件、engine=task-graph / engine_profile=checklist-graph / full_task_spec_graph=false は『checklist へ射影し、別の task-graph 状態は作らない』、fork=agent-team は『3 分析者を Agent Team へ read-only で fan-out し、Phase 3 のみ write ownership』、max_loops=12 は『1 周回 1 checklist item の消費上限』と一致し、goal-seek-loop.schema.json の『progress.max_loops は frontmatter goal_seek.max_loops と一致させる』の参照先も残っている。spec キーはこの版にも前回 PASS の版にも無く、ゴールは本文の「ゴール (Goal)」に直接書かれている。",
+      "artifact_delivery を契約 id 1 行 (artifact-delivery-v1) にし、workflow-manifest.json の artifact_delivery_contract も contract + phase_activation だけに縮めたので、状態機械の正本は lint-entrypoint-artifact-first.py の CANONICAL_CONTRACT 1 か所になる。初回の 2 択 (accept-as-is→handoff_complete / diagnose→semantic_evaluator_started、release / exhaustive は explicit-only) が本文「Pre-choice usable artifact execution」「Post-choice selected improvement execution」と一致し、phase_activation=all-legacy-phases-after-semantic_evaluator_started は本文の『既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録された場合だけ実行する』と同じことを言う。この skill では旧 4 択の light/standard/detailed が本文のどこにも挙動として結び付いていなかったので、2 択化で消えた依存は無い。",
+      "本文の数値はすべて references/convergence-policy.json と一致する。既定 5 周 = loop_bounds.goal_seek_inner.value、max_iter=3・Phase 3 の max_iter=3・停止条件の max_iterations(=3) = loop_bounds.content_review_outer_reeval.value = parameters.max_iterations = halt_conditions.max_iterations_reached.rule = feedback_contract.max_iterations = workflow-manifest の completion_signal.max_iterations、Δ閾値 0.10 = parameters.delta_threshold。30 思考法の配分 9/9/12 は thought-methods.yaml の count と methods の件数、workflow-manifest の thought_methods_count と一致する。task-graph engine の正本 4 script は実在し、validate-paradigm-coverage.py --task-graph-trace は progress 不在で exit 1 を返す (本文の fail-closed の約束どおり)。"
     ],
     "negative_feedback": [
-      "[medium/dependency_break・今回] executor 統合で plugins/harness-creator/agents/elegant-bounded-improvement-executor.md を消したが、git 管理下の symlink .claude/agents/elegant-bounded-improvement-executor.md (mode 120000、リンク先 ../../plugins/harness-creator/agents/elegant-bounded-improvement-executor.md) が残って dangling になっている。skill の外だが、.github/workflows/governance-check.yml:29 と同じ形の `python3 scripts/lint-skill-description.py` (引数なし) が FileNotFoundError で exit 1 になり、引数に plugins/harness-creator/skills/run-elegant-review を渡しても exit 1 になる。このままだと CI の governance-check が落ちる。直し方: この symlink を git から外し、`python3 scripts/lint-skill-description.py` が exit 0 になることと、`build-claude-symlinks.py --check` に dangling が出ないことを確かめる。",
-      "[medium/omission・今回] 統合後の executor は改善範囲を `selected_finding_ids` で受け取り (agents/elegant-improvement-executor.md:21・25・43)、commands/skill-improve.md:20・23 は findings を `id` 付きで一覧にして、その id を渡す。ところが Phase 2 の出力 schema schemas/findings.schema.json:107-142 の issues[] には `id` プロパティが無い (required にも properties にも無く、id を前提にしているのは depends_on の pattern `^F-[0-9]{4}$` だけ)。実在の eval-log/**/findings.json 28 本でも、issue 570 件のうち id を持つのは 87 件だけ。採番する主体も書式も決まっていないので、利用者の選択が executor へ確実に届かない。また『selected_finding_ids の外を編集しない』(executor:25) も機械で確かめられない。直し方: findings.schema.json の issues に `id` (pattern `^F-[0-9]{4}$`) を足し、Phase 2 の集約時に orchestrator が未採番の issue に番号を振ると SKILL.md に書く。schema の変更が重いなら、少なくとも skill-improve.md の手順 2 に採番規則 (F-NNNN、集約順) を書く。",
-      "[medium/inconsistency・今回] incremental profile では、同じ評価結果を elegance と rubric の 2 verdict に分けて書く (run-build-skill/references/content-review-protocol.md:56)。そのため両 verdict の negative_feedback は同じ順に同じ文が並ぶ。一方 scripts/sync-content-review-sha.py:166-175・236-237 は、使用済みかどうかを `<review_kind>:<n>` の文字列で判定する。結果として、同じ指摘を elegance:n と rubric:n で 2 回使って結び直せてしまい、protocol L139・L148 と script L33 の『1 つの指摘で結び直せるのは 1 回だけ』が incremental では守られない。scratch の仮 repo で確かめた: negative_feedback が同一の 2 verdict に対し、elegance:1 で rebound (exit 0) した後、内容を変えて rubric:1 (同じ『指摘A』) でも rebound (exit 0) でき、sha_rebinds は [[elegance:1],[rubric:1]] になった。直し方: 両 verdict の n 番目の文が同じなら elegance:n と rubric:n を同じ指摘とみなし、どちらかを使った時点で両方を使用済みにする。合わせて protocol L139 にこの同一視を 1 文足す。",
-      "[low/smell・以前から] SKILL.md:242 の括弧書き『(converged→`complete` / diverged→`human_escalate` / max_iterations_reached→`incomplete`)』に converged_with_failures→`incomplete` が無い。references/convergence-policy.json の halt_conditions は 4 キーあり、SKILL.md の停止条件と findings.schema.json の写像には 4 件そろっているので矛盾ではない。直し方: 括弧に『converged_with_failures→`incomplete`』を足す。",
-      "[low/smell・以前から] agents/elegant-improvement-executor.md:75 (4.2 失敗時挙動) は、max_rounds を使い切った場合と Δneg が 2 周連続で増えた場合しか書いていない。Δneg/Δpos が閾値未満で止まっても C1-C4 に FAIL が残る場合に incomplete を返す規則が無い (prompts/R3-phase3-execute.md:30 と convergence-policy の converged_with_failures にはある)。統合後の agent だけを読むと、停滞時に complete を返す余地が残る。直し方: L75 に『改善が閾値未満で止まっても C1-C4 に FAIL が残るなら convergence_status=incomplete (human_review 必須)』を 1 文足す。",
-      "[low/smell・以前から、今回の統合で目立つようになった] agents/elegant-improvement-executor.md:109 (6.2) は『1 worker のみ。…分割・fan-out・再帰起動を行わない』と書く。一方 SKILL.md:309、prompts/R3-phase3-execute.md:16・87・149 は『orchestrator が独立 finding を非重複 write scope の executor へ並列割当』と書く。executor:27 の『並列化は呼び出し元が所有』と合わせて読めば矛盾ではないが、6.2 だけを読むと executor の複数起動まで禁じているように読める。直し方: 6.2 を『各起動は 1 worker として単独で動き、自分で分割・fan-out・再帰起動しない。複数起動への並列割当は呼び出し元が決める』に直す。",
-      "[low/smell・今回] commands/skill-improve.md:19 は『run-elegant-review を --dry-run で起動する (Phase 1-2 の分析と C1〜C4 判定だけ)』と書く。しかし SKILL.md:327 と prompts/R3-phase3-execute.md:52 では、dry_run=true は Edit / Write を禁じるだけで、Phase 3 は適用予定の patch と検証結果を返す提案モードとして動く。--dry-run が Phase 2 で止まるとは SKILL.md のどこにも書かれていない。直し方: skill-improve.md の手順 1 を『--dry-run で起動し、Phase 3 の提案 patch は使わず、Phase 2 の集約 findings だけを一覧に使う』と書き直す。または Phase 2 で止める起動の仕方を SKILL.md 側に定義する。",
-      "[low/smell・今回] agents/elegant-improvement-executor.md:47-49 (2.3 入出力契約) には、run-elegant-review Phase 3 と run-build-skill Step 12.7 の 2 経路しか書かれていない。L31 で新しく足した『content-review verdict の指摘を SKILL.md へ当てる』経路について、入力 (どの verdict を、誰が渡すか) と id の名前空間が書かれていない。この経路の id は `<review_kind>:<n>` で、findings の F-NNNN とは別物である。直し方: 2.3 に 3 本目の経路として content-review verdict を足し、`selected_finding_ids` に入る id が呼び出し元によって F-NNNN と `<review_kind>:<n>` のどちらになるかを書く。",
-      "[low/smell・今回] scripts/sync-content-review-sha.py:36-37 の docstring は、verdict の件数を『harness-creator の 38 本』とハードコードしている。今日時点では実数 38 本と一致するが、verdict が増減すると説明だけが古くなる。直し方: 件数を書かず、『harness-creator を含む全 plugin の content-review verdict は findings[] も指摘ごとの id も持たない』とだけ書く。",
-      "[low/smell・今回] agents/elegant-improvement-executor.md:31・60 は script を `run-elegant-review/scripts/sync-content-review-sha.py` と相対表記で示す。一方 script の --repo-root の既定値は `.` で (L304)、SKILL.md を `<repo-root>/plugins/<plugin>/skills/<skill>/SKILL.md` として引く (L180)。そのため repo root 以外の場所から呼ぶと exit 2 になる。plugins/harness-creator/skills から --repo-root を付けずに --dry-run を呼んで、『SKILL.md がありません』で exit 2 になることを確かめた。直し方: L31 の呼び方を `python3 plugins/harness-creator/skills/run-elegant-review/scripts/sync-content-review-sha.py --repo-root <repo-root> ...` にし、repo root から呼ぶことを明記する。",
-      "[low/smell・今回] SKILL.md は scripts/sync-content-review-sha.py を frontmatter の script_refs (L74) に足しただけで、本文にはこの script の役割も呼ぶ時機も書いていない (呼ぶ時機は references/resource-map.yaml:71-73 の read_when にしか無い)。直し方: Phase 3 か content-review に触れる節に、『content-review verdict の指摘を当てた後は executor がこの script で sha を結び直す。条件の正本は content-review-protocol』という 1 文を足す。"
+      "[low/smell・以前から] 「ゴールシーク配線（task-graph 変種）」の `content_review_outer_reeval.max_iterations=3` は、convergence-policy.json の実際の形 (loop_bounds.content_review_outer_reeval = {param: max_iterations, value: 3}) では dot path として辿れない。値は正しいので矛盾ではない。直し方: references/orchestration-flow.md と同じく `references/convergence-policy.json#/loop_bounds/content_review_outer_reeval/value` (param=max_iterations) と書く。",
+      "[low/smell・以前から] 「ゴールシークループ」の『既定 5 周 / max_iter=3』と、直後の「ゴールシーク配線（task-graph 変種）」の goal_seek.max_loops=12 (1 周回 1 checklist item の消費上限) の関係が本文に無い。references/orchestration-flow.md の「ループ制御」は max_loops と max_iterations が別契約だとは書くが、paradigm 既定の 5 周がこの変種では使われないことは書かない。初見の読者はどちらの周回上限が効くか迷う。直し方: 「ゴールシークループ」の括弧に『task-graph 変種では下記 max_loops=12 が上書き』を 1 句足す。",
+      "[low/smell・以前から] references/convergence-policy.json の run_model_action_budget (scope は create/build の 1 run_id、bound_sources は run-build-skill と run-skill-create の上限だけを見る) に、「収束ループ設計（解像度 3 層 + 両輪フィードバック + 安全弁）」の本文、policy の purpose 文、resource-map.yaml の convergence-policy.json の topic のどれも触れていない。この skill を単独で起動したときの Phase 1-3 がこの予算に数えられるのかが、このファイルを開いた読者に分からない。直し方: 本文の『詳細は references/convergence-policy.json 参照』の後に『run_model_action_budget は create/build の run_id 用で、本 skill 単独起動の周回は loop_bounds で縛る』を 1 文足し、purpose 文と resource-map の topic にも budget を足す。",
+      "[low/smell・以前から] 「完了条件（4 条件 → 観測 signal）」の括弧書き『(converged→`complete` / diverged→`human_escalate` / max_iterations_reached→`incomplete`)』に converged_with_failures→`incomplete` が無い。halt_conditions は 4 キーあり、同じ SKILL.md の「停止条件」と schemas/findings.schema.json の run_status の説明には 4 件そろっているので矛盾ではない。直し方: 括弧に『converged_with_failures→`incomplete`』を足す。",
+      "[low/smell・以前から] 「停止条件」の安全弁は `iteration_count >= max_iterations(=3)` → incomplete / human_review だが、prompts/R3-phase3-execute.md の出力指示・反復上限・safety_valve のチェック項目は『max_iterations=3 超過』(同じ prompt の Layer 1 は `iteration_count >= 3 (max)`)、references/orchestration-flow.md は『(max 3 loops, 超過時 escalate)』『3 反復でも 4 条件未達なら escalate-to-human イベント発火』と書く。『到達』と『超過』、incomplete/human_review と escalate の語が揺れ、3 周目の後に 4 周目を回すのか、diverged の human_escalate と同じ扱いなのかが読み分けにくい。数値と status の正本 (halt_conditions) は 1 つなので矛盾ではない。直し方: R3 と orchestration-flow の該当句を『iteration_count >= 3 で停止 (status=incomplete, human_review)』にそろえる。",
+      "[low/smell・以前から] frontmatter script_refs の scripts/sync-content-review-sha.py は本文に一度も出てこない (resource-map.yaml には read_when 付きで載っている)。「Phase 3: 改善実行（ファンイン）」で改善を当てた後、content-review verdict の sha をいつ・誰が・どの条件で結び直すのかが SKILL.md からは辿れない。直し方: Phase 3 の出力か失敗時アクションの近くに『content-review verdict の sha は sync-content-review-sha.py だけが結び直す (手順の正本は run-build-skill/references/content-review-protocol.md)』を 1 行足す。",
+      "[low/smell・新規、共通の変更 2 の副作用] 2 択化で、初回の選択は『改善の深さを選ぶ』(旧 light/standard/detailed) から『診断を受ける』(diagnose) に変わった。ところが本文はいまも「Post-choice selected improvement execution」の見出しと、「出力（v2 schema 固定）」の『auto_fixable=true は選択済み改善として最小パッチを適用し』で『選んだ改善』を前提にしており、この skill で何が・いつ『選ばれる』のかを書いていない。共通の方針 (lint-entrypoint-artifact-first.py の DIAGNOSTIC_CHOICES の注記、run-build-skill / run-goal-seek の本文) は『深さは診断の所見を見せた後に 1 回だけ聞く』だが、この skill は Phase 2 の所見の後に問いを挟まず Phase 3 へ進む。挙動自体は決まっている (agents/elegant-improvement-executor.md 2.2 の既定で selected_finding_ids=全 finding・max_rounds=3、書き込みは dry_run=false かつ auto_fixable=true に限られ、Gotchas 8 で auto_fixable は単純な修正だけ) ので矛盾や漏れではないが、diagnose を選んだ利用者には、所見を見る前に自動の最小パッチが当たりうることが本文から読み取りにくい。直し方: 「Post-choice selected improvement execution」に『本 skill は診断後に深さを聞かない。Phase 3 の範囲は全 finding と options.max_iterations で、対象への書き込みは dry_run=false かつ auto_fixable=true の最小パッチに限る (所見だけ見たいときは --dry-run)』を 1 文足す。所見の提示後に 1 回だけ聞く形にそろえるなら、Phase 2 と Phase 3 の間にその問いを置く。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "incremental profile の unresolved semantic batch として、(a)〜(e) を 1 つの context でまとめて判定した (content-review-protocol.md の incremental 手順)。30 思考法は使っていない。著者とは別の subagent による新規のレビューで、既存の verdict の結論は流用していない。読んだもの: SKILL.md 全 390 行 (特に L3・52・74・89-112・146・184・242・248・268・309・327)、references/resource-map.yaml (L71-73 ほか)、references/convergence-policy.json (halt_conditions と loop_bounds)、scripts/sync-content-review-sha.py 全 343 行、workflow-manifest.json、prompts/R3-phase3-execute.md 全文、schemas/findings.schema.json (L107-142)、plugins/harness-creator/agents/elegant-improvement-executor.md 全文、plugins/harness-creator/commands/skill-improve.md、run-build-skill/references/content-review-protocol.md (L56・L130-148)、run-build-skill/schemas/content-review-verdict.schema.json、.github/workflows/governance-check.yml:27-30、既存の 2 verdict (形の参考のみで、結論は流用していない)。実行したコマンドと exit code (すべて worktree root から実行。PYTHONPYCACHEPREFIX は scratchpad/pycache に設定): (1) shasum -a 256 SKILL.md → 53e95693…608ba (開始時と書き込み後で同じ)。(2) python3 scripts/lint-ssot-duplication.py は top-level に存在せず exit 2。実体 python3 plugins/harness-creator/skills/run-build-skill/scripts/lint-ssot-duplication.py --plugin-dir plugins/harness-creator --strict → exit 0 (schemas=87 md=186)、--plugin-dir plugins/harness-creator/skills/run-elegant-review --strict → exit 0。(3) python3 -m pytest -q -p no:cacheprovider tests/scripts-plugins/test_harness_creator__elegant_review_kit_contract.py tests/scripts-plugins/test_harness_creator__sync_content_review_sha.py → exit 0 (31 passed)。(4) python3 scripts/validate-frontmatter.py <SKILL.md> → 0。python3 scripts/lint-skill-tree.py <skill dir> → 0。python3 scripts/lint-script-naming.py <skill dir> → 0 (OK=9、PENDING 1 は emit-observable)。python3 scripts/lint-feedback-contract.py --all → 0。python3 scripts/lint-dependency-direction.py --skills-dir plugins/harness-creator/skills → 0。python3 scripts/lint-artifact-delivery.py --repo-root . → 0。python3 scripts/lint-entrypoint-artifact-first.py --repo-root . → 0。(5) python3 scripts/lint-skill-description.py <skill dir> → 1、引数なし (CI と同じ形) → 1。どちらも dangling symlink の FileNotFoundError (negative 1)。--skills-dir plugins/harness-creator/skills → 0 (OK=31)。(6) python3 plugins/harness-creator/scripts/lint-agent-prompt-content.py --mode agent / --mode prompt --plugins-dir plugins → どちらも scanned=0 で exit 1 (呼び方の誤り)。--plugins-dir plugins/harness-creator に直すと agent 7 件・prompt 35 件でどちらも exit 0。(7) python3 scripts/build-claude-symlinks.py --plugins-dir plugins --target-dir .claude --check → 3 (run-skill-update-notifier の git 管理外 __pycache__ の残骸に起因する分は、指示により finding にしていない)。(8) python3 plugins/harness-creator/skills/run-elegant-review/scripts/validate-paradigm-coverage.py --phase-order eval-log → 0 (22 run、警告 269 件)。(9) sync-content-review-sha.py --help → 0。scratch の仮 repo (scratchpad/cr-elegant-1794590831、scratchpad/cr-dup-1794591059) で各分岐と、同じ指摘を elegance:1 → rubric:1 で 2 回結び直せることを確かめた (どちらも exit 0)。plugins/harness-creator/skills から --repo-root を付けずに --dry-run を呼ぶと exit 2。(10) eval-log/**/findings.json の issues の id 保有数を python で数えた → 28 本、570 件中 87 件。判定: (a) 矛盾は 0 件。executor 6.2 と R3 の並列の書き方の差は、executor:27 と合わせて読めば矛盾ではないので smell とした。(b) 漏れは 1 件 (medium、findings の id)。(c) 規約整合と (d) 依存関係整合は、skill 本体には違反が無い。dependency_break は skill 外の dangling symlink の 1 件 (medium)、inconsistency は sync script の 1 指摘 1 回の抜け穴の 1 件 (medium)。(e) rubric の high は 0 件。high/critical は 0 件なので PASS。medium 3 件はどれも今回の差分で生じたもので、次の改善で直すことを勧める。とくに negative 1 は CI の governance-check を落とすので、merge の前に直すこと。"
+  "notes": "全体の再レビュー (focused combined review) を 1 context で実施した。SKILL.md e27bc85e の全文、workflow-manifest.json、references (convergence-policy.json / orchestration-flow.md / resource-map.yaml / thought-methods.yaml の件数)、prompts/R3-phase3-execute.md の該当句、schemas/findings.schema.json の run_status、agents/elegant-improvement-executor.md の引数表、共通正本 goal-seek-paradigm.md の frontmatter goal_seek と task-graph 変種の節、goal-seek-loop.schema.json の max_loops、lint-entrypoint-artifact-first.py の CANONICAL_CONTRACT と 2 択化の注記を読んだ。前回 PASS の版 9deff953 との差分は frontmatter goal_seek の progress / intermediate の 2 行の削除だけ (diff で確認)。skill_dir_digest は前回と同じ 66645e64 で、SKILL.md 以外のモデルが読む文書は変わっていない。 C1 矛盾なし: 本文の 5 / 3 / 0.10 / 12 と 9/9/12 は policy・manifest・thought-methods.yaml と一致し、2 択は CANONICAL_CONTRACT と一致、残った goal_seek の 6 キーは本文と食い違わない。 C2 漏れなし: progress / intermediate の path は本文 4 か所と manifest に残り、消したキーを読む箇所は無い。必須の契約・停止条件・出力は書かれている。残るのは書き足しの提案 (negative 2・3・4・6・7、いずれも smell)。 C3 整合性: 語の揺れが prompts/R3 と orchestration-flow に残るが数値と status の正本は 1 つ (negative 1・5、smell)。規約整合は rubric verdict に任せた。 C4 依存関係整合: 正本 4 script は実在し、frontmatter・本文・resource-map が同じ path を指す。trace 検証は argv の path で動き、frontmatter の消したキーに依存しない。 実行した検査 (すべて exit 0): lint-goal-seek (SKILL.md)、lint-skill-runtime-profiles --plugin harness-creator --skill run-elegant-review (task-graph/agent-team 1)、validate-frontmatter、lint-entrypoint-artifact-first、lint-artifact-delivery (23 plugins)。validate-paradigm-coverage.py --task-graph-trace は存在しない path で exit 1 (fail-closed を確認)。sync-content-review-sha.py は読んだだけで走らせていない。30 思考法は使っていない。",
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "ゴールシーク配線（task-graph 変種）"
+      ]
+    },
+    "elegance:2": {
+      "sections": [
+        "ゴールシークループ",
+        "ゴールシーク配線（task-graph 変種）"
+      ]
+    },
+    "elegance:3": {
+      "sections": [
+        "収束ループ設計（解像度 3 層 + 両輪フィードバック + 安全弁）"
+      ]
+    },
+    "elegance:4": {
+      "sections": [
+        "完了条件（4 条件 → 観測 signal）"
+      ]
+    },
+    "elegance:5": {
+      "sections": [
+        "収束ループ設計（解像度 3 層 + 両輪フィードバック + 安全弁） > 停止条件"
+      ]
+    },
+    "elegance:6": {
+      "sections": [
+        "実行フロー（v2 各フェーズ 4 項目明示） > Phase 3: 改善実行（ファンイン）"
+      ]
+    },
+    "elegance:7": {
+      "sections": [
+        "Post-choice selected improvement execution",
+        "入出力契約 > 出力（v2 schema 固定）"
+      ]
+    }
+  }
 }

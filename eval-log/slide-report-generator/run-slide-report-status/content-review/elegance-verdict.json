@@ -2,20 +2,22 @@
   "target": {
     "plugin": "slide-report-generator",
     "skill": "run-slide-report-status",
-    "skill_md_sha256": "31112edb207f7574937dd3aa4bdb66158c9f7aebea95770e7d9de4ccbddb32af"
+    "skill_md_sha256": "c3155513ebbb4699d829accfa12452b201c0806aba65150a246f1d8137ada3b1",
+    "reviewed_skill_md_sha256": "c3155513ebbb4699d829accfa12452b201c0806aba65150a246f1d8137ada3b1",
+    "skill_dir_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
+    "omission": 2,
+    "inconsistency": 1,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "review-runtime-profiles (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-24T01:04:16Z",
-  "iterations": 1,
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-15T10:51:15Z",
+  "iterations": 3,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -24,15 +26,43 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "goal_seek は inline/inline で、allowed-tools に Task/Agent を持たず、本文も workflow-manager の read-only check と output-mode preflight を main context で完結させるため、frontmatter と実経路が一致する。",
-      "欠落 artifact を自動復元せず診断だけを返す境界、accept-as-is では周回しない activation 境界、3周上限が同じ本文内で明示され、status skill の副作用ゼロ契約を保っている。",
-      "共通 validate-goal-seek-anchor.py を caller project の progress/intermediate.jsonl に対して起動し、required_keys・非空 original_goal・SHA-256 不変性を fail-closed 検証する配線が実在する。"
+      "iteration 2 の high (推奨経路の deck で read-only の約束が破れる) は、根本から解消した。ゴールシーク実行 (75-82 行目) は、まず --verbose を回し、その出力の phase が P2_5 か P3 のときだけ --check を付ける。workflow-manager.js は、gate を checkOnly && gateInfo のときだけ回すので、--verbose は gate を回さない。PHASES の gate は P2_5 (P2→P3)・P3 (P3→P3_5)・P3_5 (P3_5→complete) の 3 つだけで、書くのは P3_5 の gate の verify-slides.js (phase-gate.js:198、<project-dir>/screenshots/slide_NN.png) だけである。P2→P3 の gate は validate-structure.js を --report 付きで回すが、出力先は os.tmpdir() の下の phasegate-* で、読んだ後に rmSync で消す (phase-gate.js:71-83。spawnSync は throw せず、JSON.parse は try の中なので、rmSync まで必ず届く)。validate-structure.js が書くのは options.report だけである。P3→P3_5 の gate は file の有無と中身を読むだけである。--check を付けるかを ls -a ではなく --verbose の phase で決めるので、.workflow-state.json で phase が上書きされても、gate の引き方 (PHASES[phase].gate) と同じ鍵で選べる。Key Rules (68 行目)・IN1・検証 (115 行目)・commands/slide-report-status.md (19-25 行目) が、同じ言い方にそろっている。scratchpad の見本 7 つ (det-deck・legacy-md・p3・llm-complete・ipm-only・report-real・llm-deck) で、TMPDIR を自分の dir に向けて 2 段の手順を回した。対象 dir は 7 つとも変わらず、TMPDIR の下に phasegate-* は残らなかった。det-deck は P3_5 で、--check を回していない。legacy-md (P2_5) と p3 (P3) だけに --check を当て、どちらも exit 1 で、対象 dir は変わらなかった。",
+      "iteration 2 の medium (structure.md を持つ deck で、workflow manager の次 action が使えないときの代わりが無い) は、根本から解消した。92 行目は、workflow manager の「次のステップ」を、どの dir でも使わないことにした。理由も書いている (exit 1・2 で出ない、P3_5 では diagnose 後の R6 にあたる UI 検証を出す、complete では「現在のPhaseを特定できません」を出す)。そのうえで、次 action を、在る成果物と、それを出す generate の段だけから決める。information-priority-map.json は R2 の構成着手前の宣言 (generate SKILL.md:296)、structure.json・structure.md・report-structure.json は R2 の構成、index.html・report.html は R3 の生成物、evaluation-report.json は diagnose 後の R6 である。R4 の提示と R5 の選択は file に残らないので、生成物があれば「file からは判定できない」とする。これは generate の段の定義 (generate SKILL.md:118・154-156。R4 で提示し、R5 で accept-as-is / diagnose を聞く) と一致する。gate の FAIL・WARN 行を次 action と分けて報告することも、検証 (114 行目) と command (31 行目) にそろっている。",
+      "iteration 2 の low (information-priority-map.json だけの dir) は解消した。91 行目が structure.md の無い dir の条件を「information-priority-map.json・structure.json・index.html のどれだけが在っても」に広げ、92 行目が「宣言だけなら R2 の構成が無い」と決めている。見本の ipm-only (P0・exit 0) で、workflow manager の phase と次のステップを使わない場合にあたることを確かめた。",
+      "iteration 2 の notes に書いた範囲外の別件 (commands/slide-report-status.md が「Chromium欠落時は setup-playwright.py --install でプラグイン配下へ復元する」と書いていた件) も解消した。command の 32 行目は、この command からは復元せず、preflight が示す setup-playwright.py --install を、利用者が回す remediation として示す、と書いている。validate-output-mode.py --preflight の今の出力 (ok false、remediation に「setup-playwright.py --install で復元」) とも合い、SKILL.md の 73・117 行目と OUT1 の「自動復元しない」と食い違わない。"
     ],
-    "negative_feedback": [],
-    "iteration": 1,
+    "negative_feedback": [
+      "[low] (C3 不整合) 92 行目のかっこ書き「deck の deploy-guide.md と、決定論経路の structure.md は、R3 が一緒に書く」は、structure.md を R3 が書くのは決定論経路だけ、と読める。実際は、LLM 経路の html-generator も R3 で structure.md を書く (R3-agent-html-generator.md:43 の「同梱ドキュメント2点（structure.md / deploy-guide.md）」、71 行目の Write の一覧)。次 action はどちらでも変わらない (structure.md だけなら「R3 の生成物が無い」、index.html があれば「file からは判定できない」)。直し方は、かっこ書きを「deck の structure.md と deploy-guide.md は、R3 も一緒に書く (deploy-guide.md は LLM 経路だけ)」のようにする。",
+      "[low] (C2 漏れ) 92 行目の成果物の表には、R1 が file に残す唯一の成果物が無い。全面 AI 画像化のときだけ、R1 が project-local の vendor/assets/generated/style-genome.json を写す。この file だけがある dir は「generate の成果物が無い」と報告される。ヒアリングの結果そのものは file に残らないので、次 action は実際にも「R1 から」で変わらない。ただし、在る file を表が拾わず、成果物の一覧 (欠落 artifact の報告) から落ちる。直し方は、表に「vendor/assets/generated/style-genome.json は R1 の全面 AI 画像化の宣言 (次 action は変わらない)」を足す。",
+      "[low] (C2 漏れ) ゴールシーク実行 (73 行目) の「read-only の検査」は、何に対して read-only かを書いていない。68 行目と IN1 の約束は「対象 project」に書かないことで、この skill はその外に 2 つ書く。1 つは goal-seek の progress と intermediate (${CLAUDE_PROJECT_DIR}/eval-log/、97-99 行目) で、本文に書いてある。もう 1 つは P2→P3 の gate が os.tmpdir() に作って消す phasegate-*/vs.json で、本文に書いていない。どちらも対象 dir の外なので、約束は破れていない。直し方は、82 行目の「P2_5 と P3 の gate は対象 dir を読むだけである」の後に、「P2→P3 の gate は validate-structure.js の report を OS の一時 dir に書き、読んだ後に消す」を足し、73 行目を「対象 project には read-only の検査」にする。",
+      "[smell] 自動判定の P3 (structure.md と .approved があり、index.html が無い) では、P3→P3_5 の gate は index.html・styles.css・scripts.js の有無を見るので、必ず FAIL・exit 1 になる (見本の p3)。この FAIL 行は、92 行目の次 action (「R3 の生成物が無い」) と同じことを言うだけで、新しい情報が無い。害は無い (読むだけで、exit code はそのまま報告する)。--check を P3 で回す意味があるのは、.workflow-state.json で P3 と書かれ、生成物がある dir だけである。直すなら、82 行目に「自動判定の P3 では、gate は生成物の欠落を FAIL として出すだけである」と書き添える。"
+    ],
+    "iteration": 3,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "Focused combined incremental content review. 30思考法は実施しておらず、実施とも申告しない。現SKILL全文、git diff、feedback_contract、runtime profile、実行コマンド、参照先を読んだ。inline/inline は短いread-only status診断に適合し、Task/Agentの宣言・実経路は0件。`lint-skill-runtime-profiles.py --plugin slide-report-generator` と対象 `lint-goal-seek.py` は finding/warning 0、`pytest plugins/slide-report-generator/tests` は361 passed/7 skipped。未解決medium/highは0。PASSは現在bytesの静的設計adequacyを表し、個別OUT1 live behaviorの新規実走を主張しない。"
+  "notes": "iteration 3 (上限) の再評価。builder とは別の context で、全体を再レビューした。節の変更が多いので、content-review-protocol.md の改善後の再レビューの 4 番 (全体) にあたる。30思考法は使っていない。残った指摘は low 3 件と smell 1 件で、どれも次 action や read-only の約束を変えないので PASS とした。読んだもの: 今の SKILL.md の全体 (c3155513…)、commands/slide-report-status.md (4b2a9935…。.claude/commands/slide-report-status.md はこの file への symlink)、vendor の workflow-manager.js (main の checkOnly・showNext・verbose の扱い、PHASES、detectPhase、validatePhase)・phase-gate.js (71-83・198・310 行目)・validate-structure.js (書き込みは options.report だけ)・verify-slides.js、run-slide-report-generate の SKILL.md (118・143・154-156・193・296 行目)・R3-agent-html-generator.md (43・71・84 行目)・R1-orchestrate.md (120・133 行目)、validate-output-mode.py --preflight の出力。lead の問いへの判断: P2→P3 の gate が os.tmpdir() に一時 dir を作って消すことは、read-only の約束の違反にしない。約束の範囲は、Key Rules (68 行目)・IN1・Gotchas (122 行目) のどれでも「対象 project」で、一時 dir はその外にあり、正常な経路では必ず消える。goal-seek も ${CLAUDE_PROJECT_DIR}/eval-log に書くので、この skill は始めから「対象 project には書かない」という約束である。ただし 73 行目の書き方は範囲を書いていないので、negative_feedback 3 に low として書いた。見本の dir は /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/cr/srs-probe-it3/ の下にある (7 つの見本、tmp/、各 dir の .verbose.out・.check.out・.before・.after)。この skill の判定とは別の件 (範囲外): run-slide-report-generate の SKILL.md:193 と prompts/R1-orchestrate.md:120・133 が、まだ状態確認に workflow-manager.js <out-dir> --check --next を勧めている。決定論経路の deck (P3_5) にこれを当てると、verify-slides.js が <out-dir>/screenshots/ に書く。この skill が iteration 3 で避けた書き込みが、generate の側に残っている。artifact-delivery-v1 の共通の節の置き方 (bash の手順が Post-choice の下の節にある) は全 skill に共通の型なので、この skill の指摘にしていない。sha_rebinds は書いていない。",
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "workflow manager の出力の読み替え"
+      ]
+    },
+    "elegance:2": {
+      "sections": [
+        "workflow manager の出力の読み替え"
+      ]
+    },
+    "elegance:3": {
+      "sections": [
+        "ゴールシーク実行"
+      ]
+    },
+    "elegance:4": {
+      "sections": [
+        "ゴールシーク実行"
+      ]
+    }
+  }
 }

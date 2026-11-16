@@ -1,0 +1,148 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-node",
+  "args": "add --repo-root /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/node/fx --input /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/node/fx/mixed-artifacts.json",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "c5921474c08aa66ae5c25439de05bbd5322f141ac9adfb968355b1e5c945eb02",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "fresh-evaluator-node-r44-20261115"
+    },
+    "transcript_sha256": "1cb641fffc28eeeba0da350d31dbc3b852c4b264c2b50afb757daf5ca450b554",
+    "evidence_refs": [
+      "transcript.jsonl",
+      "task.md",
+      "out/status.json",
+      "evidence/add-receipt.json",
+      "evidence/update-receipt.json",
+      "evidence/feature-reject.json",
+      "evidence/graph.json",
+      "evidence/issue.md",
+      "evidence/goal-spec.json",
+      "evidence/progress.json",
+      "evidence/intermediate.jsonl",
+      "poll-state.json",
+      "boot-ready.txt"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-node"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "e52ec0f8609f987d97379bc331881dada5ecd87bcf60d698d09c69c98c070ede",
+  "transcript_sha256": "1cb641fffc28eeeba0da350d31dbc3b852c4b264c2b50afb757daf5ca450b554",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": "2.1.325",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 255.41895031929016
+  },
+  "scenario_id": "C02-OUT1-positive-mixed-artifacts-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C02-OUT1-positive-mixed-artifacts-r2",
+    "required_observations": [
+      "all five artifacts are routed to canonical kind paths",
+      "frontmatter kind and stored path agree after a consecutive update",
+      "no feature is created outside the C14 macro-feature contract"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "all five artifacts are routed to canonical kind paths",
+        "evidence_ref": "evidence/graph.json"
+      },
+      {
+        "index": 2,
+        "observation": "frontmatter kind and stored path agree after a consecutive update",
+        "evidence_ref": "evidence/issue.md"
+      },
+      {
+        "index": 3,
+        "observation": "no feature is created outside the C14 macro-feature contract",
+        "evidence_ref": "evidence/intermediate.jsonl"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "add --repo-root <contained-fixture-repo> --input <contained-fixture-repo>/mixed-artifacts.json",
+      "template_flags": [
+        "--input",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--input",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 5000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 255.41895031929016,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "62dc1255b4e1979a86f530a0052a5ec93c9d1dc396f9a341e94e81de5c89389c",
+      "tokens": {
+        "input_tokens": 66,
+        "cache_creation_input_tokens": 142014,
+        "cache_read_input_tokens": 2907409,
+        "output_tokens": 17376,
+        "total_tokens": 3066865,
+        "assistant_messages": 30,
+        "assistant_message_ids": 30,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 1,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

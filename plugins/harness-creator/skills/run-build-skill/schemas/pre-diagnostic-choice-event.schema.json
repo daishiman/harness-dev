@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://harness/run-build-skill/schemas/pre-diagnostic-choice-event.schema.json",
   "title": "Pre-diagnostic User Choice Event",
-  "description": "artifact提示後、semantic evaluator起動前に利用者がaccept-as-isまたは診断深度を選ぶevent。",
+  "description": "artifact提示後、semantic evaluator起動前に利用者がaccept-as-isかdiagnoseかを選ぶevent。改善の深さはこのeventでは選ばず、診断所見の提示後にimprovement-user-eventで選ぶ。",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -23,7 +23,7 @@
     "target_manifest_sha256": {"$ref": "#/definitions/sha256"},
     "contract_binding_sha256": {"$ref": "#/definitions/sha256"},
     "presentation_receipt_sha256": {"$ref": "#/definitions/sha256"},
-    "selected_level": {"type": "string", "enum": ["accept-as-is", "light", "standard", "detailed"]},
+    "selected_level": {"type": "string", "enum": ["accept-as-is", "diagnose"]},
     "occurred_at": {"type": "string", "format": "date-time"}
   },
   "definitions": {

@@ -1,12 +1,12 @@
 # 生成後評価サブシステム（正本）
 
-> 実artifactの提示後、**利用者選択後のみ**、`light / standard / detailed` が選ばれた場合に「成果物が仕様通り・要望通り・エレガントか」を多角的に評価する仕組みの SSoT。
+> 実artifactの提示後、**利用者選択後のみ**、`diagnose` が選ばれた場合に「成果物が仕様通り・要望通り・エレガントか」を多角的に評価する仕組みの SSoT。
 > 機械評価 `vendor/scripts/evaluate-deck.js` ＋ LLM評価 `agents/deck-evaluator.md`（思考リセット後30種思考法）で構成する。`hooks/hook-postgen-eval.py` は評価系の一部ではなく、最小guard・提示・選択を促すfail-soft advisoryである。
 
 ## 1. 全体像
 
 ```
-プレゼン生成（P3/P3-determ で index.html 等を出力）
+プレゼン生成（R3 の LLM 経路 / 決定論経路で index.html 等を出力）
         │
         ▼  PostToolUse フック（Write|Edit|MultiEdit が中核ファイルを書いた時）
   hook-postgen-eval.py
@@ -14,15 +14,18 @@
         ▼
   artifact path/open方法を提示 → 利用者choice
         ├─ accept-as-is → evaluator 0 / improver 0 でhandoff完了
-        └─ light / standard / detailed
+        └─ diagnose → R6 へ (下の評価に進む)
         ▼
   evaluate-deck.js（slide 機械評価の正本）
         │  Dx(動作可能性)・D1〜D4 を機械判定 → evaluation-report.json / .md を出力
         ▼
   deck-evaluator.md（30種思考法のLLM評価）
-        │  D5(要望↔構成)＋視覚的多角評価＋4条件最終判定 → 改善指示
+        │  D5(要望↔構成)＋視覚的多角評価＋4条件最終判定 → 指摘一覧
         ▼
-  改善（slide-modifier / 直接Edit）→ evaluate-deck.js 再実行（最大3周）
+  指摘を提示 → 改善の深さを 1 回だけ聞く
+        │  findings-only 0周 / light 1周 / standard 2周 (既定) / detailed 3周。正本は workflow-manifest の R6 depth_choice
+        ▼
+  改善（主 skill が宛先ごとに振り分ける: レイアウト崩れは layout-optimizer、それ以外の slide HTML/CSS は R3 の生成担当、report は report-composer）→ evaluate-deck.js 再実行（選んだ深さの周回数まで・最大3周。周回数は R6 の reviewer 全体で 1 つを共有し、途中で利用者に聞かない）
 ```
 
 - **機械(evaluate-deck.js)**: 再現性のある判定（崩れ・ナビ・仕様適合）。chromium非依存の静的検証が中核。
@@ -38,8 +41,8 @@
 | `vendor/scripts/sync-checker.js` | structure.md⇔HTML 同期 | evaluate-deck.js が D4 で呼出・集約 |
 | `vendor/scripts/validate-structure.js` | 構造仕様 V_DEFINITIONS 全件 | evaluate-deck.js が D4 で集約（structure.json がある時のみ） |
 | `vendor/scripts/check-consistency.js` | 色/フォント統一 | 任意で併用（deck-evaluator 視覚評価の補助） |
-| `agents/ui-quality-reviewer.md` | S1〜S26 UIレビュー(Phase 3.5) | deck-evaluator の視覚チェックリスト参照元。**置換せず上位ゲート** |
-| `agents/cross-deck-reviewer.md` | シリーズ横断(Phase 5) | 単一デッキ評価は本サブシステム、横断はP5 と役割分担 |
+| `agents/ui-quality-reviewer.md` | S1〜S26 UIレビュー(R6 の ①・所見を主 skill へ返す) | deck-evaluator の視覚チェックリスト参照元。**置換せず上位ゲート** |
+| `agents/cross-deck-reviewer.md` | シリーズ横断(run-cross-deck-review) | 単一デッキ評価は本サブシステム、横断は run-cross-deck-review と役割分担 |
 
 **根本原因（why5回）**: 評価基準が verify-slides / ui-quality-reviewer / sync-checker / validate-structure に散在し、それらを束ねる単一の選択後ゲートが無かった。本サブシステムは「既存の統合 ＋ 利用者選択後だけの起動 ＋ 要望適合(D5)の追加」であり、新規の重複チェックや提示前の評価を増やすものではない。
 
@@ -100,7 +103,7 @@ deck-evaluator は下表の30種すべてを必ず適用し、評価レポート
 | 発想拡張 | 素人思考 | D1/D3 | 専門知識なしでも崩れ・迷子に気づくか |
 | システム | システム思考 | D1↔D2↔D3 | font小→はみ出し→ナビ被りの連鎖 |
 | システム | 因果関係分析 | D1 | 崩れの原因と結果の連鎖 |
-| システム | 因果ループ | 改善 | 改善→再評価ループの暴走防止(最大3周) |
+| システム | 因果ループ | 改善 | 改善→再評価ループの暴走防止(R6 で選んだ深さの周回数まで・最大 3 周・R6 全体で 1 つを共有。drift_signal が stagnant/widening/oscillating の周で止める) |
 | 戦略価値 | トレードオン思考 | フック | 即時静的＋遅延完全の両立 |
 | 戦略価値 | プラスサム思考 | D5 | デッキ全体の伝達価値最大化 |
 | 戦略価値 | 価値提案思考 | D5 | 崩れ/不足が価値を毀損しないか |
@@ -130,7 +133,7 @@ deck-evaluator は下表の30種すべてを必ず適用し、評価レポート
 # 機械評価（完全：chromium があれば動的検証も実行）
 node vendor/scripts/evaluate-deck.js "05_Project/スライド/slide-XXXX/"
 
-# 利用者が改善レベルを選択した後の高速静的評価
+# diagnose 選択後の評価や改善後の再評価を速く回すときの静的評価
 node vendor/scripts/evaluate-deck.js "05_Project/スライド/slide-XXXX/" --static-only
 
 # JSON出力 / 厳格(WARNも失敗) / レポート先指定
@@ -151,7 +154,7 @@ PostToolUse（matcher: `Write|Edit|MultiEdit`）に登録する。フックは d
 （`index.html` / `styles.css` / `scripts.js` / `structure.md` / `structure.json`）書込時に発火し、
 最小guard結果と現物提示・利用者選択のadvisoryだけを返す。それ以外は無音（通常編集を妨げない）。
 `index.deploy.html` / `index-single.html` は除外する。フック内の子プロセス実行数は0であり、
-`evaluate-deck.js` と `deck-evaluator` は `light / standard / detailed` 選択後のworkflowが起動する。
+`evaluate-deck.js` と `deck-evaluator` は `diagnose` 選択後のworkflowが起動する。
 
 ```json
 {
@@ -171,5 +174,5 @@ PostToolUse（matcher: `Write|Edit|MultiEdit`）に登録する。フックは d
 
 ## 8. 出力先とスコープ
 
-改善レベルが選択された場合だけ、評価レポートを `<deck-dir>/evaluation-report.json` と `.md`（05_Project配下＝変更可）に出力する。
+利用者が R5 で diagnose を選んだ場合だけ、評価レポートを `<deck-dir>/evaluation-report.json` と `.md`（05_Project配下＝変更可）に出力する。
 プラグイン本体のリソース（本reference・agent・script・schema）は `$CLAUDE_PLUGIN_ROOT` 配下に置く。

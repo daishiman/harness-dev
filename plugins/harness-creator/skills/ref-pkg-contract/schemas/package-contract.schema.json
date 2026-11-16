@@ -102,6 +102,52 @@
       },
       "uniqueItems": true
     },
+    "repo_refs": {
+      "description": "SKILL.md が名指しする、repo の clone の中にだけある資産 (設計書や、循環になるので depends_on に入れられない兄弟 plugin)。install した plugin には入らない。skill-governance-lint の lint-external-refs.py (PKG-009) が参照ごとに repo の中での実在を確かめ、使われていない宣言は contract error にする。形の規則の正本は lint の parse_repo_refs で、この schema はそれを写す (tests/test_package_contract_schema.py が同じ case で両者の判定を突き合わせる)。repo 相対 path とは、`/` と `~` で始まらず、`\\` と `:` を含まず、末尾の `/` を除いた各 segment が空・`.`・`..` でないもの (下の pattern の segment 部分はどれも `(?!\\.\\.?(?:/|$))[^/\\\\:]+`)。(ref, match) の重複は lint だけが拒む。",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["ref", "match", "reason"],
+        "properties": {
+          "ref": {
+            "description": "SKILL.md に書かれたままの参照。`../` で始まるもの (target が要る) か、repo 相対 path。match=prefix なら、この文字列で始まる参照すべて。prefix は `/` で終わる 2 段以上 (`doc/design/` など) に限る (`doc/` のような 1 段は root の下をまとめて通すので粒度として粗すぎる)。",
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?:\\.\\./|(?![/~])(?:(?!\\.\\.?(?:/|$))[^/\\\\:]+/)*(?!\\.\\.?(?:/|$))[^/\\\\:]+/*$)"
+          },
+          "match": {
+            "enum": ["exact", "prefix"]
+          },
+          "target": {
+            "description": "match=exact のときだけ書ける、実在を確かめる repo 相対 path。章番号だけの引用や、移した先がある旧 path に使う。`../` で始まる ref では必須 (起点が読み手で変わるため)。",
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?![/~])(?:(?!\\.\\.?(?:/|$))[^/\\\\:]+/)*(?!\\.\\.?(?:/|$))[^/\\\\:]+/*$"
+          },
+          "reason": {
+            "description": "空白だけの文字列は理由にならない (lint は strip して空なら拒む)。",
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          }
+        },
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "if": {"required": ["target"]},
+            "then": {"properties": {"match": {"const": "exact"}}}
+          },
+          {
+            "if": {"properties": {"ref": {"pattern": "^\\.\\./"}}},
+            "then": {"required": ["target"]}
+          },
+          {
+            "if": {"required": ["match"], "properties": {"match": {"const": "prefix"}}},
+            "then": {"properties": {"ref": {"pattern": "^(?![/~])(?:(?!\\.\\.?(?:/|$))[^/\\\\:]+/)+(?!\\.\\.?(?:/|$))[^/\\\\:]+/+$"}}}
+          }
+        ]
+      }
+    },
     "runtime_dependencies": {
       "description": "Plugin-local capability that is owned elsewhere or needs another installed plugin at runtime. owned-vendored records copied bytes without pretending the package is standalone.",
       "type": "array",

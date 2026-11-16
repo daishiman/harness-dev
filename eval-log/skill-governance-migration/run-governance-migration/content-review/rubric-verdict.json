@@ -2,7 +2,8 @@
   "target": {
     "plugin": "skill-governance-migration",
     "skill": "run-governance-migration",
-    "skill_md_sha256": "ed03757cafd2db805275cf92cc71fffc030da5c3fc81513b6c848f2578771bd0"
+    "skill_md_sha256": "3ef427a264c3fc0d7d2bba99e983735ff5419fe330b8b22d04d13032c6678168",
+    "reviewed_skill_md_sha256": "ed03757cafd2db805275cf92cc71fffc030da5c3fc81513b6c848f2578771bd0"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -36,5 +37,21 @@
     "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "rubric 1.6.0 の rule と照合した。今回の差分（`git diff 03050251`）は allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけで、本文は変わっていない。rubric 1.6.0 の high 規則（FM-001・NM-001・BD-001・BD-003、KL-001 は対象外）はすべて合格。BD-002（Gotchas 見出しの欠如、medium）は既存・差分外のため notes に記すだけで件数に入れていない。plugins/<plugin>/commands/ からこのスキルを呼ぶ command は無い。迷った例: 本文のコマンドは `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` の形で先頭は python3 だが、`${...}` の展開を含むコマンドが `Bash(python3 *)` の prefix 許可でそのまま通るかはホストの実装に依存するため、FAIL にせず記録する。backup・digest の手段の不足は low の smell として扱った。incremental の focused review で、exhaustive の30思考法は実施していない。"
+  "notes": "rubric 1.6.0 の rule と照合した。今回の差分（`git diff 03050251`）は allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけで、本文は変わっていない。rubric 1.6.0 の high 規則（FM-001・NM-001・BD-001・BD-003、KL-001 は対象外）はすべて合格。BD-002（Gotchas 見出しの欠如、medium）は既存・差分外のため notes に記すだけで件数に入れていない。plugins/<plugin>/commands/ からこのスキルを呼ぶ command は無い。迷った例: 本文のコマンドは `python3 \"${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/...\"` の形で先頭は python3 だが、`${...}` の展開を含むコマンドが `Bash(python3 *)` の prefix 許可でそのまま通るかはホストの実装に依存するため、FAIL にせず記録する。backup・digest の手段の不足は low の smell として扱った。incremental の focused review で、exhaustive の30思考法は実施していない。",
+  "sha_rebinds": [
+    {
+      "from_sha": "ed03757cafd2db805275cf92cc71fffc030da5c3fc81513b6c848f2578771bd0",
+      "to_sha": "a5831e2b00826a4b2e2dcdc88a49cec82e8ff44deae999442763f3de0f553209",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:48Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "a5831e2b00826a4b2e2dcdc88a49cec82e8ff44deae999442763f3de0f553209",
+      "to_sha": "3ef427a264c3fc0d7d2bba99e983735ff5419fe330b8b22d04d13032c6678168",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:57Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

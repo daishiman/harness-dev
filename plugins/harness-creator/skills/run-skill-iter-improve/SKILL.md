@@ -26,6 +26,7 @@ goal_seek:
   progress: eval-log/{{plugin}}/{{skill}}/iter-improve/{{run_id}}/progress.json
   intermediate: eval-log/{{plugin}}/{{skill}}/iter-improve/{{run_id}}/intermediate.jsonl
   fork: agent-team
+  max_loops: 41
 owner: team-platform
 since: 2026-07-02
 version: 0.1.0
@@ -38,10 +39,10 @@ schema_refs:
   - schemas/interrogation-log.schema.json
   - ../run-goal-elicit/schemas/goal-spec.schema.json
 script_refs:
-  - scripts/extract-ready-set-from-checklist.py
-  - scripts/build-self-reflection-entry.py
-  - scripts/extract-capability-dependency-graph.py
-  - scripts/build-capability-graph-knowledge-entry.py
+  - ../run-build-skill/templates/task-graph-engine/scripts/extract-ready-set-from-checklist.py
+  - ../run-build-skill/templates/task-graph-engine/scripts/build-self-reflection-entry.py
+  - ../run-build-skill/templates/task-graph-engine/scripts/extract-capability-dependency-graph.py
+  - ../run-build-skill/templates/task-graph-engine/scripts/build-capability-graph-knowledge-entry.py
   - ../run-build-skill/scripts/plan-verification-obligations.py
   - ../run-build-skill/scripts/record-verification-evidence.py
   - ../run-skill-live-trial/scripts/plan-live-trials.py
@@ -54,8 +55,8 @@ reference_refs:
   - ../run-build-skill/references/feedback-loop-deployment.md
   - ../../references/orchestrate-gate-pattern.md
 completeness_exempt:
-  - "prompts: ゴールシーク形 orchestrator。手順は局面カタログから都度選択し、fan-out agent prompt 核は fresh-context 前提宣言が本体のため本文に 1 個だけ持つ。prompt-creator の R-id 単位 7 層プロンプトは適用外 (run-goal-seek と同型の skip)。"
-  - "manifest: 局面はゴールシークループで都度選択するため phase/gate 固定の workflow-manifest は適用外 (run-goal-seek と同型)。"
+  - "prompts: ゴールシーク形 orchestrator。手順は局面カタログの局面を配線節の chain の順に回すもので、fan-out agent prompt 核は fresh-context 前提宣言が本体のため本文に 1 個だけ持つ。prompt-creator の R-id 単位 7 層プロンプトは適用外 (run-goal-seek と同型の skip)。"
+  - "manifest: 局面の順は progress.json の checklist の depends_on (task-graph engine) が持ち、iter の数は GOAL VERIFICATION の結果で決まって self-reflect で追記するため、phase/gate を固定で並べる workflow-manifest に同じ順を二重に書かない。"
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)
   activation_state: semantic_evaluator_started
   max_iterations: 3
@@ -85,36 +86,21 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       text: 審問独立判定 agent と fresh GOAL VERIFICATION agent を同じ iter で起動する場合は別個体かつ履歴非共有で score と改善履歴を渡されずに判定する
       verify_by: evaluator
       derived_from: [CL-4, CL-6]
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/diagnoseを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 
 # run-skill-iter-improve
 
-> **配布注記**: cross-skill refs (`../run-goal-elicit/`, `../run-build-skill/`, `../run-elegant-review/`) は repo-bundled 前提 (単独配布非対応)。本 skill と `run-skill-live-trial` は実行 acceptance 系として**ローカル開発環境限定**であり、量産先 plugin へは配備しない (正本: `../run-build-skill/references/feedback-loop-deployment.md` の配備境界)。CI でも実行しない。
+> **配布注記**: cross-skill refs (`../run-goal-elicit/`, `../run-build-skill/`, `../run-elegant-review/`) は repo-bundled 前提 (単独配布非対応)。本 skill と `run-skill-live-trial` は実行 acceptance 系として**ローカル開発環境限定**であり、量産先 plugin へは配備しない (正本: `../run-build-skill/references/feedback-loop-deployment.md` の「禁止」節にある「live-trial / iter-improve の量産先配備」)。CI でも実行しない。
 
 ## Purpose & Output Contract
 
@@ -145,7 +131,7 @@ eval 帰属反復と一括改善の 2 エンジンは編集エンジン・収束
 
 ## ゴールシーク実行
 
-固定手順は書かず、ゴール+チェックリストへ向け局面を都度選択・反復する。正本: `../run-build-skill/references/goal-seek-paradigm.md`。
+ゴール+チェックリストへ向け、局面カタログの局面を改善 iter ごとに反復する。局面の順は「ゴールシーク配線」節の chain で決まり、各 engine 周回は ready 集合の最小 id の item を 1 つ実行する。正本: `../run-build-skill/references/goal-seek-paradigm.md`。
 
 ### ゴール (Goal)
 
@@ -170,28 +156,45 @@ artifact 単体の改善は LLM 主観評価 ±3-5pt のブレに律速され pl
 
 ### ゴールシークループ
 
-正本 6 ステップ (現状評価→手順生成→実行→検証→Anchor Step→反復) に従い、下記**局面カタログ**から未達チェックリスト項目を埋める局面を都度選ぶ。ループパラメータ (反復上限 / iter あたり投入件数 / 並列 agent 数 / score 閾値) の生値は本文に書かず、`../run-elegant-review/references/convergence-policy.json` の `loop_bounds.iter_improve` (`max_iter` / `batch_per_iter_max` / `parallel_agents_default` / `score_threshold_default`) を唯一の正本とする (二重宣言禁止)。
+正本 6 ステップ (現状評価→手順生成→実行→検証→Anchor Step→反復) に従い、未達チェックリスト項目は下記**局面カタログ**の局面を配線節の chain の順に回して埋める。ループパラメータ (反復上限 / iter あたり投入件数 / 並列 agent 数 / score 閾値) の生値は本文に書かず、`../run-elegant-review/references/convergence-policy.json` の `loop_bounds.iter_improve` (`max_iter` / `batch_per_iter_max` / `parallel_agents_default` / `score_threshold_default`) を唯一の正本とする (二重宣言禁止)。frontmatter の `feedback_contract.max_iterations: 3` は、この skill 自身の content-review を再評価する回数の上限 (convergence-policy の `loop_bounds.content_review_outer_reeval`) で、ここで回す改善 iter の上限ではない。
+
+番号は 2 つあり、混ぜない。
+
+- **改善 iter**: 改善の 1 回分 (配線節の 8 局面) を iter 1 から数える番号。`max_iter` はこの番号の上限。iter 0 は GOAL DECLARATION (ループ前の宣言。goal-spec 側に記録する) だけを指し、改善 iter の数に入れない。`interrogation-log.jsonl` の `iter`、commit message、最終報告の iter はこの番号で書く。
+- **engine 周回**: task-graph engine が `progress.json` の checklist から item を 1 つ消費するたびに 1 進む番号。`progress.json` と `intermediate.jsonl` の `iteration` はこの番号で、`goal-seek-paradigm.md` の規定どおり 0 から始まる (`intermediate.jsonl` の行 i が engine 周回 i)。
+- **対応**: 1 改善 iter は配線節の 8 item で、iter 1 だけ先頭に GOAL DECLARATION の 1 item が付く。item の `text` は `[iter N] <局面名>` で始め、どの改善 iter の item かを示す (checklist item は schema が追加 field を許さないので text で持つ)。id は消費順に C1 (GOAL DECLARATION)、C2〜C9 (iter 1)、C10〜C17 (iter 2) … と振るので、iter N の item は C(8N−6)〜C(8N+1)、その GOAL VERIFICATION は C(8N+1) になる。chain は一直線なので、item Ck を消費する engine 周回は `iteration = k − 1` である。
+- **上限**: frontmatter の `goal_seek.max_loops` は engine 周回の上限で、`1 + 8 × max_iter` とする。self-reflect で追記する iter 2 以降の chain はこの式に入っているので、別の余裕は足さない。`progress.json` の `max_loops` にも同じ値を書く。`max_iter` か 1 iter の局面数を変えたら同じ式で直す (`tests/test_iter_improve_contract.py` が一致を検査する)。
+
+伸びない iter の扱いはここで決め、他の局面はここを参照する。変化量は GOAL VERIFICATION の残 blocker の数で測る (score の差分は診断信号で、停止にも継続にも使わない。INVARIANT 3)。前 iter より残 blocker が減らない iter が 2 回続いたら、次の 1 iter だけ、未解決 obligation の範囲内で eval prompt を variant 化 (model swap / persona / source 深度) して回す。variant 化した iter でも減らなければ `INCOMPLETE` で停止する。variant 化は 1 run で 1 回まで。`max_iter` に届いたらこの規則より先に停止する。diagnose 局面 3 の rubric bug 判定 (同一弱点が 3 iter 連続) は、variant 化した iter の diagnose で判定できる。
+
+停止と `progress.json` の `status` もここで決める。GOAL VERIFICATION が PASS なら `completed` で停止する。次の (a)〜(d) のどれかに当たったら `INCOMPLETE` として `handed_off` で停止し、残 blocker を `open_issues` に書く: (a) `max_iter` に届いた / (b) 上の規則で variant 化した iter でも残 blocker が減らない / (c) 残 blocker が改善できない (GOAL VERIFICATION 局面) / (d) 局面の途中で先へ進めない (「独立判定と審問ログの確定」局面で前 iter の commit を戻せない、`build-self-reflection-entry.py` が exit 1 を返した、`wrap-git-commit-safe` が `committed` 以外を返した)。
 
 ### ゴールシーク配線（task-graph 変種）
 
-`semantic_evaluator_started` 後、iter 0 は `GOAL DECLARATION → proof plan → unresolved eval → 集計+審問 → edit → 独立判定 → commit → GOAL VERIFICATION`、後続 iter は GOAL DECLARATION を再生成せず `proof plan` から始める checklist として同 run dir の `progress.json` へ保持する。実際の進行は `depends_on` が全て done の item に限定し、別状態は作らない。
+`semantic_evaluator_started` 後、iter 0 の `GOAL DECLARATION` を済ませてから、iter 1 を `proof plan → unresolved eval → 集計 → diagnose+審問 → edit → 独立判定と審問ログの確定 → commit → GOAL VERIFICATION` の順で回す。iter 2 以降は GOAL DECLARATION を再生成せず `proof plan` から始める。これらを 1 局面 1 item の checklist として同 run dir の `progress.json` へ保持する (番号と上限はゴールシークループ節)。実際の進行は `depends_on` が全て done の item に限定し、別状態は作らない。
 
-- 各周回冒頭で `scripts/extract-ready-set-from-checklist.py <run-dir>/progress.json` を実行し、ready 集合の最小 id だけを選ぶ。unresolved eval item は tier を保ち、`live` は `run-skill-live-trial` の `live_batches`、`fork` は Agent Team、`static` は決定論 check へ送る。fork は未解決 obligation 数と N の小さい方だけを並列実行し、個別 run dir のみを write scope として全結果の fan-in 後に done にする。reuse だけなら Agent 0 体で evidence path を記録して done にする。edit / commit は単一 writer で直列実行する。
-- GOAL VERIFICATION FAIL かつ正本の max_iter 未満の場合だけ、`scripts/build-self-reflection-entry.py` で次 iter chain を直前 verification 依存の sink として追記する。独立判定不要時も「発火条件非該当」証跡を残して done にし、依存を飛ばさない。追記 item を全て done にするまで self-reflect 完了 gate を閉じる。
-- `<run-dir>/intermediate.jsonl` の各周回に `ready_set` / `selected_item` / `original_goal` / `merged_directive_for_next` と obligation の `fingerprint` / `action` / `evidence_path` を追記する。`selected_item` は `ready_set` 最小 id、その依存は過去に全て done であることを検証し、トレース不在を依存順消費や proof 再利用の成功に畳まない。
-- アンカー検証は `required_keys` と `original_goal_hash` を読み、`hashlib.sha256` で不変性を確認する。着手前に `scripts/extract-capability-dependency-graph.py` を実行し、再利用価値のある依存判断だけを `scripts/build-capability-graph-knowledge-entry.py` で dependency graph knowledge へ記録する。
+engine の 4 script は同じ plugin の正本 `../run-build-skill/templates/task-graph-engine/scripts/` を skill 相対で呼び、この skill の `scripts/` に写しを置かない。
+
+- 各 engine 周回の冒頭で `../run-build-skill/templates/task-graph-engine/scripts/extract-ready-set-from-checklist.py <run-dir>/progress.json` を実行し、ready 集合の最小 id だけを選ぶ。停止した後は次の engine 周回を始めず、`ready` が空で返ったとき (追記が無く全 item が done) も、`intermediate.jsonl` へ行を書かずに終える (item を消費しない行を足すと、`max_iter` まで回った run では engine 周回の数が `max_loops` を超える)。unresolved eval item は tier を保ち、`live` は `run-skill-live-trial` の `live_batches`、`fork` は Agent Team、`static` は決定論 check へ送る。fork は未解決 obligation 数と N の小さい方だけを並列実行し、個別 run dir のみを write scope として全結果の fan-in 後に done にする。reuse だけなら Agent 0 体で evidence path を記録して done にする。edit / commit は単一 writer で直列実行する。
+- GOAL VERIFICATION FAIL で、ゴールシークループ節の停止 (a)〜(d) のどれにも当たらない場合だけ、`../run-build-skill/templates/task-graph-engine/scripts/build-self-reflection-entry.py` で次 iter の 8 item を `[iter N+1]` の text と続きの id で 1 item ずつ追記する (先頭は直前の GOAL VERIFICATION に、2 つ目以降は 1 つ前に追記した item に依存させる)。独立判定不要時は「発火条件非該当」、破棄して commit するものが無い iter は「commit なし」の証跡を残して done にし、依存を飛ばさない。追記 item を全て done にするまで self-reflect 完了 gate を閉じる。
+- `<run-dir>/intermediate.jsonl` の各 engine 周回に `ready_set` / `selected_item` / `original_goal` / `merged_directive_for_next` と obligation の `fingerprint` / `action` / `evidence_path` を追記する。`selected_item` は `ready_set` 最小 id、その依存は過去に全て done であることを検証し、トレース不在を依存順消費や proof 再利用の成功に畳まない。
+- アンカー検証は `required_keys` と `original_goal_hash` を読み、`hashlib.sha256` で不変性を確認する。着手前に `../run-build-skill/templates/task-graph-engine/scripts/extract-capability-dependency-graph.py` を実行し、再利用価値のある依存判断だけを `../run-build-skill/templates/task-graph-engine/scripts/build-capability-graph-knowledge-entry.py` で dependency graph knowledge へ記録する。
+- 3 本の入力と失敗時の扱い (exit 0=OK / 1=fail-closed / 2=usage・IO error は 3 本共通):
+  - `build-self-reflection-entry.py <run-dir>/progress.json --id <C+数字> --text <二値判定できる達成条件文> --depends-on <chain の先頭は直前の GOAL VERIFICATION item、2 つ目以降は 1 つ前に追記した item の id>`。exit 1 (id の形の誤り・重複・未知の依存・循環) なら追記せずに止め、原因を `open_issues` に残す。
+  - `extract-capability-dependency-graph.py <target の plugin root>` (target skill の dir ではなく、それを含む plugin root)。出力の gaps は plugin 全体のものなので、`from` が target skill の dir 配下の node (`skill:<skill>` とその dir の script など) の gaps だけを拾う。exit 1 (空 graph・循環・未知参照) のときも、拾った gaps 以外は依存の判断材料にしない。拾った gaps は diagnose の入力にするだけで、GOAL VERIFICATION の残 blocker の数には数えない (残 blocker は GOAL VERIFICATION が返したものだけ)。
+  - `build-capability-graph-knowledge-entry.py <前項の graph JSON> --target-knowledge-dir <target plugin の knowledge/>`。exit 1 なら knowledge へは記録せず、改善 iter は止めない (記録は再利用のための任意の副産物)。
 
 ## 8 INVARIANTS (破ったら即停止・巻き戻し)
 
 | # | 不変条件 | 実体 |
 |---|---|---|
 | 1 | PASS 詐欺禁止 | 本文 (下記) |
-| 2 | context 汚染回避 | 正本: `goal-seek-paradigm.md`「コンテキスト分離」節。改善の正否は改善履歴を知らない fresh-context agent にのみ判定させ、orchestrator の「良くなった」体感を証拠にしない |
+| 2 | context 汚染回避 | 正本: `goal-seek-paradigm.md`「達成判定 (GOAL VERIFICATION)」節 (fresh agent 1 体が改善履歴・score を共有せずに判定する)。fork の選び方は同文書「コンテキスト配置（必要性で選択）」節。改善の正否は改善履歴を知らない fresh-context agent にのみ判定させ、orchestrator の「良くなった」体感を証拠にしない |
 | 3 | goal ≠ proxy | 正本: `goal-seek-paradigm.md`「達成判定 (GOAL VERIFICATION)」節。goal アンカー正本は `goal-spec.json.goal` / `original_goal` 単一系、`--goal` は正規化書込/読取エイリアス (二重宣言禁止) |
 | 4 | 構造改善 > 対症療法 | 本文 (下記) |
 | 5 | 1 iter 少数件 | 本文 (下記) |
 | 6 | eval-driven commit | 正本: `run-elegant-review`「副作用境界 / ロールバック (B7)」+ `wrap-git-commit-safe`。commit は eval data 取得後のみ、speculative な先回りは regression の温床 |
-| 7 | 自己適用安全 | 正本: `scripts/feedback_contract_ssot.py` の `requires_subject_copy` 述語。エンジン閉包 (`ENGINE_SKILLS`) と交差する時のみ被験体を scratch copy して編集し、通常 skill は直接編集を維持 |
+| 7 | 自己適用安全 | 正本: repo root の `scripts/feedback_contract_ssot.py` (この skill の `scripts/` ではない) の `requires_subject_copy` 述語。エンジン閉包 (`ENGINE_SKILLS`) と交差する時のみ被験体を scratch copy して編集し、通常 skill は直接編集を維持 |
 | 8 | 評価縮退禁止 | 本文 (下記) |
 
 2 / 3 / 6 / 7 は正本の**再実装禁止** — 本表の 1 行相互参照のみを持つ。
@@ -202,7 +205,7 @@ score を上げる手段に「evaluator を緩める / 採点 mode を易しく�
 
 1. **iter 0 で緩め禁止リスト宣言** — `references/goal-declaration.md` の手順で goal-spec の `forbidden_loosening[]` へ格納する。一般形は convergence-policy の `anti_patterns` が正本 (target 固有の具体形のみ宣言、再掲禁止)
 2. **毎 iter 自己審問** — 改善案ごとに「generator を良くするか / 評価を緩めるか」を Yes/No + 根拠で `interrogation-log.jsonl` に記録する (schema 準拠。**保存は必須成果物** — 記録の無い iter は INVARIANT 1 違反とみなす)
-3. **score 急変は別個体独立判定** — 急変閾値と発火条件 (評価経路接触を含む) は `schemas/interrogation-log.schema.json` の allOf が機械正本。独立判定が「緩め (loosening)」なら自己審問より外部判定を優先して破棄する
+3. **score 急変・評価経路接触は別個体独立判定** — 急変閾値と発火条件は `schemas/interrogation-log.schema.json` の allOf が機械正本。判定させる diff と戻すものは発火条件で違い、score 急変では急変を起こした前 iter の commit を判定して、1 本でも緩めなら前 iter の commit を全部 revert する (正本は局面「独立判定と審問ログの確定」)。独立判定が「緩め (loosening)」なら自己審問より外部判定を優先して破棄する
 
 ### INVARIANT 4: 構造改善 > 対症療法
 
@@ -220,7 +223,7 @@ score を上げる手段に「evaluator を緩める / 採点 mode を易しく�
 - **自己適用時も縮退禁止**: 二重メタが重い場合は被験体を軽量 target で 1-fold だけ実走してよいが、**対照群 (エンジン版に同一シナリオを実走) 必須**。INVARIANT 発火の有無は行動差分でのみ客観判定でき、対照無し単発実走の自己申告は違反
 - 軽量実走の合否も orchestrator が自己判定せず、GOAL VERIFICATION 契約 (独立 fresh agent + PASS|FAIL + blocker 列挙) で独立判定する
 
-## 局面カタログ (順序固定でない。未達項目を埋める局面を都度選ぶ)
+## 局面カタログ (順は配線節の chain で決まる)
 
 ### 局面: GOAL DECLARATION (iter 0、必須経由)
 
@@ -273,7 +276,7 @@ target skill のファイル編集は絶対禁止 (改善は呼び元の責務)�
 報告: overall_score / breakdown / 弱点 top3 / goal 達成度 (score と別立て)。
 ```
 
-plateau が 2 iter 続いたら、未解決 obligation の範囲内で prompt を model swap / persona / source 深度に variant 化して再 iter する。current PASS の sibling claim を variant 数合わせのため再実走しない。
+variant 化する iter (ゴールシークループ節の「伸びない iter の扱い」で決まる) だけ、未解決 obligation の範囲内で prompt を model swap / persona / source 深度に variant 化する。current PASS の sibling claim を variant 数合わせのため再実走しない。
 
 ### 局面: 集計 (file polling)
 
@@ -284,27 +287,52 @@ plateau が 2 iter 続いたら、未解決 obligation の範囲内で prompt �
 1. current receipt と今回の runs に共通する弱点を `batch_per_iter_max` 件以下に絞る
 2. 構造改善判定 (INVARIANT 4): 1 入力固有か / 複数 sample 再現か
 3. rubric 起因の疑い: 同一弱点が 3 iter 連続 + 直接修正で +0pt なら rubric bug を 8 割疑い、target を当該 evaluator skill に切替
-4. **PASS 詐欺自己審問 + 緩め禁止リスト照合** → `interrogation-log.jsonl` へ 1 行 append (schema 必須)。独立判定の発火条件該当時は**別個体 fresh agent** に改善 diff だけを渡し「generator 改善か / 緩め操作か」を判定させる (期待する答え・改善履歴・score は渡さない)
+4. **PASS 詐欺自己審問 + 緩め禁止リスト照合** → 結果 (`proposed_changes` / `self_interrogation` / `forbidden_loosening_check` / `score_delta`) を控える。`score_delta` の比べる相手は「独立判定と審問ログの確定」局面に従う。ここではまだ `interrogation-log.jsonl` へ append しない (append は edit 後の「独立判定と審問ログの確定」局面)
 
 ### 局面: edit
 
-skill 層を `batch_per_iter_max` 件以下 Edit する (writer-prompt の rule 追加 / SKILL.md の手順明文化 / scripts の bug fix と defensive guard 注入 / schema 制約強化)。**禁止**: evaluator / rubric / 採点 mode を「score を通すため」に緩める編集。rubric が goal の悪い代理と判明したら、それは「緩める」のではなく target を evaluator skill に切り替えて「goal に寄せて作り直す」別ループで行う。
+skill 層を `batch_per_iter_max` 件以下 Edit する (writer-prompt の rule 追加 / SKILL.md の手順明文化 / scripts の bug fix と defensive guard 注入 / schema 制約強化)。編集は既存 file の書き換えだけにし、file を足さない・消さない。`loosening` と判定されたときは Edit で戻すので、Edit で戻せない変更 (file の追加・削除) は入れない。file を足さないと直せない改善は、最終報告の残課題に回す。**禁止**: evaluator / rubric / 採点 mode を「score を通すため」に緩める編集。rubric が goal の悪い代理と判明したら、それは「緩める」のではなく target を evaluator skill に切り替えて「goal に寄せて作り直す」別ループで行う。
+
+### 局面: 独立判定と審問ログの確定
+
+edit の後、diagnose 局面 4 で控えた結果に対し、`schemas/interrogation-log.schema.json` の allOf (score 急変 / 評価経路接触) で独立判定の要否を決める。要るときは**別個体 fresh agent** に下表の diff だけを渡し「generator 改善か / 緩め操作か」を判定させる (期待する答え・改善履歴・score は渡さない)。判定させる diff と戻すものは発火条件で違う。
+
+| 発火条件 | 判定させる diff | `loosening` のとき戻すもの |
+|---|---|---|
+| 評価経路接触 (`touches_evaluation_path`) | 今回の edit の diff | 今回の edit (commit 前なので Edit で戻す) |
+| score 急変 (`score_delta`) | 前 iter の commit の diff。前 iter の commit item が `intermediate.jsonl` に記録した `commits[].sha` ごとに `git diff <sha>~1 <sha>` を 1 本ずつ判定させる | 前 iter の commit 全部 (1 本でも `loosening` なら、`generator` と判定された commit も戻す。手順は下記) と今回の edit (緩んだ評価で出た指摘に基づくため) |
+
+- score 急変で前 iter の commit を判定するのは、iter N の eval が測るのは iter N−1 の commit 後の target で、iter N の edit の効果は iter N+1 まで点に出ないから。
+- diff ごとの判定は `independent_check.judgments` に 1 件ずつ書く (今回の edit は `subject: current_edit` と `commit_sha: null`、前 iter の commit は `subject: prior_commit` とその sha)。2 つの発火条件が同じ iter で重なったら、同じ agent に diff を別々に判定させる。どれかが `loosening` なら verdict を `loosening` とし、該当する行の右列を戻す。
+- 前 iter の commit を 1 本だけ戻すことはしない。iter N の eval は緩んだ評価の下で測ったもので、前 iter のどの commit が点を動かしたかを切り分けられないから。`generator` と判定された commit は、後の iter で提案し直せる。
+- 前 iter が commit しなかった (破棄した) か、前 iter の commit が revert だけ (`commits[].kind` が `revert` だけ) のときは、急変は target の変更から来ていない (revert 後の target は前々 iter が採点した状態と同じ)。revert の commit は判定させず、今回の edit の diff を判定させ、急変は揺らぎとして score summary に書く。
+- `score_delta` は前 iter の score との差。iter 1 はこの run の中に比べる前の状態が無いので 0 とする (run の外で入った変更は呼び元の責務)。前 iter の commit が revert だけのときは、前々 iter の score と比べる。revert は前 iter の commit を全部戻すので、比べる相手はいつも 1 つに決まる。
+
+前 iter の commit は、Edit と `git diff` だけで次の順に戻す (commit message は読まず、記録した sha だけを使う)。
+
+1. `git diff --name-status <最古の sha>~1 <最新の sha>` の status がすべて `M` であることを確かめる。`M` 以外があれば edit 局面の規則が破られていて Edit では戻せないので、戻さずに停止 (d) とし、sha と path を残 blocker に書く。
+2. 戻す path は、1 の path と今回の `proposed_changes[].path` を合わせたもの。path ごとに `git diff <最古の sha>~1 -- <path>` (最古の sha の親から作業 tree までの差分で、前 iter の commit と今回の edit の両方が入る) を逆向きに Edit で当てる。
+3. 2 の path すべてで、同じ `git diff <最古の sha>~1 -- <path>` が空になったことを確かめる。
+
+`loosening` なら `discarded=true` とする。判定 (要らないときは `required=false` と `verdict=null` で、`judgments` は書かない) と破棄の判断が出てから、その iter の 1 行を確定値で `interrogation-log.jsonl` へ append し、schema を通す。append は 1 iter 1 行で、後から書き換えない。前 iter の commit を戻したことは、前 iter の行を書き換えずに今回の行の `judgments` に残す。
 
 ### 局面: commit
 
-eval data 確認後に 1 ロジック 1 commit (`wrap-git-commit-safe` 経由、INVARIANT 6)。message に iter 番号 / 観測根拠 (どの run のどの弱点) / 期待効果を書き、複数ロジックを 1 commit に混ぜない (revert 可能性を保つ)。
+eval data 確認後に 1 ロジック 1 commit (`wrap-git-commit-safe` 経由、INVARIANT 6)。message に iter 番号 / 観測根拠 (どの run のどの弱点) / 期待効果を書き、複数ロジックを 1 commit に混ぜない (次 iter の独立判定で 1 本ずつ判定できるようにする)。独立判定で前 iter の commit が緩めと判定された iter は、前 iter の commit を全部戻す revert を 1 本の commit にし、message に戻した sha を並べる (今回の edit は破棄済みなので、この iter の commit は revert だけになる。全部戻すか何も戻さないかの 1 ロジックなので 1 commit でよい)。
+
+`wrap-git-commit-safe` が `status: committed` で返した commit ごとに、`commit_sha` と 1 行要約を、この commit item の `intermediate.jsonl` 行へ `commits: [{"sha": "<commit_sha>", "summary": "<1 行要約>", "kind": "change" | "revert"}]` として記録する (commit が無い iter は `[]`)。次 iter の独立判定と最終報告の commit 一覧は、この記録だけを使う。`committed` 以外が返ったら commit されていないので、記録せずに停止 (d) とする。
 
 ### 局面: GOAL VERIFICATION + 収束判定
 
-成功停止は 1 つだけ。**score は診断信号であり、成功条件でも周回継続条件でもない (INVARIANT 3)**:
+成功停止は 1 つだけ。**score は診断信号であり、成功条件でも次の iter へ進む条件でもない (INVARIANT 3)**:
 
 1. **GOAL VERIFICATION**: 契約の正本は `goal-seek-paradigm.md`「達成判定 (GOAL VERIFICATION)」節。final goal の exact fingerprint に束縛された current observational PASS receipt があれば `reuse` し、なければ fresh agent が実走成果物 / 行動ログ実体を入力に **PASS|FAIL + blocker 列挙のみ**を返す (点数出力禁止・SKILL.md 静的レビューでの代替禁止)。edit / scenario・checker 契約 / upstream proof の変更で当該 fingerprint が変われば必ず再観測する
-2. **PASS**: score にかかわらず目的達成として即停止し、残 task-graph 予算を消費しない。**FAIL**: avg overall ≥ `score_threshold_default` なら PASS 詐欺疑いとして扱い、blocker が改善可能かつ `max_iter` 未満の場合だけ次 iter へ進む。連続 2 iter +0 または `max_iter` 到達時も成功へ丸めず「score X / goal FAIL / 残 blocker」の `INCOMPLETE` として停止する
+2. **PASS**: score にかかわらず目的達成として即停止し、残 task-graph 予算を消費しない。**FAIL**: avg overall ≥ `score_threshold_default` なら PASS 詐欺疑いとして扱い、blocker が改善可能かつ `max_iter` 未満の場合だけ次 iter へ進む (variant 化と停止の順は、ゴールシークループ節の「伸びない iter の扱い」に従う)。variant 化した iter でも残 blocker が減らないとき、または `max_iter` 到達時も、成功へ丸めず「score X / goal FAIL / 残 blocker」の `INCOMPLETE` として停止する (`progress.json` の `status` と停止 (a)〜(d) はゴールシークループ節)
 
 停止時の最終報告に必ず含める:
 
 - 全 iter の score summary (iter / new・reused samples / fingerprint / avg / range) + **goal 達成度の推移** (乖離監視の証跡)
-- 全 commit 一覧 (hash + 1 行要約) と **審問ログで破棄した改善案の一覧** (何を PASS 詐欺と判定したか)
+- 全 commit 一覧 (hash + 1 行要約。commit item の `intermediate.jsonl` 行の `commits` から作る) と **審問ログで破棄した改善案の一覧** (何を PASS 詐欺と判定したか)。破棄した改善案は、`discarded=true` の行の `proposed_changes` と、`judgments` で戻した前 iter の commit を合わせる。戻した commit は `loosening` と判定したものと、`generator` だが巻き添えで戻したもの (PASS 詐欺とは判定していない) に分けて書く
 - 残課題 (plateau 突破に必要な structural change 候補)
 - **評価の前提明示**: 最終 score がどの evaluator / mode / rubric hash / 前提で出たか (同一成果物が文脈で点数割れするのを防ぐ)
 
@@ -313,7 +341,7 @@ eval data 確認後に 1 ロジック 1 commit (`wrap-git-commit-safe` 経由、
 | 役割 | 受け取る入力 | 禁止事項 |
 |---|---|---|
 | unresolved eval agent (最大 N 体) | target + task args + 割当 obligation のみ | 改善履歴・前回 score の知悉 / target skill ファイルの編集 / reuse claim の再採点 |
-| 審問独立判定 agent | 改善 diff のみ | GOAL VERIFICATION agent との兼任 / 期待する答え・改善履歴・score の受領 |
+| 審問独立判定 agent | 発火条件で決まる diff のみ (局面「独立判定と審問ログの確定」の表) | GOAL VERIFICATION agent との兼任 / 期待する答え・改善履歴・score の受領 |
 | GOAL VERIFICATION agent (observe 時のみ) | 実走成果物・行動ログ実体のみ | 審問独立判定 agent との兼任 / score・breakdown・改善履歴の受領 / 点数出力 |
 
 ## Gotchas
@@ -324,7 +352,7 @@ eval data 確認後に 1 ロジック 1 commit (`wrap-git-commit-safe` 経由、
 - **±3-5pt は noise** — 1-2pt の上下で判断しない。3pt 以上の連続変化 or breakdown の structural 変化を真の signal とする
 - **score 急上昇を疑え** — 急上昇は generator 改善より evaluator 緩和の方が起こしやすい。発火条件・独立判定強制は `schemas/interrogation-log.schema.json` が機械正本
 - **rubric bug を疑う閾値** — 3 iter 連続同一弱点 + 直接修正 +0pt で rubric 側を 8 割疑う (diagnose 局面参照)
-- **ローカル開発環境限定** — 量産先 plugin へ本 skill を配備しない。CI でも実行しない (配備境界は配布注記参照)
+- **ローカル開発環境限定** — 量産先 plugin へ本 skill を配備しない。CI でも実行しない (正本は配布注記が指す `feedback-loop-deployment.md` の「禁止」節)
 - **再帰遮断** — 本 skill / `run-skill-live-trial` / `run-elegant-review` (エンジン閉包) を target にする場合は INVARIANT 7 の scratch copy 必須。判定は `requires_subject_copy` 述語に委ね、閉包リストをここへ再掲しない
 
 ## Additional resources
@@ -333,6 +361,6 @@ eval data 確認後に 1 ロジック 1 commit (`wrap-git-commit-safe` 経由、
 - `schemas/interrogation-log.schema.json` — 審問ログ契約 (独立判定発火条件の機械正本)
 - `run-skill-live-trial` — 前段の実走受け入れ (Gate D)。FAIL / 乖離 handoff の供給元
 - `../run-elegant-review/references/convergence-policy.json` — `loop_bounds.iter_improve` / `anti_patterns` の正本
-- `../run-build-skill/references/goal-seek-paradigm.md` — コンテキスト分離 / 達成判定 (GOAL VERIFICATION) の正本
+- `../run-build-skill/references/goal-seek-paradigm.md` — コンテキスト配置（必要性で選択）/ iteration=0 (初期化規定) / 達成判定 (GOAL VERIFICATION) の正本
 - `../run-build-skill/references/verification-obligation-protocol.md` — fingerprint / receipt / machine-first 差分再評価の正本
 - `../run-build-skill/references/content-review-protocol.md` — design claim と legacy content-review verdict 投影の境界

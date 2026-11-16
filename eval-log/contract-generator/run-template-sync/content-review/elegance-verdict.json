@@ -2,7 +2,8 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-template-sync",
-    "skill_md_sha256": "85bf537301227dc4c25b669e7e046b52cadc91166dfc7ec44cd85ba3de837240"
+    "skill_md_sha256": "0f9e525022c69b915f9f5fc29cb48038c1d9fa2cd2170e6fffb8baec65da147f",
+    "reviewed_skill_md_sha256": "85bf537301227dc4c25b669e7e046b52cadc91166dfc7ec44cd85ba3de837240"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -41,5 +42,21 @@
     "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "install-portability 変更（外部変更 guard block の差し替え）に対する incremental profile の focused combined review。builder とは別 context の独立 evaluator が、現行 SKILL.md 全文、git diff HEAD（guard block だけで 15 行追加・3 行削除。同じ plugin の 2 skill と同一）、正本テンプレート、同梱 resolver、skill-governance-adapters の guard script、plugin.json の dependencies を読み、skill 固有の文脈（scan_template の exit 0/5、--apply と --dry-run の区別、allowed-tools）との整合を確かめたうえで、(a)〜(e) を 1 回で判定して elegance と rubric に分けて投影した。決定論の確認: resolver の exit 0/1/2 の実測、cache 模擬、build-artifact-delivery.py --check・lint-sibling-plugin-paths.py・lint-vendored-ssot.py が OK、pytest 28 件 pass。finding は low 3 件だけで high と medium は 0。PASS の射程は design claim（静的設計 adequacy）に限り、install 先での live trial や実際の台帳変更は行っていない。30 思考法は実施しておらず、実施も申告しない。"
+  "notes": "install-portability 変更（外部変更 guard block の差し替え）に対する incremental profile の focused combined review。builder とは別 context の独立 evaluator が、現行 SKILL.md 全文、git diff HEAD（guard block だけで 15 行追加・3 行削除。同じ plugin の 2 skill と同一）、正本テンプレート、同梱 resolver、skill-governance-adapters の guard script、plugin.json の dependencies を読み、skill 固有の文脈（scan_template の exit 0/5、--apply と --dry-run の区別、allowed-tools）との整合を確かめたうえで、(a)〜(e) を 1 回で判定して elegance と rubric に分けて投影した。決定論の確認: resolver の exit 0/1/2 の実測、cache 模擬、build-artifact-delivery.py --check・lint-sibling-plugin-paths.py・lint-vendored-ssot.py が OK、pytest 28 件 pass。finding は low 3 件だけで high と medium は 0。PASS の射程は design claim（静的設計 adequacy）に限り、install 先での live trial や実際の台帳変更は行っていない。30 思考法は実施しておらず、実施も申告しない。",
+  "sha_rebinds": [
+    {
+      "from_sha": "85bf537301227dc4c25b669e7e046b52cadc91166dfc7ec44cd85ba3de837240",
+      "to_sha": "db7bf68a73028a80a2889bd248cbb978748eb00be45d782df5e66e44666d8b32",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:44Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "db7bf68a73028a80a2889bd248cbb978748eb00be45d782df5e66e44666d8b32",
+      "to_sha": "0f9e525022c69b915f9f5fc29cb48038c1d9fa2cd2170e6fffb8baec65da147f",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:52Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

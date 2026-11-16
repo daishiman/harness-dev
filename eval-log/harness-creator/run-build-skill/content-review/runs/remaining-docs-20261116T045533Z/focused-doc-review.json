@@ -1,0 +1,67 @@
+{
+  "kind": "fresh-focused-doc-integration-review",
+  "snapshot": "aa9c63c09b242ca81714e4357fe78ee9f6a50b66",
+  "skill_bytes_identical_to_snapshot": true,
+  "reviewer": "reset-observer-independent-doc-integration",
+  "target_before": {
+    "plugin": "harness-creator",
+    "skill": "run-build-skill",
+    "skill_md_sha256": "fe8b01a4a26960fb48d45770b4b19e7fb1e003a78b31d8d90ec6489509b5d429",
+    "reviewed_skill_md_sha256": "fe8b01a4a26960fb48d45770b4b19e7fb1e003a78b31d8d90ec6489509b5d429",
+    "skill_dir_digest": "7b8fe53a1e1d5e076ef677020b0c6c5bf564c46d204b5a7ec49eeedb39d1bdb8"
+  },
+  "target_after": {
+    "plugin": "harness-creator",
+    "skill": "run-build-skill",
+    "skill_md_sha256": "fe8b01a4a26960fb48d45770b4b19e7fb1e003a78b31d8d90ec6489509b5d429",
+    "reviewed_skill_md_sha256": "fe8b01a4a26960fb48d45770b4b19e7fb1e003a78b31d8d90ec6489509b5d429",
+    "skill_dir_digest": "7b8fe53a1e1d5e076ef677020b0c6c5bf564c46d204b5a7ec49eeedb39d1bdb8"
+  },
+  "reviewed_paths": [
+    "plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md"
+  ],
+  "document_hashes": {
+    "plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md": "6a2058f4dd56cf33a211124169fc14c5805fbd742e69169a2f6b927f88f243ec"
+  },
+  "C1_C4": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": "変更前後とも評価器は単発read-only、手順反復とcontent再評価のloopは別という契約を保持。"
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": "修正した参照先にループ分類があり、既存数値正本の宣言を削除していない。"
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": "owner-qualified URLがharness-creatorの既存content-review-protocolのループ分類へ対応。rubric規約は機械採点100/80。"
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": "同名の配布先ローカル資料へ誤解決する依存を避け、追加実行や新loopを導入しない。"
+    }
+  },
+  "rubric": {
+    "score": 100,
+    "threshold": 80,
+    "machine_findings_preserved": [],
+    "pending_judgments": {
+      "BD-004": {
+        "verdict": "PASS",
+        "reason": "descriptionのCapability作成/更新とManifest/composition整備は不変SKILLの入力・生成物・draft/release契約に対応する。今回読んだ変更はgoal-seekのループ説明リンクをowner-qualifiedの正本へ向ける1行で、発動条件やbody手順を変えず、配布先で同名ローカル資料を誤読しない。"
+      }
+    }
+  },
+  "scoped_cli": "dry-run noop; no directory refresh support; new focused verdicts generated instead",
+  "validation": {
+    "elegance-verdict.json": null,
+    "rubric-verdict.json": null,
+    "pair": null
+  },
+  "limits": [
+    "snapshot full-review reuse only for identical SKILL bytes",
+    "docs delta actually read; no whole-skill reread claimed",
+    "no live/30-paradigm/code reapproval",
+    "privacy artifacts and original transcript verdict digests untouched"
+  ]
+}

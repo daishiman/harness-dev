@@ -1,0 +1,76 @@
+{
+  "verdict": "FAIL",
+  "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+  "checks": {
+    "existing_schema": {
+      "verdict": "PASS",
+      "evidence": "source scripts/validate-graph-schema.py --require-canonical-envelope の実行結果は valid=true、violation_count=0、15 node。"
+    },
+    "combined_dependency_dag": {
+      "verdict": "PASS",
+      "evidence": "既存15 nodeと予定2 featureを統合して検査。循環、重複ID、dangling dependency、taskのparent orphanは0件。"
+    },
+    "macro_boundary": {
+      "verdict": "PASS",
+      "evidence": "予定artifactはfeature 2件のみ。既存macroはarchitecture 1件とfeature 1件。既存13 taskは独立した登録済みpackageに属し、macro混入として扱っていない。共有ARCH-LT-001を再利用している。"
+    },
+    "existing_paths": {
+      "verdict": "PASS",
+      "evidence": "既存15 nodeのfile_pathはrepository内に解決され、全ファイルが存在する。"
+    },
+    "planned_snapshot_digest_binding": {
+      "verdict": "FAIL",
+      "evidence": "c02-preview.jsonのplanned_nodesはstateの縮約であり、完全なplanned graph snapshotを含まない。graph_digest_after=sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572を独立再計算できず、予定graphの正規schema検証も再現できない。"
+    },
+    "exact_13_structure": {
+      "verdict": "PASS",
+      "evidence": "既存taskは13件、phase_refはP01..P13のexact-set。全taskのparent_feature=LT-FEATURE-001、feature_package_id=feature-package/LT-FEATURE-001。receiptのnode_idsと一致し、registration manifestとreceiptのsource_digestも一致する。"
+    },
+    "existing_package_projection": {
+      "verdict": "FAIL",
+      "evidence": "全13 taskはtracker_binding=beads、beads_linkage=null。macro-report.jsonのpackage_reportは登録済みという判断のみで、task別の未投影判定、target、operationを示していない。"
+    },
+    "planned_promotion_gate": {
+      "verdict": "PASS",
+      "evidence": "両C28 receiptはplanned=trueでdraft/pendingをpromotion_gateによりblockedとしている。not in graphを判定根拠にしていない。write_count=0。"
+    },
+    "cross_binding_dependency": {
+      "verdict": "PASS",
+      "evidence": "diff(beads)→LT-FEATURE-001(none)をblockedとし、summary(beads)→diffの推移依存もcross_binding_dependencyでblockedとしている。dep-addの予定としていない。"
+    },
+    "stored_path_policy": {
+      "verdict": "FAIL",
+      "evidence": "両C28 receiptのgate.planned_previewおよびmacro-report.json内の複製に環境固有の絶対pathが保存されている。"
+    },
+    "input_preservation": {
+      "verdict": "PASS",
+      "evidence": "original-digests.jsonに記録された全既存ファイルの実bytes SHA-256が一致。選択されたmacro-report.jsonのSHA-256もartifact-delivery-choice.jsonと一致する。監査中のtracker mutationは0件。"
+    }
+  },
+  "findings": [
+    {
+      "node_id": ["feature-lt-render-diff", "feature-lt-render-summary"],
+      "severity": "high",
+      "evidence": ".dev-graph/cache/decompose-input/c02-preview.jsonには完全なplanned snapshotがなく、宣言されたplanned digestの再現検証ができない。",
+      "suggested_fix": "完全なplanned graphをrepository相対pathの監査artifactとして提供し、正規validatorとcanonical digest実計算を紐付ける。"
+    },
+    {
+      "node_id": "LT-FEATURE-001-P01..P13",
+      "severity": "high",
+      "evidence": "既存13 taskはbeads_linkage=nullだが、macro-report.jsonは各taskの未投影判定を欠く。",
+      "suggested_fix": "再登録せず、各taskについてbeads_linkageを根拠に未投影、target、operation、保留理由を明示する。"
+    },
+    {
+      "node_id": ["feature-lt-render-diff", "feature-lt-render-summary"],
+      "severity": "medium",
+      "evidence": "*-c28.jsonのgate.planned_previewが絶対pathであり、repository-relativeの保存方針に反する。",
+      "suggested_fix": "成果物内のplanned_previewをrepository相対pathへ統一する。"
+    },
+    {
+      "node_id": "LT-FEATURE-001-P01..P13",
+      "severity": "medium",
+      "evidence": "source_lineage.source_pathが参照するpublished配下の13 task-specファイルは存在しない。package構造とreceipt間の一致は確認できるが、published bytesへの遡及照合はできない。",
+      "suggested_fix": "元published bundleの読取可能な証拠を提供し、source_digestとの対応を再検証する。"
+    }
+  ]
+}

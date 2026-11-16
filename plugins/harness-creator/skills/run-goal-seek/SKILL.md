@@ -54,31 +54,16 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 固定手順を SKILL.md にハードコードせず Step1-3 を本文に焼かない都度生成原則を保ち paradigm.md を共有正本として参照し本スキル固有差分のみ記す
       verify_by: evaluator
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/diagnoseを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 
 # run-goal-seek
@@ -119,7 +104,7 @@ Purpose & Output Contractの最小の実成果物をmain contextで作成する�
 `artifact_created` → `minimal_guard_passed` → `artifact_presented` → `user_choice_recorded` → `semantic_evaluator_started`
 
 - `minimal_guard_passed` は成果物classに応じた最小限の parse/open、secret混入、不可逆操作、破損検査だけを意味する。意味的な「よさ」はここで判定しない。
-- `artifact_presented` で現物のpathと試し方を利用者に渡し、その後に診断・改善深度を聞く。提示前の evaluator 起動は順序違反とする。
+- `artifact_presented` で現物のpathと試し方を利用者に渡し、その後に現状で試すか診断するかを聞き、改善の深さは診断所見の提示後に1回だけ聞く。提示前の evaluator 起動は順序違反とする。
 - `accept-as-is` は `evaluator_contexts=0` / `improver_contexts=0` でhandoff完了。診断を選んだ場合のみ semantic evaluator、30思考法、multi-agent、有界改善を使う。
 - release / exhaustive は利用者の明示選択だけで開始し、finding数や直前の依頼から自動昇格しない。
 

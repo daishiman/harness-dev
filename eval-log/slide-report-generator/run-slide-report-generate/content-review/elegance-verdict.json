@@ -1,1 +1,98 @@
-{"target": {"plugin": "slide-report-generator", "skill": "run-slide-report-generate", "skill_md_sha256": "b304c0d797f053695e265674ff2998968fd1d65ecf15ea19288065be7a6e5186"}, "review_kind": "elegance", "verdict": "PASS", "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)", "reviewed_at": "2026-10-04T22:30:28Z", "iterations": 1, "human_review_required": false, "feedback_loop": {"loop_scope": "both", "criteria_evaluated": ["IN1", "IN2", "OUT1"], "positive_feedback": ["IN2 ゲートの実行パスを、install 先で兄弟に届かない `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/../system-spec-harness/scripts/...` から plugin 自身の `scripts/validate-information-priority.py` へ一貫して切り替えた。対象は SKILL.md:171,:222、prompts R1-orchestrate.md:157・R2-agent-structure-designer.md:147・R2-agent-report-structure-designer.md:140、agents/structure-designer.md:37・report-structure-designer.md:45、workflow-manifest.json:203 (`../../scripts/validate-information-priority.py`) で、宣言 (criteria IN2) と実行経路が同じ 1 本の同梱 script を指す。SRG 単独 install でも IN2 が成立する。", "同梱した scripts/validate-information-priority.py と schemas/information-priority-map.schema.json は system-spec-harness の正本と sha256 が一致し (448494ea… / 4ed0087f…)、scripts/lint-vendored-ssot.py に組として登録されている (実行して 33 組 byte 一致で OK)。複製の drift を repo 側で機械的に止める仕組みが、複製と同時に入っている。", "原理の正本 information-design.md を「system-spec-harness plugin の `skills/ref-system-design-knowledge/references/information-design.md` (出典表記)」と書き、同梱しない理由 (実行時に読む path ではない、原理の再掲は二重定義になる) を SKILL.md:135,:263,:283 と references/information-priority-rules.md:3-7 で揃えて述べている。写像 (SRG 固有) と原理 (外部正本) の責務分離が保たれた。", "Gotchas の配置非依存 (SKILL.md:235) に、兄弟相対参照を禁止する理由 (install 先 `<cache>/<marketplace>/<plugin>/<version>/` では `..` の先が同じ plugin の別 version 群になる) を書き、再発の判断材料を本文に残した。"], "negative_feedback": ["low (記述規約・移行漏れ): 原理の正本 information-design.md の引用が、prompts の 3 か所 (R1-orchestrate.md:70、R2-agent-structure-designer.md:212、R2-agent-report-structure-designer.md:175) で repo root 起点の `plugins/system-spec-harness/skills/ref-system-design-knowledge/references/information-design.md` のまま残っている。同じ差分が SKILL.md と information-priority-rules.md を出典表記へ揃え、同じ 3 ファイルの gate コマンド行も書き換えたのに、この 3 行は移行されていない。SRG は marketplace に登録された配布 plugin なので、scripts/lint-sibling-plugin-paths.py の docstring の方針では本文の引用は出典表記で書く。repo root 形は lint-sibling-plugin-paths の検出対象外 (dotdot/dirname/pyparent/osjoin のみ) で、機械では止まらない。実行パスではなく、SRG 固有の写像は同梱の information-priority-rules.md が持つため low とした。", "low (曖昧さ): SKILL.md:235 と information-priority-rules.md:38 の `scripts/lint-vendored-ssot.py` は repo root の script だが、SKILL.md:235 では直前に plugin-root glue = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/…` を並べているため、plugin 内の script とも読める。install 先には存在せず repo 側でだけ走ることが書かれていない。", "low (依存関係・plugin レベル): 同梱した scripts/validate-information-priority.py と scripts/extract-plugin-root.py が plugin-composition.yaml の script inventory に宣言されておらず、SRG の validate-plugin-completeness が undeclared として報告する。この gate は HEAD 時点で既に別の理由 (bundle_targets、entry_points/hooks の欠落、validate-inline-goal-seek-anchor.py の未宣言) で exit 1 なので、今回の差分で新たに赤くなったわけではない。", "low (差分外・前回からの持ち越し): `## 決定論チェック` の前置き (:161) が実行時期を無条件に読ませ、R6 限定は R3 (:151) を読まないと確定しない。", "low (差分外・前回からの持ち越し): :213 の (2)「R3 生成後に成果物 HTML へ当てる」が時期条件 (改善レベル選択後の R6) を再掲せず、R3 での即時実行とも読める。", "low (前回からの持ち越し): 散文中の plugin root 表記 (:127,:135,:235,:242,:244) が旧 `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` 形のままで、実行行の `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}` 形と揃っていない。今回の差分は :135 (schema のパス) と :235 を書き換えたが旧形を踏襲した。実行行ではないので動作への影響は無い。"], "iteration": 1, "iteration_limit": 3, "hook_trigger": "manual:install-portability", "next_action": "none"}, "notes": "HEAD (f30813a) の SKILL.md を評価した前回 verdict (sha 9786229c…) の後に入った、install 先での兄弟参照の修正を対象に、builder とは別 context の独立 evaluator が incremental profile の focused combined review を 1 回行った。(a)矛盾 (b)漏れ (c)記述規約整合 (d)依存関係整合 (e)rubric high severity を同時に判定し、elegance/rubric の 2 verdict へ分けて投影した。30 思考法は実施しておらず、実施したとも申告しない。読んだもの: 現行 SKILL.md 全文 (285 行、sha は書き込み直前に再計算)、SKILL.md・prompts 3 本・references/information-priority-rules.md・workflow-manifest.json・agents 2 本の差分、untracked の同梱 3 ファイル (validate-information-priority.py、information-priority-map.schema.json、extract-plugin-root.py)、scripts/lint-vendored-ssot.py の登録、scripts/lint-sibling-plugin-paths.py の docstring。参照先の実在: information-design.md、同梱 2 ファイル、workflow-manifest の `../../scripts/validate-information-priority.py` はいずれも実在する。同梱 script は stdlib のみで schema を実行時に読まないため、schema の同梱は文書と検証用の複製である。決定論の確認: scripts/lint-sibling-plugin-paths.py OK (exit 0)、scripts/lint-vendored-ssot.py OK (33 組 byte 一致)、SRG の pytest は 361 passed / 7 skipped。SRG 内の lint-reference-attribution.py と lint-contract-drift.py は差分が触れていないファイル (HEAD から存在) 由来で失敗するため finding の対象外とした。参考情報で finding ではないもの: agents 2 本の gate 行は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}` 形で、agents 全体の既存の書き方に合わせている。README の distributable:false と package-contract.json の distributable:true の不一致は差分外の既存事項。結果は high/medium 0 件、low 6 件 (うち今回の差分に関わるもの 3 件、持ち越し 3 件)。PASS の射程は design claim (SKILL.md と参照契約・同梱物の静的設計 adequacy) に限る。実際の install 先 (Claude/Codex の cache) での IN2 ゲート実行は検証していない。"}
+{
+  "target": {
+    "plugin": "slide-report-generator",
+    "skill": "run-slide-report-generate",
+    "skill_md_sha256": "52f55b7928d6108df22447f6dd5975ba48b2268b9b36a9f199c6f4647ba51c08",
+    "reviewed_skill_md_sha256": "9f2b7adae3367523cf5235319da0ed28a04543509fa5253757e14f372382ac86",
+    "skill_dir_digest": "33f74c3ee034f70e63504cae29278ef910953799d55e6bbcc63a3fbd88c8c57d"
+  },
+  "review_kind": "elegance",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 2,
+    "omission": 1,
+    "inconsistency": 0,
+    "dependency_break": 1,
+    "smell": 1
+  },
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-14T21:57:42Z",
+  "iterations": 3,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1"
+    ],
+    "positive_feedback": [
+      "R6 の起動順の正本を SKILL.md の「R6 の 1 周の順番 (正本)」1 か所に置き、R1-orchestrate.md (97・203 行目)・layout-optimizer (30・145・155 行目)・slide-renderer・html-generator (343 行目)・ui-quality-reviewer・report-quality-reviewer・deck-evaluator・ai-image-diagram-producer がそこを参照する形にそろえた。「生成担当が先、layout-optimizer が最後」「custom.css を新しく置いた周と HTML を直す所見が出た周だけ、同じ周の中で生成担当を 1 回だけ追加起動し、周回数に数えない」は、layout-optimizer 145 行目・slide-renderer の R6 節 (custom.css の追加起動では structure.json を変えずに再 render する)・html-generator の R6 節 (styles.css の link の直後に custom.css の link を入れる) と一致する。追加起動は同じ周の ② の中の 1 回で、① → ② → ③ を 1 周と数えて R6 全体で共有する規則と矛盾しない。並びを写さずに参照させる形は、他の多 agent skill にも横展開できる。",
+      "評価と修正を分けた。reviewer 3 本と deck-evaluator は read_only で所見 (違反 ID・対象・宛先・補正指針) を返すだけになり、deck-evaluator から Edit が消え、ui-quality-reviewer は S1〜S26 違反を経路ごとの宛先 (LLM 経路は html-generator、決定論経路は slide-renderer) を付けて返し、report-quality-reviewer は上流起因を宛先付きの所見として返す。修正履歴は ② で実際に直した担当だけが書き、書き先を structure.md / report-structure.md の `## 修正履歴` 節に限って structure.json / report-structure.json には書かない理由 (schema の additionalProperties:false) まで書いた。道具も合う: html-generator は Edit を外して「Read で読んでから全体を Write で書き直す」、slide-renderer は Bash (node -e と JSON.stringify) で structure.json を直し、mktemp -d に控えて exit 2 なら戻し、render-slide.cjs が作り直す structure.md の修正履歴を Read で控えて Bash で書き戻す。layout-optimizer は custom.css と修正履歴への `>>` 追記だけで、index.html を書かない。",
+      "仮定一覧が端から端までつながった。R1/R2/R3 の生成系 worker の返答に「項目・置いた値・根拠」の仮定一覧があり、R1-orchestrate.md (63・164・184・206・212・242 行目) が R2 の WARN と合わせて集め、R4 で提示し、生成レポートの assumptions[] (item / value / basis / source_worker、required) に入れる。structure-validator と reviewer が仮定一覧を持たないのは、R2 の WARN を主 skill が直接集め、reviewer は所見を返す側なので筋が通る。成果物前に承認を取らない代わりに仮定を R4 で見せる、という前々回の修正の前提がこれで成り立つ。",
+      "R6 の周回の中から、利用者への承認の要求・slide-report-modifier への受け渡し・reviewer による直接の修正が消えた。slide-report-modifier は run-slide-report-modify の文脈 (ui-quality-reviewer 266 行目、report-quality-reviewer、layout-optimizer 29・155・330 行目) にだけ残り、R6 では主 skill が宛先ごとに振り分ける。CONST_003 の二重の意味は、deck-evaluator 207 行目と ui-quality-reviewer の「run-slide-report-modify の CONST_003「承認必須」(本 rubric の CONST_003 とは別)」の注記と、references/deck-evaluation-rubric.md 42 行目の「R6 の周回上限 (0〜3 周・R6 全体で共有)。周回の途中で利用者に聞かない」で解けた。vendor の旧い P 段の挙動 (workflow-manager.js の P2→P3 の `.approved`) は vendor を書き換えずに SKILL.md 側で読み替えている。"
+    ],
+    "negative_feedback": [
+      "low (C1 矛盾・前回 elegance:1 の残り): 生成レポートの書き方が schema の required とまだ揃っていない。SKILL.md の出力 (103 行目) と prompts/R1-orchestrate.md の 2.4 出力契約 (63 行目) は今回「schemas/generation-report.schema.json 準拠」と書き、出力を output_mode / route / artifacts / open_instructions / assumptions[] / user_choice とし、「diagnose のときだけ … 未達指摘一覧 (findings[]) も加える」とする。しかし schema の required は [output_mode, route, status, artifacts, open_instructions, assumptions, checks, findings] で、トップレベルは additionalProperties:false。status (PASS/WARN/FAIL) と checks ({id, status, command, reason}) を書く手順がどこにも無く、findings は accept-as-is のときも必須なので「diagnose のときだけ加える」と食い違う。仮定一覧の連鎖 (前回の中心) は直ったが、「SKILL.md の出力どおりに書くと schema に通らない」状態は status / checks / findings について残る。生成レポートを schema で検査する script は無く、R3 の最小 guard の結果を checks に写せば埋まるので、既定経路の成果物と利用者の判断には響かない。low とした。修正案: 103 行目と R1-orchestrate.md 63 行目の列挙に status (最小 guard の総合判定) と checks (最小 guard と、diagnose のときは R6 の決定論チェックの結果) を足し、findings は「accept-as-is のときは空配列、diagnose のときは未達指摘一覧」と書く。",
+      "low (C2 漏れ・R6 の起動順の正本): 「R6 の 1 周の順番 (正本)」の ② の宛先に ai-image-diagram-producer が無い。prompts/R1-orchestrate.md 3.2 (97 行目) は R6 で「所見を受けて直す」担当に「画像明示時は ai-image-diagram-producer」を挙げ、R3-agent-ai-image-diagram-producer.md (26・38・127・217 行目) と manifest の R6 resourceIds (prompt-R3-agent-ai-image-diagram-producer・vendor-build-image-prompts ほか) も R6 の ② での起動を前提にしている。しかし正本の節は「prompts と references はここを参照し、並びを写さない」と宣言しながら、画像の所見をどの宛先に振り、生成担当・layout-optimizer との前後をどうするか (画像を差し替えた面に layout-optimizer の寸法合わせを当てるなら画像担当が先) を持たない。画像を明示した回だけの経路なので low。修正案: ② の宛先に「画像の所見 (利用者が画像生成を明示していたときだけ) → ai-image-diagram-producer」を足し、「生成担当 → ai-image-diagram-producer → layout-optimizer」の順を 1 行で書く。",
+      "low (C1 矛盾・道具と書き込み範囲): R3-agent-html-generator.md の Layer 4 データアクセス (86 行目) は「`structure.md`（入力）は read_only」とするが、同じ表の 84 行目は structure.md の生成・更新を許可し、R6 節 (338〜345 行目) と SKILL.md「R6 の 1 周の順番 (正本)」の修正履歴の段落は、② で直した html-generator が structure.md の `## 修正履歴` 節に行を足すことを求める。86 行目は今回の変更より前からある記述だが、R6 で修正履歴を書く担当に html-generator を入れたことで食い違いが表に出た。修正案: 86 行目を「structure.md は structure-designer の構成部分を read_only とし、`## 修正履歴` 節への追記だけを許す」(layout-optimizer 106 行目と同じ書き方) に直す。",
+      "low (C4 依存関係・manifest と追加リソースの取りこぼし): (a) SKILL.md の修正履歴の段落は書式の理由に `sync-checker.js` を挙げ、slide-renderer の R6 節も書き戻しのあと sync-checker.js で確かめる手順を持つが、vendor/scripts/sync-checker.js は workflow-manifest.json の resources にも、追加リソース節の vendor script 19 本の列挙にも無い (追加リソース節は「この列挙は manifest の vendor script 全件と一致させる」と書くので、両方から抜けると照合でも見つからない)。(b) R6 の ② で html-generator / slide-renderer を再起動するのに、生成で読む ref-slide-frame-contract・ref-diagram-skeleton-slide / ref-diagram-skeleton-report・vendor-mermaid-render・vendor-build-single-html の phaseIds は R3 だけのまま (前回 elegance:8 で挙げた 5 本は R6 に入った)。修正案: sync-checker.js を manifest の resources (phaseIds に R6) と追加リソース節の列挙に足す。R6 の再生成で読む上の資源の phaseIds に R6 を足すか、「R6 の再生成は R3 の resource をそのまま使う」と manifest の R6 に一言書く。",
+      "low (smell・旧名と版の残り): (a) R2-agent-structure-validator.md 198 行目は「ワークフローの Phase 2.5（仕様確定ゲート）に位置し、Phase 2（structure-designer）と Phase 3（html-generator / slide-renderer）の間」と、R1–R6 の段名への読み替えの注記なしで旧 phase 名を残す (同じファイルの 79 行目の P3.5 の表には vendor のラベルと注記がある)。(b) R3-agent-report-quality-reviewer.md 292 行目は「report-composer（R3-generate）」と manifest に無い段 id を書く (正しくは R3-generate-minimal-guard)。(c) ui-quality-reviewer と report-quality-reviewer の frontmatter の version は 0.1.0 のままで、changelog はそれぞれ 2.4.0 と 0.4.0。(d) agents/*.md の R2 系 worker の定型文「規定周回で未達なら上位 orchestrator に差し戻す」は R6 に関わらず、主 skill へ返す意味に読めるので害は小さい。(e) prompts のファイル名の `R3-` が R6 で使われる点は、各 prompt に「起動段の正本は manifest の phaseIds」と注記があるので命名の軽微な不一致として扱う。修正案: (a) に R2 の後半・R2→R3 の間と読み替えを書く。(b) を R3-generate-minimal-guard に直す。(c) frontmatter の version を changelog の最新に揃える。"
+    ],
+    "iteration": 3,
+    "iteration_limit": 3,
+    "hook_trigger": "manual-incremental-content-review",
+    "next_action": "none"
+  },
+  "notes": "feedback loop の iteration 3 (上限 3)。iteration 2 (reviewed sha b9fe6b55…、FAIL・medium 1 / low 8) の後に作者が当てた修正を、incremental profile の focused combined review として独立 evaluator context で 1 回読み、現在の文書全体 (SKILL.md sha 9f2b7ada…、skill_dir_digest 33f74c3e…) に対して C1 矛盾 / C2 漏れ / C3 整合性 / C4 依存関係整合を判定した。rubric で採点できる記述規約は elegance 側に重ねていない。30 思考法は実施しておらず、実施したとも申告しない。全体の再レビューなので sha_rebinds は持たない。iteration 2 の指摘の状況: elegance:1 (仮定一覧の連鎖) 直った。schema との突き合わせのうち status / checks / findings の扱いだけが残り、今回 elegance:1 (low) に下げた / elegance:2 (layout-optimizer) 直った。precheck-layout / layout-calculator を Bash で回し、書き込みは custom.css と修正履歴の追記だけ、`<br>` は所見として返し、R6 の ② で最後に起動される / elegance:3 (deck-evaluator の Edit) 直った / elegance:4 (report-quality-reviewer の直接差し戻し) 直った / elegance:5 (CONST_003) 直った。references/deck-evaluation-rubric.md 42 行目も R6 の周回上限に直った / elegance:6 (ui-quality-reviewer の差し戻しと誤った並び) 直った / elegance:7 (R1 の駆動契約) 直った。正本を参照し、4 つの規則が 203 行目にある / elegance:8 (manifest の R6) 直った。挙げた 5 本の phaseIds に R6 が入り、precheck-layout / layout-calculator / check-consistency も載った。sync-checker.js と R3 だけの資源が残り、今回 elegance:4 (low) / elegance:9 (旧 phase 名) 直った。agents/*.md の Phase は実在する id になり、ai-image-diagram-producer の Phase 3.2 / 3.5 は消えた。structure-validator 198 行目などの残りは今回 elegance:5 (smell)。今回の修正で生まれた食い違い: elegance:1 (schema 準拠を謳ったことで status / checks の欠けが表に出た) と elegance:3 (修正履歴を書く担当に html-generator を入れたことで 86 行目の read_only が食い違った)。いずれも low。判定: 残る 5 件はすべて low (C1 2 件・C2 1 件・C4 1 件・smell 1 件) で、既定経路の成果物と利用者の判断を変えるものは無く、medium 以上の違反は残っていないので PASS とし、5 件を改善提案として negative_feedback に残す。",
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "Purpose & Output Contract"
+      ],
+      "source_id": "elegance:1 (iteration 2)"
+    },
+    "elegance:2": {
+      "sections": [
+        "R6 の 1 周の順番 (正本)"
+      ]
+    },
+    "elegance:3": {
+      "sections": [
+        "R6 の 1 周の順番 (正本)"
+      ]
+    },
+    "elegance:4": {
+      "sections": [
+        "追加リソース",
+        "R6 の 1 周の順番 (正本)"
+      ],
+      "source_id": "elegance:8 (iteration 2)"
+    },
+    "elegance:5": {
+      "sections": [
+        "R4–R6: 提示、選択、選択後評価",
+        "R2: 構成設計と仕様確定ゲート"
+      ],
+      "source_id": "elegance:9 (iteration 2)"
+    }
+  },
+  "sha_rebinds": [
+    {
+      "from_sha": "9f2b7adae3367523cf5235319da0ed28a04543509fa5253757e14f372382ac86",
+      "to_sha": "52f55b7928d6108df22447f6dd5975ba48b2268b9b36a9f199c6f4647ba51c08",
+      "scoped_review": {
+        "sections": [
+          "R2: 構成設計と仕様確定ゲート",
+          "追加リソース"
+        ],
+        "reviewer": "assign-skill-design-evaluator",
+        "reviewed_at": "2026-11-15T08:55:04Z",
+        "review_ref": "scoped-reviews/52f55b7928d6108df22447f6dd5975ba48b2268b9b36a9f199c6f4647ba51c08.json",
+        "review_sha256": "3d25346ec3cdb4d317194bd0d5f1ff51800ffd1967092b49796e3dfb2ec6cc93"
+      },
+      "rebound_at": "2026-11-15T08:57:39Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
+}

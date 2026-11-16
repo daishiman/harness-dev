@@ -1,0 +1,19 @@
+{
+  "overall": "PASS",
+  "graph_baseline": {"graph_revision": 1, "graph_digest": "sha256:41f7ce4c71720cb623410ce14ce08364da8e43635cf1b22ded3a5a4b88735de1"},
+  "writer_receipts": [".dev-graph/state/receipts/node-r000002-update.json"],
+  "checklist": [
+    {"id": "containment", "status": "achieved", "evidence": "resolve-repo-context.py --mode write: repo_root == content_roots.repository, repository_id local:sha256:e925ad6a...; writer resolved all 5 paths under canonical roots; feature add input also in-repo"},
+    {"id": "classification", "status": "achieved", "evidence": "pre-choice add receipt .dev-graph/state/receipts/node-r000001-add.json: 5 artifacts decision=auto (confidence 0.89-0.93, margin 0.81-0.88 >= 0.80/0.15); update verb does no classification; feature add rejected feature_requires_c14_macro_contract"},
+    {"id": "schema", "status": "achieved", "evidence": "validate-graph-schema.py --graph rev2: exit 0, valid=true, violation_count=0 (eval-log/validate-graph-schema.report.json); frontmatter artifact_kind/graph_node_id/file_path equal graph for all 5"},
+    {"id": "package", "status": "not_applicable", "evidence": "register-package not invoked; verbs run: add (pre-choice), update, add (feature, rejected)"},
+    {"id": "receipt", "status": "achieved", "evidence": "pre-choice receipt .dev-graph/state/receipts/node-r000001-add.json rev 0->1, graph_digest_after sha256:41f7ce4c... == graph_baseline; post-choice receipt node-r000002-update.json rev 1->2 chains from baseline, graph_digest_after sha256:651115ca... and node_ids (5) match current graph; feature rejection wrote no receipt (applied_count 0, write_count 0)"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "evidence": "pre-write validation by writer passed for add and update; post-commit validate-graph-schema violation_count 0 (no missing required keys)"},
+    {"id": "OUT1", "status": "external_pending", "judged_by": "live trial C02-OUT1-positive-mixed-artifacts-r2"},
+    {"id": "OUT2", "status": "external_pending", "judged_by": "live trial / acceptance test"},
+    {"id": "OUT3", "status": "external_pending", "judged_by": "live trial / acceptance test"}
+  ],
+  "independent_verifier": {"agent": "dev-graph:dev-graph-integrity-auditor", "verdict": "PASS", "graph_digest": "sha256:651115caa02dca5e975dd5ef4f81810505b784e8bf27080cd9b2f1b1f6255d4a", "graph_revision": 2}
+}

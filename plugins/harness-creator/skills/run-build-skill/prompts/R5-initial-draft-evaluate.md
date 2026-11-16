@@ -101,7 +101,7 @@
 - どちらも親contextで追加の30思考法診断を繰り返さない。
 
 ### 6.2 後続ゲート
-- 親は出力を `build-improvement-gate.py --review ...` で検査する。起動前の診断深度選択を改善実行の代理承認とせず、selected findingの範囲だけを後続に渡す。
+- 親は出力を `build-improvement-gate.py --review ...` で検査する。起動前の診断選択を改善実行や改善深度の代理承認とせず、selected findingの範囲だけを後続に渡す。
 
 ## Layer 7: UI / 提示層
 

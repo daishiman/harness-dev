@@ -2,7 +2,8 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-contract-finalize",
-    "skill_md_sha256": "54d332144f885a83eb8cecb08bebd2ce5afdbc07fd0f6eebcfd895cd011a1eec"
+    "skill_md_sha256": "86f399bb7d8d8ad567693d86259d9e2e0f8deca5e595c96aa01be8f14a3c0464",
+    "reviewed_skill_md_sha256": "54d332144f885a83eb8cecb08bebd2ce5afdbc07fd0f6eebcfd895cd011a1eec"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -41,5 +42,21 @@
     "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "install-portability 変更（外部変更 guard block の差し替え）に対する incremental profile の focused combined review。builder とは別 context の独立 evaluator が、現行 SKILL.md 全文、git diff HEAD（guard block だけで 15 行追加・3 行削除）、正本テンプレート（scripts/build-artifact-delivery.py）、同梱 resolver（plugins/contract-generator/scripts/extract-plugin-root.py）、skill-governance-adapters の guard script（pretool・pending 判定・cancel・execute）、plugin.json の dependencies を読み、(a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定して elegance と rubric に分けて投影した。決定論の確認: resolver の exit 0/1/2 を実測、CLAUDE_CONFIG_DIR と CODEX_HOME を差し替えた cache 模擬で同じ marketplace の最新 semver を選ぶことと未 install 時に exit 1 になることを確認、build-artifact-delivery.py --check・lint-sibling-plugin-paths.py・lint-vendored-ssot.py が OK、pytest（resolver と sibling path lint の 28 件）が pass。finding は low 3 件だけで high と medium は 0。PASS の射程は design claim（静的設計 adequacy）に限る。install 先での live trial や、Drive・Sheets・Slack への実際の外部変更は行っていない。30 思考法は実施しておらず、実施も申告しない。"
+  "notes": "install-portability 変更（外部変更 guard block の差し替え）に対する incremental profile の focused combined review。builder とは別 context の独立 evaluator が、現行 SKILL.md 全文、git diff HEAD（guard block だけで 15 行追加・3 行削除）、正本テンプレート（scripts/build-artifact-delivery.py）、同梱 resolver（plugins/contract-generator/scripts/extract-plugin-root.py）、skill-governance-adapters の guard script（pretool・pending 判定・cancel・execute）、plugin.json の dependencies を読み、(a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定して elegance と rubric に分けて投影した。決定論の確認: resolver の exit 0/1/2 を実測、CLAUDE_CONFIG_DIR と CODEX_HOME を差し替えた cache 模擬で同じ marketplace の最新 semver を選ぶことと未 install 時に exit 1 になることを確認、build-artifact-delivery.py --check・lint-sibling-plugin-paths.py・lint-vendored-ssot.py が OK、pytest（resolver と sibling path lint の 28 件）が pass。finding は low 3 件だけで high と medium は 0。PASS の射程は design claim（静的設計 adequacy）に限る。install 先での live trial や、Drive・Sheets・Slack への実際の外部変更は行っていない。30 思考法は実施しておらず、実施も申告しない。",
+  "sha_rebinds": [
+    {
+      "from_sha": "54d332144f885a83eb8cecb08bebd2ce5afdbc07fd0f6eebcfd895cd011a1eec",
+      "to_sha": "6ed2553435954b199512ec2bf622a27cd646a11b2d0cdaf65e8948f9371ea5ff",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:43Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "6ed2553435954b199512ec2bf622a27cd646a11b2d0cdaf65e8948f9371ea5ff",
+      "to_sha": "86f399bb7d8d8ad567693d86259d9e2e0f8deca5e595c96aa01be8f14a3c0464",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:52Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

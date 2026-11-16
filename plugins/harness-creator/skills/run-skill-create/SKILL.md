@@ -36,7 +36,7 @@ reference_refs:
   - ref-domain-task-spec-rubric
 # context-budget: orchestrationのみ。各子スキルがそれぞれの設計書を参照する。本スキルは05/06/07/13/23/25章のみ参照。
 feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)。content-review verdict の criteria_evaluated と突合
-  activation_state: semantic_evaluator_started
+  activation_state: gate_review_started
   max_iterations: 3
   criteria:
     - id: IN1
@@ -61,40 +61,25 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       derived_from: [CL-1, CL-2, CL-8, CL-11]
     - id: OUT2
       loop_scope: outer
-      text: 完了レポートの C1-C4 が run-build-skill の初稿診断 receipt (review.json / improvement-validation.json) の転記で、create 内で評価し直しておらず、receipt が無い場合は未診断と明記している
-      verify_by: elegant-review
+      text: 完了レポートの C1-C4 節が scripts/render-c1-c4-section.py の出力をそのまま貼ったもので、run-build-skill の初稿診断 receipt (review.json、改善した場合は improvement-result.json / post-target-manifest.json / improvement-validation.json) から描画され、create 内で評価し直しておらず、receipt が無い・壊れている・今の成果物と合わない場合は未診断と明記している
+      verify_by: script
       derived_from: [CL-9]
 # auto-backfilled by backfill-source-tier.py (doc/21)
 source: doc/ClaudeCodeスキルの設計書/
 source-tier: internal
 last-audited: 2026-05-19
 audit-trigger: quarterly
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
 
-本スキルの最小の実成果物はGate 1の`eval-log/skill-brief.json`とする。schema検証だけを最小guardとして通し、現物path・digest・要点を提示してGate 1の承認を得る。診断深度の4択はここでは聞かず、run-build-skillのStep 12.5が1回だけ記録した`diagnostic-choice.json`を`record_user_choice`として転記する。
+本スキルの最小の実成果物はGate 1の`eval-log/skill-brief.json`とする。schema検証だけを最小guardとして通し、現物path・digest・要点を提示してGate 1の承認を得る。現状で試すか診断するかの2択はここでは聞かず、run-build-skillのStep 12.5が1回だけ記録した`diagnostic-choice.json`を`record_user_choice`として転記する。
 
 ## Post-choice selected improvement execution
 
-accept-as-isでも、`workflow-manifest.json`の`gate_order`に残るGateとP0 lintと完了レポートはhandoff完了の条件として通す (決定論lintと利用者承認だけで、evaluatorは起動しない)。light/standard/detailedで増えるのはrun-build-skillのStep 12.6-12.8だけで、`semantic_evaluator_started`はbuild側で初稿診断が始まったことを指す。
+accept-as-isでも、`workflow-manifest.json`の`gate_order`に残るGateとP0 lintと完了レポートはhandoff完了の条件として通す (決定論lintと利用者承認だけで、evaluatorは起動しない)。diagnoseで増えるのはrun-build-skillのStep 12.6-12.8だけで、`semantic_evaluator_started`はbuild側で初稿診断が始まったことを指す。本スキル自身の状態は、diagnoseなら`diagnosis_delegated` (buildへ委譲) を経て`gate_review_started`へ進み、`semantic_evaluator_started`には入らない。本スキルのfeedback改善ループは`gate_review_started`の後だけ動く。
 release/exhaustiveは別の明示eventを必要とする。
 
 
@@ -114,14 +99,14 @@ release/exhaustiveは別の明示eventを必要とする。
 
 **入力**: topic (任意), mode ∈ {create, update}, brief_path (任意・E2 直接消費), handoff (任意・brief_path 併給時の parity preflight)
 **出力**:
-- `plugins/harness-creator/skills/<skill_name>/` 一式 (SKILL.md + references/ + scripts/)
+- `plugins/<plugin>/skills/<skill_name>/` 一式 (SKILL.md + references/ + scripts/。run-build-skill の `$OUT_BASE/<skill_name>/`)。`<plugin>` が `harness-creator` になるのは共通基盤の場合だけ
 - `eval-log/skill-build-trace.json` (`../run-build-skill/schemas/skill-build-trace.schema.json` 準拠。build の正本 schema をそのまま使う)
-- 共通基盤の場合は `plugins/harness-creator/.claude-plugin/plugin.json` 登録差分
-- 評価結果は新たに書かない。完了レポートは build の receipt (`eval-log/skill-build-trace.json#/reproducibility_gates/lint`、診断を選んだ場合の `eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/{review.json,improvement-validation.json}`) を参照する
-- `eval-log/handoff-<step>.json` (`schemas/handoff.schema.json` 準拠)
+- 生成先 plugin の `plugins/<plugin>/.claude-plugin/plugin.json` 登録差分 (共通基盤の場合は `plugins/harness-creator/.claude-plugin/plugin.json`)
+- 評価結果は新たに書かない。完了レポートは build の receipt (`eval-log/skill-build-trace.json#/reproducibility_gates/lint`、診断を選んだ場合の `eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/review.json`、改善した場合は同じ dir の `improvement-result.json` (改善後の C1-C4)・`post-target-manifest.json`・`improvement-validation.json` (Step 12.8 の合格印)) を参照する。C1-C4 節は `python3 "$PLUGIN_ROOT/skills/run-skill-create/scripts/render-c1-c4-section.py" --plugin <plugin> --skill <skill_name>` の出力をそのまま貼る
+- 各 phase の handoff JSON (path は `workflow-manifest.json` の `phases[].handoff` の path、`schemas/handoff.schema.json` 準拠)
 - 完了レポート (日本語本文、パラメーター名のみ英語)
 
-**完了条件**: build の lint receipt PASS + create 固有の P0 lint pass + 各遷移の明示的gate decision。C1-C4 は build の初稿診断 receipt を完了レポートへ転記する (receipt が無い accept-as-is は未診断と明記)。
+**完了条件**: build の lint receipt PASS + create 固有の P0 lint pass + 各遷移の明示的gate decision。C1-C4 は build の初稿診断 receipt から `scripts/render-c1-c4-section.py` で描画した節を完了レポートへそのまま貼る (receipt が無い・壊れている・今の成果物と合わない場合、script が未診断と出す)。
 
 **禁則**: ゲート判定なしに次フェーズへ進まない。人間承認gateはユーザー承認を必須とする。P0 lint 失敗の自動修正は禁止 (根本原因をユーザー提示)。build が済ませた lint と C1-C4 評価を本スキルで再実行しない。詳細は `## Key Rules`。
 
@@ -137,8 +122,8 @@ release/exhaustiveは別の明示eventを必要とする。
 2. **子スキルへの委譲**: 各フェーズは独立 Skill を Skill tool で起動 (`workflow-manifest.json` の `delegateSkill`)。本スキルは制御のみ。
 3. **失敗時の停止**: build の lint receipt が PASS でない、または create 固有の P0 lint が fail なら停止し findings 提示。
 4. **評価は build を正本にする**: C1-C4 は `run-build-skill` の初稿診断 (Step 12.5 で利用者が診断を選んだときだけ別 context で起動) の receipt を使い回し、本スキルで evaluator / elegant-review を起動しない。rubric governance は rubric を変更するときだけ利用者が `run-skill-rubric-governance` を明示的に呼ぶ。
-5. **handoff 保存**: 各ゲート通過時に `eval-log/handoff-<step>.json` を `schemas/handoff.schema.json` 準拠で残す。PostCompact hook で復元。
-6. **plugin/marketplace 登録は確認後**: legacy manifest.json は `build-manifest-registration-plan.py` の提案 → Gate 2.5 承認 → `--apply` の順。新形式 plugin.json plugin のルート `marketplace.json` / `bundles.json` 登録は `scripts/validate-plugin-completeness.py --fix`（append-only・冪等・書込後自己再検証）が担い、人間が PR diff で最終承認する（破壊的変更を含まない append-only ゆえ生成フロー内で自動実行可）。
+5. **handoff 保存**: 各ゲート通過時に `workflow-manifest.json` の `phases[].handoff` の path へ handoff JSON を `schemas/handoff.schema.json` 準拠で残す。PostCompact hook で復元。
+6. **plugin/marketplace 登録は確認後**: legacy manifest.json は `build-manifest-registration-plan.py --plugin plugins/<plugin>` の提案 → Gate 2.5 承認 → `--apply` の順。新形式 plugin.json plugin のルート `marketplace.json` / `bundles.json` 登録は `scripts/validate-plugin-completeness.py --fix`（append-only・冪等・書込後自己再検証）が担い、人間が PR diff で最終承認する（破壊的変更を含まない append-only ゆえ生成フロー内で自動実行可）。
    Codex 面は `run-codex-plugin-package` に委譲する。Claude plugin envelopeを持つ全pluginを対象に、新規/既存を状態から判定する同一upsertが `.codex-plugin/plugin.json` と `.agents/plugins/marketplace.json` を同期し、手書きの二重管理はしない。Codex固有値は `.codex-plugin-overrides.json` へ明示する。
    これに対し **CL-4c の `build-plugin-release.py` は承認境界の外側 (＝承認後) に置く**。理由は `validate-plugin-completeness.py --fix` と性質が違うため: `write_version()` は `plugin.json` の version 行を原文 in-place 置換し、そこから公開 `marketplace.json` (`sync_public_marketplace_version()`) と `.codex-plugin/plugin.json` (`sync_codex_manifest_version()`) を追従させる **既存行の書き換え**であり (さらに `_run()` が `bumped` 非空のとき `regenerate_config_version_lock()` で `config-version-lock.json` も再生成する)、append-only の安全性論拠がそのまま使えない。よって生成フロー内で自動実行してよいのは**読み取りのみの `--check`** に限る。version を実際に上げる実行は **Gate 2.5 承認後に、`--only <plugin>` を必ず付けて**行う — `_run()` は `only = set(args.only) or None` なので無指定は全 plugin 走査となり、本フローと無関係な変更済み plugin まで同じ実行で patch bump されるため、`--only` は範囲を宣言する必須引数として扱う。
 
@@ -158,7 +143,7 @@ release/exhaustiveは別の明示eventを必要とする。
 [Step 3.7 plugin-release-record] build-plugin-release.py --only <plugin> (内容 hash 記録 / patch 採番。Gate 2.5 承認後・--only 必須。Key Rule 6)
 [Step 4a p0-lint] create 固有 lint のみ (build と重複する lint は build-trace の lint receipt を再利用。fail→停止して findings を提示し、利用者が選んだときだけ build から 1 回やり直す) ─[Gate 2 diff]─▶
 [Step 4a.5 pkg-check] run-plugin-package-check (条件: kind==plugin-composition or 新規 plugin 横展開)
-[Step 7 report] C1-C4 は build の初稿診断 receipt を転記 (評価し直さない)
+[Step 7 report] C1-C4 は render-c1-c4-section.py が build の初稿診断 receipt から描画した節をそのまま貼る (評価し直さない)
 ```
 
 旧 Step 4b (design-evaluate) / 5 (elegant-review) / 6 (governance) は既定の流れから外した。rubric を変更するときだけ、利用者が `run-skill-rubric-governance` を明示的に呼ぶ。
@@ -189,10 +174,10 @@ release/exhaustiveは別の明示eventを必要とする。
 - [ ] `eval-log/skill-build-trace.json` の `reproducibility_gates.lint` が PASS で `lint_target_sha256` が今の skill ディレクトリ全体の digest と一致する (一致すれば build Step 4 の lint を使い回す。不一致なら covered_scripts をここで再実行し、1 本でも fail なら止めて提示する。`phases[id=p0-lint].build_lint_reuse`)。そのうえで `workflow-manifest.json` の `phases[id=p0-lint].commands` 全件 (create 固有分。lint-manifest-contents 含む) が exit 0。`TODO`/未展開 `{{...}}`/英語仮文の残存なし (パラメーター名除く) <!-- CL-7 -->
 - [ ] create/update 共通で `audit-capability-parity.py --plugin plugins/<plugin> --json` が PASS。Claude 固有 command/agent/hook は Codex skill 代替または理由・replacement 付き omission contract を持つ。SKILL/promptのplugin-root付き実行行はowner SKILLに `runtime_root_policy: host-skill-path` とRuntime root本文契約を必須とし、bare `CLAUDE_PLUGIN_ROOT`、cwd推測、literal placeholderを残さない。env unset + foreign cwdでもabsolute owner `SKILL.md` pathからmanifest祖先を解決できる <!-- CL-14 -->
 - [ ] Gate 2 で `git diff <skill_path>` + build-trace を提示し承認済み <!-- CL-8 -->
-- [ ] 完了レポートの C1-C4 が `run-build-skill` の初稿診断 receipt (`eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/review.json`、改善した場合は `improvement-validation.json`) の転記で、本スキルで evaluator / elegant-review を起動していない。receipt が無い (accept-as-is) 場合は未診断と明記している <!-- CL-9 -->
+- [ ] 完了レポートの C1-C4 節が `python3 "$PLUGIN_ROOT/skills/run-skill-create/scripts/render-c1-c4-section.py" --plugin <plugin> --skill <skill_name>` の出力 (`run-build-skill` の初稿診断 receipt `eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/review.json`、改善した場合は同じ dir の `improvement-result.json` (改善後の C1-C4) と `post-target-manifest.json`・`improvement-validation.json` から描画) をそのまま貼ったもので、本スキルで evaluator / elegant-review を起動していない。receipt が無い (accept-as-is)・壊れている・今の成果物と合わない場合は script の出力どおり未診断と明記している <!-- CL-9 -->
 - [ ] 既定の流れで `run-skill-rubric-governance` を起動していない。rubric を変更した場合だけ、利用者が明示的に呼んだ governance の結果を完了レポートに記録している <!-- CL-11 -->
-- [ ] 各ゲート通過時に `eval-log/handoff-<step>.json` が `schemas/handoff.schema.json` 準拠で保存されている <!-- CL-12 -->
-- [ ] 完了レポート (下記項目: mode/gates_passed/creator_kit_registration/build_lint_receipt/build_evaluation_receipt/build_stage/deferred_to_release/open_questions。draft なら後回しにした release 検証の件数と id を `deferred_to_release` に書き、release 検証が要るときは `Skill(run-build-skill, args=[skill_name, kind, --mode=update, --stage release])` で続けられると 1 行添える) が日本語本文で提示されている (パラメーター名のみ英語) <!-- CL-13 exempt: レポート提示の運用項目。完了レポート契約は本文で規定済み -->
+- [ ] 各ゲート通過時に `workflow-manifest.json` の `phases[].handoff` の path へ handoff JSON が `schemas/handoff.schema.json` 準拠で保存されている <!-- CL-12 -->
+- [ ] 完了レポート (下記項目: mode/gates_passed/creator_kit_registration/build_lint_receipt/build_evaluation_receipt/build_stage/deferred_to_release/open_questions。build_evaluation_receipt は `render-c1-c4-section.py` の出力をそのまま貼る。draft なら後回しにした release 検証の件数と id を `deferred_to_release` に書き、release 検証が要るときは `Skill(run-build-skill, args=[skill_name, kind, --mode=update, --stage release])` で続けられると 1 行添える) が日本語本文で提示されている (パラメーター名のみ英語) <!-- CL-13 exempt: レポート提示の運用項目。完了レポート契約は本文で規定済み -->
 
 ### ゴールシークループ
 
@@ -201,14 +186,17 @@ release/exhaustiveは別の明示eventを必要とする。
 - **未達評価の単位はゲート**: `workflow-manifest.json` の `gate_order` 順に「未承認」とみなして都度埋める (Gate 番号順の直書き禁止、順序正本は manifest)。人間承認gateは AskUserQuestion (`prompts/R2-gate-review.md`) で承認を取る。
 - **委譲先 (子 Skill)**: `run-skill-elicit` / `run-build-skill` (C1-C4 の初稿診断も build 側で完結する)。Notion 指定ありの非技術者 intake は `skill-intake` 完了証跡を先に検証する。本スキルは制御のみ、各子が自設計書を参照。
 - **評価を重ねない**: C1-C4 は build の初稿診断 receipt を転記し、本スキルで evaluator / elegant-review / governance reviewer を起動しない。
-- **差し戻し**: build の lint receipt が PASS でない、または P0 lint fail なら自動で再実行しない。失敗した lint と根本原因を利用者に提示して止め、利用者が修正と再実行を選んだときだけ `run-build-skill` から 1 回やり直す。
+- **差し戻し**: build の lint receipt が PASS でない、または P0 lint fail なら自動で再実行しない。失敗した lint と根本原因を利用者に提示して止め、利用者が修正と再実行を選んだときだけ `run-build-skill` から 1 回やり直す。Gate の差戻しも同じで、戻り先は `references/gate-templates.md` の各 Gate の差戻し先、利用者が選ぶたびに 1 回やり直し、同じ Gate で通算 3 周まで (`prompts/R2-gate-review.md` の CONST_004)。
 - **lint 自動修正禁止**: 根本原因をユーザー提示し LLM 判断で勝手に直さない。
 - 各フェーズ phase=id・entryHook/exitHook・dependsOn・fatal_exit_codes は `workflow-manifest.json` 参照。プロンプト R1/R2 は `prompts/*.md`。
-- **`### ゴールシーク配線` は持たない**: 本スキルは子スキルへ渡す orchestrator で、反復は利用者のゲート判断でしか起きない。中間成果物の anchor (intermediate.jsonl / original_goal など) は子スキル側が持つので、`lint-goal-seek.py` が出す WARN 3 件は対象外として `GRANDFATHERED_WARNINGS` に登録してある。
+
+### ゴールシーク配線を持たない理由
+
+本スキルは子スキル (`run-skill-elicit` / `run-build-skill`) へ渡す orchestrator で、反復は利用者のゲート判断でしか起きず、自分では再実行しない (上の「差し戻し」)。差し戻しで build をやり直すときも同じ run_id を渡し、1 run で起動してよい AI context の総数は `run-elegant-review/references/convergence-policy.json` の `run_model_action_budget` を正本として build 側の gate が数える (尽きれば evaluator も executor も起動しない)。各周の成果物は各ゲートの handoff JSON と子スキルの記録 (`eval-log/skill-brief.json`・`eval-log/skill-build-trace.json`) に残るので、中間成果物の anchor を重ねて持たない。
 
 ## Gotchas
 
-1. **Gate skip 禁止**: 「次へ」を自動推測しない。人間承認gateは明示確認が必須。
+1. **Gate skip 禁止**: 承認を自動推測しない。人間承認gateは選択肢「承認」が明示的に選ばれたときだけ通し、自由入力の「OK」「了解」は承認にしない。
 2. **評価の二重化禁止**: build の初稿診断 (選んだときだけ別 context の evaluator) を正本とし、本スキルで同じ成果物を評価し直さない。
 3. **lint 失敗時の自動修正禁止**: 根本原因をユーザー提示。LLM 判断で勝手に直さない。
 4. **mode=update 時の改名**: `run-skill-rename` に委譲。本スキル対象外。

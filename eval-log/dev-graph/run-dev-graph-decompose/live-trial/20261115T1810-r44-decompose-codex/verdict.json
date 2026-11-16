@@ -1,0 +1,196 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-decompose",
+  "args": "",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 1,
+  "gate_kind": "contractual",
+  "gate_contract_evidence": [
+    "frontmatter.allowed-tools:AskUserQuestion"
+  ],
+  "goal_verdict": {
+    "result": "FAIL",
+    "blockers": [
+      "scenario decompose-macro-promotion-gate-beads-fixture-standard-v3-codex-v1 の task_args_template と実 args が乖離: template のみ ['--dry-run', '--repo-root'] (template='<natural-language macro request adding two dependent features on top of LT-FEATURE-001 with tracker_binding beads> --repo-root <contained-fixture-repo> --dry-run')"
+    ]
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "d926e7b046974bbb4af3dc8d1931cd699c503742c5216dbbf7706d64c21a1ad0",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "fresh-evaluator-decompose-codex-r44-20261115"
+    },
+    "transcript_sha256": "9ce812becbc3ebfdc798948175ea65d7cdb20349131fbf827b93dde5bd4fc204",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl",
+      "transcript/subagents/01a1de7d-ae4f-7ea2-bb68-763625afa682.jsonl",
+      "transcript/subagents/01a1de7d-ddc5-76b0-9817-76f9c5354a95.jsonl",
+      "native-collection-validation.json",
+      "native-run-state.json",
+      "native-exec/turn-001.stderr.log",
+      "native-exec/turn-002.stderr.log",
+      "project-projection.json",
+      "fixture-publication-receipt.json",
+      "public-copy-receipt.json",
+      "out/status.json",
+      "fixture-final/artifact-choice-request.json",
+      "fixture-final/fake-bd-calls.jsonl",
+      "fixture-final/.dev-graph/state/graph.json",
+      "fixture-final/.dev-graph/cache/decompose-input/baseline.json",
+      "fixture-final/.dev-graph/cache/decompose-input/macro-input.json",
+      "fixture-final/.dev-graph/cache/decompose-input/c02-preview.json",
+      "fixture-final/.dev-graph/cache/decompose-input/macro-report.json",
+      "fixture-final/.dev-graph/cache/decompose-input/publication-complete-report.json",
+      "fixture-final/.dev-graph/cache/decompose-input/feature-render-diff-c28.json",
+      "fixture-final/.dev-graph/cache/decompose-input/feature-render-diff-summary-c28.json",
+      "fixture-final/.dev-graph/cache/decompose-input/LT-FEATURE-001-P01-c28.json",
+      "fixture-final/.dev-graph/cache/decompose-input/LT-FEATURE-001-P13-c28.json",
+      "fixture-final/eval-log/run-dev-graph-decompose-artifact-choice.json",
+      "fixture-final/eval-log/run-dev-graph-decompose-goal-spec.json",
+      "fixture-final/eval-log/run-dev-graph-decompose-progress.json",
+      "fixture-final/eval-log/run-dev-graph-decompose-intermediate.jsonl",
+      "fixture-final/eval-log/integrity-audit.json",
+      "fixture-final/eval-log/semantic-evaluation.json",
+      "fixture-final/eval-log/scenario-result.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-decompose"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "FAIL",
+    "verdict": "DEGRADED"
+  },
+  "skill_dir_tree_sha": "cbde23aa4fcb1265b3ea2e87ad67177d5f655250f0b8a90e1944cd64b0a50946",
+  "transcript_sha256": "9ce812becbc3ebfdc798948175ea65d7cdb20349131fbf827b93dde5bd4fc204",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/orca/workspaces/harness/harness-creatorの改善/eval-log/dev-graph/run-dev-graph-decompose/live-trial/20261115T1810-r44-decompose-codex/out",
+          "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/cases/run-dev-graph-decompose/fx"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 0,
+    "single_input_autonomous": false,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "6b1720aafb5f9ff398bbcc120c28c00d1699c1c13047a5ca181be785f0029d42"
+  },
+  "tier": "live",
+  "downgrade_reason": "goal-proxy 乖離 (完走するが目的を果たさない)",
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 370.0
+  },
+  "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-codex-scenarios.json",
+    "scenario_id": "decompose-macro-promotion-gate-beads-fixture-standard-v3-codex-v1",
+    "required_observations": [
+      "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node",
+      "every new node is a draft preview and no feature is registered directly through a plain C02 add",
+      "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes",
+      "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the macro feature+architecture DAG including the existing nodes is acyclic and contains no task-granularity node",
+        "evidence_ref": "fixture-final/eval-log/integrity-audit.json"
+      },
+      {
+        "index": 2,
+        "observation": "every new node is a draft preview and no feature is registered directly through a plain C02 add",
+        "evidence_ref": "fixture-final/.dev-graph/cache/decompose-input/macro-report.json"
+      },
+      {
+        "index": 3,
+        "observation": "the binding=beads projection preview through C28 bd-bridge.py targets only confirmed/pass/readiness-complete nodes and 0 pre-evaluation draft nodes",
+        "evidence_ref": "fixture-final/.dev-graph/cache/decompose-input/publication-complete-report.json"
+      },
+      {
+        "index": 4,
+        "observation": "the original graph digest is unchanged and Beads, GitHub, and Projects writes are 0",
+        "evidence_ref": "fixture-final/.dev-graph/cache/decompose-input/publication-complete-report.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "<natural-language macro request adding two dependent features on top of LT-FEATURE-001 with tracker_binding beads> --repo-root <contained-fixture-repo> --dry-run",
+      "template_flags": [
+        "--dry-run",
+        "--repo-root"
+      ],
+      "actual_flags": [],
+      "missing_flags": [
+        "--dry-run",
+        "--repo-root"
+      ],
+      "extra_flags": [],
+      "matches": false
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 5000000,
+      "max_wall_clock_s": 1200
+    },
+    "resource_usage": {
+      "wall_clock_s": 370.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "68d4c414c4fb6b8ff4d09853ad97c14f1e1735923dfce105ad8b493a1b035b64",
+      "tokens": {
+        "input_tokens": 3868550,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 19833,
+        "total_tokens": 3888383,
+        "assistant_messages": 47,
+        "transcript_files": 3,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

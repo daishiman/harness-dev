@@ -2,7 +2,8 @@
   "target": {
     "plugin": "ubm-goal-setting",
     "skill": "run-ubm-goal-setting",
-    "skill_md_sha256": "6669733741cca3d61c211b3dae091cda35f6843123151f19ffa59a915479dafc"
+    "skill_md_sha256": "bf1af2fa20cfa02a17b3adb5eeaf33d408ac583e310f42998f245d8a7596b03c",
+    "reviewed_skill_md_sha256": "6669733741cca3d61c211b3dae091cda35f6843123151f19ffa59a915479dafc"
   },
   "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
   "reviewed_at": "2026-11-03T13:30:01Z",
@@ -41,5 +42,21 @@
     "hook_trigger": "manual:ci-stale-sha",
     "next_action": "none"
   },
-  "notes": "[elegance] incremental の focused combined review。共通部品A〜G、提出用と管理用の同値、期日、1ターン3問、層間の金額2値が、SKILL.md の手順と矛盾しないかを見た。読んだ見出しは output-formats.md の共通部品A〜G、簡潔な記述の共通原則、月報の項目保持と同期、月報の提出用と管理用の節、四層連携、data-contract.md の層間一致検査と四層横断照合、validation-gates.md の決定論ゲートと IN3 の1年層の引数。live trial（OUT2 の verify_by: live-trial）はしていない。OUT2 は、手順が AskUserQuestion の先の Phase3 対話→Phase5 検証→Phase6 の埋め込み更新を live trial に渡す、という静的確認だけ。OUT1 の受入テストもこのレビューでは再実行していない。手順と frontmatter の対応だけを見た。SKILL.md の sha256 は 6669733741cca3d61c211b3dae091cda35f6843123151f19ffa59a915479dafc（python3 の hashlib.sha256 で対象ファイルのバイト列を計算）。判定: (a) 矛盾 0。上の5点は手順と食い違わない。(b) 漏れ 0。A〜G の見出しは参照先にあり、手順のポインタと対応する。(c) 規約との整合は低い不一致1件（N1）。ゲートの --type は手順上 monthly で、参照節の month は choices に無い。(d) 依存関係の切断は 0。1年層の引数は validation-gates、横断照合の一覧は data-contract §3.1.3、版履歴は CHANGELOG で、ポインタは解決できる。(e) rubric の high は 0。"
+  "notes": "[elegance] incremental の focused combined review。共通部品A〜G、提出用と管理用の同値、期日、1ターン3問、層間の金額2値が、SKILL.md の手順と矛盾しないかを見た。読んだ見出しは output-formats.md の共通部品A〜G、簡潔な記述の共通原則、月報の項目保持と同期、月報の提出用と管理用の節、四層連携、data-contract.md の層間一致検査と四層横断照合、validation-gates.md の決定論ゲートと IN3 の1年層の引数。live trial（OUT2 の verify_by: live-trial）はしていない。OUT2 は、手順が AskUserQuestion の先の Phase3 対話→Phase5 検証→Phase6 の埋め込み更新を live trial に渡す、という静的確認だけ。OUT1 の受入テストもこのレビューでは再実行していない。手順と frontmatter の対応だけを見た。SKILL.md の sha256 は 6669733741cca3d61c211b3dae091cda35f6843123151f19ffa59a915479dafc（python3 の hashlib.sha256 で対象ファイルのバイト列を計算）。判定: (a) 矛盾 0。上の5点は手順と食い違わない。(b) 漏れ 0。A〜G の見出しは参照先にあり、手順のポインタと対応する。(c) 規約との整合は低い不一致1件（N1）。ゲートの --type は手順上 monthly で、参照節の month は choices に無い。(d) 依存関係の切断は 0。1年層の引数は validation-gates、横断照合の一覧は data-contract §3.1.3、版履歴は CHANGELOG で、ポインタは解決できる。(e) rubric の high は 0。",
+  "sha_rebinds": [
+    {
+      "from_sha": "6669733741cca3d61c211b3dae091cda35f6843123151f19ffa59a915479dafc",
+      "to_sha": "9be43dbaf11de84c76368d72ee7f74e56d2438f4f93d9270e90966d86fa8fd4d",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:51Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "9be43dbaf11de84c76368d72ee7f74e56d2438f4f93d9270e90966d86fa8fd4d",
+      "to_sha": "bf1af2fa20cfa02a17b3adb5eeaf33d408ac583e310f42998f245d8a7596b03c",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:43:00Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

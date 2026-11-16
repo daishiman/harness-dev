@@ -2,7 +2,9 @@
   "target": {
     "plugin": "spec-drift-guardian",
     "skill": "run-spec-drift-triage",
-    "skill_md_sha256": "3a55e67b7ac166827e663d3f58816a26c9e5d5309afd0b0de31a03e6c7107452"
+    "skill_md_sha256": "af597a50ccefc80c4951f0a666fda4e0b0fb831869d0d47d6aecfc83dc5cdbc1",
+    "reviewed_skill_md_sha256": "af597a50ccefc80c4951f0a666fda4e0b0fb831869d0d47d6aecfc83dc5cdbc1",
+    "skill_dir_digest": "00fcb875da2cee5765de4cedc9e3ccec572765b8e24e9b00de96976297de0727"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,11 +13,11 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "review-runtime-profiles (focused combined content review, incremental profile)",
-  "reviewed_at": "2026-08-24T01:04:16Z",
-  "iterations": 1,
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-15T09:09:20Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -24,15 +26,25 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "fork は inline に統一され、C11/C08/C09 の決定論 gate と triage-report 組立てを main context が所有する一方、独立性は下流 C03 spec-impact-verifier が担うため、同じ周回を不要にSubAgentへ移す矛盾がない。",
-      "完全diff・commit pair・digestをC11からverbatim継承し、truncated previewや複数commit pairをfail-closedにする境界が Purpose、Key Rules、Gotchas、IN1/OUT1で一貫する。",
-      "caller root を `${CLAUDE_PROJECT_DIR:?}` でfail-closed固定し、共通anchor validatorが intermediate.jsonl のrequired_keysとoriginal_goal hashを検証する実行可能配線を持つ。"
+      "iteration 1 の C2 の漏れが直った。ゴールシーク配線が goal-spec の path (${CLAUDE_PROJECT_DIR}/eval-log/run-spec-drift-triage-goal-spec.json) を持つ。これは frontmatter から消した goal_seek.spec と同じ値である。goal-spec が無いときの扱いも、goal-seek-paradigm.md の iteration=0 の規定 (AI 推定値を採用し、goal-spec の constraints に inferred と記録する) に合っている。",
+      "iteration 1 の C3 の不整合が直った。goal-spec から読む key が `goal` になり、それを `original_goal` として転記すると書いている。run-goal-elicit の goal-spec.schema.json (goal は string、constraints は string の array) と、paradigm の『goal-spec.json.goal をそのまま転記』の両方に合う。",
+      "直した段落は新しい矛盾を生んでいない。段落の progress と intermediate の path は、ゴールシーク検証の validator コマンド (SKILL.md の 188-189 行) と同じ字面である。『original_goal を SHA-256 化して progress の original_goal_hash に固定する』は、validator が検査する『original_goal_hash == hashlib.sha256(original_goal)』と一致する。参照先の見出し『### ゴール (Goal)』も、実在する見出しと同じ字面である。",
+      "依存の向きは iteration 1 から変わらず閉じている。validator が読むのは progress と intermediate だけで、goal-spec は本文の手順の中で読む。本文は goal_seek.<key> の名前で値を読ませないので、paradigm の『frontmatter に同じ値を重ねない』に従い、frontmatter に spec や progress を戻す必要は無い。決定論段 C11/C08/C09 の exit code、C03 を /rubric-sync の Step2 が起動すること、C10 の --triage-report が単数で digest の一致を求めることと Gotcha 4 が噛み合うことも、そのまま保たれている。"
     ],
-    "negative_feedback": [],
-    "iteration": 1,
+    "negative_feedback": [
+      "[low][改善提案] ゴールシーク配線: 判定を止める違反ではない。goal-spec が無いときは『### ゴール (Goal)』の文を推定ゴールにする。しかしこの文には対象の issue が入っていない。また progress と intermediate の path は skill ごとに 1 本で、issue ごとには分かれていない。このため、別の issue の周回の行が同じ intermediate に重なっても、original_goal が同じ文なので validator の不変性の検査を通ってしまう。つまりアンカーが、どの issue の周回かを区別できない。issue のすり替えそのものは、C11 の --issue と digest、triage-report の issue と diff_sha256、C10 の digest 一致が決定論で止めるので、害は小さい。直すなら、推定ゴールの文に対象の issue 番号 (--issue N) を添える。そうすれば paradigm の例が求める『original_goal の具体性』を満たす。"
+    ],
+    "iteration": 2,
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "Focused combined incremental content review。30思考法は未実施。現SKILL全文、diff、R1-R3責務、C11→C08→C09→C03境界、feedback_contract、anchor commandを読んだ。SubAgent削除後も独立判定C03は下流に保持され、main context triageと自己肯定抑制の責務が分離している。runtime/goal-seek lintは0、plugin testsは103 passed。未解決medium/high 0。PASSは静的設計adequacyであり新規live trialを主張しない。"
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "ゴールシーク配線"
+      ]
+    }
+  },
+  "notes": "iteration 1 (FAIL: C2 の goal-spec の path の漏れ medium、C3 の key 名 low) を受けて呼び出し元が直したあとの再評価 (iteration 2、focused combined review、1 context)。30 思考法は使っていない。今の SKILL.md の全文を読み、前回の PASS の版と diff した。差分は、frontmatter の goal_seek.spec と goal_seek.progress の 2 行の削除と、ゴールシーク配線の 1 段落の書き換えだけだった。直した段落は、goal-seek-paradigm.md の goal_seek の項と iteration=0 の規定、run-goal-elicit の goal-spec.schema.json の goal と constraints、validator のコマンドと照らした。plugin の中に goal-spec 系の path や goal_seek.<key> を読む箇所がほかに無いことは git grep で確かめた。C1-C4 の違反は無いので PASS にした。negative_feedback の 1 件は low の改善提案で、判定を止めない。rubric 側の FM-005 (low) と PD-002 (medium) は、ここには重ねて書かない。"
 }

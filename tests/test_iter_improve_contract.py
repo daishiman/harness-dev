@@ -4,6 +4,8 @@
   1. schemas/interrogation-log.schema.json (D11 審問ログ契約) の正負検証。
      独立判定の発火条件 (|score_delta|>10 または評価経路接触) と
      「緩め判定 / 緩め禁止抵触 → 破棄必須」の機械強制を固定する。
+     verdict を出した行は judgments (判定した diff ごとの結論) を持ち、
+     verdict はその集約と食い違わないことも固定する。
   2. SKILL.md frontmatter 契約: validate-frontmatter.py 通過 +
      feedback_contract.criteria が feedback_contract_ssot.validate_criteria を通過。
   3. 本文が参照する SSOT (convergence-policy loop_bounds.iter_improve /
@@ -78,6 +80,18 @@ def _is_valid(validator, entry) -> bool:
     return not list(validator.iter_errors(entry))
 
 
+PRIOR_SHA_1 = "a1b2c3d"
+PRIOR_SHA_2 = "0f9e8d7c6b5a49382716"
+
+
+def _current_edit(verdict: str) -> dict:
+    return {"subject": "current_edit", "commit_sha": None, "verdict": verdict}
+
+
+def _prior_commit(sha: str, verdict: str) -> dict:
+    return {"subject": "prior_commit", "commit_sha": sha, "verdict": verdict}
+
+
 # --- 正例 ------------------------------------------------------------------
 
 
@@ -92,6 +106,7 @@ def test_score_surge_with_independent_check_passes(validator):
         "required": True,
         "verdict": "generator",
         "agent_independent": True,
+        "judgments": [_prior_commit(PRIOR_SHA_1, "generator")],
     }
     assert _is_valid(validator, e)
 
@@ -103,6 +118,7 @@ def test_eval_path_touch_with_independent_check_passes(validator):
         "required": True,
         "verdict": "generator",
         "agent_independent": True,
+        "judgments": [_current_edit("generator")],
     }
     assert _is_valid(validator, e)
 
@@ -114,6 +130,27 @@ def test_loosening_verdict_discarded_passes(validator):
         "required": True,
         "verdict": "loosening",
         "agent_independent": True,
+        "judgments": [_prior_commit(PRIOR_SHA_1, "loosening")],
+    }
+    e["discarded"] = True
+    assert _is_valid(validator, e)
+
+
+def test_overlapping_triggers_record_each_diff_passes(validator):
+    # 急変と評価経路接触が重なった iter: 今回の edit と前 iter の commit 2 本を別々に判定し、
+    # 1 本でも loosening なら verdict は loosening、改善案は破棄
+    e = _base_entry()
+    e["score_delta"] = 14.0
+    e["proposed_changes"][0]["touches_evaluation_path"] = True
+    e["independent_check"] = {
+        "required": True,
+        "verdict": "loosening",
+        "agent_independent": True,
+        "judgments": [
+            _current_edit("generator"),
+            _prior_commit(PRIOR_SHA_1, "generator"),
+            _prior_commit(PRIOR_SHA_2, "loosening"),
+        ],
     }
     e["discarded"] = True
     assert _is_valid(validator, e)
@@ -174,6 +211,7 @@ def test_verdict_without_agent_independence_fails(validator):
         "required": True,
         "verdict": "generator",
         "agent_independent": False,  # 別個体性なしの判定は無効 (D11)
+        "judgments": [_prior_commit(PRIOR_SHA_1, "generator")],
     }
     assert not _is_valid(validator, e)
 
@@ -188,6 +226,7 @@ def test_loosening_verdict_not_discarded_fails(validator):
         "required": True,
         "verdict": "loosening",
         "agent_independent": True,
+        "judgments": [_prior_commit(PRIOR_SHA_1, "loosening")],
     }
     e["discarded"] = False  # 外部判定「緩め」を無視して採用するのは違反
     assert not _is_valid(validator, e)
@@ -200,6 +239,74 @@ def test_forbidden_violation_not_discarded_fails(validator):
         "matched_rule": "threshold を下げる",
     }
     e["discarded"] = False
+    assert not _is_valid(validator, e)
+
+
+# --- 負例: judgments (判定した diff と戻した commit の記録) ------------------
+
+
+def _surge_entry(judgments, verdict="generator") -> dict:
+    e = _base_entry()
+    e["score_delta"] = 15.0
+    e["independent_check"] = {
+        "required": True,
+        "verdict": verdict,
+        "agent_independent": True,
+        "judgments": judgments,
+    }
+    e["discarded"] = verdict == "loosening"
+    return e
+
+
+def test_verdict_without_judgments_fails(validator):
+    e = _surge_entry([_prior_commit(PRIOR_SHA_1, "generator")])
+    del e["independent_check"]["judgments"]  # どの diff を判定したかが残らない
+    assert not _is_valid(validator, e)
+
+
+def test_null_verdict_with_judgments_fails(validator):
+    e = _base_entry()
+    e["independent_check"]["judgments"] = [_current_edit("generator")]  # 判定していない行に結論がある
+    assert not _is_valid(validator, e)
+
+
+def test_loosening_judgment_with_generator_verdict_fails(validator):
+    e = _surge_entry(
+        [_prior_commit(PRIOR_SHA_1, "generator"), _prior_commit(PRIOR_SHA_2, "loosening")],
+        verdict="generator",  # 集約が judgments と食い違う
+    )
+    assert not _is_valid(validator, e)
+
+
+def test_loosening_verdict_without_loosening_judgment_fails(validator):
+    e = _surge_entry([_prior_commit(PRIOR_SHA_1, "generator")], verdict="loosening")
+    assert not _is_valid(validator, e)
+
+
+@pytest.mark.parametrize(
+    "judgment",
+    [
+        {"subject": "prior_commit", "commit_sha": None, "verdict": "generator"},  # どの commit か不明
+        {"subject": "current_edit", "commit_sha": PRIOR_SHA_1, "verdict": "generator"},  # commit 前なのに sha
+        {"subject": "prior_commit", "commit_sha": "HEAD~1", "verdict": "generator"},  # sha でない参照
+        {"subject": "prior_commit", "verdict": "generator"},  # commit_sha 欠落
+        {"subject": "other", "commit_sha": None, "verdict": "generator"},  # 未知の subject
+    ],
+)
+def test_malformed_judgment_fails(validator, judgment):
+    e = _surge_entry([judgment])
+    assert not _is_valid(validator, e)
+
+
+def test_empty_or_duplicate_judgments_fail(validator):
+    assert not _is_valid(validator, _surge_entry([]))
+    j = _prior_commit(PRIOR_SHA_1, "generator")
+    assert not _is_valid(validator, _surge_entry([j, dict(j)]))
+
+
+def test_eval_path_touch_without_current_edit_judgment_fails(validator):
+    e = _surge_entry([_prior_commit(PRIOR_SHA_1, "generator")])
+    e["proposed_changes"][0]["touches_evaluation_path"] = True  # 今回の edit を判定していない
     assert not _is_valid(validator, e)
 
 
@@ -225,6 +332,7 @@ def test_invalid_verdict_enum_fails(validator):
         "required": True,
         "verdict": "maybe",
         "agent_independent": True,
+        "judgments": [_current_edit("generator")],
     }
     assert not _is_valid(validator, e)
 
@@ -322,6 +430,17 @@ def test_goal_pass_is_the_only_success_stop_and_score_remains_diagnostic():
     assert "成功停止の正本は current observational GOAL PASS" in scope
 
 
+def test_prior_commit_revert_closes_within_allowed_tools():
+    # 前 iter の commit は記録した sha で特定し、Edit と git diff だけで戻す (git log / revert の権限を足さない)
+    fm = _frontmatter()
+    assert [t for t in fm["allowed-tools"] if "git" in t] == ["Bash(git diff *)"]
+    body = SKILL_MD.read_text(encoding="utf-8")
+    assert "`commits[].sha`" in body
+    assert "`git diff --name-status <最古の sha>~1 <最新の sha>`" in body
+    assert "file を足さない・消さない" in body
+    assert "commit message の iter 番号で特定" not in body
+
+
 def test_task_graph_state_is_isolated_per_target_run():
     goal_seek = _frontmatter()["goal_seek"]
     for key in ("progress", "intermediate"):
@@ -342,3 +461,18 @@ def test_goal_spec_has_forbidden_loosening_field():
     schema = json.loads(GOAL_SPEC_SCHEMA.read_text(encoding="utf-8"))
     assert "forbidden_loosening" in schema["properties"]
     assert "forbidden_loosening" not in schema.get("required", [])
+
+
+def test_task_graph_max_loops_covers_every_item_of_max_iter():
+    # engine 周回は 1 item に 1 周回。GOAL DECLARATION の 1 item + 1 改善 iter の局面数 × max_iter が上限
+    import re
+
+    body = SKILL_MD.read_text(encoding="utf-8")
+    match = re.search(r"iter 1 を `([^`]+)` の順で回す", body)
+    assert match, "配線節の iter 1 の局面列が見つからない"
+    per_iter = len(match.group(1).split(" → "))
+    assert per_iter == 8
+    policy = json.loads(CONVERGENCE_POLICY.read_text(encoding="utf-8"))
+    max_iter = policy["loop_bounds"]["iter_improve"]["params"]["max_iter"]
+    assert _frontmatter()["goal_seek"]["max_loops"] == 1 + per_iter * max_iter
+    assert "`1 + 8 × max_iter`" in body

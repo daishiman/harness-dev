@@ -175,6 +175,10 @@ _BYTECODE_SUFFIXES = (".pyc", ".pyo")
 # macOS の Finder がディレクトリを開くと置く .DS_Store も配布物ではない。正本とコピーの片方だけに
 # できると、中身が同じでも digest が食い違い、配布コピーが独立 skill として重複計上される。
 _FINDER_METADATA = ".DS_Store"
+# pytest は起動したディレクトリに .pytest_cache (前回の失敗の記録など) を作る。skill のディレクトリで
+# pytest を回しただけで content-review の digest が変わり、PASS の verdict が stale になる。
+# .gitignore の対象で CI の checkout には無いので、置いたまま記録した digest は CI の値とも食い違う。
+_PYTEST_CACHE_DIR = ".pytest_cache"
 
 
 def _is_bytecode_cache(relative: Path) -> bool:
@@ -182,19 +186,62 @@ def _is_bytecode_cache(relative: Path) -> bool:
 
 
 def _is_local_artifact(relative: Path) -> bool:
-    """digest に含めない、手元で生成されるファイル (bytecode cache と .DS_Store)。"""
-    return _is_bytecode_cache(relative) or relative.name == _FINDER_METADATA
+    """digest に含めない、手元で生成されるファイル (bytecode cache・pytest cache・.DS_Store)。"""
+    return (
+        _is_bytecode_cache(relative)
+        or _PYTEST_CACHE_DIR in relative.parts
+        or relative.name == _FINDER_METADATA
+    )
 
 
-def directory_content_sha256(root: Path) -> str | None:
+def _is_excluded(relative: str, exclude: frozenset[str]) -> bool:
+    return any(relative == item or relative.startswith(item + "/") for item in exclude)
+
+
+# content-review verdict の target.skill_dir_digest が結び付く範囲。SKILL.md は
+# target.skill_md_sha256 が bytes で結ぶので外す。scripts/・tests/・fixtures/ はモデルが
+# 指示として読むものではなく、挙動は test と coverage 記録が確かめるので外す。
+# references/・prompts/・schemas/・templates/ などモデルが読む文書は含める
+# (references/ を変えても verdict が古くならなかった穴を塞ぐ。harness-g67)。
+CONTENT_REVIEW_DIGEST_EXCLUDE = frozenset({"SKILL.md", "scripts", "tests", "fixtures"})
+
+
+def content_review_dir_digest(skill_dir: Path) -> str | None:
+    """content-review verdict の target.skill_dir_digest に書く値。"""
+    return directory_content_sha256(skill_dir, exclude=CONTENT_REVIEW_DIGEST_EXCLUDE)
+
+
+# 改善後の範囲つき再レビュー (scoped re-review) で verdict を結び直せる範囲 (harness-g67)。
+# 範囲つき再レビューは変えた節だけを見るので、変更が大きい・契約や基準に触れる・何度も重なる
+# ときは全体の再レビューに戻す。sync-content-review-sha.py --scoped-review (書く側) と
+# scripts/lint-content-review.py の連鎖検査 (読む側) が同じ値を使う。
+SCOPED_REVIEW_KIND = "scoped-content-review"
+SCOPED_REVIEW_DIR = "scoped-reviews"
+SCOPED_REVIEW_MAX_SECTIONS = 3
+SCOPED_REVIEW_MAX_CHANGED_LINES = 60
+# 1 回の全体レビューのあとに範囲つき再レビューで結び直せる回数。全体レビューは verdict を
+# 置き換えて sha_rebinds を空に戻すので、sha_rebinds の中の scoped_review の数で数える。
+SCOPED_REVIEW_MAX_PER_FULL_REVIEW = 2
+# 変えると成果物の約束そのものが変わる節。範囲つき再レビューでは結び直さない。
+SCOPED_REVIEW_CONTRACT_SECTIONS = frozenset({"Purpose & Output Contract", "入出力契約"})
+# 変更した本人や親 context は、自分の変更の範囲つき再レビューを書けない。
+SCOPED_REVIEW_NON_INDEPENDENT = frozenset({"root", "self", "elegant-improvement-executor"})
+
+
+def directory_content_sha256(root: Path, *, exclude: frozenset[str] = frozenset()) -> str | None:
     """Return a deterministic digest of a directory tree, or None if absent.
 
     Relative paths, entry kinds, file bytes, and symlink targets all participate
     in the digest.  This intentionally does not follow symlinks.  Python
     bytecode caches (``__pycache__`` / ``*.pyc`` / ``*.pyo``) are excluded
-    because they are generated locally and embed the source path, and so is
-    macOS Finder metadata (``.DS_Store``).  An entry that cannot be read
+    because they are generated locally and embed the source path, and so are
+    pytest's cache directory (``.pytest_cache``) and macOS Finder metadata
+    (``.DS_Store``).  An entry that cannot be read
     (file bytes or symlink target) yields None instead of raising.
+
+    ``exclude`` names root-relative POSIX paths left out of the digest; a
+    directory name leaves out everything beneath it as well.  The
+    content-review verdict uses it through :func:`content_review_dir_digest`.
     """
     root = Path(root)
     if not root.is_dir():
@@ -202,6 +249,8 @@ def directory_content_sha256(root: Path) -> str | None:
     digest = hashlib.sha256()
     for path in sorted(root.rglob("*"), key=lambda item: item.relative_to(root).as_posix()):
         if _is_local_artifact(path.relative_to(root)):
+            continue
+        if _is_excluded(path.relative_to(root).as_posix(), exclude):
             continue
         relative = path.relative_to(root).as_posix().encode("utf-8")
         if path.is_symlink():

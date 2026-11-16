@@ -1,0 +1,17 @@
+{
+  "expected_graph_revision": 27,
+  "updates": [
+    {
+      "graph_node_id": "arch-remaining-publication",
+      "set_sections": {
+        "Risks and verification": "sourceの古い参照/版によるmain退行、public/private混在、旧PASSの現在版への偽装、unit成功からhost完了の誤推定を防ぐ。分類漏れ・SHA不一致・secret検出は停止し、MVPで見ない既存未達は残課題へ明示する。\n\nCIのplugin-testsは、過去の実走受領commit本文へ証跡を照合するためcommit履歴を必要とする。checkoutはfetch-depth: 0とfilter: blob:noneで履歴を保持し、blob本文は必要時に取得して一括取得を避ける。履歴不足を証跡やvalidatorの不備として扱わず、証跡・判定閾値は変更しない。"
+      }
+    },
+    {
+      "graph_node_id": "task-remaining-publication",
+      "set_sections": {
+        "検証方法": "最小ゲートのコマンド・実結果・test件数・対象版は親が管理するsystem-spec/remaining-publication/quality-gates.jsonを正とする。全体LLM再評価、live再走、全coverage達成認定は追加しない。 公開manifestで2284項目の欠落・重複・理由・対応先を確認し、privacy派生物/旧verdictと証拠SHAを検証する。C02は新規5nodeのschema/readinessを検査し、既存25nodeの内容不変を比較する。原runtime承認記録や実secretをテスト入力へ混ぜない。\n\nCIのplugin-testsは過去の実走受領commit本文の照合を前提とするため、checkoutをfetch-depth: 0とfilter: blob:noneにして履歴を保持しblob本文は必要時に取得する。過去commitの未取得はcheckout環境の不足として診断し、証跡不在や挙動FAILと混同しない。証跡・validator・閾値を緩めず、修復後の対象CI成功を確認してから公開の品質ゲート結果へ記録する。"
+      }
+    }
+  ]
+}

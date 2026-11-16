@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://harness/plugins/harness-creator/run-skill-create/schemas/handoff.schema.json",
   "title": "Gate Handoff Record",
-  "description": "各 Gate 通過時に eval-log/handoff-<step>.json として書き出される共通スキーマ。PostCompact hook が復元キーとして利用する。",
+  "description": "各 Gate 通過時に workflow-manifest.json の phases[].handoff の path へ書き出される共通スキーマ。PostCompact hook が復元キーとして利用する。",
   "type": "object",
   "additionalProperties": false,
   "required": ["step", "timestamp", "gate_id", "approver", "artifacts", "next_phase"],

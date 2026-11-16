@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # name: lint-capability-graph-knowledge
-# purpose: brief.goal_seek.engine=task-graph 指定で生成された harness が、ENG-C06 による cross-surface dependency graph 抽出、ENG-C07 による Loop A/Loop B knowledge 記録、各 surface の実行前 knowledge consult 指示を3段設計 (skill=hard gate / command・agent=warning / script=同梱 byte-parity) で検査する。checklist 順序実行だけで終わらず、依存グラフ由来 knowledge を各 surface が使うことの機械ゲートにする (H6 の実装物)。
+# purpose: brief.goal_seek.engine=task-graph 指定で生成された harness が、ENG-C06 による cross-surface dependency graph 抽出、ENG-C07 による Loop A/Loop B knowledge 記録、各 surface の実行前 knowledge consult 指示を3段設計 (skill=hard gate / command・agent=warning / script=同梱 byte-parity か builder と同じ plugin の正本参照) で検査する。checklist 順序実行だけで終わらず、依存グラフ由来 knowledge を各 surface が使うことの機械ゲートにする (H6 の実装物)。
 # inputs:
 #   - argv: <generated_harness_dir_or_skill_md> | --self-test (BUNDLED_SCRIPTS↔SKILL.md Step10.6 parity + regex 定義 drift 検査)
 # outputs:
@@ -21,6 +21,9 @@ consumption verifier の SSOT drift を見るのと分離して、本 lint は�
 各 surface が実際に使う」横断契約を検査する:
   1. 同梱 4 script (ENG-C01/ENG-C02/ENG-C06/ENG-C07) が生成先 scripts/ に実在し、テンプレ原本と
      byte 一致する (同梱 script は原本の無改変コピー。手改変は fail-closed 検出)。
+     例外は builder (run-build-skill) と同じ plugin の skill だけで、frontmatter の script_refs が
+     正本を指す本は同梱済みとみなす (lint-skill-runtime-profiles.py と同じ判定。install の単位は
+     plugin なので、同じ plugin の正本は実行時にも届く)。写しも置いてあれば写しの byte 一致も見る。
   2. engine:task-graph を宣言する各 skill surface が dependency graph knowledge consult token を持つ。
   3. command/agent surface が存在する場合は advisory consult token 欠落を warning として収集する。
   4. 記録済み knowledge entry (knowledge-capability-graph.json) が全て source_ref を持つ (dangling
@@ -29,7 +32,8 @@ consumption verifier の SSOT drift を見るのと分離して、本 lint は�
 スコープ注記: consult token の hard 検査対象は「ループを回す skill surface」(engine:task-graph 宣言
 SKILL.md)。command/agent surface は consult token の欠如を warning で報告する (skill 側 wiring が
 consult の一次責務を負い、全 surface へトークンを強制するのは Goodhart 化するため)。script surface は
-実体 (ENG-C01/ENG-C02/ENG-C06/ENG-C07) の同梱有無で担保する。
+実体 (ENG-C01/ENG-C02/ENG-C06/ENG-C07) の同梱有無 (builder と同じ plugin の skill は正本参照でもよい)
+で担保する。
 
 engine:task-graph を宣言する SKILL.md が 1 件も無ければ not-applicable として exit0。
 
@@ -39,6 +43,7 @@ from __future__ import annotations
 
 import ast
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -101,21 +106,117 @@ def _template_root() -> Path:
     return Path(__file__).resolve().parent.parent / "templates" / "task-graph-engine" / "scripts"
 
 
-def check_bundling(skills: list[Path]) -> list[str]:
-    """task-graph 宣言 skill ごとに4 script の実在と原本 byte 一致を検査する。
+def _strip_scalar(value: str) -> str:
+    """単純 YAML scalar から末尾コメントと引用符を除く (lint-skill-runtime-profiles.py と同じ読み方)。"""
+    value = value.strip()
+    if not value:
+        return ""
+    if value[0] in {'"', "'"}:
+        quote = value[0]
+        end = value.find(quote, 1)
+        if end != -1:
+            return value[1:end]
+    return value.split("#", 1)[0].strip()
 
-    別 skill や builder 自身の templates に同名資産があっても充足扱いしない。
+
+def _script_refs(frontmatter: str) -> list[str]:
+    """frontmatter の script_refs (block 形式 `- a` と flow 形式 `[a, b]`) を読む。
+
+    header が dependencies: [] なので PyYAML は使わない。読み方は lint-skill-runtime-profiles.py の
+    _list_values と揃える。
+    """
+    lines = frontmatter.splitlines()
+    start = next((i for i, line in enumerate(lines) if re.match(r"^script_refs:", line)), None)
+    if start is None:
+        return []
+    inline = _strip_scalar(lines[start].split(":", 1)[1])
+    if inline.startswith("[") and inline.endswith("]"):
+        return [v for v in (_strip_scalar(item) for item in inline[1:-1].split(",")) if v]
+    values: list[str] = []
+    for line in lines[start + 1 :]:
+        if line and not line.startswith((" ", "\t", "-")):
+            break
+        match = re.match(r"^\s*-\s*(.*?)\s*$", line)
+        if match and (value := _strip_scalar(match.group(1))):
+            values.append(value)
+    return values
+
+
+def placed_in_plugin(skill: Path, plugin_root: Path) -> bool:
+    """skill が plugin_root の skills/ の下に置かれているか。
+
+    置かれた場所 (写しを探す skill.parent と同じ) で決め、SKILL.md や skill dir の symlink はたどらない。
+    たどると、別 plugin に置いた symlink が builder の plugin の skill として数えられ、写しを
+    探す場所 (別 plugin 側) と同梱扱いの根拠 (builder 側) が食い違う。plugin dir より上の symlink
+    (/tmp → /private/tmp など) だけは解いて比べる。lint-skill-runtime-profiles.py も、skill を
+    集めた plugin の名前で同じように決めている。
+    """
+    placed = Path(os.path.abspath(skill))
+    if len(placed.parents) < 3 or placed.parents[1].name != "skills":
+        return False
+    return placed.parents[2].resolve() == plugin_root.resolve()
+
+
+def canonical_engine_refs(skill: Path, template_root: Path) -> tuple[set[str], set[str]]:
+    """script_refs のうち正本 (template_root 直下の 4 本) を指す本の名前を (同じ plugin, 別 plugin) に分ける。
+
+    解決は lint-skill-runtime-profiles.py と同じく repo root 起点、次に skill の置かれた dir 起点で試し、
+    resolve 後の path が正本と一致したものだけを数える。同じ plugin の別 skill に置いた写しを指す参照は、
+    resolve しても正本と一致しないので数えない。同じ plugin かどうかは placed_in_plugin で決める
+    (正本の plugin root は template_root の 5 つ上)。install の単位は plugin なので、別 plugin の正本は
+    install 先では届かない。validate-build-plan.py --check もこの関数で同じ判定をする。
+    """
+    plugin_root = template_root.parents[4].resolve()
+    canonical = {
+        (template_root / name).resolve(): name
+        for name in BUNDLED_SCRIPTS
+        if (template_root / name).is_file()
+    }
+    if not canonical:
+        return set(), set()
+    skill_dir = Path(os.path.abspath(skill)).parent
+    repo_root = plugin_root.parent.parent
+    hits: set[str] = set()
+    for ref in _script_refs(_frontmatter(_read(skill))):
+        for candidate in (repo_root / ref, skill_dir / ref):
+            name = canonical.get(candidate.resolve())
+            if name is not None:
+                hits.add(name)
+                break
+    return (hits, set()) if placed_in_plugin(skill, plugin_root) else (set(), hits)
+
+
+def check_bundling(skills: list[Path]) -> list[str]:
+    """task-graph 宣言 skill ごとに 4 script が使える状態か (写しか正本参照) を検査する。
+
+    既定は、skill の scripts/ に写しが実在し、テンプレ原本と byte 一致すること。別 plugin の skill
+    (生成された harness) は今までどおりこれだけを充足とみなし、別 skill や builder 自身の templates に
+    同名資産があっても、script_refs で正本を指していても充足扱いしない。
+    例外は builder と同じ plugin の skill が script_refs で正本を指す本だけで、写しが無くても同梱済み
+    とみなす (lint-skill-runtime-profiles.py と同じ判定)。同じ plugin の別 skill の写しを指す参照は
+    充足扱いしない。写しと参照が両方ある本は、消し忘れた写しが古いまま残らないよう写しの byte 一致も見る。
     """
     findings: list[str] = []
     template_root = _template_root()
     for skill in skills:
         scripts_dir = skill.parent / "scripts"
+        same_plugin_refs, foreign_refs = canonical_engine_refs(skill, template_root)
         for name in BUNDLED_SCRIPTS:
             copy = scripts_dir / name
             if not copy.is_file():
-                findings.append(
-                    f"同梱欠落: {copy} が不在 (task-graph 宣言 skill ごとの scripts/ に必須)"
-                )
+                if name in same_plugin_refs:
+                    continue
+                if name in foreign_refs:
+                    findings.append(
+                        f"同梱欠落: {copy} が不在 (別 plugin の skill が script_refs で正本 {name} を"
+                        "参照しても install 先では届かないので充足扱いしない。scripts/ に写しを置くこと)"
+                    )
+                else:
+                    findings.append(
+                        f"同梱欠落: {copy} が不在 (task-graph 宣言 skill ごとの scripts/ に必須。"
+                        "builder と同じ plugin の skill は script_refs で正本 "
+                        f"../run-build-skill/templates/task-graph-engine/scripts/{name} を参照してもよい)"
+                    )
                 continue
             original = template_root / name
             if not original.is_file():
@@ -168,7 +269,8 @@ def check_consult_tokens(skills: list[Path]) -> list[str]:
 def collect_advisory_surfaces(root: Path) -> list[Path]:
     """command/agent surface を収集する。
 
-    skill surface は hard gate、script surface は bundled script 実在で担保するためここでは扱わない。
+    skill surface は hard gate、script surface は bundled script 実在 (builder と同じ plugin の skill は
+    正本参照でもよい) で担保するためここでは扱わない。
     command/agent は routing surface であり、欠落は警告に留めて実行前 consult の改善余地として返す。
     """
     candidates: list[Path] = []

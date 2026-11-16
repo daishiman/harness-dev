@@ -5,15 +5,26 @@
 #          所見提示後のユーザー選択だけが改善範囲を認可する。
 # inputs:
 #   - argv: --verification-plan <json> --usable-draft-proof <json>
-#           --target-path <path> --state-dir <dir>
+#           --target-path <path> (複数可) --state-dir <dir> [--repo-root <dir>]
+#           [--artifact-presentation-receipt <json> --pre-diagnostic-choice-event <json>]
+#           [--user-request-file <utf-8 text>]
 #           [--review <json> --claim-id <id>]
 #           [--selected-level <level> --user-choice-event <json>]
+#           [--exhaustive-confirmation-event <json> --confirm-exhaustive]
+#           [--risk-acknowledgement-event <json>] [--user-choice-ref <event id>]
+#           [--methods <thought-methods.yaml> --levels <improvement-levels.json>]
+#           [--prompt <R5 prompt> --review-schema <schema json>]
+#           [--budget-policy <convergence-policy.json>]
 # outputs:
 #   - stdout / --out: improvement gate plan JSON
-#   - --decision-out: user choice receipt JSON
+#   - --decision-out: user choice receipt JSON (--selected-level 必須)
+# exit:
+#   - 0: gate plan を出した (run-budget-exhausted や awaiting-* など、認可しない status も 0)
+#   - 2: 引数の誤り・読めない/不正な入力・認可できない状態・state/出力の書き込み失敗。stderr に [ERROR]
 # contexts: [C, E]
 # network: false
-# write-scope: --state-dir / --out / --decision-out 指定先のみ
+# write-scope: --state-dir (gate state と lock と run-model-actions 台帳。symlink は辿らない) / --out / --decision-out 指定先のみ
+#              (claim のときは --out を state より先に書く)
 # dependencies: []
 # requires-python: ">=3.10"
 # ///
@@ -24,6 +35,7 @@ from __future__ import annotations
 import argparse
 import fcntl
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -31,11 +43,10 @@ import subprocess
 import sys
 import tempfile
 import unicodedata
-import uuid
 from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator
 
 
 SKILL_ROOT = Path(__file__).resolve().parents[1]
@@ -43,6 +54,8 @@ DEFAULT_METHODS_PATH = SKILL_ROOT.parent / "run-elegant-review" / "references" /
 DEFAULT_LEVELS_PATH = SKILL_ROOT / "references" / "improvement-levels.json"
 DEFAULT_PROMPT_PATH = SKILL_ROOT / "prompts" / "R5-initial-draft-evaluate.md"
 DEFAULT_REVIEW_SCHEMA_PATH = SKILL_ROOT / "schemas" / "initial-draft-review.schema.json"
+DEFAULT_BUDGET_POLICY_PATH = SKILL_ROOT.parent / "run-elegant-review" / "references" / "convergence-policy.json"
+BUDGET_SCRIPT_PATH = SKILL_ROOT / "scripts" / "validate-run-model-budget.py"
 SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 METHOD_ID_RE = re.compile(r"^\s+- id:\s*([a-z0-9]+(?:-[a-z0-9]+)*)\s*$")
 METHOD_VERSION_RE = re.compile(r'^version:\s*["\']?([^"\'\s]+)')
@@ -62,7 +75,7 @@ BUILD_TRACE_VALIDATOR_REF = "scripts/validate-build-trace.py"
 BUILD_TRACE_VALIDATOR_PATH = Path(__file__).resolve().with_name("validate-build-trace.py")
 BUILD_TRACE_VALIDATOR_TIMEOUT_SECONDS = 30
 BUILD_TRACE_RESULT_KEYS = {"valid", "kind", "findings"}
-PRE_DIAGNOSTIC_LEVELS = {"accept-as-is", "light", "standard", "detailed"}
+PRE_DIAGNOSTIC_LEVELS = {"accept-as-is", "diagnose"}
 PRESENTATION_RECEIPT_KEYS = {
     "schema_version", "event_id", "event_type", "source", "run_id", "subject",
     "artifact_path", "artifact_sha256", "target_manifest_sha256",
@@ -79,6 +92,11 @@ PRE_DIAGNOSTIC_CHOICE_KEYS = {
 
 class GateError(ValueError):
     """The gate cannot safely authorize the requested action."""
+
+
+# 読めない JSON 入力はどれも GateError (exit 2) に落とす。ValueError は UnicodeDecodeError と
+# JSONDecodeError を含む。RecursionError は深く入れ子にした JSON で json が投げる。
+UNREADABLE_JSON_ERRORS = (OSError, ValueError, RecursionError)
 
 
 def _canonical_bytes(value: Any) -> bytes:
@@ -155,7 +173,7 @@ def load_method_ids(path: Path = DEFAULT_METHODS_PATH) -> list[str]:
     """Load the 30 method IDs from the existing elegant-review SSOT."""
     try:
         text = path.read_text(encoding="utf-8")
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         raise GateError(f"cannot read thought-methods SSOT: {exc}") from exc
     ids = [match.group(1) for line in text.splitlines() if (match := METHOD_ID_RE.match(line))]
     if len(ids) != 30 or len(set(ids)) != 30:
@@ -168,7 +186,7 @@ def _method_catalog_version(path: Path) -> str:
         for line in path.read_text(encoding="utf-8").splitlines():
             if match := METHOD_VERSION_RE.match(line.strip()):
                 return match.group(1)
-    except OSError as exc:
+    except (OSError, UnicodeDecodeError) as exc:
         raise GateError(f"cannot read thought-methods SSOT: {exc}") from exc
     raise GateError("thought-methods SSOT version is required")
 
@@ -176,7 +194,7 @@ def _method_catalog_version(path: Path) -> str:
 def load_levels(path: Path = DEFAULT_LEVELS_PATH) -> dict:
     try:
         doc = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except UNREADABLE_JSON_ERRORS as exc:
         raise GateError(f"cannot read improvement level SSOT: {exc}") from exc
     _require_exact_keys(doc, required={"schema_version", "default", "offered_order", "levels"}, label="improvement level SSOT")
     if doc["schema_version"] != 1 or doc["default"] != "ask":
@@ -454,7 +472,7 @@ def _run_build_trace_validator(
         raise GateError(f"usable-draft proof validator execution failed: {exc}") from exc
     try:
         report = json.loads(completed.stdout.decode("utf-8"))
-    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+    except (ValueError, RecursionError) as exc:
         raise GateError("usable-draft proof validator did not emit valid JSON") from exc
     if not isinstance(report, dict) or set(report) != BUILD_TRACE_RESULT_KEYS:
         raise GateError("usable-draft proof validator emitted an invalid JSON contract")
@@ -490,7 +508,7 @@ def _validate_usable_draft_proof(proof: Any, *, plan: dict, target_scope: dict) 
         raise GateError("usable-draft proof verification plan sha256 mismatch")
     try:
         persisted_plan = json.loads(plan_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except UNREADABLE_JSON_ERRORS as exc:
         raise GateError("usable-draft proof verification plan is unreadable") from exc
     if persisted_plan != plan:
         raise GateError("usable-draft proof verification plan content mismatch")
@@ -555,7 +573,7 @@ def _validate_usable_draft_proof(proof: Any, *, plan: dict, target_scope: dict) 
             raise GateError("usable-draft proof upstream receipt sha256 mismatch")
         try:
             receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
+        except UNREADABLE_JSON_ERRORS as exc:
             raise GateError("usable-draft proof upstream receipt is unreadable") from exc
         _require_exact_keys(receipt, required=UPSTREAM_RECEIPT_KEYS, label=f"upstream receipt {receipt_type}")
         if receipt["schema_version"] != 1 or receipt["status"] != "PASS" or receipt["capability_kind"] != capability_kind or receipt["producer_phase"] != upstream_phase or receipt["receipt_type"] != receipt_type or receipt["verification_plan_sha256"] != proof["verification_plan_sha256"]:
@@ -686,7 +704,7 @@ def _validate_pre_diagnostic_choice_event(
     if event["presentation_receipt_sha256"] != _canonical_sha(presentation_receipt):
         raise GateError("pre-diagnostic choice event presentation receipt digest mismatch")
     if event["selected_level"] not in PRE_DIAGNOSTIC_LEVELS:
-        raise GateError("pre-diagnostic selected_level must be accept-as-is, light, standard, or detailed")
+        raise GateError("pre-diagnostic selected_level must be accept-as-is or diagnose")
     choice_at = _parse_datetime(event["occurred_at"], "pre-diagnostic choice occurred_at")
     if choice_at <= presented_at:
         raise GateError("pre-diagnostic choice must occur strictly after artifact presentation")
@@ -756,11 +774,13 @@ def _validate_launch_receipt(value: Any, *, claim_id: str, artifact_fingerprint:
 
 
 def _read_launch_receipt(path: Path, *, state: dict) -> dict | None:
+    if path.is_symlink():
+        raise GateError(f"durable launch receipt must not be a symlink: {path}")
     if not path.exists():
         return None
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except UNREADABLE_JSON_ERRORS as exc:
         raise GateError(f"cannot read durable launch receipt: {exc}") from exc
     return _validate_launch_receipt(
         value,
@@ -1070,8 +1090,15 @@ def _state_path(state_dir: Path, baseline: str) -> Path:
 
 @contextmanager
 def _locked_state(path: Path) -> Iterator[None]:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor = os.open(path.with_suffix(path.suffix + ".lock"), os.O_CREAT | os.O_RDWR, 0o600)
+    # launcher と run-model-actions 台帳の lock と同じく symlink を辿らない。辿ると --state-dir の外に lock を作る。
+    if path.parent.is_symlink():
+        raise GateError(f"state dir must not be a symlink: {path.parent}")
+    lock_path = path.with_suffix(path.suffix + ".lock")
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        descriptor = os.open(lock_path, os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
+    except OSError as exc:
+        raise GateError(f"cannot lock durable review state ({lock_path}): {exc}") from exc
     try:
         fcntl.flock(descriptor, fcntl.LOCK_EX)
         yield
@@ -1099,11 +1126,13 @@ def _atomic_write_json(path: Path, value: dict) -> None:
 
 
 def _read_state(path: Path) -> dict | None:
+    if path.is_symlink():
+        raise GateError(f"durable review state must not be a symlink: {path}")
     if not path.exists():
         return None
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except UNREADABLE_JSON_ERRORS as exc:
         raise GateError(f"cannot read durable review state: {exc}") from exc
     required = {"schema_version", "artifact_fingerprint_sha256", "subject", "contract_binding", "target_root", "target_roots", "target_exclusions", "target_manifest", "status", "claim_id", "claimed_run_id", "created_at", "review", "review_sha256", "review_content_sha256", "decisions"}
     _require_exact_keys(value, required=required, label="durable review state")
@@ -1112,12 +1141,112 @@ def _read_state(path: Path) -> dict | None:
     return value
 
 
+_BUDGET_MODULE = None
+
+
+def _budget_module():
+    """Load validate-run-model-budget.py once; the run budget has one implementation."""
+    global _BUDGET_MODULE
+    if _BUDGET_MODULE is None:
+        spec = importlib.util.spec_from_file_location("validate_run_model_budget", BUDGET_SCRIPT_PATH)
+        if spec is None or spec.loader is None:
+            raise GateError(f"cannot load run model-action budget script: {BUDGET_SCRIPT_PATH}")
+        module = importlib.util.module_from_spec(spec)
+        try:
+            spec.loader.exec_module(module)
+        except Exception as exc:  # 予算を確かめられないなら認可しない (fail-closed)
+            raise GateError(f"cannot load run model-action budget script {BUDGET_SCRIPT_PATH}: {exc}") from exc
+        _BUDGET_MODULE = module
+    return _BUDGET_MODULE
+
+
+def _plan_verification_required(plan: dict) -> dict[str, int]:
+    """Verification model actions the plan spent or will spend in this run, per subject.
+
+    planner が --state-dir で予約したときと同じ量になる (同じ plan から同じ式で出す)。subject ごとの
+    内訳を持たない古い plan は、consumed_model_actions をその plan の subject の分として読む
+    (古い planner は今の subject の receipt しか数えなかった)。
+    """
+    cost = plan.get("cost_summary")
+    if cost is None:
+        return {}
+    if not isinstance(cost, dict):
+        raise GateError("verification plan cost_summary must be an object")
+    counts = {}
+    for key in ("consumed_model_actions", "planned_model_actions"):
+        value = cost.get(key, 0)
+        if type(value) is not int or value < 0:
+            raise GateError(f"verification plan cost_summary.{key} must be a non-negative integer")
+        counts[key] = value
+    subject = plan["subject"]
+    by_subject = cost.get("consumed_model_actions_by_subject")
+    if by_subject is None:
+        by_subject = {subject: counts["consumed_model_actions"]}
+    elif not isinstance(by_subject, dict) or any(
+        not isinstance(name, str) or type(value) is not int or value < 0 for name, value in by_subject.items()
+    ) or sum(by_subject.values()) != counts["consumed_model_actions"]:
+        raise GateError("verification plan cost_summary.consumed_model_actions_by_subject must map subjects to counts that add up to consumed_model_actions")
+    required = {name: value for name, value in by_subject.items() if value > 0}
+    if counts["planned_model_actions"] > 0 or subject in required:
+        required[subject] = required.get(subject, 0) + counts["planned_model_actions"]
+    return required
+
+
+def _reserve_run_budget(plan: dict, *, state_dir: Path, policy_path: Path, action_id: str, component: str, count: int, at_least: bool = False) -> tuple[bool, dict]:
+    """Reserve model actions in the run ledger; (False, info) means the budget is exhausted.
+
+    先に plan の検証用 model action を reserve_verification で台帳に入れ (planner が同じ台帳に予約済みなら
+    何も足さない)、それから component を予約する。検証はもう台帳の中にあるので、台帳の外の消費
+    (verification_model_actions) は 0 で、launcher が古い claim を予約し直すときもこの値を使う。
+    """
+    budget_mod = _budget_module()
+    required = _plan_verification_required(plan)
+    external = 0
+    try:
+        budget = budget_mod.load_budget(Path(policy_path))
+        verification = budget_mod.reserve_verification(Path(state_dir), plan["run_id"], required=required, total=budget["total"])
+        status = budget_mod.reserve(Path(state_dir), plan["run_id"], action_id=action_id, component=component, count=count, total=budget["total"], external_consumed=external, at_least=at_least)
+    except budget_mod.BudgetExhausted as exc:
+        return False, {"component": component, "requested": exc.requested, "reason": str(exc), "verification_model_actions": external, "verification_required": required, **budget_mod.budget_status(exc.total, exc.consumed)}
+    except budget_mod.BudgetError as exc:
+        raise GateError(f"run model-action budget: {exc}") from exc
+    except RecursionError as exc:
+        # 深く入れ子にした台帳や policy は budget script の読み込みを素通りする。読めない台帳として止める。
+        raise GateError("run model-action budget: ledger or policy JSON is nested too deeply") from exc
+    return True, {"component": component, "verification_model_actions": external, "verification_required": required, "verification_added": verification["added"], **status}
+
+
+def _durable_claim_id(*, run_id: str, subject: str, baseline: str, binding: dict, target_scope: dict, target_manifest: Any, pre_diagnostic: dict) -> str:
+    """Derive the claim id from what the claim binds, so a retry after a failed state write reuses its reservation.
+
+    予約してから state を書く順なので、書き込みが落ちると予約だけが残る。id が入力だけで決まれば、
+    同じ入力の再試行は同じ action_id になり、台帳は二重に引かない。
+    """
+    material = {"run_id": run_id, "subject": subject, "artifact_fingerprint_sha256": baseline, "contract_binding": binding, "target_scope": target_scope, "target_manifest": target_manifest, "pre_diagnostic": pre_diagnostic}
+    return f"IRC-{_canonical_sha(material)[:32]}"
+
+
+def _budget_exhausted(result: dict, run_budget: dict, instruction: str) -> dict:
+    result["status"] = "run-budget-exhausted"
+    result["initial_review"] = {**result.get("initial_review", {}), "authorized": False, "evaluator_contexts": 0}
+    result["improvement"] = {"authorized": False, "improver_contexts": 0}
+    result["run_budget"] = run_budget
+    result["instruction"] = instruction
+    return result
+
+
 def _base_result(plan: dict, baseline: str, binding: dict, state_path: Path, target_scope: dict) -> dict:
     return {"schema_version": 1, "subject": plan["subject"], "run_id": plan["run_id"], "baseline_fingerprint_sha256": baseline, "artifact_fingerprint_sha256": baseline, "contract_binding": binding, "target_root": target_scope["target_root"], "target_roots": target_scope["target_roots"], "target_exclusions": target_scope["target_exclusions"], "state_ref": str(state_path), "launch_receipt_ref": str(_launch_receipt_path(state_path)), "auto_promote_release": False, "auto_promote_exhaustive": False, "initial_review": {"authorized": False}, "improvement": {"authorized": False}}
 
 
-def build_gate(plan: dict, *, target_manifest: list[dict[str, Any]], target_scope: dict, usable_draft_proof: dict, state_dir: Path, artifact_presentation_receipt: dict | None = None, pre_diagnostic_choice_event: dict | None = None, review: dict | None = None, review_source_sha256: str | None = None, claim_id: str | None = None, selected_level: str | None = None, choice_event: dict | None = None, exhaustive_confirmation_event: dict | None = None, risk_acknowledgement_event: dict | None = None, user_choice_ref: str | None = None, confirm_exhaustive: bool = False, intent_anchor: dict | None = None, methods_path: Path = DEFAULT_METHODS_PATH, levels_path: Path = DEFAULT_LEVELS_PATH, prompt_path: Path = DEFAULT_PROMPT_PATH, review_schema_path: Path = DEFAULT_REVIEW_SCHEMA_PATH) -> dict:
-    """Return and durably record the only currently authorized action."""
+def build_gate(plan: dict, *, target_manifest: list[dict[str, Any]], target_scope: dict, usable_draft_proof: dict, state_dir: Path, artifact_presentation_receipt: dict | None = None, pre_diagnostic_choice_event: dict | None = None, review: dict | None = None, review_source_sha256: str | None = None, claim_id: str | None = None, selected_level: str | None = None, choice_event: dict | None = None, exhaustive_confirmation_event: dict | None = None, risk_acknowledgement_event: dict | None = None, user_choice_ref: str | None = None, confirm_exhaustive: bool = False, intent_anchor: dict | None = None, methods_path: Path = DEFAULT_METHODS_PATH, levels_path: Path = DEFAULT_LEVELS_PATH, prompt_path: Path = DEFAULT_PROMPT_PATH, review_schema_path: Path = DEFAULT_REVIEW_SCHEMA_PATH, budget_policy_path: Path = DEFAULT_BUDGET_POLICY_PATH, before_claim_commit: Callable[[dict], None] | None = None) -> dict:
+    """Return and durably record the only currently authorized action.
+
+    before_claim_commit は新しい claim の state を書く直前に、確定した initial-review-required の結果で呼ぶ。
+    CLI はここで --out を書く。state を先に書いて出力が落ちると、再実行は initial-review-in-progress を返し、
+    この claim を起動できる plan がどこにも残らない。出力が先なら、落ちても state は無く、同じ入力の再実行は
+    同じ claim id と予約に着地する。
+    """
     _validate_verification_plan(plan)
     _validate_manifest(target_manifest, target_manifest)
     target_scope = _validate_target_scope(target_scope, target_manifest, state_dir=Path(state_dir))
@@ -1156,7 +1285,7 @@ def build_gate(plan: dict, *, target_manifest: list[dict[str, Any]], target_scop
             raise GateError("review or improvement selection cannot start before pre-diagnostic user choice")
         result.update(
             status="awaiting-pre-diagnostic-choice",
-            instruction="提示済みartifactをそのまま受理するか、light/standard/detailed診断を行うか利用者eventを待つ。",
+            instruction="提示済みartifactをそのまま受理するか、診断するかの利用者eventを待つ。改善の深さは診断所見の提示後に聞く。",
         )
         return result
 
@@ -1198,14 +1327,21 @@ def build_gate(plan: dict, *, target_manifest: list[dict[str, Any]], target_scop
         if state is None:
             if review is not None or selected_level is not None:
                 raise GateError("initial review must be durably claimed before review or selection")
-            durable_claim_id = f"IRC-{uuid.uuid4().hex}"
+            durable_claim_id = _durable_claim_id(run_id=plan["run_id"], subject=plan["subject"], baseline=baseline, binding=binding, target_scope=target_scope, target_manifest=target_manifest, pre_diagnostic=pre_diagnostic)
+            # 予約してから state を書く。予算切れなら claim を作らず、evaluator は 0 context。
+            reserved, run_budget = _reserve_run_budget(plan, state_dir=Path(state_dir), policy_path=budget_policy_path, action_id=durable_claim_id, component="initial_diagnosis", count=1)
+            if not reserved:
+                return _budget_exhausted(result, run_budget, "この run_id の AI 呼び出し予算 (convergence-policy.json#/run_model_action_budget) が初回診断 1 context に足りない。evaluator を起動せず、消費と上限を利用者へ報告し、提示済み draft をそのまま受理するかを聞く。")
+            result["run_budget"] = run_budget
             state = {"schema_version": 2, "artifact_fingerprint_sha256": baseline, "subject": plan["subject"], "contract_binding": binding, "target_root": target_scope["target_root"], "target_roots": target_scope["target_roots"], "target_exclusions": target_scope["target_exclusions"], "target_manifest": target_manifest, "status": "claimed", "claim_id": durable_claim_id, "claimed_run_id": plan["run_id"], "created_at": _now(), "review": None, "review_sha256": None, "review_content_sha256": None, "decisions": {"pre_diagnostic": pre_diagnostic}}
-            _atomic_write_json(state_path, state)
             result["status"] = "initial-review-required"
             result["initial_review"] = {"authorized": True, "action": "run-once", "claim_id": durable_claim_id, "claimed_run_id": plan["run_id"], "evaluator_id": "elegant-initial-draft-evaluator", "evaluator_context_limit": 1, "review_mode": "diagnostic-only", "target_edits_allowed": False, "thought_reset_required": True, "required_method_count": 30, "required_method_ids": method_ids, "target_manifest": target_manifest, "contract_binding": binding, "artifact_presentation_receipt_sha256": pre_diagnostic["presentation_receipt_sha256"], "pre_diagnostic_choice_event_sha256": pre_diagnostic["choice_event_sha256"], "pre_diagnostic_level": pre_diagnostic["selected_level"], "schema_ref": "schemas/initial-draft-review.schema.json", "prompt_ref": "prompts/R5-initial-draft-evaluate.md"}
             if intent_anchor is not None:
                 result["initial_review"]["intent_anchor"] = intent_anchor
             result["instruction"] = "fresh contextの単一elegant-initial-draft-evaluatorへ、同一identityの有効配送leaseを1件だけ認可し、claim/target/contractをreceiptへ束縛する。"
+            if before_claim_commit is not None:
+                before_claim_commit(result)
+            _atomic_write_json(state_path, state)
             return result
 
         if state["artifact_fingerprint_sha256"] != baseline or state["contract_binding"] != binding or state["target_root"] != target_scope["target_root"] or state["target_roots"] != target_scope["target_roots"] or state["target_exclusions"] != target_scope["target_exclusions"] or state["target_manifest"] != target_manifest or state["subject"] != plan["subject"]:
@@ -1314,6 +1450,15 @@ def build_gate(plan: dict, *, target_manifest: list[dict[str, Any]], target_scop
                 raise GateError("a different improvement decision already exists for this run")
             decision = existing
         else:
+            if edits_authorized:
+                # executor は max_rounds まで回りうるので、認可の前にその分を予約する。
+                # 予約の後に decision の書き込みが落ち、利用者が別の深さを選び直しても止めない (at_least):
+                # 既に足りていればそのまま使い、足りなければ差分だけ足す。多めに引いた分は返さない (fail-closed)。
+                improve_action = f"improve:{state['claim_id']}:{hashlib.sha256(plan['run_id'].encode('utf-8')).hexdigest()[:16]}"
+                reserved, run_budget = _reserve_run_budget(plan, state_dir=Path(state_dir), policy_path=budget_policy_path, action_id=improve_action, component="bounded_improvement", count=policy["max_rounds"], at_least=True)
+                if not reserved:
+                    return _budget_exhausted(result, run_budget, "この run_id の AI 呼び出し予算が、選んだ深さの改善 (max_rounds) に足りない。executor を起動せず、残りに収まる浅い深さを選び直すか、改善せず受理するかを利用者に聞く。")
+                result["run_budget"] = run_budget
             state["decisions"][plan["run_id"]] = decision
             _atomic_write_json(state_path, state)
 
@@ -1327,11 +1472,29 @@ def build_gate(plan: dict, *, target_manifest: list[dict[str, Any]], target_scop
 def _read_json(path: Path, label: str) -> dict:
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except UNREADABLE_JSON_ERRORS as exc:
         raise GateError(f"cannot read {label}: {exc}") from exc
     if not isinstance(value, dict):
         raise GateError(f"{label} must be a JSON object")
     return value
+
+
+def _preflight_output(path: Path, label: str) -> None:
+    """state と台帳を書く前に、出力先へ書けることを作らずに確かめる。
+
+    書けない出力先 (既存の directory、symlink、file の下、書き込み権の無い親) は、claim や予約を残す前に止める。
+    """
+    if path.is_symlink():
+        raise GateError(f"{label} must not be a symlink: {path}")
+    if path.exists() and not path.is_file():
+        raise GateError(f"{label} must be a regular file path: {path}")
+    ancestor = path.absolute().parent
+    while not os.path.lexists(ancestor) and ancestor != ancestor.parent:
+        ancestor = ancestor.parent
+    if not ancestor.is_dir():
+        raise GateError(f"{label} parent is not a directory: {ancestor}")
+    if not os.access(ancestor, os.W_OK | os.X_OK):
+        raise GateError(f"{label} parent is not writable: {ancestor}")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1356,12 +1519,25 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--levels", default=str(DEFAULT_LEVELS_PATH))
     parser.add_argument("--prompt", default=str(DEFAULT_PROMPT_PATH))
     parser.add_argument("--review-schema", default=str(DEFAULT_REVIEW_SCHEMA_PATH))
+    parser.add_argument("--budget-policy", default=str(DEFAULT_BUDGET_POLICY_PATH), help="run_model_action_budget を持つ convergence-policy.json。台帳は --state-dir に置く")
     parser.add_argument("--decision-out")
     parser.add_argument("--out")
     args = parser.parse_args(argv)
     try:
+        # 出力の検査は state と台帳に触れる前に済ませる (G1)。--decision-out は選択の無い呼び出しでは必ず落ちるので、
+        # claim を残してから落ちないよう先に断る。
+        if args.decision_out and args.selected_level is None:
+            raise GateError("--decision-out requires a validated user decision")
+        for label, raw in (("--decision-out", args.decision_out), ("--out", args.out)):
+            if raw:
+                _preflight_output(Path(raw), label)
+        if Path(args.state_dir).is_symlink():
+            raise GateError(f"--state-dir must not be a symlink: {args.state_dir}")
         plan = _read_json(Path(args.verification_plan), "verification plan")
-        repo_root = Path(args.repo_root).resolve(strict=True)
+        try:
+            repo_root = Path(args.repo_root).resolve(strict=True)
+        except OSError as exc:
+            raise GateError(f"cannot resolve --repo-root: {exc}") from exc
         state_dir = Path(args.state_dir).resolve(strict=False)
         runtime_paths = [
             Path(path).resolve(strict=False)
@@ -1395,12 +1571,19 @@ def main(argv: list[str] | None = None) -> int:
         exhaustive_event = _read_json(Path(args.exhaustive_confirmation_event), "exhaustive confirmation event") if args.exhaustive_confirmation_event else None
         risk_event = _read_json(Path(args.risk_acknowledgement_event), "risk acknowledgement event") if args.risk_acknowledgement_event else None
         intent_anchor = read_intent_anchor(Path(args.user_request_file)) if args.user_request_file else None
-        result = build_gate(plan, target_manifest=target_manifest, target_scope=target_scope, usable_draft_proof=usable_draft_proof, state_dir=state_dir, artifact_presentation_receipt=artifact_presentation_receipt, pre_diagnostic_choice_event=pre_diagnostic_choice_event, review=review, review_source_sha256=review_source_sha256, claim_id=args.claim_id, selected_level=args.selected_level, choice_event=choice_event, exhaustive_confirmation_event=exhaustive_event, risk_acknowledgement_event=risk_event, user_choice_ref=args.user_choice_ref, confirm_exhaustive=args.confirm_exhaustive, intent_anchor=intent_anchor, methods_path=Path(args.methods), levels_path=Path(args.levels), prompt_path=Path(args.prompt), review_schema_path=Path(args.review_schema))
+        written: set[str] = set()
+
+        def write_out_before_claim(claim: dict) -> None:
+            if args.out:
+                _atomic_write_json(Path(args.out), claim)
+                written.add("--out")
+
+        result = build_gate(plan, target_manifest=target_manifest, target_scope=target_scope, usable_draft_proof=usable_draft_proof, state_dir=state_dir, artifact_presentation_receipt=artifact_presentation_receipt, pre_diagnostic_choice_event=pre_diagnostic_choice_event, review=review, review_source_sha256=review_source_sha256, claim_id=args.claim_id, selected_level=args.selected_level, choice_event=choice_event, exhaustive_confirmation_event=exhaustive_event, risk_acknowledgement_event=risk_event, user_choice_ref=args.user_choice_ref, confirm_exhaustive=args.confirm_exhaustive, intent_anchor=intent_anchor, methods_path=Path(args.methods), levels_path=Path(args.levels), prompt_path=Path(args.prompt), review_schema_path=Path(args.review_schema), budget_policy_path=Path(args.budget_policy), before_claim_commit=write_out_before_claim)
         if args.decision_out:
             if "decision" not in result:
                 raise GateError("--decision-out requires a validated user decision")
             _atomic_write_json(Path(args.decision_out), result["decision"])
-        if args.out:
+        if args.out and "--out" not in written:
             _atomic_write_json(Path(args.out), result)
         if result.get("status") == "initial-review-required" and intent_anchor is None:
             # 止めはしないが黙らせない。錨が無いと evaluator は目的適合を affects_goal=false
@@ -1408,6 +1591,10 @@ def main(argv: list[str] | None = None) -> int:
             print("WARN: --user-request-file 無しで claim した。evaluator は当初目的を判定できず、目的適合の所見は選択対象に上がりにくい (SKILL.md Step 12.6)", file=sys.stderr)
     except GateError as exc:
         print(f"[ERROR] {exc}", file=sys.stderr)
+        return 2
+    except UNREADABLE_JSON_ERRORS as exc:
+        # 書き込み失敗や想定外の読めない入力も traceback (exit 1) にせず、認可しない側 (exit 2) に倒す。
+        print(f"[ERROR] {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0

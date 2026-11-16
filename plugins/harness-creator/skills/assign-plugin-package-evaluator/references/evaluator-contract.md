@@ -6,7 +6,7 @@
 |---|---|---|
 | PKG-001 公式 CLI strict validate | **B (run-plugin-package-check)** | `claude plugin validate --strict` ラッパー |
 | PKG-002〜008 静的検査 | **本 skill** | findings JSON で返す |
-| PKG-009 外部参照ゼロ | **B** | 既存 `scripts/lint-external-refs.py` 直呼出 |
+| PKG-009 外部参照ゼロ | **B** | `run-plugin-package-check/scripts/lint-pkg-009.py` が skill-governance-lint の `lint-external-refs.py` を呼ぶ |
 | PKG-010 install smoke | **B** | `scripts/smoke-plugin-install.sh` |
 | PKG-011〜013 / PKG-015 出荷前 gate | **B** | uninstall/upgrade/permission/rubric |
 | PKG-014 runtime contract | **本 skill** | kind/combinator 宣言と実配線の静的整合を findings JSON で返す |

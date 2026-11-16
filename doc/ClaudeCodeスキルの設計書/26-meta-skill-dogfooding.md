@@ -83,7 +83,7 @@ re-review → 新しい記録で PASS を確認
 
 ## dogfooding と `skill-only` モードの関係（恒久例外）
 
-[36-plugin-package-harness-contract.md](./36-plugin-package-harness-contract.md) §`skill-only` では、`package_mode: skill-only` を「legacy / dev-only / migration exception」と定義し、新規量産では選択しない方針を取る。一方で本章の dogfooding ループ（設計書自身を artifact とみなして検査する運用）は、配布対象ではなく設計書の自己検査であり、`/plugin install` UX を保証する必要がない。したがって dogfooding 用途に限り `skill-only` モードを**恒久例外として許容**する。これは 36章で列挙された3例外（legacy / dev-only / migration）のうち「dev-only（局所検証）」に該当し、設計書側に明示しておくことで「dogfooding が package completeness check に通らない」ことを fail として誤検知するのを防ぐ。36章の表では `skill-only` は PKG-001〜009 が任意適用、PKG-010 以降が適用対象外である。dogfooding artifact は plugin package を構成しないため、任意適用の PKG-001〜009 も適用せず、`completeness check: not applicable (dogfooding)` を完了レポートに残す。逆方向のリンクとして、36章 §`skill-only` 列挙箇所からは本章を「dev-only の恒久例外運用」として参照する。
+[36-plugin-package-harness-contract.md](./36-plugin-package-harness-contract.md) §`skill-only` では、`package_mode: skill-only` を「legacy / dev-only / migration exception」と定義し、新規量産では選択しない方針を取る。一方で本章の dogfooding ループ（設計書自身を artifact とみなして検査する運用）は、配布対象ではなく設計書の自己検査であり、`/plugin install` UX を保証する必要がない。したがって dogfooding 用途に限り `skill-only` モードを**恒久例外として許容**する。これは 36章で列挙された3例外（legacy / dev-only / migration）のうち「dev-only（局所検証）」に該当し、設計書側に明示しておくことで「dogfooding が package completeness check に通らない」ことを fail として誤検知するのを防ぐ。36章の表では `skill-only` は PKG-002 / PKG-004 のみ任意適用で、それ以外の PKG ID は適用対象外である。dogfooding artifact は plugin package を構成しないため、任意適用の PKG-002 / PKG-004 も適用せず、`completeness check: not applicable (dogfooding)` を完了レポートに残す。逆方向のリンクとして、36章 §`skill-only` 列挙箇所からは本章を「dev-only の恒久例外運用」として参照する。
 
 ## 運用ルール
 

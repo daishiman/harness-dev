@@ -180,7 +180,7 @@
       "contexts": [
         "build-preflight"
       ],
-      "ci_exclusion_reason": "入力の skill-brief.json が build 実行時 (eval-log/) にのみ存在するため CI 一括適用は不可。量産経路では build-preflight で強制し、run-skill-create の p0-gate は build-trace の lint receipt (reproducibility_gates.lint=PASS) を再利用して再実行しない。brief 不在の単発 build は NOTE 付き skip (fail-open は量産経路外に限定)"
+      "ci_exclusion_reason": "入力の skill-brief.json が build 実行時 (eval-log/) にのみ存在するため CI 一括適用は不可。量産経路では build-preflight で強制し、run-skill-create の p0-gate は build-trace の lint receipt (reproducibility_gates.lint=PASS) を再利用して再実行しない。brief 不在の単発 build (フラグ明示) は呼び出し側が明示して skip し、突合が未実施であることを build report に NOTE として残す。script 自体は brief 不在の --check・--out を exit 2 にする (偽の PASS を作らない)"
     },
     {
       "id": "capability-graph-knowledge",

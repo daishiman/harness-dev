@@ -3,16 +3,17 @@
 # name: record-verification-evidence
 # purpose: verifier の成果物を、plan の obligation 1件の fingerprint に結び付けた receipt として記録する
 # inputs:
-#   - argv: --plan <json> --obligation-id <id> --status <PASS|FAIL|INCONCLUSIVE> --verifier-kind <kind> --verifier-id <id> --evidence-dir <dir>（必須） [--evidence-path ...] [--confidence] [--finding-code ...] [usage 系] [--repo-root]
+#   - argv: --plan <json> --obligation-id <id> --status <PASS|FAIL|INCONCLUSIVE> --verifier-kind <kind> --verifier-id <id> --evidence-dir <dir>（必須） [--evidence-path ...] [--confidence] [--finding-code ...] [--run-id] [--model-action-id] [--note] [usage 系: --input-tokens --output-tokens --elapsed-ms --estimated-cost-usd] [--repo-root] [--keep-existing-non-pass]
 # outputs:
-#   - file: <evidence-dir>/<obligation-id>-<fingerprint 先頭12桁>.json
+#   - file: <evidence-dir>/<safe_id>-<fingerprint 先頭12桁>.json（safe_id は obligation id の英数字と ._- 以外の並びを - にして両端の - を除いたもの）
 #   - stdout: {"receipt": <path>, "status": <status>}
-#   - exit: 0=OK / 2=入力不正 (plan の形・fingerprint・usage の値)・証跡の欠落・receipt を書けない
+#   - exit: 0=OK / 2=入力不正 (plan の形・fingerprint・usage の値)・証跡の欠落・receipt を書けない /
+#           3=--keep-existing-non-pass で、同じ fingerprint の receipt が既にあり PASS と読めない (書かない。置き換えの直前にも確かめる)
 # requires-python: ">=3.10"
 # dependencies: [plan-verification-obligations.py]
 # contexts: [A, C]
 # network: false
-# write-scope: --evidence-dir 配下の receipt 1件
+# write-scope: --evidence-dir 配下の receipt 1件（同じディレクトリの一時ファイルに書いてから名前を置き換える。同じ名前の symlink はたどらず、symlink そのものを置き換える）
 # ///
 """Bind a verifier artifact to one planned obligation fingerprint."""
 
@@ -23,13 +24,70 @@ import datetime as dt
 import importlib.util
 import json
 import math
+import os
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 # receipt のファイル名に使う fingerprint。planner は sha256 の hexdigest を書く。
 # 形を確かめずにファイル名へ入れると、'/../..' を含む値で --evidence-dir の外に書けてしまう。
 FINGERPRINT_RE = re.compile(r"[0-9a-f]{64}")
+
+
+class _KeptExisting(Exception):
+    """--keep-existing-non-pass で、PASS と読めない receipt が既にあったので置き換えなかった。"""
+
+    def __init__(self, status: object) -> None:
+        super().__init__(status)
+        self.status = status
+
+
+def _existing_non_pass(out: Path) -> tuple[bool, object]:
+    """同じ名前のものがあり PASS と読めないかを返す。dangling な symlink・壊れた receipt も「PASS でない」。"""
+    if not os.path.lexists(out):
+        return False, None
+    try:
+        status = json.loads(out.read_text(encoding="utf-8")).get("status")
+    except (OSError, ValueError, AttributeError, RecursionError):
+        status = None
+    return status != "PASS", status
+
+
+def _replace_receipt(out: Path, rendered: str, keep_existing_non_pass: bool) -> None:
+    """同じディレクトリの一時ファイルに書いて fsync し、os.replace で receipt の名前へ置き換える。
+
+    write_text は名前が symlink だとリンク先 (--evidence-dir の外もありうる) を上書きし、dangling なら
+    外に新しいファイルを作る。os.replace は名前そのものを置き換えるのでリンク先に触れず、途中で止まっても
+    半端な receipt を残さない。一時ファイルは mkstemp (O_CREAT|O_EXCL) で作り、*.json で終わらない名前に
+    するので、書いている途中の planner に receipt として読まれない。--keep-existing-non-pass の確認は
+    置き換えの直前にもう一度行い、確認から置き換えまでの間に置かれた FAIL を上書きする窓を小さくする。
+    """
+    if keep_existing_non_pass:
+        refuse, status = _existing_non_pass(out)
+        if refuse:
+            raise _KeptExisting(status)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(dir=out.parent, prefix=f".{out.name}.", suffix=".tmp")
+    try:
+        umask = os.umask(0)
+        os.umask(umask)
+        os.fchmod(fd, 0o666 & ~umask)  # mkstemp の 0600 ではなく、従来の write_text と同じ権限にする
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(rendered)
+            handle.flush()
+            os.fsync(handle.fileno())
+        if keep_existing_non_pass:
+            refuse, status = _existing_non_pass(out)
+            if refuse:
+                raise _KeptExisting(status)
+        os.replace(tmp_name, out)
+    except BaseException:
+        try:
+            os.unlink(tmp_name)
+        except FileNotFoundError:
+            pass
+        raise
 
 
 def _load_planner():
@@ -61,6 +119,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--note", default="")
     parser.add_argument("--repo-root", default=".")
     parser.add_argument("--evidence-dir", required=True)
+    parser.add_argument(
+        "--keep-existing-non-pass", action="store_true",
+        help="同じ fingerprint の receipt が既にあり、PASS と読めない (FAIL・INCONCLUSIVE・壊れている) なら書かずに exit 3。"
+             "自動で PASS を書く呼び手 (derive の Step 4) が、利用者の直していない FAIL を消さないために使う",
+    )
     args = parser.parse_args(argv)
     if not 0 <= args.confidence <= 1:
         print("[ERROR] confidence must be between 0 and 1", file=sys.stderr)
@@ -137,8 +200,12 @@ def main(argv: list[str] | None = None) -> int:
     safe_id = re.sub(r"[^A-Za-z0-9._-]+", "-", args.obligation_id).strip("-")
     out = out_dir / f"{safe_id}-{fingerprint[:12]}.json"
     try:
-        out_dir.mkdir(parents=True, exist_ok=True)
-        out.write_text(json.dumps(receipt, ensure_ascii=False, indent=2, allow_nan=False) + "\n", encoding="utf-8")
+        rendered = json.dumps(receipt, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
+        _replace_receipt(out, rendered, args.keep_existing_non_pass)
+    except _KeptExisting as kept:
+        # 証跡が変わって planner が一致から外した FAIL も、ここで守る (直したかどうかは利用者が決める)
+        print(f"[SKIP] 既存の receipt が PASS でないので書かない: {out} (status={kept.status!r})", file=sys.stderr)
+        return 3
     except (OSError, ValueError) as exc:
         print(f"[ERROR] receipt を書けない: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 2

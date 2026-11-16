@@ -1,0 +1,124 @@
+{
+  "verdict": "PASS",
+  "scope": "初稿macro成果物の独立意味評価。外部試験OUT1..OUT7および最終run判定は含まない。",
+  "evaluated_artifact": ".dev-graph/cache/decompose-input/macro-report.json",
+  "artifact_bytes_sha256": "4371f79b1483a0b1cfd95e03f827c7e6c80feafc85517b34d8bf36f1b106f7b7",
+  "planned_graph_digest": "sha256:9fc821cc42663cf451ca23d005e56f257498687302f5b3ea8b926004a01d5e82",
+  "checks": [
+    {
+      "id": "requested_two_features",
+      "status": "PASS",
+      "evidence": "新規は差分と要約の独立した2 feature。既存renderの生成責務を再生成せず、比較結果とその読解支援を分離している。"
+    },
+    {
+      "id": "dependency_chain",
+      "status": "PASS",
+      "evidence": "差分→LT-FEATURE-001、要約→差分。ユーザー指定と完全一致。"
+    },
+    {
+      "id": "shared_architecture",
+      "status": "PASS",
+      "evidence": "既存ARCH-LT-001を両featureが参照し、architecture複製なし。"
+    },
+    {
+      "id": "purpose_goal_scope_acceptance",
+      "status": "PASS",
+      "evidence": "差分は追加/削除/変更と比較不能、要約は差分との対応・変更なし・比較不能の誤表示禁止。いずれも成否を判定でき、実装phaseへ過分解していない。"
+    },
+    {
+      "id": "macro_granularity",
+      "status": "PASS",
+      "evidence": "macro_nodesは既存architecture1件、既存feature1件、新規feature2件。既存13 taskはpackage_reportに隔離され、新規task生成なし。"
+    },
+    {
+      "id": "beads_draft_only",
+      "status": "PASS",
+      "evidence": "readiness completeはテンプレート充足を示すのみ。confirmed/passではないため、昇格済みと解釈されていない。"
+    },
+    {
+      "id": "promotion_gate_feature-render-diff",
+      "status": "PASS",
+      "evidence": "C28 planned-preview実出力はpromotion_gateでblocked。対象はdraft/pendingであり投影0。"
+    },
+    {
+      "id": "promotion_gate_feature-render-diff-summary",
+      "status": "PASS",
+      "evidence": "C28 planned-preview実出力はpromotion_gateでblocked。対象はdraft/pendingであり投影0。"
+    },
+    {
+      "id": "cross_binding_transitive_hold",
+      "status": "PASS",
+      "evidence": "既存renderのnone bindingを起点に差分と要約を連鎖保留。create後に張れるedgeとして誤記していない。"
+    },
+    {
+      "id": "preview_digest_binding",
+      "status": "PASS",
+      "evidence": "macro-input bytes→C02 preview→C28 planned_graph_digestの一致。"
+    },
+    {
+      "id": "dryrun_not_applied",
+      "status": "PASS",
+      "evidence": "初稿はpreviewと明示し、graph/content/receipt/Beads/GitHub/Projectsのwrite countは0。外部状態の網羅検証はこの意味評価の対象外。"
+    }
+  ],
+  "findings": [],
+  "outer_criteria": {
+    "OUT1": "external_pending",
+    "OUT2": "external_pending",
+    "OUT3": "external_pending",
+    "OUT4": "external_pending",
+    "OUT5": "external_pending",
+    "OUT6": "external_pending",
+    "OUT7": "external_pending"
+  },
+  "evaluated_at": "2026-11-15T09:16:40.442670+00:00",
+  "supplemental_evaluation": {
+    "verdict": "PASS",
+    "artifact": ".dev-graph/cache/decompose-input/publication-complete-report.json",
+    "artifact_bytes_sha256": "469772629b3ffc8d5787358cf4c2a649fe71a414c9ec5630b707202b7e7b7d35",
+    "checks": [
+      {
+        "id": "all_target_coverage",
+        "status": "PASS",
+        "evidence": "最終reportの17 targetは既存13 task、新規draft2 feature、既存none binding2 nodeと過不足なく一致。noneのoperationは外部writeなし。"
+      },
+      {
+        "id": "promoted_only_c28_pass",
+        "status": "PASS",
+        "evidence": "13件すべての実C28 JSONを読み、graph上のconfirmed/pass/complete、task種別、create dry-run write0、planned digest一致を確認。"
+      },
+      {
+        "id": "zero_draft_projection",
+        "status": "PASS",
+        "evidence": "新規feature2件のみdraftとしてblocked。C28 passは既存13 task、既存none2件はlocal_onlyで投影対象外。"
+      },
+      {
+        "id": "package_edge_coverage",
+        "status": "PASS",
+        "evidence": "既存13-node DAGの12 edgeが一致。両端未起票なのでdep-addを呼ばずcreate後のedgeとしてpreview。"
+      },
+      {
+        "id": "registered_package_kept",
+        "status": "PASS",
+        "evidence": "登録済みpackageを再登録せず、共通parent/packageを保持。新featureは依存先未完了でreadyでないと明記。"
+      },
+      {
+        "id": "observed_bd_readonly",
+        "status": "PASS",
+        "evidence": "実fake-bdログ26行はversion/whereだけ。create/dep-add/外部mutation呼出しなし。"
+      },
+      {
+        "id": "unchanged_original_inputs",
+        "status": "PASS",
+        "evidence": "baseline対象graph/content/receiptのbytesすべて不変。初稿artifact bytes SHAおよびcanonical graph digestも一致。"
+      },
+      {
+        "id": "writecounts_and_outer_scope",
+        "status": "PASS",
+        "evidence": "graph/content/receipt/Beads/GitHub/Projects write0。sourceのOUT1..OUT7はexternal_pendingのまま。"
+      }
+    ],
+    "findings": [],
+    "scope": "指定scenarioのdry-run観測4項目。source OUT1..OUT7の網羅試験とは別。"
+  }
+}

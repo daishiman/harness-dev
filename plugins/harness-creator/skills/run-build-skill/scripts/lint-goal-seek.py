@@ -38,6 +38,8 @@
 配線系の 3 warning は既存スキルの grace だが、grace は新規スキルにも効くので
 `GRANDFATHERED_WARNINGS` に登録された (path, kind) 以外は violation にする
 (未登録の新規不足と、返済済みのまま残った登録の両方向)。
+配線を持たない loop 実行系は `### ゴールシーク配線を持たない理由` 見出しの下に理由を書いて宣言する。
+宣言があれば 3 warning を出さない。理由が空の宣言と、配線と並んだ宣言は violation。
 
 `--baseline <json>` は CI scope 外 (harness-creator 以外の plugin) に残る既知の違反を
 (repo 相対 path, 規則) で固定する。載った違反は猶予し、載っていない違反と、返済済み・
@@ -85,7 +87,16 @@ VAGUE_TERMS = ("丁寧", "品質を高める", "適切に", "きちんと", "し
 # with-goal-seek combinator が注入する実行配線サブセクション。
 # 行頭の実見出しのみ一致 (本文に見出し名を引用しただけでは満たさない)。
 WIRING_HEADING = "### ゴールシーク配線"
-WIRING_HEADING_RE = re.compile(r"^###\s*ゴールシーク配線", re.MULTILINE)
+# 配線を持たない loop 実行系の宣言。見出しの次の行から次の見出しまでが理由で、空なら宣言ではない。
+# 見出しは配線の見出しと前方一致するので、配線側の正規表現はこの見出しを否定先読みで除く。
+NO_WIRING_HEADING = "### ゴールシーク配線を持たない理由"
+_NO_WIRING_SUFFIX = "を持たない理由"
+NO_WIRING_SECTION_RE = re.compile(
+    r"^###\s*ゴールシーク配線" + _NO_WIRING_SUFFIX + r"\s*$(.*?)(?=^#{1,3}\s|\Z)",
+    re.MULTILINE | re.DOTALL,
+)
+_HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
+WIRING_HEADING_RE = re.compile(r"^###\s*ゴールシーク配線(?!" + _NO_WIRING_SUFFIX + ")", re.MULTILINE)
 # 中間成果物アンカー (ドリフト圧縮機構) の配線存在検査。
 # AND マッチで「配線実体」を保証する。1 トークン欠落でも warning (F-LS-002 / F-MD-010 / F-SS-004)。
 # (1) jsonl パス, (2) 不変アンカー original_goal, (3) 次周回必須入力 merged_directive_for_next の 3 トークン全部が
@@ -97,7 +108,7 @@ VERIFICATION_REQUIRED_TOKENS = ("required_keys", "original_goal_hash", "hashlib.
 # 停止条件を ## level に緩めることで、中間成果物トークンと検証 bash トークンを同一 wiring_text で AND 検査可能になる
 # (F-MD-003 / F-SS-006 / F-LS-002 解消: body 全体 scope の偽陰性/偽陽性両方を回避)。
 WIRING_SECTION_RE = re.compile(
-    r"^###\s*ゴールシーク配線.*?(?=^##\s|\Z)", re.MULTILINE | re.DOTALL
+    r"^###\s*ゴールシーク配線(?!" + _NO_WIRING_SUFFIX + r").*?(?=^##\s|\Z)", re.MULTILINE | re.DOTALL
 )
 
 
@@ -232,6 +243,36 @@ def canonical_anchor_reference(path: Path, wiring_text: str) -> tuple[str, list[
     return (content if not errors else ""), errors
 
 
+def no_wiring_declaration(path: Path, body: str, has_wiring: bool, findings: list[str]) -> bool:
+    """`### ゴールシーク配線を持たない理由` の宣言を読み、有効なら True を返す。
+
+    有効な宣言があると、配線系の 3 warning (wiring-section / intermediate-tokens /
+    verification-tokens) を出さない。理由が空 (空白と HTML コメントだけ、または未展開の
+    `{{...}}`) の宣言と、配線の見出しと並んだ宣言は violation にして False を返すので、
+    そのときの warning は今までどおり出る。
+    """
+    sections = list(NO_WIRING_SECTION_RE.finditer(body))
+    if not sections:
+        return False
+    valid = True
+    for match in sections:
+        reason = _HTML_COMMENT_RE.sub("", match.group(1)).strip()
+        if not reason or "{{" in reason:
+            findings.append(
+                f"{path}: '{NO_WIRING_HEADING}' の理由が空 "
+                "(見出しの下に、配線を持たない理由を 1 行以上書くこと)"
+            )
+            valid = False
+    if has_wiring:
+        findings.append(
+            f"{path}: '{NO_WIRING_HEADING}' と '{WIRING_HEADING}' が両方ある "
+            "(配線を持つなら宣言を消し、持たないなら配線を消すこと。"
+            "with-goal-seek combinator を当て直すと配線が戻る)"
+        )
+        valid = False
+    return valid
+
+
 def lint_file(path: Path) -> tuple[list[str], list[str]]:
     """(findings=exit1 違反, warnings=exit0 助言) を返す。"""
     findings: list[str] = []
@@ -298,7 +339,8 @@ def lint_file(path: Path) -> tuple[list[str], list[str]]:
         # 実行配線サブセクション + 中間成果物アンカーの 2 検査を独立 if で分離する (F-LS-007 / F-SS-014)。
         # 配線サブセクション不在は warning (既存スキル grace)。中間成果物トークン欠落は scope 限定 AND 検査。
         wiring_match = WIRING_SECTION_RE.search(body)
-        if not wiring_match:
+        declared = no_wiring_declaration(path, body, wiring_match is not None, findings)
+        if not wiring_match and not declared:
             warnings.append(
                 f"{path}: '{WIRING_HEADING}' が無い "
                 "(with-goal-seek combinator で goal-spec/progress JSON/fork 委譲を配線推奨)"
@@ -310,7 +352,7 @@ def lint_file(path: Path) -> tuple[list[str], list[str]]:
         findings.extend(reference_errors)
         contract_text = wiring_text + "\n" + canonical_text
         missing_tokens = [t for t in INTERMEDIATE_REQUIRED_TOKENS if t not in contract_text]
-        if missing_tokens:
+        if missing_tokens and not declared:
             warnings.append(
                 f"{path}: ゴールシーク配線に中間成果物アンカー必須トークン {missing_tokens} "
                 "が不在 (3 トークン AND 必須: intermediate.jsonl + original_goal + "
@@ -320,7 +362,7 @@ def lint_file(path: Path) -> tuple[list[str], list[str]]:
         # WIRING_SECTION_RE が ## level まで拡張されたため `### ゴールシーク検証` も同 scope に含まれる。
         # wiring_text 限定 AND 検査により body 全体 scope の偽陰性/偽陽性を排除する。
         missing_verify = [t for t in VERIFICATION_REQUIRED_TOKENS if t not in contract_text]
-        if missing_verify:
+        if missing_verify and not declared:
             warnings.append(
                 f"{path}: ゴールシーク配線に機械検証 bash 必須トークン {missing_verify} "
                 "が不在 (3 トークン AND 必須: required_keys + original_goal_hash + hashlib.sha256。"
@@ -627,14 +669,13 @@ WARNING_KINDS = (
 GRACE_UNREGISTERED_MARK = "grace 未登録"
 # 実測 2026-10-10 21:46:10 時点で `--skills-dir plugins/harness-creator/skills`
 # (CI が回す scope・SKILL.md 32 本) が出していた warning 37 件。返済したら削る。
+# run-build-skill と run-skill-create の 6 件は `### ゴールシーク配線を持たない理由` の宣言で返した
+# (harness-bqr)。残りの扱いは harness-gn7e。
 GRANDFATHERED_WARNINGS: frozenset[tuple[str, str]] = frozenset(
     {
         ("plugins/harness-creator/skills/delegate-codex-skill-review/SKILL.md", "intermediate-tokens"),
         ("plugins/harness-creator/skills/delegate-codex-skill-review/SKILL.md", "verification-tokens"),
         ("plugins/harness-creator/skills/delegate-codex-skill-review/SKILL.md", "wiring-section"),
-        ("plugins/harness-creator/skills/run-build-skill/SKILL.md", "intermediate-tokens"),
-        ("plugins/harness-creator/skills/run-build-skill/SKILL.md", "verification-tokens"),
-        ("plugins/harness-creator/skills/run-build-skill/SKILL.md", "wiring-section"),
         ("plugins/harness-creator/skills/run-goal-elicit/SKILL.md", "intermediate-tokens"),
         ("plugins/harness-creator/skills/run-goal-elicit/SKILL.md", "verification-tokens"),
         ("plugins/harness-creator/skills/run-goal-elicit/SKILL.md", "wiring-section"),
@@ -645,9 +686,6 @@ GRANDFATHERED_WARNINGS: frozenset[tuple[str, str]] = frozenset(
         ("plugins/harness-creator/skills/run-plugin-package-check/SKILL.md", "intermediate-tokens"),
         ("plugins/harness-creator/skills/run-plugin-package-check/SKILL.md", "verification-tokens"),
         ("plugins/harness-creator/skills/run-plugin-package-check/SKILL.md", "wiring-section"),
-        ("plugins/harness-creator/skills/run-skill-create/SKILL.md", "intermediate-tokens"),
-        ("plugins/harness-creator/skills/run-skill-create/SKILL.md", "verification-tokens"),
-        ("plugins/harness-creator/skills/run-skill-create/SKILL.md", "wiring-section"),
         ("plugins/harness-creator/skills/run-skill-elicit/SKILL.md", "intermediate-tokens"),
         ("plugins/harness-creator/skills/run-skill-elicit/SKILL.md", "verification-tokens"),
         ("plugins/harness-creator/skills/run-skill-elicit/SKILL.md", "wiring-section"),
@@ -672,7 +710,7 @@ def warning_kind(message: str) -> str | None:
     """配線 warning を ratchet の kind へ分類する。未知なら None。
 
     None は呼び出し側で violation にする (fail-closed)。文面を変えた warning が
-    黙って grace 側へ落ちると、ratchet の分母 (登録 37 件) が嘘になる。
+    黙って grace 側へ落ちると、ratchet の分母 (登録件数) が嘘になる。
     """
     if f"'{WIRING_HEADING}' が無い" in message:
         return WARNING_KIND_WIRING_SECTION

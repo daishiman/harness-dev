@@ -1,0 +1,86 @@
+{
+  "verdict": "PASS",
+  "summary": {
+    "categories": 8,
+    "platforms": 6,
+    "total_cells": 48,
+    "uncollected_cells": 0,
+    "confirmed_cells": 8,
+    "out_of_scope_cells": 40,
+    "findings_by_axis": {
+      "missed-collection": 0,
+      "leading-question": 6,
+      "premature-stop": 0,
+      "traceability": 0,
+      "foundation-trace": 0
+    },
+    "findings_by_severity": {"high": 0, "medium": 4, "low": 2, "info": 0},
+    "closed_findings": 3,
+    "hearing_progress": {"loop_count": 4, "max_loops": 4, "complete": true, "next_question": null},
+    "schema_version": "1.0",
+    "notes": [
+      "軸1: 48 セルは 確定 8 (各カテゴリの web) と 対象外 40 (appr-001 / qa-000) だけで、未収集セルは 0。",
+      "軸3(a): 未収集セルが 0 なので complete=true は矛盾しない。",
+      "軸3(b): loop_count=4 が max_loops=4 に達しているが、未収集が無く complete=true、next_question=null で、未完を完了扱いにする状態ではない。",
+      "軸4: 確定 8 セルの qa_ref (qa-031 / qa-auth-written-v7 / qa-003 / qa-security-written-v7 / qa-005 / qa-006 / qa-007 / qa-008) はすべて qa_log に実在する。どれも superseded_by を持たない。",
+      "軸4: 置き換え済みの qa-009 は ui-ux×web の qa_refs (裏付け) にだけ残っており、active consumer ではない。qa_refs からの参照は検出にしない。",
+      "軸5: schema 1.0 で effective_source_refs が無いため、canonical の qa-foundation-u1〜u9 へ fallback して照合した。",
+      "軸5: qa-foundation-u1〜u9 の answer は、根拠とされた qa-010/011/012/013/014/015/016+019/017+000/018+031/001+028+024 の answer と逐語で一致する。",
+      "軸5: requirements_foundation の U1-U9 の値は、対応する qa-foundation entry に遡れる。",
+      "軸5: confirmed=true で、approval_ref=appr-foundation-v2 は approval_log に実在する。U1/U2/U3 は N/A でなく値である。",
+      "書面 source (read-only 検査): qa-csrf-written-v7 / qa-session-written-v7 / qa-auth-written-v7 / qa-security-written-v7 の 4 件すべてで、(1) source.path が project root 配下の実在 file である (relative_to 成功)、(2) source.section の本文が answer と逐語一致する、(3) source.sha256 が sha256(answer UTF-8) と一致する。",
+      "active consumer: 置き換え済み qa-009 / qa-037 / qa-038 を、確定セルの qa_ref や effective_source_refs で参照しているものは 0 件。qa-037 / qa-038 は reopen_log で現行セルから外されている。",
+      "対象外: decisions[] の採択根拠の遡及監査は C05 decision_guidance の責務で、本監査には含めない。C07 (対象外理由) / C08 (鮮度) にも踏み込んでいない。"
+    ]
+  },
+  "findings": [
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-009",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出。JTBD・対象ユーザー・利用文脈 (場所/端末/頻度/制約) の 3 論点を名指しで 1 問に束ねていた。置き換え先 qa-019 は (a) 1 論点 (JTBD) の開いた問で N1-N4 を満たす、(b) superseded_note と両方の問を照合して同じ JTBD の論点、(c) answer・basis=user-decision・answered_at=2026-10-12T00:16:45Z があり、旧 entry に answered_at は無い。以上から有効。残りの論点は qa-016 / qa-020 / qa-021 で 1 論点ずつ問い直されている。qa-009 を active consumer が参照している形跡は無く、ui-ux×web の qa_refs (裏付け) にだけ残る。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-037",
+      "criteria": ["N2"],
+      "supersession_valid": true,
+      "observation": "閉じた検出。選択肢 (1) だけが「SameSite の属性だけで防ぐ」と限定的に書かれ、(2)(3) は「加えて」と補強する書き方になっており、軽微な語調の偏りがある。選択肢と保留の道は揃っている。さらに provenance は、orchestrator が書いた既定値の basis を後から user-decision へ変えたと明記しており、旧 entry を利用者一次入力として扱わない扱いは妥当。置き換え先 qa-csrf-written-v7 は書面 source-index で、(a) 問の文面は文書参照のみで誘導は無い、(b) 同じ CSRF 防御の論点、(c) answer・user-decision・answered_at=2026-11-01T13:47:28Z (旧 2026-10-12T17:34:57Z より後)。書面の逐語・パス含有・SHA-256 も一致するため有効。旧 entry は qa_ref / qa_refs / effective_source_refs のどれからも参照されていない。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-038",
+      "criteria": ["N4"],
+      "supersession_valid": true,
+      "observation": "閉じた検出。保存先の選択 (Pod メモリ / PostgreSQL / Redis 等) と、有効期限・ログアウト時の扱いという独立した 2 論点を 1 問に束ねていた。保留の道は示されている。置き換え先 qa-session-written-v7 は書面 source-index で、(a) 問の文面は文書参照のみ、(b) 保存先と有効期限・ログアウトの両方を同じセッション保存の論点として扱う、(c) answer・user-decision・answered_at=2026-11-01T13:47:29Z (旧 2026-10-12T17:34:57Z より後)。書面の逐語・パス含有・SHA-256 も一致するため有効。旧 entry の active consumer は 0 件。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-033",
+      "criteria": ["N4"],
+      "supersession_valid": false,
+      "observation": "U1-U9 の要約を 1 問で「確定しますか」と問う。独立に決められる 9 論点 (U1-U9 とその下の G/O/I) を 1 つの確定/指摘/保留の答えに束ねている。保留と指摘の道は示され、推奨の印や前提の埋め込みは無いため medium。この問は確定セルの主たる接地根拠 (qa_ref) ではなく、approval_ref (appr-foundation-v2) の根拠にあたる。U1-U9 自体は qa-foundation-u1〜u9 経由で一次入力に遡れる。置き換え済みではないので閉じた検出ではない。C01 への指針: 次回の確定確認では U ごとの確認に分ける。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "medium",
+      "qa_id": "qa-o1-fixture-v3",
+      "criteria": ["N4"],
+      "supersession_valid": false,
+      "observation": "「O1の請求漏れをどう定義し、いつ検知し、誰へ示し、どのデータで月次成果を計測しますか。」は、定義・検知タイミング・提示先・計測データの 4 論点を名指しで並べて答えを求めており、N4 の「開いた形でも論点を名指しで複数並べる問」にあたる。決定の選択肢や可否は示していないので medium。この問は database / ui-ux / backend / maintenance-ops の web セルの qa_refs (裏付け) にだけあり、主たる接地根拠 (qa_ref) ではない。置き換え済みではない。"
+    },
+    {
+      "axis": "leading-question",
+      "severity": "low",
+      "qa_id": "qa-job-choice-fixture-v3",
+      "criteria": ["N4"],
+      "supersession_valid": false,
+      "observation": "2 案を中立に並べ、推奨の印は無く、別案・保留も選べる。ただし選択に加えて「理由と運用条件」も求めるため、運用条件が選択から独立した論点として混ざる軽微な束ねがある。答えを左右したとは読めないので low。この問は qa_refs (裏付け) にだけあり、主たる接地根拠ではない。"
+    }
+  ]
+}

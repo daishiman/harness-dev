@@ -13,12 +13,18 @@ conftest 非依存で module-level に importlib ロードする (自己完結�
 - build_knowledge_entry が add_entry.py 必須6フィールドを生成し source は参照のみ
 - write_knowledge が Loop A + Loop B 双方へ追記 (dry-run 経路確認 + 実 add_entry 統合)
 - graph / plan を一切書かない (依存方向担保)
+- 完了ゲート第3段の runtime ledger: 不在=missing と 読めない/壊れた JSON/null=invalid (診断つき) の区別、
+  --runtime-ledger による場所の指定
+- 不正入力の fail-closed: UTF-8 でない・形の崩れた入力を traceback にも gate ok にもせず exit 2 /
+  未処理 / invalid へ落とす。evidence 探索の repo root 打ち切り、--max-entries の下限、
+  有効な ledger が覆わない未完了 P13 の status=uncovered
 """
 from __future__ import annotations
 
 import importlib.util
 import hashlib
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -1518,3 +1524,371 @@ def test_runtime_ledger_graph_hash_and_unknown_key_fail_closed(tmp_path, capsys)
     assert rc == 1
     assert any("未知キー" in v for v in violations)
     assert any("graph_hash が task-state pin と不一致" in v for v in violations)
+
+
+# ─────────── runtime ledger の「無い」と「壊れている」を分けて報告する ───────────
+def _p13_trust_build(tmp_path) -> tuple[Path, Path, Path]:
+    """P13 trust node だけが未完了の plan / build dir / task-state を作る。"""
+    plan = tmp_path / "plan"
+    plan.mkdir()
+    _write(plan / "task-graph.json", {"nodes": [
+        {"id": "P13-x-03", "phase_ref": "P13", "title": "trust後 SessionStart run"},
+    ]})
+    build = tmp_path / "build"
+    build.mkdir()
+    state = _write(build / "task-state.json", {"graph_hash": _GRAPH_HASH, "nodes": []})
+    return plan, build, state
+
+
+@pytest.fixture
+def stage3(tmp_path, capsys):
+    """第3段まで走らせ (rc, stdout JSON) を返す。completion evidence は extra で渡したときだけ付く。"""
+    def run(state, plan, *extra):
+        inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+        rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "ev.jsonl"),
+                       "--task-state", str(state), "--plan-dir", str(plan), "--dry-run", *extra])
+        return rc, json.loads(capsys.readouterr().out)
+    return run
+
+
+def test_runtime_ledger_absent_reports_missing(tmp_path, stage3):
+    plan, build, state = _p13_trust_build(tmp_path)
+    rc, out = stage3(state, plan)
+    gate = out["runtime_pending_user_gate"]
+    assert rc == 1 and gate["status"] == "missing"
+    assert gate["violations"] == ["runtime-evidence-ledger.json 不在"]
+    assert gate["path"] == str(build / "runtime-evidence-ledger.json")
+    assert any("build-runtime-evidence-ledger.py" in s for s in out["next_steps"])
+
+
+def test_runtime_ledger_corrupt_json_is_invalid_with_parse_position(tmp_path, stage3):
+    """壊れた JSON は「不在」に畳まず invalid とし、どこで壊れたかを violations に残す。"""
+    plan, build, state = _p13_trust_build(tmp_path)
+    (build / "runtime-evidence-ledger.json").write_text('{"schema_version": "2.0.0",\n  oops', encoding="utf-8")
+    rc, out = stage3(state, plan)
+    gate = out["runtime_pending_user_gate"]
+    assert rc == 1 and gate["status"] == "invalid"
+    assert len(gate["violations"]) == 1
+    violation = gate["violations"][0]
+    assert "壊れた JSON" in violation and "line 2" in violation and "不在" not in violation
+
+
+@pytest.mark.parametrize("payload,needle", [
+    (b"\xff\xfe\x00broken", "読めない"),
+    (b"null", "object でない"),
+])
+def test_runtime_ledger_unreadable_or_null_is_invalid(tmp_path, stage3, payload, needle):
+    plan, build, state = _p13_trust_build(tmp_path)
+    (build / "runtime-evidence-ledger.json").write_bytes(payload)
+    rc, out = stage3(state, plan)
+    gate = out["runtime_pending_user_gate"]
+    assert rc == 1 and gate["status"] == "invalid"
+    assert any(needle in v for v in gate["violations"])
+
+
+def test_runtime_ledger_arg_overrides_default_location(tmp_path, stage3):
+    plan, build, state = _p13_trust_build(tmp_path)
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    ledger_path = _write(elsewhere / "ledger.json", _runtime_ledger(elsewhere, gate_task_ids={
+        "trust": ["P13-x-03"], "new_session": ["P13-x-03"],
+    }))
+    # 既定の場所 (task-state と同じ dir) は壊れていても、--runtime-ledger が指す方を読む
+    (build / "runtime-evidence-ledger.json").write_text("{ broken", encoding="utf-8")
+    rc, out = stage3(state, plan, "--runtime-ledger", str(ledger_path),
+                     "--completion-evidence", str(_completion_evidence(tmp_path)))
+    gate = out["runtime_pending_user_gate"]
+    assert rc == 0 and gate["status"] == "accepted" and gate["path"] == str(ledger_path)
+    assert gate["deferred_task_ids"] == ["P13-x-03"]
+
+
+def test_runtime_ledger_arg_requires_task_state(tmp_path, capsys):
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    rc = rec.main(["--discovered-inbox", str(inbox), "--runtime-ledger", str(tmp_path / "l.json"),
+                   "--dry-run"])
+    assert rc == 2
+    assert "--task-state" in capsys.readouterr().err
+
+
+# ─────────── 不正入力の fail-closed (独立レビュー指摘の再現) ───────────
+def _gate_ok_args(tmp_path, *extra) -> list[str]:
+    """第1段を通す全解決 inbox と、存在しない task-events で dry-run する引数。"""
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    return ["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "ev.jsonl"),
+            "--dry-run", *extra]
+
+
+def test_inbox_non_utf8_form_is_pending_not_traceback(tmp_path, capsys):
+    """[中] inbox に b'{"status": "\\xff"}' → traceback せず未処理として gate を閉じる。"""
+    inbox = _inbox(tmp_path)
+    (inbox / "bad.json").write_bytes(b'{"status": "\xff"}')
+    assert [p["status"] for p in rec.scan_pending_discovered(inbox)] == [None]
+    rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "ev.jsonl"),
+                   "--dry-run"])
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 1 and out["completion_gate"] == "blocked"
+    assert [p["path"] for p in out["pending_discovered_tasks"]] == [str(inbox / "bad.json")]
+
+
+def test_inbox_non_string_status_is_pending_not_traceback(tmp_path, capsys):
+    """[中] inbox form の status=[] → unhashable で落とさず未処理と数える。"""
+    inbox = _inbox(tmp_path, {"a.json": {**_form(), "status": []}})
+    rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "ev.jsonl"),
+                   "--dry-run"])
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 1 and out["pending_discovered_tasks"][0]["status"] == []
+
+
+@pytest.mark.skipif(hasattr(os, "geteuid") and os.geteuid() == 0, reason="root は chmod 000 を読める")
+def test_unreadable_inbox_dir_is_input_error_exit2(tmp_path, capsys):
+    """一覧を読めない inbox を「未処理 0 件」と読まず exit 2 にする (Path.glob は空を返す)。"""
+    inbox = _inbox(tmp_path, {"a.json": _form()})
+    inbox.chmod(0)
+    try:
+        rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(tmp_path / "ev.jsonl"),
+                       "--dry-run"])
+    finally:
+        inbox.chmod(0o755)
+    captured = capsys.readouterr()
+    assert rc == 2 and captured.out == ""
+    assert "--discovered-inbox" in captured.err
+
+
+def test_task_state_non_utf8_is_input_error_exit2(tmp_path, capsys):
+    """[中] --task-state に b'\\xff\\xfe' → traceback せず exit 2 と stderr の診断。"""
+    state = tmp_path / "task-state.json"
+    state.write_bytes(b"\xff\xfe")
+    rc = rec.main(_gate_ok_args(tmp_path, "--task-state", str(state)))
+    captured = capsys.readouterr()
+    assert rc == 2 and captured.out == ""
+    assert "--task-state 読込/parse 失敗" in captured.err
+
+
+@pytest.mark.parametrize("doc,needle", [
+    ({"nodes": 5}, "nodes が配列でない"),
+    ([1, 2], "object でない"),
+    ({}, "nodes が配列でない"),
+    ({"nodes": [5, {"id": "T1", "state": "done"}]}, "nodes[0] が object でない"),
+    ({"nodes": [{"state": "done"}]}, "id が非空文字列でない"),
+    ({"nodes": [{"id": "T1", "state": "done"}, {"id": "T1", "state": "pending"}]}, "id が重複"),
+])
+def test_task_state_malformed_shape_is_exit2_even_with_pass_evidence(tmp_path, capsys, doc, needle):
+    """[中] task-state [1,2] や {} は --plan-dir なし・evidence pass でも gate ok にせず exit 2。"""
+    state = _write(tmp_path / "task-state.json", doc)
+    evidence = _completion_evidence(tmp_path)
+    rc = rec.main(_gate_ok_args(tmp_path, "--task-state", str(state),
+                                "--completion-evidence", str(evidence)))
+    captured = capsys.readouterr()
+    assert rc == 2 and captured.out == ""
+    assert needle in captured.err
+
+
+def test_task_state_malformed_writes_nothing(tmp_path, capsys):
+    """exit 2 は knowledge も task-events も書かない (dry-run でない実行で確かめる)。"""
+    state = _write(tmp_path / "task-state.json", [1, 2])
+    store = _make_store(tmp_path / "loop-b", "/capability-build")
+    events = tmp_path / "ev.jsonl"
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(events),
+                   "--task-state", str(state),
+                   "--completion-evidence", str(_completion_evidence(tmp_path)),
+                   "--harness-knowledge-dir", str(store), "--add-entry-path", str(_ADD_ENTRY)])
+    assert rc == 2 and capsys.readouterr().out == ""
+    assert not events.exists()
+    assert sorted(p.name for p in store.iterdir()) == ["knowledge-index.json"]
+
+
+def test_task_graph_empty_object_is_exit2(tmp_path, capsys):
+    """task-graph {} を照合元にすると task-state の未完了 node を見ずに通るため exit 2 にする。"""
+    plan = tmp_path / "plan"
+    plan.mkdir()
+    _write(plan / "task-graph.json", {})
+    state = _task_state(tmp_path, [{"id": "T1", "state": "pending"}])
+    rc = rec.main(_gate_ok_args(tmp_path, "--task-state", str(state), "--plan-dir", str(plan),
+                                "--completion-evidence", str(_completion_evidence(tmp_path))))
+    captured = capsys.readouterr()
+    assert rc == 2 and captured.out == ""
+    assert "task-graph.nodes が配列でない" in captured.err
+
+
+@pytest.mark.parametrize("payload,needle", [
+    ([1], "object でない"),
+    ({"stall": 5}, "stall が object でない"),
+    ({"stall": {"diagnosis": [5]}}, "stall.diagnosis が object 配列でない"),
+    ({"handoff_notes": [5]}, "handoff_notes が object 配列でない"),
+    ({"handoff_notes": [{"friction_points": "abc"}]}, "friction_points が配列でない"),
+])
+def test_summary_json_malformed_shape_is_exit2(tmp_path, capsys, payload, needle):
+    """[中] summary-json [1] / stall.diagnosis=[5] / handoff_notes=[5] → traceback せず exit 2。"""
+    summary = _write(tmp_path / "summary.json", payload)
+    rc = rec.main(_gate_ok_args(tmp_path, "--summary-json", str(summary)))
+    captured = capsys.readouterr()
+    assert rc == 2 and captured.out == ""
+    assert needle in captured.err
+
+
+def test_summary_json_non_utf8_is_exit2(tmp_path, capsys):
+    summary = tmp_path / "summary.json"
+    summary.write_bytes(b"\xff\xfe")
+    rc = rec.main(_gate_ok_args(tmp_path, "--summary-json", str(summary)))
+    assert rc == 2 and "--summary-json 読込/parse 失敗" in capsys.readouterr().err
+
+
+def test_summary_handoff_notes_null_merges_task_state_notes(tmp_path, capsys):
+    """handoff_notes: null でも task-state の notes を足せる (setdefault で null を残さない)。"""
+    summary = _write(tmp_path / "summary.json", {"handoff_notes": None})
+    state = _task_state(tmp_path, [{"id": "T1", "state": "done",
+                                    "handoff_notes": {"friction_points": ["fp-1"]}}])
+    rc = rec.main(_gate_ok_args(tmp_path, "--summary-json", str(summary), "--task-state", str(state),
+                                "--completion-evidence", str(_completion_evidence(tmp_path))))
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 0 and len(out["entry_candidates"]) == 1
+    assert "fp-1" in json.dumps(out["entry_candidates"][0], ensure_ascii=False)
+
+
+def test_task_events_non_object_line_is_skipped(tmp_path, capsys):
+    """[中] task-events の 1 行が 5 → 壊れた行と同じく skip し、他の行は蒸留する。"""
+    events = _events(tmp_path, [5, {"ts": "t1", "type": "lease_reaped", "task_id": "T1"}])
+    lessons = rec.distill_events(events, {}, limit=10)
+    assert [l["signal"] for l in lessons] == ["retry-resolved"]
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(events), "--dry-run"])
+    assert rc == 0 and len(json.loads(capsys.readouterr().out)["entry_candidates"]) == 1
+
+
+@pytest.mark.parametrize("kind", ["directory", "non_utf8"])
+def test_task_events_unreadable_is_exit2(tmp_path, capsys, kind):
+    """[中] task-events が dir (IsADirectoryError) や UTF-8 でない → traceback せず exit 2。"""
+    events = tmp_path / "ev.jsonl"
+    if kind == "directory":
+        events.mkdir()
+    else:
+        events.write_bytes(b'{"type": "\xff"}\n')
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(events), "--dry-run"])
+    captured = capsys.readouterr()
+    assert rc == 2 and captured.out == ""
+    assert "--task-events 読込失敗" in captured.err
+
+
+def test_completion_evidence_non_utf8_is_invalid(tmp_path, capsys):
+    """[中] completion evidence が UTF-8 でない → traceback せず invalid で gate を閉じる。"""
+    evidence = tmp_path / "completion-evidence.json"
+    evidence.write_bytes(b"\xff\xfe")
+    rc = rec.main(_gate_ok_args(tmp_path, "--completion-evidence", str(evidence)))
+    out = json.loads(capsys.readouterr().out)
+    assert rc == 1 and out["completion_evidence_gate"]["status"] == "invalid"
+
+
+@pytest.mark.parametrize("mutate,needle", [
+    (lambda l: l["artifacts"][0].__setitem__("purpose", {"x": 1}), "purpose が enum 外"),
+    (lambda l: l["gates"]["trust"].__setitem__("state", []), "trust.state が enum 外"),
+    (lambda l: l["gates"]["uninstall"].__setitem__("artifact_refs", [["rollback"]]),
+     "uninstall.artifact_refs が実在 purpose を参照していない"),
+])
+def test_runtime_ledger_unhashable_values_are_invalid(tmp_path, stage3, mutate, needle):
+    """[中] ledger の purpose=dict / state=[] / artifact_refs=[[...]] → TypeError でなく invalid。"""
+    plan, build, state = _p13_trust_build(tmp_path)
+    ledger = _runtime_ledger(build, gate_task_ids={"trust": ["P13-x-03"], "new_session": ["P13-x-03"]})
+    mutate(ledger)
+    _write(build / "runtime-evidence-ledger.json", ledger)
+    rc, out = stage3(state, plan)
+    gate = out["runtime_pending_user_gate"]
+    assert rc == 1 and gate["status"] == "invalid"
+    assert any(needle in v for v in gate["violations"])
+
+
+def _evidence_with_refs(path: Path, refs: list[str]) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return _write(path, {
+        "schema_version": "1.0.0", "target_plugin_slug": "acme", "overall_status": "pass",
+        "gates": [{"id": "coverage", "status": "pass", "evidence": refs}],
+        "invalidated_task_ids": [], "invalidated_phase_refs": [],
+    })
+
+
+@pytest.mark.parametrize("ref", ["etc/hosts", "/etc/hosts", "../outside.txt"])
+def test_completion_evidence_ref_outside_root_is_invalid(tmp_path, ref):
+    """[低] evidence_ref は / まで遡らない ("etc/hosts" で pass にしない)。絶対パスも root 内だけ。"""
+    (tmp_path / "outside.txt").write_text("x", encoding="utf-8")
+    evidence = _evidence_with_refs(tmp_path / "build" / "completion-evidence.json", [ref])
+    gate = rec.check_completion_evidence(str(evidence), "acme")
+    assert gate["status"] == "invalid"
+    assert any("evidence file が存在しない" in f for f in gate["findings"])
+
+
+def test_completion_evidence_ref_search_stops_at_repo_root(tmp_path):
+    """repo-relative ref は .git を持つ祖先まで探し、その外と symlink で外を指すものは拒む。"""
+    repo = tmp_path / "repo"
+    (repo / ".git").mkdir(parents=True)
+    (repo / "plugins").mkdir()
+    (repo / "plugins" / "x.py").write_text("x", encoding="utf-8")
+    (tmp_path / "outside.txt").write_text("x", encoding="utf-8")
+    (repo / "plugins" / "link.txt").symlink_to(tmp_path / "outside.txt")
+    evidence_path = repo / "eval-log" / "acme" / "build" / "completion-evidence.json"
+
+    ok = rec.check_completion_evidence(str(_evidence_with_refs(evidence_path, ["plugins/x.py"])), "acme")
+    assert ok["status"] == "ok"
+    for ref in ("outside.txt", "plugins/link.txt", str(tmp_path / "outside.txt")):
+        gate = rec.check_completion_evidence(str(_evidence_with_refs(evidence_path, [ref])), "acme")
+        assert gate["status"] == "invalid", ref
+
+
+@pytest.mark.parametrize("value", ["0", "-3"])
+def test_max_entries_non_positive_is_usage_error(tmp_path, capsys, value):
+    """[低] --max-entries 0/-3 でも 1 件書いていた → usage error (exit 2) にする。"""
+    events = _events(tmp_path, [{"ts": "t1", "type": "lease_reaped", "task_id": "T1"}])
+    inbox = _inbox(tmp_path, {"a.json": _form(status="accepted")})
+    rc = rec.main(["--discovered-inbox", str(inbox), "--task-events", str(events),
+                   "--max-entries", value, "--dry-run"])
+    captured = capsys.readouterr()
+    assert rc == 2 and captured.out == ""
+    assert "--max-entries" in captured.err
+
+
+def test_distill_limit_zero_returns_nothing(tmp_path):
+    events = _events(tmp_path, [{"ts": "t1", "type": "lease_reaped", "task_id": "T1"}])
+    assert rec.distill_events(events, {}, limit=0) == []
+
+
+def test_valid_ledger_not_covering_incomplete_p13_is_uncovered(tmp_path, stage3):
+    """[低] 有効な ledger が未完了 P13 を覆わないとき not_needed でなく uncovered と示す。"""
+    plan = tmp_path / "plan"
+    plan.mkdir()
+    _write(plan / "task-graph.json", {"nodes": [
+        {"id": "P13-x-03", "phase_ref": "P13", "title": "trust後 SessionStart run"},
+        {"id": "P13-x-07", "phase_ref": "P13", "title": "trust 再確認"},
+    ]})
+    build = tmp_path / "build"
+    build.mkdir()
+    state = _write(build / "task-state.json", {"graph_hash": _GRAPH_HASH, "nodes": [
+        {"id": "P13-x-03", "state": "done"},
+    ]})
+    _write(build / "runtime-evidence-ledger.json", _runtime_ledger(build, gate_task_ids={
+        "trust": ["P13-x-03"], "new_session": ["P13-x-03"],
+    }))
+    rc, out = stage3(state, plan)
+    gate = out["runtime_pending_user_gate"]
+    assert rc == 1 and gate["status"] == "uncovered"
+    assert gate["deferred_task_ids"] == []
+    assert any("P13-x-07" in v for v in gate["violations"])
+    assert [t["id"] for t in out["incomplete_required_tasks"]] == ["P13-x-07"]
+
+
+def test_collectors_skip_malformed_nodes_and_reports(tmp_path):
+    """task-state node が 5 や route_report が UTF-8 でない・deviations が int でも落とさない。"""
+    bad_report = tmp_path / "bad.json"
+    bad_report.write_bytes(b'{"deviations": "\xff"}')
+    int_report = _write(tmp_path / "int.json", {"deviations": 5, "handover": "next-step"})
+    state = {"nodes": [
+        5,
+        {"id": "T1", "route_report": str(bad_report)},
+        {"id": "T2", "route_report": str(int_report)},
+        {"id": "T3", "route_report": 7, "handoff_notes": {"friction_points": "abc"}},
+    ]}
+    assert rec._collect_handoff_notes(state) == []
+    assert [l["message"] for l in rec._collect_report_lessons(state)] == ["next-step"]
+
+
+def test_child_remediation_items_ignore_non_list_fields():
+    assert rec._child_remediation_items({"adapters": 5, "conflicts": 5, "violations": "x"}) == []

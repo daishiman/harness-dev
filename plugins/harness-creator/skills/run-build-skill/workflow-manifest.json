@@ -4,26 +4,7 @@
   "workflowId": "run-build-skill",
   "skill": "run-build-skill",
   "description": "新規/更新 Capability 構築のフェーズ定義。kind_filter はskill内部のサブ種別、capability_kind_filterはCapability 7 kind共通phaseに使う。全kindで現物の最小guardと提示を先に完了し、利用者が選ぶまでsemantic evaluatorを起動しない。",
-  "artifact_delivery_contract": {
-    "contract": "artifact-delivery-v1",
-    "state_machine": {
-      "initial": "artifact_created",
-      "states": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started", "handoff_complete"],
-      "transitions": [
-        {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed"},
-        {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented"},
-        {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded"},
-        {"from": "user_choice_recorded", "event": "accept-as-is", "to": "handoff_complete"},
-        {"from": "user_choice_recorded", "event": "light|standard|detailed", "to": "semantic_evaluator_started"},
-        {"from": "semantic_evaluator_started", "event": "improvement_complete", "to": "handoff_complete"}
-      ],
-      "pre_choice_forbidden": ["semantic-evaluator", "task-fork", "subagent", "multi-worker", "revise-loop"],
-      "accept_contexts": {"evaluator": 0, "improver": 0}
-    },
-    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
-    "release": "explicit-only",
-    "exhaustive": "explicit-only"
-  },
+  "artifact_delivery_contract": {"contract": "artifact-delivery-v1", "phase_activation": "all-legacy-phases-after-semantic_evaluator_started"},
   "phases": [
     {
       "id": "init-pre",
@@ -88,7 +69,7 @@
       "resourceIds": ["schema-skill-build-trace"],
       "output_artifact": "eval-log/skill-build-trace.json",
       "verifier": "Step4 lint set including scripts/lint-feedback-contract.py --changed-only",
-      "note": "trace の初回記入 (lint=N/A) は SKILL.md Step 3.5 がこの phase より先に行い、ここで validate-build-trace.py がそれを検査する。lint が全て exit 0 なら trace の lint を PASS にし、lint_target_sha256 に skill ディレクトリ全体の digest を書く。",
+      "note": "trace の初回記入 (lint=N/A) は SKILL.md Step 3.5 がこの phase より先に行い、ここで validate-build-trace.py がそれを検査する。lint が全て exit 0 なら trace の lint を PASS にし、lint_target_sha256 に skill ディレクトリ全体の digest を、lint_brief_sha256 に validate-build-plan --check が読んだ brief の sha256 を書く (brief 無しの build では書かない)。",
       "transition": {"gate": "決定論scriptとlintがexit 0", "on_pass": "templates", "on_fail": "abort"}
     },
     {
@@ -143,7 +124,7 @@
       "kind_filter": ["run", "ref", "assign", "delegate", "wrap"],
       "resourceIds": ["schema-skill-build-trace", "prompt-trace-write"],
       "output_artifact": "eval-log/skill-build-trace.json",
-      "note": "prompts-emit / evaluator-emit は flag_required の任意 phase。trace-write は必須 phase のため optional phase へ依存しない。任意成果物が存在する場合のみ trace に取り込む。scripts より後のこの phase は最終記入を受け持ち、scripts が書いた lint=PASS と lint_target_sha256 は書き換えない (Step 4 以降に skill ディレクトリが変われば digest が一致せず、create が lint をやり直す)。loop実行系の feedback_contract は生成 SKILL.md frontmatter と trace の両方に固定する。",
+      "note": "prompts-emit / evaluator-emit は flag_required の任意 phase。trace-write は必須 phase のため optional phase へ依存しない。任意成果物が存在する場合のみ trace に取り込む。scripts より後のこの phase は最終記入を受け持ち、scripts が書いた lint=PASS と lint_target_sha256・lint_brief_sha256 は書き換えない (Step 4 以降に skill ディレクトリか brief が変われば digest が一致せず、create が lint を、Step 12 が validate-build-plan をやり直す)。loop実行系の feedback_contract は生成 SKILL.md frontmatter と trace の両方に固定する。",
       "transition": {"gate": "traceがschema準拠かつ必須章coverageを満たす", "on_pass": "notion-register", "on_fail": "abort"}
     },
     {
@@ -229,18 +210,18 @@
     {
       "id": "diagnostic-choice",
       "step": 12.5,
-      "title": "提示後の利用者診断深度選択",
+      "title": "提示後の利用者診断選択",
       "dependsOn": ["artifact-present-handoff"],
       "capability_kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
       "stage_filter": ["draft"],
       "execution": "user-choice-after-presentation",
-      "choices": ["accept-as-is", "light", "standard", "detailed"],
+      "choices": ["accept-as-is", "diagnose"],
       "accept_as_is_evaluator_contexts": 0,
       "accept_as_is_improver_contexts": 0,
       "resourceIds": ["schema-pre-diagnostic-choice-event"],
       "output_artifact": "eval-log/<plugin>/build/diagnostic-choice.json",
       "completion_gate": "artifact_presented event exists before host-recorded user_choice_recorded event",
-      "note": "通常は現物提示後に深度を聞く。今回依頼のように30思考法監査が明示済みの場合は、その現在turn限定選択をreceipt化するが、将来draftへ自動継承しない。"
+      "note": "通常は現物提示後に現状で試すか診断するかだけを聞き、深さは診断の後に 1 回だけ聞く。今回依頼のように30思考法監査が明示済みの場合は、その現在turn限定選択をreceipt化するが、将来draftへ自動継承しない。"
     },
     {
       "id": "initial-draft-review",
@@ -250,7 +231,7 @@
       "capability_kind_filter": ["skill", "agent", "hook", "command", "plugin-composition", "prompt", "workflow"],
       "stage_filter": ["draft"],
       "default_on": false,
-      "trigger": "explicit current-request audit OR pre-diagnostic choice in light|standard|detailed",
+      "trigger": "explicit current-request audit OR pre-diagnostic choice diagnose",
       "execution": "post-choice-single-read-only-evaluator",
       "single_active_delivery_lease_per_artifact_contract": true,
       "stale_lease_redelivery": "same-idempotency-identity",
@@ -260,7 +241,7 @@
       "entry_gate": "usable-draft-proof.status=PASS AND artifact_presented=true AND user_choice_recorded=true AND diagnostic_authorized=true",
       "launcher": "scripts/build-review-launch.py",
       "max_active_launch_leases_per_harness": 1,
-      "resourceIds": ["schema-usable-draft-proof", "schema-artifact-presentation-receipt", "schema-pre-diagnostic-choice-event", "schema-review-launch-request", "schema-initial-draft-review", "schema-improvement-user-event", "schema-improvement-decision", "ref-improvement-levels", "prompt-initial-draft-evaluate", "script-build-review-launch", "agent-initial-draft-evaluator"],
+      "resourceIds": ["schema-usable-draft-proof", "schema-artifact-presentation-receipt", "schema-pre-diagnostic-choice-event", "schema-review-launch-request", "schema-initial-draft-review", "schema-improvement-user-event", "schema-improvement-decision", "ref-improvement-levels", "prompt-initial-draft-evaluate", "script-build-review-launch", "script-validate-run-model-budget", "agent-initial-draft-evaluator"],
       "output_artifact": "eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/{launch-request.json,review.json,improvement-decision.json,gate-plan.json} + <state_ref>.launch.json",
       "verifier": "scripts/build-improvement-gate.py --verification-plan <verification-plan.json> --usable-draft-proof <usable-draft-proof.json> --artifact-presentation-receipt <artifact-presentation.json> --pre-diagnostic-choice-event <pre-diagnostic-choice.json> [...required gate arguments]",
       "note": "skill subtypeに限定しない。artifact created < presented < evaluator eventをlauncher入力で検査し、accept-as-isはevaluator 0 contextのまま完了する。複数componentのharness全体を1つのtarget manifestとして束ね、artifact+contract fingerprintごとに同時active delivery leaseは1つだけ。現在turnの明示30監査は起動できるが、そのreceiptから将来draftの自動診断を導出しない。release/exhaustive自動昇格はfalse固定。"
@@ -278,7 +259,7 @@
       "trigger": "improvement-decision.improvement_authorized=true AND selected_finding_ids is non-empty",
       "accept_draft_executor_contexts": 0,
       "max_executor_contexts": 1,
-      "resourceIds": ["prompt-bounded-improve", "schema-improvement-result", "agent-improvement-executor"],
+      "resourceIds": ["prompt-bounded-improve", "schema-improvement-result", "script-validate-run-model-budget", "agent-improvement-executor"],
       "output_artifact": "eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/{post-target-manifest.json,improvement-result.json}",
       "note": "accept-draftはexecutorを起動せずusable draftで停止。他levelもdecisionのselected_finding_ids/max_roundsだけを1 workerが処理する。release/exhaustiveはuser eventへ束縛された明示decisionにnext_stage/next_profileがある場合だけ後続候補になる。"
     },
@@ -346,6 +327,7 @@
     {"id": "script-build-usable-draft-proof", "kind": "script", "path": "./scripts/build-usable-draft-proof.py", "phaseIds": ["usable-draft-proof"]},
     {"id": "script-validate-build-trace", "kind": "script", "path": "./scripts/validate-build-trace.py", "phaseIds": ["usable-draft-proof"]},
     {"id": "script-build-review-launch", "kind": "script", "path": "./scripts/build-review-launch.py", "phaseIds": ["initial-draft-review"]},
+    {"id": "script-validate-run-model-budget", "kind": "script", "path": "./scripts/validate-run-model-budget.py", "phaseIds": ["initial-draft-review", "bounded-improvement"]},
     {"id": "script-validate-improvement-result", "kind": "script", "path": "./scripts/validate-improvement-result.py", "phaseIds": ["post-improvement-verification"]},
     {"id": "agent-initial-draft-evaluator", "kind": "agent", "path": "../../agents/elegant-initial-draft-evaluator.md", "phaseIds": ["initial-draft-review"]},
     {"id": "agent-improvement-executor", "kind": "agent", "path": "../../agents/elegant-improvement-executor.md", "phaseIds": ["bounded-improvement"]},

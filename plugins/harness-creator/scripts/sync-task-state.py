@@ -36,6 +36,7 @@ scripts/ を sys.path に足すのは import の間だけで、この module を
 from __future__ import annotations
 
 import argparse
+import errno
 import json
 import os
 import sys
@@ -615,11 +616,28 @@ def reactivate_cascade(
 
 
 # ── 実行イベントログ (append-only) ────────────────────────────────────────────
+def reject_symlink_events(events_path) -> None:
+    """task-events が symlink なら OSError で止める。
+
+    symlink を辿って追記すると、repo の外のファイルに event の行を書けてしまう。
+    """
+    if os.path.islink(events_path):
+        raise OSError(errno.ELOOP, "task-events は symlink にできない (辿ると先のファイルに書く)",
+                      os.fspath(events_path))
+
+
 def append_event(events_path, event: dict) -> None:
-    """{"ts": <UTC ISO8601>, ...event} を events_path へ 1 行 JSON append する (既存行不変)。"""
+    """{"ts": <UTC ISO8601>, ...event} を events_path へ 1 行 JSON append する (既存行不変)。
+
+    symlink は辿らない。O_NOFOLLOW がある OS では、確かめた後に差し替えられた symlink も
+    open が ELOOP で拒む。
+    """
     record = {"ts": _iso(_utc_now())}
     record.update(event)
-    with open(events_path, "a", encoding="utf-8") as fh:
+    reject_symlink_events(events_path)
+    flags = os.O_WRONLY | os.O_APPEND | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(events_path, flags, 0o644)
+    with os.fdopen(fd, "a", encoding="utf-8") as fh:
         fh.write(json.dumps(record, ensure_ascii=False) + "\n")
 
 
@@ -912,6 +930,7 @@ def main(argv: list[str] | None = None) -> int:
     # 書込 (単一 writer): task-state を canonical で上書き + task-events を append。
     try:
         build_dir.mkdir(parents=True, exist_ok=True)
+        reject_symlink_events(events_path)  # state だけ書いて events で止まる片書きを避ける
         atomic_write_state(state_path, state)
         for ev in events:
             append_event(events_path, ev)

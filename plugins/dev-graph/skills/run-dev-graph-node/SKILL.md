@@ -71,31 +71,16 @@ feedback_contract:
       loop_scope: outer
       text: "12/14 task、phase欠落/重複、mixed parent/package、cross-feature edgeを注入するとapplied_count=0。正常時はexpected_count=applied_count=13、P01..P13/node exact-set、graph_revision付きreceiptとなる"
       verify_by: test
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/diagnoseを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 
 # run-dev-graph-node
@@ -187,7 +172,7 @@ frontmatter の `goal_seek.engine: inline` / `fork: subagent` / `max_loops: 5` �
 - 開始時に C24 `resolve-repo-context.py --mode write` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>`・`DEV_GRAPH_GRAPH=<receipt.local_state_paths.graph>` に固定する。cwd から再解決しない。
 - 元のゴールを `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-goal-spec.json` へ、各 checklist の status/evidence を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-progress.json` へ記録する。単発の node 操作 1 件だけを依頼された場合でも、この配線成果物 (goal-spec / progress / intermediate) の書き出しは省略しない。
 - 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する (`fork: subagent`。周回の駆動は main context のまま)。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
-- 必須の独立 verifier は `dev-graph-integrity-auditor` (`../../agents/dev-graph-integrity-auditor.md`。plugin 経由の名前は `dev-graph:dev-graph-integrity-auditor`) である。light/standard/detailed を記録して `semantic_evaluator_started` へ進んだ run では、各周回の writer receipt・commit 後の graph snapshot・`validate-graph-schema.py` の report を `Agent` で read-only の fork context に渡し、writer の推論や期待 verdict は渡さない。返った verdict は progress.json の `independent_verifier` に `{agent, verdict, graph_digest}` として写す。`graph_digest` は verifier が返した値をそのまま写し、main context が計算した値で置き換えない。verifier は、渡された graph の canonical digest を、writer receipt の `graph_digest_after` と同じ計算 (`sha256:` に、`json.dumps(graph, ensure_ascii=False, sort_keys=True, separators=(',', ':'))` の UTF-8 の sha256 を続ける) で返す。verifier の後に graph が進んだら、verifier をもう一度起こす。schema・DAG・orphan・path containment・feature/package 境界の verdict が PASS でない周回は完了扱いにしない。
+- 必須の独立 verifier は `dev-graph-integrity-auditor` (`../../agents/dev-graph-integrity-auditor.md`。plugin 経由の名前は `dev-graph:dev-graph-integrity-auditor`) である。diagnose を記録して `semantic_evaluator_started` へ進んだ run では、各周回の writer receipt・commit 後の graph snapshot・`validate-graph-schema.py` の report を `Agent` で read-only の fork context に渡し、writer の推論や期待 verdict は渡さない。返った verdict は progress.json の `independent_verifier` に `{agent, verdict, graph_digest}` として写す。`graph_digest` は verifier が返した値をそのまま写し、main context が計算した値で置き換えない。verifier は、渡された graph の canonical digest を、writer receipt の `graph_digest_after` と同じ計算 (`sha256:` に、`json.dumps(graph, ensure_ascii=False, sort_keys=True, separators=(',', ':'))` の UTF-8 の sha256 を続ける) で返す。verifier の後に graph が進んだら、verifier をもう一度起こす。schema・DAG・orphan・path containment・feature/package 境界の verdict が PASS でない周回は完了扱いにしない。
 - progress.json の `feedback_criteria` には、frontmatter の4つ (IN1・OUT1-OUT3) を1回ずつ書く。IN1 には各周回の検証結果を status に書く。OUT1-OUT3 は `status: external_pending` と判定する場所 (live trial・受入テスト) を書き、writer は PASS などの判定値を書かない。
 - progress.json の `graph_baseline` に、post-choice の開始時の graph の `{graph_revision, graph_digest}` (digest は上と同じ canonical digest) を書く。writer が commit するたびに、その receipt の path を `$DEV_GRAPH_ROOT` からの相対で `writer_receipts` の末尾に足す (build-graph-node は `<graph の dir>/receipts/` に書き、register-package は `--receipt` に渡した path に書く)。noop・register-package の再実行・`--dry-run`・pre-choice の commit は足さない (pre-choice の commit は baseline より前に済んでいて、baseline の graph に含まれる)。receipt は鎖になる。最初の receipt の `graph_revision_before` は baseline の `graph_revision` と、次の receipt の `graph_revision_before` は前の receipt の `graph_revision_after` と一致する。今の graph は、最後の receipt の `graph_revision_after`・`graph_digest_after` と一致し、receipt が無ければ `graph_baseline` と一致する。baseline は post-choice の開始時の graph をそのまま起点にするもので、それより前の graph の変化は、この照合では見ない。baseline は、post-choice の開始時 (C24 の receipt を得た直後、post-choice の最初の writer を起こす前) に1回だけ書き、後から書き直さない。鎖の照合は revision だけを見る (receipt は書く前の digest を持たない) ので、revision を進めずに graph を書き換えると、baseline と最初の receipt の間、receipt と receipt の間では止まらない。最後の receipt の後の書き換えは、今の graph の digest の照合で止まる。run の外で graph が進んだとき (C27 の execution-context は receipt を書かずに revision を進める) は、baseline を取り直さず、`blocked` にして親へ handoff する。
 - 各周回末に `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-node-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。

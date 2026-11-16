@@ -130,7 +130,7 @@ Stage 1 でクエリキーワードをシノニム展開してからスコアリ
 ```json
 {
   "path": "{{SOURCE_FILE_PATH}}",
-  "source_type": "youtube|markdown|pdf",
+  "source_type": "youtube|markdown|pdf|text|other",
   "status": "pending|processed|needs-update|deprecated",
   "file_hash": "sha256hex",
   "file_modified": "YYYY-MM-DD",
@@ -189,22 +189,28 @@ Stage 1 でクエリキーワードをシノニム展開してからスコアリ
 ナレッジは「使うほど良くなる」閉ループで運用する。日次/定期で以下を回す。
 
 ```
-検索   : python3 scripts/search_knowledge.py "<query>"
+検索   : python3 scripts/search_knowledge.py --query "<query>"
   ↓ 活用 (AI が成果物生成に利用)
-記録   : python3 scripts/record_usage.py --record   (usage-log.jsonl に追記)
+記録   : python3 scripts/record_usage.py --record --query "<query>" \
+           --matched-ids <id1,id2> --used-ids <id1> --satisfaction helpful|neutral|unhelpful
+         (usage-log.jsonl に 1 行追記。--query は必須)
   ↓
-分析   : python3 scripts/record_usage.py --analyze --emit-queue <queue>
-         (§12.2 の品質改善パターン4種を検出し brushup キューを出力)
+分析   : python3 scripts/record_usage.py --analyze --emit-queue [<queue>]
+         (§12.2 の品質改善パターン4種を検出し brushup キューを出力。<queue> 省略時は brushup-queue.jsonl)
   ↓ キューを見て改善 (title/keywords/background を編集 — AI/人の判断)
-付与   : python3 scripts/record_usage.py --mark-needs-update <id>
-         (再処理が必要なエントリに status: needs-update を付与)
+付与   : python3 scripts/record_usage.py --analyze --mark-needs-update
+         (--analyze が検出したエントリ ID に status: needs-update を付与。ID は引数で渡さない)
 ```
+
+各 script の引数の正本は `--help` の出力 (雛形 `run-build-skill/templates/knowledge-skeleton/scripts/`)。ここに書いた例と食い違ったら `--help` に従う。
 
 `add_entry.py` は runtime external intelligence で promoted まで到達した知見を curated seed へ取り込むレビュー工程で使う。未検証の新知見を直接追記しない:
 
 ```
-python3 scripts/add_entry.py --category <cat> --title ... --background ... --keywords ... --source ...
+python3 scripts/add_entry.py --category <cat> --title ... --intent ... --background ... --keywords ... --source ...
 ```
+
+schema 上 `title|content` の一方と `intent|purpose` の一方が必須なので、`--intent` (または `--json` の `purpose`) を省くと検証で止まる。
 
 二層分離: 決定論 (スクリプト) が担うのは「検証・検索品質記録・status付与・パターン検出」、内容判断 (AI/人) が担うのは「何を改善するか・何を promoted seed として採用するか」。runtime 観測の lifecycle は [external-intelligence.md](external-intelligence.md) だけに定義する。
 

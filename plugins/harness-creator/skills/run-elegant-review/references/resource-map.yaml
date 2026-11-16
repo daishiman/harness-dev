@@ -56,16 +56,16 @@ related_artifacts:
   - file: ../scripts/validate_phase_order.py
     topic: Phase1→Phase2→Phase3 順序と signal/verdict 導出整合の補助検査
     read_when: run directory の handoff 順序を検証するとき
-  - file: ../scripts/extract-ready-set-from-checklist.py
+  - file: ../../run-build-skill/templates/task-graph-engine/scripts/extract-ready-set-from-checklist.py
     topic: checklist の depends_on から依存充足順の ready 集合をステートレスに算出する決定論ゲート
     read_when: task-graph 周回冒頭で次に着手する item を決めるとき
-  - file: ../scripts/build-self-reflection-entry.py
+  - file: ../../run-build-skill/templates/task-graph-engine/scripts/build-self-reflection-entry.py
     topic: self-reflect で発見した新規タスクを checklist 末尾へ単一truth追記する決定論ゲート
     read_when: 4 条件 FAIL で次反復の分析 / 改善 item を足すとき
-  - file: ../scripts/extract-capability-dependency-graph.py
+  - file: ../../run-build-skill/templates/task-graph-engine/scripts/extract-capability-dependency-graph.py
     topic: 生成 harness の cross-surface capability 依存グラフを決定論抽出するスクリプト
     read_when: capability 間の依存詰まり・dangling 参照を knowledge 化する入力を作るとき
-  - file: ../scripts/build-capability-graph-knowledge-entry.py
+  - file: ../../run-build-skill/templates/task-graph-engine/scripts/build-capability-graph-knowledge-entry.py
     topic: capability 依存グラフと discovered task を Loop A/B knowledge へ source_ref 付きで記録するスクリプト
     read_when: 依存グラフ由来の学びを knowledge entry 化するとき
   - file: ../scripts/sync-content-review-sha.py

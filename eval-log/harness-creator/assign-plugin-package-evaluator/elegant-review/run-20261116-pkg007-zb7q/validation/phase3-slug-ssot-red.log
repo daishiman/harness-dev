@@ -1,0 +1,49 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+____________ test_main_plugin_slug_matches_contract_schema[a-False] ____________
+
+tmp_path = PosixPath('/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pytest-of-dm/pytest-326/test_main_plugin_slug_matches_0')
+slug = 'a', accepted = False
+
+    @pytest.mark.parametrize("slug,accepted", [("1demo", False), ("a", False), ("demo--test", True)])
+    def test_main_plugin_slug_matches_contract_schema(tmp_path, slug, accepted):
+        root = _make_plugins_root(tmp_path, name=slug)
+        proc = _run_cli([f"--plugin={slug}", "--plugins-root", str(root), "--check", "pkg-007"])
+>       assert proc.returncode == (0 if accepted else 2)
+E       assert 0 == 2
+E        +  where 0 = CompletedProcess(args=['/Library/Frameworks/Python.framework/Versions/3.11/bin/python3', '/Users/dm/orca/workspaces/ha...ct": {\n    "total": 1,\n    "pass": 1,\n    "fail": 0,\n    "skip": 0,\n    "not_applicable": 0\n  }\n}\n', stderr='').returncode
+
+tests/scripts-plugins/test_harness_creator__validate_plugin_package.py:1691: AssertionError
+__________ test_main_plugin_slug_matches_contract_schema[1demo-False] __________
+
+tmp_path = PosixPath('/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pytest-of-dm/pytest-326/test_main_plugin_slug_matches_1')
+slug = '1demo', accepted = False
+
+    @pytest.mark.parametrize("slug,accepted", [("1demo", False), ("a", False), ("demo--test", True)])
+    def test_main_plugin_slug_matches_contract_schema(tmp_path, slug, accepted):
+        root = _make_plugins_root(tmp_path, name=slug)
+        proc = _run_cli([f"--plugin={slug}", "--plugins-root", str(root), "--check", "pkg-007"])
+>       assert proc.returncode == (0 if accepted else 2)
+E       assert 0 == 2
+E        +  where 0 = CompletedProcess(args=['/Library/Frameworks/Python.framework/Versions/3.11/bin/python3', '/Users/dm/orca/workspaces/ha...ct": {\n    "total": 1,\n    "pass": 1,\n    "fail": 0,\n    "skip": 0,\n    "not_applicable": 0\n  }\n}\n', stderr='').returncode
+
+tests/scripts-plugins/test_harness_creator__validate_plugin_package.py:1691: AssertionError
+________ test_main_plugin_slug_matches_contract_schema[demo--test-True] ________
+
+tmp_path = PosixPath('/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pytest-of-dm/pytest-326/test_main_plugin_slug_matches_2')
+slug = 'demo--test', accepted = True
+
+    @pytest.mark.parametrize("slug,accepted", [("1demo", False), ("a", False), ("demo--test", True)])
+    def test_main_plugin_slug_matches_contract_schema(tmp_path, slug, accepted):
+        root = _make_plugins_root(tmp_path, name=slug)
+        proc = _run_cli([f"--plugin={slug}", "--plugins-root", str(root), "--check", "pkg-007"])
+>       assert proc.returncode == (0 if accepted else 2)
+E       assert 2 == 0
+E        +  where 2 = CompletedProcess(args=['/Library/Frameworks/Python.framework/Versions/3.11/bin/python3', '/Users/dm/orca/workspaces/ha...ches_2/plugins', '--check', 'pkg-007'], returncode=2, stdout='', stderr="error: invalid --plugin slug: 'demo--test'\n").returncode
+
+tests/scripts-plugins/test_harness_creator__validate_plugin_package.py:1691: AssertionError
+=========================== short test summary info ============================
+FAILED tests/scripts-plugins/test_harness_creator__validate_plugin_package.py::test_main_plugin_slug_matches_contract_schema[a-False]
+FAILED tests/scripts-plugins/test_harness_creator__validate_plugin_package.py::test_main_plugin_slug_matches_contract_schema[1demo-False]
+FAILED tests/scripts-plugins/test_harness_creator__validate_plugin_package.py::test_main_plugin_slug_matches_contract_schema[demo--test-True]
+3 failed, 178 deselected in 0.46s

@@ -1,0 +1,59 @@
+{
+  "target": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-feedback",
+    "skill_md_sha256": "cce4b2fe594664a4676d52da854e1d032e40e329384e8d2d3eb223a300f52769",
+    "reviewed_skill_md_sha256": "c45c89cded3c40d38db15b8bc78fab435cee37b7e82f0131dd3ae8dd94265566"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "reviewer": "cr-run-skill-feedback (independent focused combined reviewer; not the SKILL.md author)",
+  "reviewed_at": "2026-10-29T12:42:29Z",
+  "iterations": 3,
+  "human_review_required": false,
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 0
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "IN3",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "機械採点 (rubric skill-design 1.6.0) を iteration 3 で再実行: score 100 / threshold 80、passed=true、findings 0、required_fixes 0、applicable 20 中 scored 19・pending_human 1 (BD-004)。",
+      "BD-004 (pending_human を本 reviewer が判定 = 充足): description L3 の 2 trigger『改善要望を構造化するとき』『Notion 改善要望 DB へ登録するとき』が本文の同定・要望収集 (L234-293) と投入・完了通知 (L307-320) に 1:1 対応。",
+      "上位仕様整合 (c): SKILL.md L268 と skill-list.schema.json L97 fallback が一致、L201/L285-293 の必須・任意・既定値が schema intake_fields と一致。lint-feedback-protocol exit0。",
+      "依存関係整合 (d): script_refs/schema_refs/reference_refs/responsibility_refs と guard 解決用 extract-plugin-root.py・goal-seek validator (生成元と byte 一致) が実在。量産先 21 コピーは manifest を含め正本と byte 一致し、lint-vendored-ssot exit0 (119 件一致)。"
+    ],
+    "negative_feedback": [],
+    "iteration": 3,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "incremental focused combined review の rubric 側 projection (iteration 3、elegance-verdict.json と同一評価を分割)。30 思考法は使っていない。実測 sha256 = c45c89cded3c40d38db15b8bc78fab435cee37b7e82f0131dd3ae8dd94265566。機械採点: python3 plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py --rubric-refs plugins/harness-creator/skills/ref-skill-design-rubric/references/rubric.json --target plugins/harness-creator/skills/run-skill-feedback → exit0、rubric_version 1.6.0、rubric_hash sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9、score 100、threshold 80、passed true、findings []、required_fixes []、coverage applicable 20 / scored 19 / pending_human 1 (BD-004) / unscored 0 / not_applicable 21、BD-004 は本 reviewer が意味判断して充足。rubric high severity 0。iteration 1 の contradiction・smell、iteration 2 の dependency_break はすべて解消を実物で確認: lint-vendored-ssot.py exit0 ('OK: vendored SSOT 119 件が正本と byte 一致')、is_vendored_feedback_skill で量産先 21 件 True、lint-content-review --all の run-skill-feedback 行は書込前で harness-creator の verdict=FAIL 2 行のみ (量産先の stale-sha 行は消滅)、lint-feedback-protocol.py exit0、テスト 31 passed。live Notion 投入は未実施 (静的審査)。",
+  "sha_rebinds": [
+    {
+      "from_sha": "c45c89cded3c40d38db15b8bc78fab435cee37b7e82f0131dd3ae8dd94265566",
+      "to_sha": "6c09ffaa80e6c7133661940e5c94b46b1052cf27c604cc5c7ed5ef5303bab250",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:47Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "6c09ffaa80e6c7133661940e5c94b46b1052cf27c604cc5c7ed5ef5303bab250",
+      "to_sha": "cce4b2fe594664a4676d52da854e1d032e40e329384e8d2d3eb223a300f52769",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:55Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
+}

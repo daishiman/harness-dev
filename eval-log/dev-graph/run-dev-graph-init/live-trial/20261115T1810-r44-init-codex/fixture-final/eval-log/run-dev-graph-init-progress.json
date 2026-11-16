@@ -1,0 +1,36 @@
+{
+  "state": "scenario_pass",
+  "iteration": 2,
+  "checklist": {
+    "preflight": "pass",
+    "context": "pass",
+    "roots_routing_graph": "pass",
+    "templates_present": "pass",
+    "plugin_source_record": "pass",
+    "independent_audit": "pass",
+    "second_init_zero_changes": "pass",
+    "user_edits_preserved": "pass"
+  },
+  "criteria": {
+    "IN1": "pass",
+    "OUT1": "pass_live_trial",
+    "OUT2": "pass_edited_template_preserved",
+    "OUT3": "not_evaluated_full_cross_repo_suite",
+    "OUT4": "pass_config_storage",
+    "OUT5": "plugin_source_only_fallback_suite_not_run"
+  },
+  "improvement": {
+    "depth": "standard",
+    "source": "task_preselected",
+    "diagnosis": "eval-log/init-second-independent-audit.json",
+    "changes_required": false
+  },
+  "skill_full_completion": false,
+  "scope_limits": [
+    "OUT3 cross-repo/fault injection not evaluated",
+    "OUT5 fallback merge/rollback not evaluated",
+    "native hook delivery not proven"
+  ],
+  "scenario_verdict": "PASS",
+  "evidence": "eval-log/init-second-independent-audit.json"
+}

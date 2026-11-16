@@ -56,6 +56,8 @@ ALLOWLIST = {
     "plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md":
         "外部 fetch した YAML spec の cache mirror (ref-yaml-spec-fetcher 自動生成)。"
         "逐語の外部由来内容で能動層でないため凍結層と同等に扱う",
+    "plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-index.json":
+        "yaml-spec-cache.md から機械生成する見出し索引。外部 docs の見出しを逐語で持つため cache と同じ扱い",
     "doc/マルチ企業展開/README.md": "改名経緯 (skill-creator→harness-creator) と旧構成対応表の歴史記述",
     "doc/マルチ企業展開/構築手順.md": "harness-creator への改名経緯の説明 (旧名→新名対応の意図的言及)",
     "doc/マルチ企業展開/移管計画.md": "移管元である旧 meta-skill-creator repo 構造の歴史記述",
@@ -111,10 +113,26 @@ def _passes_symlink(root: Path, rel: str) -> bool:
     return False
 
 
+def tracked_files(root: Path) -> list[str]:
+    """git が追跡する file の相対 path。
+
+    -z で NUL 区切りにする。-z が無いと、core.quotepath=true (git の既定) のときに非 ASCII の
+    path が引用符と 8 進の escape つきで返り、実在しない path として黙って飛ばされる
+    (日本語の path の file に旧名が戻っても検査されない)。
+    """
+    proc = subprocess.run(["git", "ls-files", "-z"], capture_output=True, cwd=root)
+    if proc.returncode != 0:
+        raise RuntimeError(proc.stderr.decode("utf-8", "replace").strip() or f"rc {proc.returncode}")
+    return [rel for rel in proc.stdout.decode("utf-8", "surrogateescape").split("\0") if rel]
+
+
 def main() -> int:
-    files = subprocess.run(
-        ["git", "ls-files"], capture_output=True, text=True, cwd=ROOT, check=True
-    ).stdout.splitlines()
+    """exit: 0 = 旧名の残存なし / 1 = 残存あり / 2 = git ls-files に失敗して検査できない。"""
+    try:
+        files = tracked_files(ROOT)
+    except (OSError, RuntimeError) as exc:
+        print(f"[lint-legacy-plugin-name] ERROR: git ls-files に失敗しました ({exc})", file=sys.stderr)
+        return 2
     external_owned = load_external_owned(ROOT)
     violations: list[str] = []
     for rel in files:

@@ -7,7 +7,9 @@ SSOT を shim 経由 import) と (b) run/assign の責務プロンプトが空�
 ことを機械検証する純ローカル lint (network/keychain なし)。
 
 カバレッジ方針:
-- 純関数 (_skill_kind_of / _split_frontmatter / _is_redirect_shell) を実値検証。
+- 純関数 (_skill_kind_of / _split_frontmatter / _is_redirect_shell / _shell_reason) を実値検証。
+  空殻の境目 (7 層の見出しが 1 つ欠ける・層が空か agents/ を指す行だけ・frontmatter の
+  moved_to:) を両側から固定し、宣言の語の有無では判定が変わらないことも固定する。
 - `scan(repo_root)` を tmp_path に合格 fixture / 各違反 fixture を生成して genuine 検査
   (PROMPT-FILENAME-FORMAT と PROMPT-REDIRECT-INVERSION の双方、kind による
   skip 分岐、plugins 不在の早期 return)。
@@ -32,9 +34,12 @@ LPP = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(LPP)
 
 
-# 7 層相当の十分長い本文 (12 実質行以上 → 空殻でないとみなされる)
+# 7 層の見出し「## Layer N:」のそれぞれに本文がある、空殻でない本文 (n は全体の行数の目安)
 def _long_body(n=20):
-    return "\n".join(f"行{i} これは実質的な 7 層本文の一部です。" for i in range(n))
+    per = max(1, n // 7)
+    return "\n".join(
+        f"## Layer {k}: 層{k}\n" + "\n".join(f"- 層{k} の実質本文 {i}。" for i in range(per))
+        for k in range(1, 8))
 
 
 def _frontmatter(**kv):
@@ -99,15 +104,18 @@ def test_is_redirect_shell_moved_to_in_frontmatter():
     assert LPP._is_redirect_shell(text) is True
 
 
-def test_is_redirect_shell_redirect_phrase_and_agents_ref():
-    text = "# Prompt (リダイレクト)\n本文は agents/x.md を参照。\n" + _long_body()
-    assert LPP._is_redirect_shell(text) is True
+def test_is_redirect_shell_declaration_words_do_not_decide():
+    # 宣言の語があっても 7 層本文がそろっていれば空殻ではなく、7 層が無ければ語が無くても空殻
+    decl = "# Prompt (リダイレクト)\n本文は agents/x.md を参照。\n"
+    assert LPP._is_redirect_shell(decl + _long_body()) is False
+    assert LPP._is_redirect_shell(decl + "\n".join(f"行{i}" for i in range(30))) is True
 
 
 def test_is_redirect_shell_too_short_body():
-    # 実質本文 < 12 行 → 空殻判定
+    # 7 層の見出しが無い短い本文 → 空殻判定
     text = _frontmatter(responsibility_id="R1") + "\n短い\n本文のみ\n"
     assert LPP._is_redirect_shell(text) is True
+    assert "Layer 1, 2, 3, 4, 5, 6, 7" in LPP._shell_reason(text)
 
 
 def test_is_redirect_shell_full_body_is_ok():
@@ -119,6 +127,90 @@ def test_is_redirect_shell_agents_ref_without_redirect_phrase_not_shell():
     # 'リダイレクト' が無ければ agents/ 言及だけでは shell にならない (本文が十分長い場合)
     text = _long_body() + "\nなお agents/ に補助あり。"
     assert LPP._is_redirect_shell(text) is False
+
+
+def test_is_redirect_shell_mid_body_redirect_mention_not_shell():
+    # 冒頭で agents/ の adapter に触れ、本文の途中 (冒頭 12 実質行の外) で shell の
+    # リダイレクトに触れる 7 層本文は、リダイレクト宣言ではない
+    # (slide-report-generator の R3-agent-ui-quality-reviewer.md と同じ形)。
+    text = ("<!--\nPackaged from agents/ui-quality-reviewer.md.\n"
+            "agents/ui-quality-reviewer.md is a thin Task adapter.\n-->\n"
+            + _long_body(30)
+            + "\n- 禁止アクション: Bash の sed やリダイレクトでの書き換え。")
+    assert LPP._is_redirect_shell(text) is False
+
+
+@pytest.mark.parametrize("dropped", range(1, 8))
+def test_is_redirect_shell_each_missing_layer_is_shell(dropped):
+    # 境目: 7 層そろえば空殻ではなく、どれか 1 層の見出しが欠ければ空殻
+    body = _long_body()
+    assert LPP._is_redirect_shell(body) is False
+    broken = body.replace(f"## Layer {dropped}: 層{dropped}", f"## 層{dropped}")
+    assert LPP._is_redirect_shell(broken) is True
+    assert LPP._shell_reason(broken) == f"Layer {dropped} の見出し (# Layer N:) が無い"
+
+
+def test_is_redirect_shell_pointer_only_layer_is_shell():
+    # 境目: 層の本文がどの行も agents/ を指すだけなら空殻、agents/ を含まない行が 1 行あれば本文
+    stub = ("\n".join(f"## Layer {k}: 層{k}\n- 本文は agents/x.md の Layer {k} を見る。"
+                      for k in range(1, 8)))
+    assert LPP._shell_reason(stub) == "Layer 1, 2, 3, 4, 5, 6, 7 の本文が空か、agents/ を指す行だけ"
+    one_real = stub.replace("を見る。", "を見る。\n- この層の自前の本文。")
+    assert LPP._is_redirect_shell(one_real) is False
+    # 空の層 (見出しの直後に次の見出し) も空殻
+    empty = _long_body().replace("- 層4 の実質本文 0。\n- 層4 の実質本文 1。", "")
+    assert LPP._shell_reason(empty) == "Layer 4 の本文が空か、agents/ を指す行だけ"
+
+
+def test_is_redirect_shell_late_declaration_without_layers_is_shell():
+    # 冒頭を adapter の行と 11 行のメタ表で埋め、宣言をその後ろに置いた空殻
+    table = "\n".join(f"| key{i} | value{i} |" for i in range(11))
+    late = f"# Prompt\n> 起動アダプタ = ../../agents/foo.md\n{table}\n## 本文 (リダイレクト)\n"
+    assert LPP._is_redirect_shell(late) is True
+    # frontmatter と 12 行の変更履歴のあとに、英語で宣言を置いた空殻
+    log = "\n".join(f"- 2026-01-{i:02d} 変更" for i in range(1, 13))
+    english = _frontmatter(responsibility_id="R1") + log + "\n## Body (redirect)\nsee agents/foo.md\n"
+    assert LPP._is_redirect_shell(english) is True
+
+
+def test_is_redirect_shell_head_mentions_in_7_layer_body_are_ok():
+    # packaged prompt の冒頭 (埋め込み YAML の description) で 2 語に触れる 7 層本文は空殻ではない
+    head = ("<!--\nPackaged from agents/x.md.\n-->\n\n---\nname: x\n"
+            "description: 出力のリダイレクトを検証したいときに使う\n---\n\n")
+    assert LPP._is_redirect_shell(head + _long_body()) is False
+
+
+@pytest.mark.parametrize("prefix,newline", [
+    ("<!--\nPackaged from agents/x.md.\n-->\n\n", "\n"),
+    ("", "\r\n"),
+    (chr(0xFEFF), "\n"),
+])
+def test_is_redirect_shell_moved_to_variants(prefix, newline):
+    # frontmatter の前のコメント・CRLF・BOM があっても moved_to: を拾う
+    text = prefix + ("---\nmoved_to: agents/x.md\n---\n" + _long_body()).replace("\n", newline)
+    assert LPP._shell_reason(text) == "frontmatter に moved_to: がある"
+
+
+def test_is_redirect_shell_moved_to_in_body_is_not_a_declaration():
+    # 本文の中の moved_to: (YAML の例など) は frontmatter の宣言ではない
+    text = _long_body() + "\n```yaml\nmoved_to: agents/x.md\n```\n"
+    assert LPP._is_redirect_shell(text) is False
+
+
+def test_layers_load_from_vendored_verify_completeness():
+    assert LPP._VENDORED_VERIFY == (ROOT / "plugins" / "harness-creator" / "vendor"
+                                    / "prompt-creator" / "verify-completeness.py")
+    assert LPP._layers().split_layers is not None
+
+
+def test_vendor_missing_exits_2(monkeypatch, tmp_path, capsys):
+    monkeypatch.setattr(LPP, "_VENDORED_VERIFY", tmp_path / "absent.py")
+    monkeypatch.setattr(LPP, "_layers_module", None)
+    _make_prompt(tmp_path, "p", "run-foo", "R1.md", _long_body())
+    monkeypatch.setattr(LPP, "_repo_root", lambda: tmp_path)
+    monkeypatch.setattr(sys, "argv", ["lint-prompt-placement.py"])
+    assert LPP.main() == 2
+    assert "vendored verifier 不在" in capsys.readouterr().err
 
 
 # ===================== scan (fixture repo) =====================
@@ -165,12 +257,26 @@ def test_scan_rejects_invalid_planner_responsibility_filename(tmp_path):
 
 
 def test_scan_flags_redirect_inversion_for_run_kind(tmp_path):
-    # run の R-id プロンプトが空殻リダイレクト → PROMPT-REDIRECT-INVERSION
+    # run の R-id プロンプトが空殻リダイレクト → PROMPT-REDIRECT-INVERSION (理由つき)
     shell = _frontmatter(moved_to="agents/x.md") + "\n# Prompt\nstub"
     _make_prompt(tmp_path, "myplugin", "run-foo", "R1.md", shell)
     viols = LPP.scan(tmp_path)
     assert any("PROMPT-REDIRECT-INVERSION" in v for v in viols)
-    assert any("kind=run" in v for v in viols)
+    assert any("kind=run" in v and "moved_to:" in v for v in viols)
+
+
+def test_scan_unreadable_prompt_is_reported_and_exits_2(tmp_path, monkeypatch, capsys):
+    # UTF-8 で読めない prompt は traceback にせず PROMPT-UNREADABLE とし、逸脱の exit 1 と分けて exit 2
+    d = tmp_path / "plugins" / "p" / "skills" / "run-foo" / "prompts"
+    d.mkdir(parents=True)
+    (d / "R1.md").write_bytes(b"\xff\xfe\x00broken")
+    viols = LPP.scan(tmp_path)
+    assert viols == ["PROMPT-UNREADABLE plugins/p/skills/run-foo/prompts/R1.md "
+                     "(UTF-8 として読めない: UnicodeDecodeError)"]
+    monkeypatch.setattr(LPP, "_repo_root", lambda: tmp_path)
+    monkeypatch.setattr(sys, "argv", ["lint-prompt-placement.py"])
+    assert LPP.main() == 2
+    assert "PROMPT-UNREADABLE" in capsys.readouterr().out
 
 
 def test_scan_flags_inversion_for_assign_kind(tmp_path):
@@ -231,8 +337,9 @@ def test_main_self_test_flag(monkeypatch, capsys):
     assert "self-test: PASS" in capsys.readouterr().out
 
 
-def test_main_usage_on_unknown_arg(monkeypatch, capsys):
-    monkeypatch.setattr(sys, "argv", ["lint-prompt-placement.py", "--bogus"])
+@pytest.mark.parametrize("argv", [["--bogus"], ["--self-test", "extra"]])
+def test_main_usage_on_unknown_arg(monkeypatch, capsys, argv):
+    monkeypatch.setattr(sys, "argv", ["lint-prompt-placement.py", *argv])
     assert LPP.main() == 2
     assert "usage:" in capsys.readouterr().err
 

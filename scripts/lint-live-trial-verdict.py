@@ -24,6 +24,11 @@ live-trial-verdict.py の freshness_enforced)。WARN でも sha の手書き更�
 stale-sha は、verdict を commit したツリーと今の挙動閉包を比べ、挙動投影が
 変わったファイル名を同じ行に出す。manifest の version だけが動いたファイルは
 出さない。
+Codex verdict の本文照合 (native-skill-source/activation-unproven) は、閉包が古いと
+今の SKILL.md とは必ず合わない。受領 commit の閉包を展開して digest が記録と一致し、
+その本文で照合し直して通るときだけ、stale-sha の行へ畳んで WARN にする。通らない・
+受領 commit が無い・展開できないときは FAIL のまま (起動の証明が無い verdict を
+古さの陰に隠さない)。
 
 Usage:
   python3 scripts/lint-live-trial-verdict.py --all [--enforce]
@@ -33,8 +38,12 @@ Usage:
 """
 import argparse
 import importlib.util
+import io
 import json
+import os
+import subprocess
 import sys
+import tarfile
 import tempfile
 from pathlib import Path
 
@@ -141,6 +150,127 @@ def latest_verdict_path(plugin, skill):
     return (candidates[-1] / "verdict.json") if candidates else None
 
 
+# 挙動閉包が古い Codex verdict で、transcript が読んだ本文が今の SKILL.md と
+# 合わないことから出る誤り (extract-codex-transcript.py の本文照合)。
+STALE_SOURCE_ERRORS = ("native-skill-source-unproven", "native-skill-activation-unproven")
+
+
+def _closure_roots(labels):
+    """閉包 label を、受領 commit から展開する単位 (plugin dir か単独ファイル) にまとめる。"""
+    roots = set()
+    for label in labels:
+        parts = label.split("/")
+        roots.add("/".join(parts[:2]) if parts[0] == "plugins" and len(parts) > 2 else label)
+    return sorted(roots)
+
+
+_STDLIB_LINK_CHECK_SOUND = None
+
+
+def _stdlib_link_check_sound():
+    """stdlib の data filter が、symlink の行き先を link 自身の dir から計算するか。
+
+    Python 3.11.4 の data filter は行き先を展開先の根から計算し、下位 dir にある
+    中を指す相対 link を外と誤って拒む (gh-107845)。版の番号ではなく、その link を
+    1 件判定させた結果で見分ける。結果は process の中で使い回す。
+    """
+    global _STDLIB_LINK_CHECK_SOUND
+    if _STDLIB_LINK_CHECK_SOUND is None:
+        probe = tarfile.TarInfo("probe/link")
+        probe.type = tarfile.SYMTYPE
+        probe.linkname = "../target"
+        with tempfile.TemporaryDirectory() as tmp:
+            try:
+                tarfile.data_filter(probe, tmp)
+                _STDLIB_LINK_CHECK_SOUND = True
+            except tarfile.LinkOutsideDestinationError:
+                _STDLIB_LINK_CHECK_SOUND = False
+    return _STDLIB_LINK_CHECK_SOUND
+
+
+def _member_filter(member, dest_path):
+    """展開に使う filter。stdlib の data filter が正しく判定できる版では、それをそのまま使う。
+
+    gh-107845 を抱える版でだけ、symlink の行き先の検査を差し替える。行き先は upstream の
+    修正と同じく link 自身の dir から realpath で求める。realpath は先に展開した link を
+    ディスク上でたどるので、link を経由する連鎖 (p/x -> . の後の p/x/y -> ../..) と、
+    大文字小文字を区別しない FS での衝突 (p/X -> . と p/x/y) も外を指すとして拒む。
+    絶対 path の link も拒む。
+    """
+    if not member.issym() or _stdlib_link_check_sound():
+        return tarfile.data_filter(member, dest_path)
+    if os.path.isabs(member.linkname):
+        raise tarfile.AbsoluteLinkError(member)
+    base = os.path.realpath(dest_path)
+    target = os.path.realpath(os.path.join(base, os.path.dirname(member.name), member.linkname))
+    if os.path.commonpath([base, target]) != base:
+        raise tarfile.LinkOutsideDestinationError(member, target)
+    return tarfile.tar_filter(member, dest_path)
+
+
+def _extract_baseline(commit, roots, dest):
+    """``commit`` の ``roots`` を dest へ展開する。
+
+    git が無い・読めない、または展開が安全でないときは False。
+    """
+    try:
+        present = [
+            root for root in roots
+            if subprocess.run(["git", "cat-file", "-e", f"{commit}:{root}"],
+                              cwd=ROOT, capture_output=True).returncode == 0
+        ]
+        if not present:
+            return False
+        proc = subprocess.run(["git", "archive", "--format=tar", commit, "--", *present],
+                              cwd=ROOT, capture_output=True)
+    except OSError:
+        return False
+    if proc.returncode != 0:
+        return False
+    try:
+        with tarfile.open(fileobj=io.BytesIO(proc.stdout)) as archive:
+            archive.extractall(dest, filter=_member_filter)
+    except (tarfile.TarError, OSError):
+        return False
+    return True
+
+
+def stale_source_explained(verdict_mod, data, path, skill_dir, runtime_errors, commit):
+    """本文照合の誤りが「閉包が古い」だけで説明できるか。
+
+    受領 commit (verdict を最後に commit した revision) の閉包を一時展開し、次の 2 つが
+    そろうときだけ説明できるとみなす。そろわないときは FAIL のまま残す (fail-closed)。
+      1. 展開したツリーで計算した閉包 digest が verdict の skill_dir_tree_sha と一致する
+      2. そのツリーを基準に検査し直した誤りが、今のツリーで出ている本文照合以外の誤りに
+         すべて含まれる。本文照合の誤りは「以外」に入らないので、受領 commit の本文で
+         照合しても外れるなら、この条件で落ちる。新しい誤りが出たときも落ちる
+    commit は verdict_baseline_commit の値。未追跡の verdict (commit が None)・git が
+    無い・読めない環境・展開の失敗・閉包に symlink の輪がある (3.11/3.12 の
+    RuntimeError) ときは、どれも False になる。
+    """
+    if not commit:
+        return False
+    try:
+        relative = skill_dir.resolve().relative_to(ROOT.resolve())
+        labels = [label for label, _ in verdict_mod.behavior_closure_files(skill_dir, runtime="codex")]
+    except ValueError:
+        return False
+    others = {error for error in runtime_errors if not error.startswith(STALE_SOURCE_ERRORS)}
+    with tempfile.TemporaryDirectory() as tmp:
+        if not _extract_baseline(commit, _closure_roots(labels), tmp):
+            return False
+        baseline_dir = Path(tmp) / relative
+        try:
+            if verdict_mod.skill_dir_tree_sha(baseline_dir, runtime="codex") != data.get("skill_dir_tree_sha"):
+                return False
+            baseline_errors = verdict_mod.validate_runtime_evidence(
+                data, path.parent / "transcript.jsonl", baseline_dir,
+            )
+        except (OSError, ValueError, RuntimeError):
+            return False
+    return set(baseline_errors) <= others
+
+
 def check_verdict(path, plugin, skill, verdict_mod, backend_mod, schema):
     """verdict 1 件の違反リストを返す (空 = 合格)。"""
     errs = []
@@ -166,6 +296,7 @@ def check_verdict(path, plugin, skill, verdict_mod, backend_mod, schema):
     if (skill_dir / "SKILL.md").is_file():
         current_sha = (verdict_mod.skill_dir_tree_sha(skill_dir, runtime=runtime)
                        if runtime == "codex" else verdict_mod.skill_dir_tree_sha(skill_dir))
+        stale_line = commit = None
         if data.get("skill_dir_tree_sha") != current_sha:
             used_runtime = runtime if runtime == "codex" else "claude"
             labels = None
@@ -174,14 +305,30 @@ def check_verdict(path, plugin, skill, verdict_mod, backend_mod, schema):
                 labels = verdict_mod.closure_drift_labels(
                     ROOT, skill_dir, commit, runtime=used_runtime,
                 )
-            errs.append(verdict_mod.format_stale_sha(
+            stale_line = verdict_mod.format_stale_sha(
                 data.get("skill_dir_tree_sha"), current_sha, labels,
-            ))
+            )
+        runtime_errors = []
         if runtime == "codex":
-            for error in verdict_mod.validate_runtime_evidence(
+            runtime_errors = verdict_mod.validate_runtime_evidence(
                 data, path.parent / "transcript.jsonl", skill_dir,
+            )
+            source_errors = [e for e in runtime_errors if e.startswith(STALE_SOURCE_ERRORS)]
+            # 古い閉包では、今の本文との照合は必ず外れる。受領 commit の本文で
+            # 照合し直して通るときだけ、その誤りを stale-sha の行へ畳む (同じ古さを
+            # 二重に FAIL にしない)。通らないときは起動の証明が無いので FAIL のまま。
+            if stale_line and source_errors and stale_source_explained(
+                verdict_mod, data, path, skill_dir, runtime_errors, commit,
             ):
-                errs.append(f"runtime-evidence: {error}")
+                runtime_errors = [e for e in runtime_errors if e not in source_errors]
+                stale_line += (
+                    f" / 本文照合 {', '.join(source_errors)} は受領 commit {commit[:12]}"
+                    " の本文では通る (今の SKILL.md と違うのは閉包が古いため)"
+                )
+        if stale_line:
+            errs.append(stale_line)
+        for error in runtime_errors:
+            errs.append(f"runtime-evidence: {error}")
 
     # 降格除外: tier が live 未満 or downgrade_reason 有りは PASS 扱い禁止 (D13)
     if data.get("tier") != "live" or data.get("downgrade_reason") is not None:

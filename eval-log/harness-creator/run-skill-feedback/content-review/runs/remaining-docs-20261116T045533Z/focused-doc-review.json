@@ -1,0 +1,71 @@
+{
+  "kind": "fresh-focused-doc-integration-review",
+  "snapshot": "aa9c63c09b242ca81714e4357fe78ee9f6a50b66",
+  "skill_bytes_identical_to_snapshot": true,
+  "reviewer": "reset-observer-independent-doc-integration",
+  "target_before": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-feedback",
+    "skill_md_sha256": "eb1353f8957db3b20302149a8958d5069d968e30c8c5a5b31a818b72efa8da3f",
+    "reviewed_skill_md_sha256": "eb1353f8957db3b20302149a8958d5069d968e30c8c5a5b31a818b72efa8da3f",
+    "skill_dir_digest": "d00cd538f29424506b429e608d986a45c842edc78181f60aa8d5c899daf3301a"
+  },
+  "target_after": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-feedback",
+    "skill_md_sha256": "eb1353f8957db3b20302149a8958d5069d968e30c8c5a5b31a818b72efa8da3f",
+    "reviewed_skill_md_sha256": "eb1353f8957db3b20302149a8958d5069d968e30c8c5a5b31a818b72efa8da3f",
+    "skill_dir_digest": "d00cd538f29424506b429e608d986a45c842edc78181f60aa8d5c899daf3301a"
+  },
+  "reviewed_paths": [
+    "plugins/harness-creator/skills/run-skill-feedback/references/feedback-to-improvement-runbook.md",
+    "plugins/harness-creator/skills/run-skill-feedback/references/goal-seek-paradigm.md",
+    "plugins/harness-creator/skills/run-skill-feedback/references/resource-map.yaml"
+  ],
+  "document_hashes": {
+    "plugins/harness-creator/skills/run-skill-feedback/references/feedback-to-improvement-runbook.md": "2ddf937316b285f0491e553e12b24edef1717ed38113d5a1d73c637a671f39a3",
+    "plugins/harness-creator/skills/run-skill-feedback/references/goal-seek-paradigm.md": "6a2058f4dd56cf33a211124169fc14c5805fbd742e69169a2f6b927f88f243ec",
+    "plugins/harness-creator/skills/run-skill-feedback/references/resource-map.yaml": "85975894526adf8951f532e25f780286513b807a29ffffe19617e7ddfb47796c"
+  },
+  "C1_C4": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": "runbookのID記号の平易化は人間工程2/3/6の意味を変えず、Notionからの自動read-backを加えていない。"
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": "resource-mapの4参照先が実在し、設定・投入・改善運用・実行方針の必要場面を被覆。"
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": "goal-seekコピーは正本と同じ変更で、primary inline gateと補助guardの説明は既存手順と一致。rubric100/80。"
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": "参照索引は必要時に資料を読む入口だけで通常起動に走査・LLM・live・追加loopを加えない。"
+    }
+  },
+  "rubric": {
+    "score": 100,
+    "threshold": 80,
+    "machine_findings_preserved": [],
+    "pending_judgments": {
+      "BD-004": {
+        "verdict": "PASS",
+        "reason": "descriptionの要望構造化/Notion登録は不変SKILLのhost候補同定→不足項目収集→承認wrapper→投入→通知へ対応する。変更したrunbookの用語、loop説明リンク、必要時だけ読むresource-mapは通常フローや自動改善の責務を拡張しない。"
+      }
+    }
+  },
+  "scoped_cli": "dry-run noop; no directory refresh support; new focused verdicts generated instead",
+  "validation": {
+    "elegance-verdict.json": null,
+    "rubric-verdict.json": null,
+    "pair": null
+  },
+  "limits": [
+    "snapshot full-review reuse only for identical SKILL bytes",
+    "docs delta actually read; no whole-skill reread claimed",
+    "no live/30-paradigm/code reapproval",
+    "privacy artifacts and original transcript verdict digests untouched"
+  ]
+}

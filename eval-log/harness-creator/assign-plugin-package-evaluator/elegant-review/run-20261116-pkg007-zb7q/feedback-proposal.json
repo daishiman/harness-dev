@@ -1,0 +1,177 @@
+{
+  "status": "提案のみ。製品反映はユーザー回答待ち。scratch試作は別途許可済み。",
+  "recommendation": "案Aを実施するなら、共通skillのscripts/schemas/references内に実行時依存を閉じる。repo lintはbuild役割へ明示移管する。",
+  "observed_deployments": {
+    "total_including_canonical": 23,
+    "vendored_copies": 22,
+    "canonical": "plugins/harness-creator/skills/run-skill-feedback",
+    "selection": "feedback_contract_ssot.is_feedback_deploy_exemptとmanifest保持pluginの既存選択条件を共用。固定23件リストを正本にしない。"
+  },
+  "minimal_runtime_closure": {
+    "added_scripts": [
+      {
+        "source": "scripts/notion-submit-improvement.py",
+        "target": "scripts/notion-submit-improvement.py",
+        "change": "ローカルnotion_configがある場合は同階層import。repo正本実行時だけ従来repo plugin scriptsへfallback。未使用SCHEMA_DIRは削除。"
+      },
+      {
+        "source": "plugins/harness-creator/scripts/notion_config.py",
+        "target": "scripts/notion_config.py",
+        "change": "plugin_root()は自ファイル祖先のmanifestでowner pluginを解決する。環境変数の自plugin検証と明示config優先は維持。parents[1]はmanifestがない旧配置fallbackに限定。"
+      },
+      {
+        "source": "scripts/tenant_runtime.py",
+        "target": "scripts/tenant_runtime.py",
+        "change": "bytecopy。設定を同梱せず、既存HARNESS_TENANT_CONFIG等の明示指定を維持。"
+      },
+      {
+        "source": "plugins/harness-creator/scripts/extract-plugin-root.py",
+        "target": "scripts/extract-plugin-root.py",
+        "change": "bytecopy。呼出しは --from \"$PLUGIN_ROOT\" を明示しskill/scriptsという配置の深さに依存させない。"
+      }
+    ],
+    "existing_anchor": {
+      "source": "plugins/harness-creator/skills/run-build-skill/templates/goal-seek-runtime/scripts/validate-inline-goal-seek-anchor.py",
+      "target": "scripts/validate-inline-goal-seek-anchor.py",
+      "change": "既存bytecopyを維持。"
+    },
+    "schemas": [
+      {
+        "source": "doc/notion-schema/skill-list.schema.json",
+        "target": "schemas/skill-list.schema.json"
+      },
+      {
+        "source": "doc/notion-schema/improvement-request.schema.json",
+        "target": "schemas/improvement-request.schema.json"
+      }
+    ],
+    "references": [
+      {
+        "source": "plugins/harness-creator/skills/run-skill-feedback/references/notion-submit-contract.md",
+        "target": "references/notion-submit-contract.md",
+        "change": "実行先と設定解決の説明を配布配置へ更新。"
+      },
+      {
+        "source": "plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md",
+        "target": "references/goal-seek-paradigm.md"
+      },
+      {
+        "source": "plugins/harness-creator/references/feedback-to-improvement-runbook.md",
+        "target": "references/feedback-to-improvement-runbook.md",
+        "note": "責務境界の背景資料。直接runtime必要性は低いが読めないrepo pathを残さないため同梱。"
+      },
+      {
+        "source": "plugins/harness-creator/references/notion-per-repo-setup.md",
+        "target": "references/notion-per-repo-setup.md",
+        "note": "設定不在時の利用者向け復旧資料。存在確認してから追加。"
+      }
+    ],
+    "excluded_from_runtime": [
+      "scripts/lint-feedback-protocol.py",
+      "scripts/feedback_contract_ssot.py",
+      "scripts/notion-upsert-plugin.py",
+      "repo全体のplugins一覧"
+    ],
+    "external_dependencies": [
+      {
+        "name": "skill-governance-adapters",
+        "contract": "既存depends_onを使い、resolverで解決したguardだけを呼ぶ。配布先pluginにも依存宣言が必要。guard自身へ配備された場合は自plugin解決を許す。"
+      },
+      {
+        "name": "Notion設定",
+        "contract": "NOTION_CONFIG_PATHまたはowner plugin rootの設定。token/db値を成果物へ含めない。"
+      },
+      {
+        "name": "実行環境",
+        "contract": "python3、curl。Keychain経路ではsecurity。tenant由来credentialを使う場合のみtenant設定。"
+      }
+    ]
+  },
+  "concrete_changes": [
+    {
+      "path": "scripts/notion-submit-improvement.py",
+      "change": "runtime配置の同階層importとrepo正本fallbackを両対応。引数/exit/status/secret transportの既存契約は維持。"
+    },
+    {
+      "path": "plugins/harness-creator/scripts/notion_config.py",
+      "change": "manifest祖先によるplugin_root解決。既存skill-intake vendorもSSOT同期する。"
+    },
+    {
+      "path": "doc/notion-schema/skill-list.schema.json",
+      "change": "feedback_protocolの対象同定手順からrepo内find plugins必須を除き、hostが登録済みのSKILL.md実在pathを使う。schema正本を先に更新する。"
+    },
+    {
+      "path": "plugins/harness-creator/skills/run-skill-feedback/SKILL.md",
+      "change": "schema/reference/scriptをskill相対へ。repo-bundled注記をruntime bundle対応に更新。HARNESS_ROOT/cwd fallbackを廃止しSKILL_ROOT絶対pathを利用。guard resolverはskill内scriptへ。Notion未登録時のrepo登録コマンドは開発者向け別工程と明示。"
+    },
+    {
+      "path": "plugins/harness-creator/skills/run-skill-feedback/workflow-manifest.json",
+      "change": "runtime resourcesをskill相対へ更新。build_validation.lint_feedback_protocolにrepo scope・実在path・実行argv・IN1/IN2対応・shebang/+x要件を明示。"
+    },
+    {
+      "path": "scripts/lint-feedback-protocol.py",
+      "change": "R3/R8が新runtime配置とbuild role宣言を検証。R5/R6/R7はrepo検証のまま。参照先の移管前後が欠落しないことも検査。"
+    },
+    {
+      "path": "scripts/lint-vendored-ssot.py",
+      "change": "各canonical asset→共通skill内asset→22配布コピーの一致を既存VENDORED_PAIRSへ追加。SKILL/manifest/1referenceだけでなく全runtime closureの存在とbyte一致を検査。"
+    },
+    {
+      "path": "plugins/harness-creator/skills/run-build-skill/scripts/render-combinators.py",
+      "change": "既存実体に対するno-opでは更新できないため、同じapply_feedback_loop/SSOT判定を再利用する明示refreshを追加。独自の手書きcopy一覧は作らない。"
+    },
+    {
+      "path": "tests/scripts-root/test_scripts__lint_feedback_protocol.py",
+      "change": "build役割への移管、IN1/IN2検証先、runtime copiesのsecret-resolution検査を追加。"
+    },
+    {
+      "path": "tests/scripts-root/test_root__lint_vendored_ssot.py",
+      "change": "新runtime asset欠落・drift・symlink回帰を検出する。"
+    },
+    {
+      "path": "tests/test_render_combinators_feedback_contract.py",
+      "change": "既存実体へのrefreshと再実行の冪等性、正本除外を検証。"
+    },
+    {
+      "path": "tests/test_feedback_runtime_bundle.py",
+      "change": "新規予定。repoなし・環境ルートなし・任意cwdの隔離bundleでimport/dry-run/root/schema/guardを検証。"
+    }
+  ],
+  "attribute_and_role_contract": {
+    "helpers": "notion_config.pyとtenant_runtime.pyはscript_refsへ残し、既存ルール通りshebang/+xを要求。helper名を理由に免除しない。",
+    "lint": "runtime script_refsから消すだけは禁止。workflow-manifest.jsonのbuild_validation.lint_feedback_protocolへrepo scopeとroleを明示して移管し、元と同じshebang/+xを開発gateで検証する。",
+    "verifier": "scripts/lint-feedback-protocol.pyがbuild_validationの必須path/role/scope/argv/criteria対応を検証し、python3 scripts/lint-feedback-protocol.py --strictを必須gateとする。",
+    "governance": "PKG-007の『参照されるscripts/*』からbuild-roleを除く解釈は黙示的に導入しない。catalog/evaluator契約にruntime script_refsとrepo build_validationの責務境界を追記する承認が必要。未承認ならlintの外部参照は現行007 failを維持。",
+    "minimum_mode_changes": "root lint/submit/FCを参照または実行する開発gateもshebang/+xを満たす。既存参照helper/lintの属性違反を移管で隠さない。"
+  },
+  "generation_structure": {
+    "canonical_edit_points": "root scripts、Notion schema正本、共有notion_config、canonical run-skill-feedbackのみを編集点にする。",
+    "materialization": "正本assetsをcanonical skillへbytecopyし、その完成済みskillディレクトリを既存apply_feedback_loopから配布。",
+    "existing_copies": "refreshは既存実体を対象にcanonical treeから更新し、実体copy・mode保持・digest一致を確認。symlink配布は禁止。",
+    "parity": "feedback_contract_ssotのcontent-addressed境界と既存除外を維持する。23の配置名を固定制御リテラルへ追加しない。"
+  },
+  "validation": [
+    "python3 scripts/lint-vendored-ssot.py",
+    "python3 scripts/lint-feedback-protocol.py --strict",
+    "該当既存tests＋test_feedback_runtime_bundle.pyを実行。全repo試験は追加変更や失敗が要求しない限り拡大しない。",
+    "scratch pluginにcanonical skillと最小manifestだけ置き、repo由来PYTHONPATH・HARNESS_ROOT・HC_ROOT・CLAUDE_PLUGIN_ROOTを除去、任意cwdでsubmit --dry-run。外部通信/Keychain禁止。",
+    "notion_config.plugin_root()がskilldirではなくscratch owner pluginを返し、隣接NOTION_CONFIG_PATHが最優先となることをdummy設定で確認。",
+    "2schemaが配布内からJSONとして読めることを確認。未使用SCHEMA_DIRの実在はruntime条件に数えない。",
+    "dummy installed-plugin registryでguard resolverを --from owner plugin指定で確認。未登録guard時はfail-closed、mutationは実行しない。",
+    "明示script_refs全件の実在・plugin内包含・shebang・+xを確認し、同名repo pathを解決候補へ混ぜない。",
+    "全配布先で依存宣言、runtime closure、byte parityを確認。正本込み23配置で新資産の欠落ゼロ。"
+  ],
+  "acceptance_limits": [
+    "dry-runはNotion登録確認でも本投入成功でもない。実API POSTはこの試作では行わない。",
+    "role境界変更と製品適用はユーザー回答後。既存の他worker差分は変更しない。"
+  ],
+  "scratch_evidence": {
+    "prototype": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pkg007-elegant-hkkg1bky/feedback-prototype",
+    "report": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pkg007-elegant-hkkg1bky/feedback-prototype-validation.json",
+    "reproducible_builder": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pkg007-elegant-hkkg1bky/prepare-feedback-prototype.py",
+    "repeat_verifier": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pkg007-elegant-hkkg1bky/verify-feedback-prototype.py",
+    "checks_passed": 7,
+    "meaning": "隔離dry-runとroot/config/schema/実行属性/guard resolverのみ確認。4条件PASS・単独配布全体完了を意味しない。",
+    "source_changes": "製品変更なし。scratch copyのsubmitとnotion_configだけコード差分。"
+  }
+}

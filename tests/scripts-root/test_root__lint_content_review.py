@@ -11,6 +11,7 @@ monkeypatch で差し替えて検査する (repo を汚さない)。
 import hashlib
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -260,12 +261,118 @@ def test_main_requires_mode():
     assert r.returncode == 2
 
 
-def test_main_changed_only_no_diff_is_ok(tmp_path):
-    # 存在しない base ref を渡すと _git_changed_skills は空集合になり「no target skill」
+@pytest.mark.parametrize("base", ["0000000000000000000000000000000000000000", "does-not-exist"])
+def test_main_changed_only_unknown_base_is_an_input_error(base):
+    # 旧 test_main_changed_only_no_diff_is_ok。存在しない base を渡すと「no target skill」rc0 になる
+    # 動き (fail-open) を固定していた。base を誤っただけで本当の違反が隠れるので、git の失敗は
+    # 「対象なし」にせず exit 2 で止める (独立レビューの再現: --base does-not-exist)。
     r = subprocess.run(
-        [sys.executable, str(SCRIPT), "--changed-only", "--base",
-         "0000000000000000000000000000000000000000"],
+        [sys.executable, str(SCRIPT), "--changed-only", "--base", base],
         cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
     )
-    assert r.returncode == 0
+    assert r.returncode == 2
+    assert "no target skill" not in r.stdout
+    assert f"git diff {base}...HEAD failed" in r.stderr
+
+
+def test_main_changed_only_empty_diff_is_ok():
+    # 差分が本当に空 (HEAD...HEAD) のときは、今までどおり「no target skill」で rc0
+    r = subprocess.run(
+        [sys.executable, str(SCRIPT), "--changed-only", "--base", "HEAD"],
+        cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+    )
+    assert r.returncode == 0, r.stderr
     assert "no target skill" in r.stdout
+
+
+# ---------- 形の崩れた verdict は traceback にせず違反にする (fail-closed) ----------
+
+def _write(path, data):
+    path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+_REQUIRED_KEYS = ["target", "review_kind", "verdict", "reviewer", "reviewed_at", "iterations", "feedback_loop"]
+
+
+@pytest.mark.parametrize("data, json_type", [
+    (None, "null"),
+    (5, "number"),
+    (_REQUIRED_KEYS, "array"),  # 必須キーの名前を並べた配列は `key not in data` を素通りする
+    ("PASS", "string"),
+])
+def test_check_verdict_top_level_not_object(skill_tree, tmp_path, data, json_type):
+    # 独立レビューの再現: verdict が null / 5 → TypeError、必須キーの配列 → AttributeError だった
+    path = _write(tmp_path / "v.json", data)
+    res = LCR._check_verdict(path, "p1", "run-x", "elegance-verdict.json")
+    assert res == f"schema: verdict must be a JSON object, got {json_type}"
+
+
+@pytest.mark.parametrize("field, value, message", [
+    # 再現: criteria_evaluated=[{"id":"IN1"}] は set() で unhashable だった
+    ("criteria_evaluated", [{"id": "IN1"}], "schema: feedback_loop.criteria_evaluated[1] must be string, got object"),
+    ("criteria_evaluated", ["IN1", ["OUT1"]], "schema: feedback_loop.criteria_evaluated[2] must be string, got array"),
+    # 再現: loop_scope=["both"] / next_action={} は set の in で unhashable だった
+    ("loop_scope", ["both"], "schema: feedback_loop.loop_scope invalid"),
+    ("next_action", {}, "schema: feedback_loop.next_action invalid"),
+])
+def test_check_verdict_unhashable_feedback_loop_fields(skill_tree, tmp_path, field, value, message):
+    data = _good_verdict("p1", "run-x", skill_tree["sha"])
+    data["feedback_loop"][field] = value
+    path = _write(tmp_path / "v.json", data)
+    assert LCR._check_verdict(path, "p1", "run-x", "elegance-verdict.json") == message
+
+
+def test_check_verdict_unreadable_skill_md_is_stale(skill_tree, tmp_path):
+    # 再現: SKILL.md を変えて chmod 000 にすると current_sha が None になり、stale の検査が外れて rc0 だった
+    data = _good_verdict("p1", "run-x", skill_tree["sha"])
+    path = _write(tmp_path / "v.json", data)
+    md = skill_tree["md"]
+    md.write_text(md.read_text(encoding="utf-8") + "changed\n", encoding="utf-8")
+    md.chmod(0)
+    try:
+        if os.access(md, os.R_OK):
+            pytest.skip("権限を外しても読める環境 (root など) では再現できない")
+        assert LCR._check_verdict(path, "p1", "run-x", "elegance-verdict.json") == "stale-sha: cannot read SKILL.md"
+    finally:
+        md.chmod(0o644)
+
+
+def test_read_kind_undecodable_skill_md_returns_none(skill_tree):
+    # UTF-8 でない SKILL.md は kind が分からないので None (除外せず検査に回す)
+    skill_tree["md"].write_bytes(b"---\nkind: \xff\xfe\n---\n")
+    assert LCR._read_kind("p1", "run-x") is None
+
+
+# ---------- --print-target の正規化 ----------
+
+def test_print_target_drops_a_trailing_slash():
+    # 再現: --print-target p1/run-x/ は skill "run-x/" を出して rc0 だった (その target は target-mismatch になる)
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "--print-target", "harness-creator/run-goal-seek/"],
+        capture_output=True, text=True, cwd=ROOT,
+    )
+    assert proc.returncode == 0, proc.stderr
+    target = json.loads(proc.stdout)
+    assert (target["plugin"], target["skill"]) == ("harness-creator", "run-goal-seek")
+
+
+@pytest.mark.parametrize("spec", ["harness-creator//run-goal-seek", "harness-creator/run-goal-seek/references"])
+def test_print_target_rejects_nested_paths(spec):
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "--print-target", spec], capture_output=True, text=True, cwd=ROOT
+    )
+    assert proc.returncode == 2
+    assert proc.stdout == ""
+
+
+# ---------- frontmatter ----------
+
+def test_script_has_a_valid_frontmatter():
+    # 前回の指摘 (1): # /// script の frontmatter が無かった。exit の意味と write-scope を宣言する
+    linter = ROOT / "plugins" / "skill-governance-lint" / "scripts" / "lint-script-frontmatter.py"
+    proc = subprocess.run([sys.executable, str(linter), str(SCRIPT)], capture_output=True, text=True, cwd=ROOT)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    head = SCRIPT.read_text(encoding="utf-8").split("# ///\n", 1)[0]
+    assert "# write-scope: none" in head
+    assert "0=違反なし" in head and "1=違反あり" in head and "2=usage" in head

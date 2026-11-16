@@ -1,0 +1,172 @@
+.FFFFFFF.                                                                [100%]
+=================================== FAILURES ===================================
+_________ test_pkg_006_invalid_hooks_map_is_finding[hooks-file-hooks2] _________
+
+tmp_path = PosixPath('/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pytest-of-dm/pytest-328/test_pkg_006_invalid_hooks_map1')
+source = 'hooks-file', hooks = {'PreToolUse': {}}
+
+    @pytest.mark.parametrize("source,hooks", [
+        (source, value) for source in ("hooks-file", "plugin")
+        for value in (None, 3, {"PreToolUse": {}}, {"PreToolUse": [3]})
+    ] + [("hooks-file", [])])
+    def test_pkg_006_invalid_hooks_map_is_finding(tmp_path, source, hooks):
+        p = _plugin(tmp_path)
+        if source == "hooks-file":
+            (p / "hooks").mkdir()
+            (p / "hooks" / "hooks.json").write_text(json.dumps({"hooks": hooks}), encoding="utf-8")
+        else:
+            _write_plugin_json(p, {"name": "demo", "hooks": hooks})
+        fs = MOD.check_pkg_006(p)
+        assert fs
+>       assert all(Path(f["location"]).is_absolute() for f in fs)
+E       assert False
+E        +  where False = all(<generator object test_pkg_006_invalid_hooks_map_is_finding.<locals>.<genexpr> at 0x10bb9ace0>)
+
+tests/scripts-plugins/test_harness_creator__validate_plugin_package.py:1617: AssertionError
+_________ test_pkg_006_invalid_hooks_map_is_finding[hooks-file-hooks3] _________
+
+tmp_path = PosixPath('/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pytest-of-dm/pytest-328/test_pkg_006_invalid_hooks_map2')
+source = 'hooks-file', hooks = {'PreToolUse': [3]}
+
+    @pytest.mark.parametrize("source,hooks", [
+        (source, value) for source in ("hooks-file", "plugin")
+        for value in (None, 3, {"PreToolUse": {}}, {"PreToolUse": [3]})
+    ] + [("hooks-file", [])])
+    def test_pkg_006_invalid_hooks_map_is_finding(tmp_path, source, hooks):
+        p = _plugin(tmp_path)
+        if source == "hooks-file":
+            (p / "hooks").mkdir()
+            (p / "hooks" / "hooks.json").write_text(json.dumps({"hooks": hooks}), encoding="utf-8")
+        else:
+            _write_plugin_json(p, {"name": "demo", "hooks": hooks})
+        fs = MOD.check_pkg_006(p)
+        assert fs
+>       assert all(Path(f["location"]).is_absolute() for f in fs)
+E       assert False
+E        +  where False = all(<generator object test_pkg_006_invalid_hooks_map_is_finding.<locals>.<genexpr> at 0x10bb37220>)
+
+tests/scripts-plugins/test_harness_creator__validate_plugin_package.py:1617: AssertionError
+_________ test_pkg_006_invalid_hooks_map_is_finding[hooks-file-hooks8] _________
+
+tmp_path = PosixPath('/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pytest-of-dm/pytest-328/test_pkg_006_invalid_hooks_map3')
+source = 'hooks-file', hooks = []
+
+    @pytest.mark.parametrize("source,hooks", [
+        (source, value) for source in ("hooks-file", "plugin")
+        for value in (None, 3, {"PreToolUse": {}}, {"PreToolUse": [3]})
+    ] + [("hooks-file", [])])
+    def test_pkg_006_invalid_hooks_map_is_finding(tmp_path, source, hooks):
+        p = _plugin(tmp_path)
+        if source == "hooks-file":
+            (p / "hooks").mkdir()
+            (p / "hooks" / "hooks.json").write_text(json.dumps({"hooks": hooks}), encoding="utf-8")
+        else:
+            _write_plugin_json(p, {"name": "demo", "hooks": hooks})
+        fs = MOD.check_pkg_006(p)
+        assert fs
+>       assert all(Path(f["location"]).is_absolute() for f in fs)
+E       assert False
+E        +  where False = all(<generator object test_pkg_006_invalid_hooks_map_is_finding.<locals>.<genexpr> at 0x10bb37680>)
+
+tests/scripts-plugins/test_harness_creator__validate_plugin_package.py:1617: AssertionError
+___________ test_pkg_006_invalid_hooks_map_is_finding[hooks-file-3] ____________
+
+tmp_path = PosixPath('/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pytest-of-dm/pytest-328/test_pkg_006_invalid_hooks_map4')
+source = 'hooks-file', hooks = 3
+
+    @pytest.mark.parametrize("source,hooks", [
+        (source, value) for source in ("hooks-file", "plugin")
+        for value in (None, 3, {"PreToolUse": {}}, {"PreToolUse": [3]})
+    ] + [("hooks-file", [])])
+    def test_pkg_006_invalid_hooks_map_is_finding(tmp_path, source, hooks):
+        p = _plugin(tmp_path)
+        if source == "hooks-file":
+            (p / "hooks").mkdir()
+            (p / "hooks" / "hooks.json").write_text(json.dumps({"hooks": hooks}), encoding="utf-8")
+        else:
+            _write_plugin_json(p, {"name": "demo", "hooks": hooks})
+        fs = MOD.check_pkg_006(p)
+        assert fs
+>       assert all(Path(f["location"]).is_absolute() for f in fs)
+E       assert False
+E        +  where False = all(<generator object test_pkg_006_invalid_hooks_map_is_finding.<locals>.<genexpr> at 0x10bb37bc0>)
+
+tests/scripts-plugins/test_harness_creator__validate_plugin_package.py:1617: AssertionError
+__________ test_pkg_006_invalid_hooks_map_is_finding[hooks-file-None] __________
+
+tmp_path = PosixPath('/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pytest-of-dm/pytest-328/test_pkg_006_invalid_hooks_map5')
+source = 'hooks-file', hooks = None
+
+    @pytest.mark.parametrize("source,hooks", [
+        (source, value) for source in ("hooks-file", "plugin")
+        for value in (None, 3, {"PreToolUse": {}}, {"PreToolUse": [3]})
+    ] + [("hooks-file", [])])
+    def test_pkg_006_invalid_hooks_map_is_finding(tmp_path, source, hooks):
+        p = _plugin(tmp_path)
+        if source == "hooks-file":
+            (p / "hooks").mkdir()
+            (p / "hooks" / "hooks.json").write_text(json.dumps({"hooks": hooks}), encoding="utf-8")
+        else:
+            _write_plugin_json(p, {"name": "demo", "hooks": hooks})
+        fs = MOD.check_pkg_006(p)
+        assert fs
+>       assert all(Path(f["location"]).is_absolute() for f in fs)
+E       assert False
+E        +  where False = all(<generator object test_pkg_006_invalid_hooks_map_is_finding.<locals>.<genexpr> at 0x10bb85000>)
+
+tests/scripts-plugins/test_harness_creator__validate_plugin_package.py:1617: AssertionError
+___________ test_pkg_006_invalid_hooks_map_is_finding[plugin-hooks6] ___________
+
+tmp_path = PosixPath('/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pytest-of-dm/pytest-328/test_pkg_006_invalid_hooks_map6')
+source = 'plugin', hooks = {'PreToolUse': {}}
+
+    @pytest.mark.parametrize("source,hooks", [
+        (source, value) for source in ("hooks-file", "plugin")
+        for value in (None, 3, {"PreToolUse": {}}, {"PreToolUse": [3]})
+    ] + [("hooks-file", [])])
+    def test_pkg_006_invalid_hooks_map_is_finding(tmp_path, source, hooks):
+        p = _plugin(tmp_path)
+        if source == "hooks-file":
+            (p / "hooks").mkdir()
+            (p / "hooks" / "hooks.json").write_text(json.dumps({"hooks": hooks}), encoding="utf-8")
+        else:
+            _write_plugin_json(p, {"name": "demo", "hooks": hooks})
+        fs = MOD.check_pkg_006(p)
+        assert fs
+>       assert all(Path(f["location"]).is_absolute() for f in fs)
+E       assert False
+E        +  where False = all(<generator object test_pkg_006_invalid_hooks_map_is_finding.<locals>.<genexpr> at 0x10bb37ca0>)
+
+tests/scripts-plugins/test_harness_creator__validate_plugin_package.py:1617: AssertionError
+___________ test_pkg_006_invalid_hooks_map_is_finding[plugin-hooks7] ___________
+
+tmp_path = PosixPath('/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pytest-of-dm/pytest-328/test_pkg_006_invalid_hooks_map7')
+source = 'plugin', hooks = {'PreToolUse': [3]}
+
+    @pytest.mark.parametrize("source,hooks", [
+        (source, value) for source in ("hooks-file", "plugin")
+        for value in (None, 3, {"PreToolUse": {}}, {"PreToolUse": [3]})
+    ] + [("hooks-file", [])])
+    def test_pkg_006_invalid_hooks_map_is_finding(tmp_path, source, hooks):
+        p = _plugin(tmp_path)
+        if source == "hooks-file":
+            (p / "hooks").mkdir()
+            (p / "hooks" / "hooks.json").write_text(json.dumps({"hooks": hooks}), encoding="utf-8")
+        else:
+            _write_plugin_json(p, {"name": "demo", "hooks": hooks})
+        fs = MOD.check_pkg_006(p)
+        assert fs
+>       assert all(Path(f["location"]).is_absolute() for f in fs)
+E       assert False
+E        +  where False = all(<generator object test_pkg_006_invalid_hooks_map_is_finding.<locals>.<genexpr> at 0x10bb374c0>)
+
+tests/scripts-plugins/test_harness_creator__validate_plugin_package.py:1617: AssertionError
+=========================== short test summary info ============================
+FAILED tests/scripts-plugins/test_harness_creator__validate_plugin_package.py::test_pkg_006_invalid_hooks_map_is_finding[hooks-file-hooks2]
+FAILED tests/scripts-plugins/test_harness_creator__validate_plugin_package.py::test_pkg_006_invalid_hooks_map_is_finding[hooks-file-hooks3]
+FAILED tests/scripts-plugins/test_harness_creator__validate_plugin_package.py::test_pkg_006_invalid_hooks_map_is_finding[hooks-file-hooks8]
+FAILED tests/scripts-plugins/test_harness_creator__validate_plugin_package.py::test_pkg_006_invalid_hooks_map_is_finding[hooks-file-3]
+FAILED tests/scripts-plugins/test_harness_creator__validate_plugin_package.py::test_pkg_006_invalid_hooks_map_is_finding[hooks-file-None]
+FAILED tests/scripts-plugins/test_harness_creator__validate_plugin_package.py::test_pkg_006_invalid_hooks_map_is_finding[plugin-hooks6]
+FAILED tests/scripts-plugins/test_harness_creator__validate_plugin_package.py::test_pkg_006_invalid_hooks_map_is_finding[plugin-hooks7]
+7 failed, 2 passed, 172 deselected in 0.31s

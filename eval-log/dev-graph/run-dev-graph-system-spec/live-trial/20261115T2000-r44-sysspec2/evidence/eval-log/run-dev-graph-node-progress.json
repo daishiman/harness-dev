@@ -1,0 +1,21 @@
+{
+  "skill": "dev-graph:run-dev-graph-node",
+  "verb": "add",
+  "checklist": [
+    {"id": "containment", "status": "achieved", "evidence": "eval-log/run-dev-graph-node/c24-receipt.json (mode write, exit 0, repo_root == content_roots.repository); writer resolved C24 internally for --input .dev-graph/cache/inputs/system-spec-import-apply.json"},
+    {"id": "classification", "status": "achieved", "evidence": "receipt .dev-graph/state/receipts/node-r000001-add.json; decision=auto (specification 0.95 / architecture 0.05, margin 0.90 >= 0.15) for spec-billing-audit-system and arch-billing-audit-system"},
+    {"id": "schema", "status": "achieved", "evidence": "eval-log/run-dev-graph-node/schema-report.json: validate-graph-schema --strict-artifact-readiness exit 0, violations 0, readiness complete 2/2; dry-run pre_write_validation findings 0"},
+    {"id": "package", "status": "not_applicable", "evidence": "verb add (no register-package)"},
+    {"id": "receipt", "status": "achieved", "evidence": "receipt .dev-graph/state/receipts/node-r000001-add.json (single pre-choice commit): graph_revision_before 0 -> graph_revision_after 1, graph_digest_after sha256:893011d98c3cfea6552c050cb69024a73f55471c1044a9fffc8dd064133caaf6 == graph_baseline; node_ids [spec-billing-audit-system, arch-billing-audit-system] == graph nodes"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "evidence": "dry-run valid (findings 0), apply applied_count 2, validate-graph-schema --strict-artifact-readiness exit 0, validate-source-lineage exit 0"},
+    {"id": "OUT1", "status": "external_pending"},
+    {"id": "OUT2", "status": "external_pending"},
+    {"id": "OUT3", "status": "external_pending"}
+  ],
+  "graph_baseline": {"graph_revision": 1, "graph_digest": "sha256:893011d98c3cfea6552c050cb69024a73f55471c1044a9fffc8dd064133caaf6"},
+  "writer_receipts": [],
+  "independent_verifier": {"agent": "dev-graph:dev-graph-integrity-auditor", "verdict": "PASS", "graph_digest": "sha256:893011d98c3cfea6552c050cb69024a73f55471c1044a9fffc8dd064133caaf6"},
+  "overall": "PASS"
+}

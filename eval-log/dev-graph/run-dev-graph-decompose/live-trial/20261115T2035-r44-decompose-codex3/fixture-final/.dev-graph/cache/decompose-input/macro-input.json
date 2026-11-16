@@ -1,0 +1,68 @@
+{
+  "artifacts": [
+    {
+      "artifact_kind": "feature",
+      "slug": "lt-render-diff",
+      "title": "render 結果の前回比較",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "tracker_binding": "beads",
+      "depends_on": [
+        "LT-FEATURE-001"
+      ],
+      "macro": {
+        "purpose": "render 間の変化を読み手が確認できるようにする",
+        "goal": "現在と前回の render の追加・削除・変更を特定できる状態",
+        "scope_in": [
+          "比較対象 render の識別",
+          "追加・削除・変更の差分出力"
+        ],
+        "scope_out": [
+          "render 基盤の再実装",
+          "P01..P13 task の生成",
+          "外部 tracker への実書込"
+        ],
+        "acceptance": [
+          "同じ render 同士では差分が0件",
+          "追加・削除・変更を区別できる",
+          "前回 render が無い場合は比較不能と示す"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    },
+    {
+      "artifact_kind": "feature",
+      "slug": "lt-render-summary",
+      "title": "render 差分の読者向け要約",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "tracker_binding": "beads",
+      "depends_on": [
+        "feature-lt-render-diff"
+      ],
+      "macro": {
+        "purpose": "差分の要点を短時間で把握できるようにする",
+        "goal": "差分に根拠を持つ要約を読み手が確認できる状態",
+        "scope_in": [
+          "差分の要点整理",
+          "根拠の差分への対応付け"
+        ],
+        "scope_out": [
+          "render 基盤の再実装",
+          "P01..P13 task の生成",
+          "外部 tracker への実書込"
+        ],
+        "acceptance": [
+          "要約の各記述が差分へ対応する",
+          "差分0件なら変更なしと示す",
+          "比較不能時に変化を捏造しない"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    }
+  ]
+}

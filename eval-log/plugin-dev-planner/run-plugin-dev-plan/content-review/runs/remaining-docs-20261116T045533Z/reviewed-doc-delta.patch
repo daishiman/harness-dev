@@ -1,0 +1,75 @@
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/harness-creator-spec-reflection.md b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/harness-creator-spec-reflection.md
+index 70134010..b00fbf13 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/harness-creator-spec-reflection.md
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/harness-creator-spec-reflection.md
+@@ -34,7 +34,7 @@ source-tier: internal
+ | B1 | feedback_contract_ssot.py(+vendoring) | `plugins/harness-creator/scripts/feedback_contract_ssot.py` | CRITERIA_ID_RE=`^(IN\|OUT\|C)[0-9]+$`・verify_by∈{lint,test,script,evaluator,elegant-review,live-trial,human,verification-obligation}・loop_scope∈{inner,outer}各≥1・必須キー(id,loop_scope,text,verify_by)・FEEDBACK_LOOP_KINDS={run,wrap,delegate}・FEEDBACK_SKIP_KINDS={ref,assign}・frontmatter スカラは行末インラインコメントを除去して解釈 (PyYAML 有無で値が食い違わないこと)・Codex 単体 cache 配布向け `run-skill-feedback` は symlink ではなく byte-identical 物理コピーとし、repo-wide lint/eval の重複除外は「同名の非正本ツリーが相対パス・エントリ種類・バイト列・symlink 先を含む content SHA-256 で正本と完全一致」する場合のみ (正本自身・改変コピー・別名 skill は評価対象。手元で生成される `__pycache__`・`*.pyc`・`*.pyo`・`.DS_Store` は digest から除外し、読めない entry があれば digest は None)・3 者ミラー解消 | P6 + inventory component エントリ |
+ | B2 | lint-feedback-contract.py | `scripts/lint-feedback-contract.py` | kind∈{run,wrap,delegate} の frontmatter に criteria 必須・SSOT 制約満たす・CI/pre-push fail-closed・skip_reason で N/A・フォールバック既定残存 WARN | P6 完了条件(verify) |
+ | B3 | run-build-skill Step1/3.5 | `plugins/harness-creator/skills/run-build-skill/` (+`templates/combinators/with-feedback-contract.patch`) | loop 系は Step1 で brief.goal/checklist から criteria を test-first 導出 → Step3.5 で SKILL.md frontmatter と build-trace 両方に固定・patch 注入 | P4/P6 |
+-| B4 | notion_config.py (per-project Notion DB 解決 SSOT) | `plugins/harness-creator/scripts/notion_config.py` | DB キー (論理名)=plan 宣言 / DB ID (具体値)=config 供給の二層分離・config は多段フォールバック解決 (env `NOTION_CONFIG_PATH` → repo-root `.notion-config.json` (gitignore) → plugin-root → 焼き込み `notion-config.fixed.json`。単独 install でも repo-root 非依存)・plugin-root アンカー自体も多段解決 (`plugin_root()`: env `HC_ROOT` → env `CLAUDE_PLUGIN_ROOT` → `__file__` 相対。env 値は `.claude-plugin/plugin.json` の `name` を自 plugin 名 (`__file__` から上向き探索で同定) と照合し、**別 plugin を指すと確認できた場合のみ拒否**して次段へ落とす。`.claude` 平置き projection の借用先で env が他 plugin を指す環境でも誤読しない)・require_or_skip fail-closed・解決ロジックは名前参照のみ (planner 側で再実装/複製禁止) | inventory `plugin_level_surfaces.notion_config` + index `plugin_meta.feedback_deploy.notion_sink.resolution` |
++| B4 | notion_config.py (per-project Notion DB 解決 SSOT) | `plugins/harness-creator/scripts/notion_config.py` | DB キー (論理名)=plan 宣言 / DB ID (具体値)=config 供給の二層分離・config は多段フォールバック解決 (env `NOTION_CONFIG_PATH` → repo-root `.notion-config.json` (gitignore) → plugin-root → 焼き込み `notion-config.fixed.json`。単独 install でも repo-root 非依存)・plugin-root アンカー自体も多段解決 (`plugin_root()`: env `HC_ROOT` → env `CLAUDE_PLUGIN_ROOT` → `__file__` の manifest 祖先（manifest 不在の旧配置だけ親の親へ戻る）。env 値は `.claude-plugin/plugin.json` の `name` を自 plugin 名 (`__file__` から上向き探索で同定) と照合し、**別 plugin を指すと確認できた場合のみ拒否**して次段へ落とす。`.claude` 平置き projection の借用先で env が他 plugin を指す環境でも誤読しない)・require_or_skip fail-closed・import 時の bytecode 書込抑制を追加（設定/DB解決の契約は不変更）・解決ロジックは名前参照のみ (planner 側で再実装/複製禁止) | inventory `plugin_level_surfaces.notion_config` + index `plugin_meta.feedback_deploy.notion_sink.resolution` |
+ | B5 | improvement-request.schema.json (改善要望 受け皿DB) | `doc/notion-schema/improvement-request.schema.json` | 量産先 feedback (run-skill-feedback→`notion-submit-improvement.py`) の Notion 受け皿 DB スキーマ・schema はパス参照で複製しない・feedback_deploy enabled 時に schema_ref 必須 | index `plugin_meta.feedback_deploy.notion_sink.schema_ref` |
+ 
+ ## カテゴリ3: テスト / TDD / カバレッジ
+@@ -50,7 +50,7 @@ source-tier: internal
+ 
+ | ID | 仕様 | 絶対パス | 何を強制 | 焼き先 |
+ |---|---|---|---|---|
+-| D1 | goal-seek-paradigm | `plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md` | loop 系は固定手順禁止・「## ゴールシーク実行」4 ブロック(ゴール 1 文+目的背景+二値チェックリスト+ループ)・AI 最尤ゴール推定・6 ステップ既定 5 周・engine/fork 既定 inline (必要性明示時だけ task-graph/SubAgent/Agent Team)・達成判定=fresh agent PASS/FAIL(score 禁止・original_goal 正本) | P1 + 横断 |
++| D1 | goal-seek-paradigm | `plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md` | loop 系は固定手順禁止・「## ゴールシーク実行」4 ブロック(ゴール 1 文+目的背景+二値チェックリスト+ループ)・AI 最尤ゴール推定・6 ステップ既定 5 周・engine/fork 既定 inline (必要性明示時だけ task-graph/SubAgent/Agent Team)・達成判定=fresh agent PASS/FAIL(score 禁止・original_goal 正本)・内外ループ分類は harness-creator 正本への owner-qualified URL を参照（配布先の同名ローカル資料へ解決しない） | P1 + 横断 |
+ | D2 | 中間成果物アンカー schema | `plugins/harness-creator/skills/run-build-skill/schemas/goal-seek-loop.schema.json` | 各周回末に `eval-log/<skill>-intermediate.jsonl` へ 5 要素(original_goal 不変 SHA256/current_goal_snapshot/delta/merged_directive/drift_signal 6 値)・次周回 Step2 必須入力・改竄検知停止 | 横断(§13-3) |
+ | D3 | run-goal-elicit(goal-spec) | `plugins/harness-creator/skills/run-goal-elicit/schemas/goal-spec.schema.json` | 曖昧要求→purpose/background/goal/checklist を `<PLAN_DIR>/goal-spec.json` (既定 `plugin-plans/<plugin-slug>/goal-spec.json`)・checklist 各{id:`^C[0-9]+$`,criterion,done,verify_by∈{reasoning,script,lint,test,human}}・target_plugin_slug/plan_dir 固定・max_loops=5・追加質問禁止・仮定明示 | P1(§13-1) |
+ | D4 | run-goal-seek | `plugins/harness-creator/skills/run-goal-seek/` | goal-spec 達成まで手順都度生成反復・決定論検査優先・max_loops5 超過で open_issues 停止・fork・handoff-goal-seek.json のみ親へ | 横断 |
+diff --git a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/upstream-pins.json b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/upstream-pins.json
+index 89244ed3..891b4080 100644
+--- a/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/upstream-pins.json
++++ b/plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/upstream-pins.json
+@@ -5,15 +5,15 @@
+     {
+       "path": "plugins/harness-creator/skills/run-skill-create/schemas/skill-brief.schema.json",
+       "sha256": "0862aadd7f53c96ae1ce397489fade55b3ef07abf77053e26d5860e446fbd8c0",
+-      "verified_at": "2026-11-15",
++      "verified_at": "2026-11-16",
+       "matrix_rows": [
+         "E1"
+       ]
+     },
+     {
+       "path": "plugins/harness-creator/scripts/feedback_contract_ssot.py",
+-      "sha256": "859998e420045bce00d5436f03e50593928514e6ae1cf16ff9bbe94f13cd881b",
+-      "verified_at": "2026-11-15",
++      "sha256": "16f249b93e51b8011bd064ba64218c65e622c28538053c5d2ea989bba6fecce9",
++      "verified_at": "2026-11-16",
+       "matrix_rows": [
+         "B1"
+       ]
+@@ -29,15 +29,15 @@
+     {
+       "path": "plugins/harness-creator/skills/run-elegant-review/references/convergence-policy.json",
+       "sha256": "cbb98cb59ae073b39b3453efc549c69df0263bff79015dbaa76fda571ef2dd5c",
+-      "verified_at": "2026-11-15",
++      "verified_at": "2026-11-16",
+       "matrix_rows": [
+         "A4"
+       ]
+     },
+     {
+       "path": "plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md",
+-      "sha256": "f299491dbd185005d37adcbf437e13ddbf31d5bdc01fbabec5db443b82f6a10a",
+-      "verified_at": "2026-11-15",
++      "sha256": "6a2058f4dd56cf33a211124169fc14c5805fbd742e69169a2f6b927f88f243ec",
++      "verified_at": "2026-11-16",
+       "matrix_rows": [
+         "D1"
+       ]
+@@ -53,8 +53,8 @@
+     },
+     {
+       "path": "plugins/harness-creator/scripts/notion_config.py",
+-      "sha256": "bbdbe9af40cdd45eb68600146493c85d8f3013711a0cf69e94d60838d6f5cf37",
+-      "verified_at": "2026-08-11",
++      "sha256": "6ff261964cfc93bf90d046a331204fa1e66c56e20bfeb147c07b08ffaef22cc3",
++      "verified_at": "2026-11-16",
+       "matrix_rows": [
+         "B4"
+       ]

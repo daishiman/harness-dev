@@ -372,6 +372,25 @@ def test_pkg_003_ds_store_does_not_break_shared_feedback_copy(tmp_path):
     assert MOD.check_pkg_003(a) == []
 
 
+def test_pkg_003_pytest_cache_does_not_break_shared_feedback_copy(tmp_path):
+    # 写しの中で pytest を回して .pytest_cache ができても、配布物の一致は崩れない (.gitignore 対象で CI には無い)
+    a = _plugin(tmp_path, "demo")
+    b = _plugin(tmp_path, "other")
+    _write_plugin_json(a, {"name": "demo"})
+    _write_plugin_json(b, {"name": "other"})
+    for plug in (a, b):
+        _write_skill(plug, "run-skill-feedback", _full_required_fm())
+    cache = a / "skills" / "run-skill-feedback" / ".pytest_cache" / "v" / "cache"
+    cache.mkdir(parents=True)
+    (cache / "lastfailed").write_text("{}", encoding="utf-8")
+
+    assert MOD.check_pkg_003(a) == []
+
+    # 名前が似ているだけのファイルは配布物として数え、違いは衝突として検出する
+    (a / "skills" / "run-skill-feedback" / ".pytest_cache.md").write_text("note\n", encoding="utf-8")
+    assert len(MOD.check_pkg_003(a)) == 1
+
+
 def _load_ssot():
     path = Path(__file__).resolve().parents[2] / "plugins" / "harness-creator" / "scripts" / "feedback_contract_ssot.py"
     spec = importlib.util.spec_from_file_location("feedback_contract_ssot_for_parity", path)
@@ -380,13 +399,14 @@ def _load_ssot():
     return mod
 
 
-@pytest.mark.parametrize("shape", ["plain", "empty_dir", "symlink", "bytecode", "nested_pycache_md", "ds_store"])
+@pytest.mark.parametrize(
+    "shape", ["plain", "empty_dir", "symlink", "bytecode", "nested_pycache_md", "ds_store", "pytest_cache"])
 def test_tree_fingerprint_matches_feedback_contract_ssot(tmp_path, shape):
     # PKG-003 の一致判定と feedback_contract_ssot.is_vendored_feedback_skill を食い違わせない。
     # 除外の定数と算出を写しているので、同じツリーで同じ digest になることを固定する
     ssot = _load_ssot()
-    assert (MOD._BYTECODE_CACHE_DIR, MOD._BYTECODE_SUFFIXES, MOD._FINDER_METADATA) == (
-        ssot._BYTECODE_CACHE_DIR, ssot._BYTECODE_SUFFIXES, ssot._FINDER_METADATA)
+    assert (MOD._BYTECODE_CACHE_DIR, MOD._BYTECODE_SUFFIXES, MOD._PYTEST_CACHE_DIR, MOD._FINDER_METADATA) == (
+        ssot._BYTECODE_CACHE_DIR, ssot._BYTECODE_SUFFIXES, ssot._PYTEST_CACHE_DIR, ssot._FINDER_METADATA)
     root = tmp_path / "skill"
     (root / "scripts").mkdir(parents=True)
     (root / "SKILL.md").write_text("---\nname: x\n---\n", encoding="utf-8")
@@ -405,6 +425,10 @@ def test_tree_fingerprint_matches_feedback_contract_ssot(tmp_path, shape):
     elif shape == "ds_store":
         (root / ".DS_Store").write_bytes(b"\x00finder")
         (root / "scripts" / ".DS_Store").write_bytes(b"\x00finder")
+    elif shape == "pytest_cache":
+        (root / ".pytest_cache" / "v" / "cache").mkdir(parents=True)
+        (root / ".pytest_cache" / "v" / "cache" / "lastfailed").write_text("{}", encoding="utf-8")
+        (root / ".pytest_cache.md").write_text("note\n", encoding="utf-8")
     assert MOD._tree_fingerprint(root) == ssot.directory_content_sha256(root)
 
 

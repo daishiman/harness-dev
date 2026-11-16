@@ -1,0 +1,45 @@
+{
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "system_spec_index": "system-spec/index.md",
+  "registration_owner": "dev-graph:run-dev-graph-node (C02 build-graph-node.py add)",
+  "c02_dry_run": "eval-log/run-dev-graph-node-dryrun.json",
+  "c02_apply": "eval-log/run-dev-graph-node-apply.json",
+  "c02_receipt": ".dev-graph/state/receipts/node-r000001-add.json",
+  "c02_payload": {
+    "dry_run": ".dev-graph/cache/inputs/system-spec-import.json",
+    "apply": ".dev-graph/cache/inputs/system-spec-import-apply.json",
+    "difference": "apply adds only top-level expected_graph_revision=0"
+  },
+  "evaluator": {
+    "skill": "system-spec-harness:assign-system-spec-completeness-evaluator",
+    "report": "eval-log/system-spec-completeness-report.json",
+    "verdict": "PASS"
+  },
+  "graph_revision_after": 1,
+  "graph_digest_after": "sha256:893011d98c3cfea6552c050cb69024a73f55471c1044a9fffc8dd064133caaf6",
+  "imported_nodes": [
+    {
+      "graph_node_id": "spec-billing-audit-system",
+      "artifact_kind": "specification",
+      "file_path": "specs/billing-audit-system.md",
+      "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/index.md", "source_version": "0.1.28", "source_digest": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2", "imported_at": "2026-11-15T11:25:25Z"},
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "confirmation_evidence": {"evaluator": "system-spec-harness:assign-system-spec-completeness-evaluator", "evidence_ref": "eval-log/system-spec-completeness-report.json", "evaluated_digest": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2"},
+      "readiness": "complete"
+    },
+    {
+      "graph_node_id": "arch-billing-audit-system",
+      "artifact_kind": "architecture",
+      "artifact_subtypes": ["frontend", "backend", "data", "infrastructure", "security"],
+      "file_path": "architecture/billing-audit-system.md",
+      "source_lineage": {"origin_kind": "system-spec-harness", "source_plugin": "system-spec-harness", "source_path": "system-spec/00-requirements-definition.md", "source_version": "0.1.28", "source_digest": "22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd", "imported_at": "2026-11-15T11:25:25Z"},
+      "confirmation_status": "confirmed",
+      "evaluation_status": "pass",
+      "confirmation_evidence": {"evaluator": "system-spec-harness:assign-system-spec-completeness-evaluator", "evidence_ref": "eval-log/system-spec-completeness-report.json", "evaluated_digest": "22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd"},
+      "readiness": "complete"
+    }
+  ],
+  "lineage_gate": {"report": "eval-log/run-dev-graph-system-spec/r3-lineage.json", "status": "pass", "checked": 2, "violations": []},
+  "integrity_audit": {"agent": "dev-graph:dev-graph-integrity-auditor", "verdict": "PASS"}
+}

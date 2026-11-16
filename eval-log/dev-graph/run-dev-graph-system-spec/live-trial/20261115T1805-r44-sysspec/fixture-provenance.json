@@ -1,0 +1,61 @@
+{
+  "run_id": "20261115T1805-r44-sysspec",
+  "scenario_id": "C19-OUT1-positive-system-spec-lineage-r2",
+  "fixture_root": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/system-spec/fx",
+  "template_run": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261103T065037-claude-ci12-sysspec",
+  "reason_rebuilt": "前回 ci12 の fixture (/private/tmp/harness-claude-ci10-20261102/cases/system-spec/fx) は消えていたため、bytes が一致する種から同じ形で作り直した。",
+  "seed": {
+    "path": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T010423-ci-full/fixture-final/system-spec",
+    "match_basis": "ci12 transcript の preflight 入力 (system-spec/ の 18 ファイル) と sha256 が一致することを事前に確認した。",
+    "readme_included": false,
+    "readme_reason": "fixture-final/README.md は ci12 の FX root に無かった (ci12 task.md の記述は「入力は未追跡の system-spec/」) ので入れていない。"
+  },
+  "factory": {
+    "path": "fixture/build-fixture.py",
+    "original_path": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/system-spec/build-fixture.py",
+    "steps": [
+      "git init -b main (core.hooksPath=/dev/null, GIT_CONFIG_GLOBAL=/dev/null)",
+      "空 commit 'fixture: canonical resume inputs' (user live-trial / live-trial@example.invalid)",
+      ".git/info/exclude に .claude/",
+      "種の system-spec/ を copytree (copy2、bytes 保存)",
+      "CLAUDE_PROJECT_DIR を外した env で ROOT の plugins/dev-graph/scripts/build-init-scaffold.py --repo-root FX --hook-source plugin (C01 正規 builder)",
+      "graph.nodes == [] を assert",
+      "読取専用の preflight: validate-graph-schema.py / validate-source-lineage.py (checked=0, pass)"
+    ],
+    "pattern_source": "eval-log/dev-graph/run-dev-graph-system-spec/live-trial/20261102T004729-pr86-source-scope-context/fixture-preparation.py の前半 (candidate-import.json・guard 差し替え・observer は持ち込まない)"
+  },
+  "machine_records": {
+    "summary_with_sha256": "fixture/fixture-summary.json",
+    "init_receipt": "fixture/fixture-init-receipt.json",
+    "preflight": "fixture/fixture-preflight.json",
+    "claude_local_md_copy": "fixture/CLAUDE.local.md"
+  },
+  "claude_local_md": {
+    "path_in_fixture": "CLAUDE.local.md",
+    "basis": "ci12 transcript から取り出した fixture の CLAUDE.local.md 原文。fixture path を差し替え、次の 3 点だけ変えた。",
+    "changes": [
+      "artifact_delivery の事前回答を 2 択に直した (初回は diagnose、診断の所見の後に深さを聞かれたら standard)。scripts/lint-entrypoint-artifact-first.py の DIAGNOSTIC_CHOICES = accept-as-is / diagnose に合わせた。",
+      "cwd が harness worktree (ROOT) で、plugin 実体は ROOT/plugins/<plugin>/ (boot の --plugin-dir) であり fixture に写しが無いことを書き足した。",
+      "監査 fork 台帳の所在 (env SYSTEM_SPEC_AUDIT_FORK_LEDGER の path) を書き足した。"
+    ],
+    "auto_loaded": false,
+    "auto_loaded_reason": "session の cwd は ROOT なので fixture の CLAUDE.local.md は自動では読み込まれない。task.md で開始時に Read させる。"
+  },
+  "audit_fork_ledger": {
+    "path": "fork-ledger/audit-fork-ledger.jsonl",
+    "passed_to_boot": "--audit-fork-ledger <workdir>/fork-ledger/audit-fork-ledger.jsonl",
+    "reason": "session の cwd が ROOT のため、hook (record-audit-fork.py) の CLAUDE_PROJECT_DIR は ROOT になり、既定では ROOT/eval-log/system-spec-harness/audit-fork-ledger.jsonl に書かれる (ROOT への副作用)。一方 aggregate-completeness.py は Bash の CLAUDE_PROJECT_DIR=FX 相対を見るので食い違う。boot の resolve_audit_fork_ledger は cwd (ROOT) の中・名前 audit-fork-ledger.jsonl に限るので、FX (ROOT の外) は指定できない。そこで本 run の証跡 dir の下を env で hook と aggregator の両方に渡す。",
+    "seeded_rows": 0
+  },
+  "seeded": {
+    "evaluation_report": false,
+    "pass_result": false,
+    "registered_nodes": false,
+    "import_payload": false,
+    "audit_ledger_rows": false,
+    "resume_receipt": false,
+    "plugin_copy_in_fixture": false
+  },
+  "graph_nodes_initial": 0,
+  "inputs_are_resume_inputs_only": "system-spec/ の確定問答・出典・compiled 章は再開入力であり、今回の compile・evaluator・登録の証拠には使わない。"
+}

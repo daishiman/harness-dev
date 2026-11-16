@@ -1,0 +1,84 @@
+{
+  "kind": "fresh-focused-doc-integration-review",
+  "snapshot": "aa9c63c09b242ca81714e4357fe78ee9f6a50b66",
+  "skill_bytes_identical_to_snapshot": true,
+  "reviewer": "reset-observer-independent-doc-integration",
+  "target_before": {
+    "plugin": "plugin-dev-planner",
+    "skill": "run-plugin-dev-plan",
+    "skill_md_sha256": "297130c2276851a6a00ad68922b61bc17bdb57f6e4a13d90dc5fe333a1bfbc35",
+    "reviewed_skill_md_sha256": "297130c2276851a6a00ad68922b61bc17bdb57f6e4a13d90dc5fe333a1bfbc35",
+    "skill_dir_digest": "1245c0f42887c7748ce2e252f8d4fbbf6a54006c673dea5c7c4a02b821c2184c"
+  },
+  "target_after": {
+    "plugin": "plugin-dev-planner",
+    "skill": "run-plugin-dev-plan",
+    "skill_md_sha256": "297130c2276851a6a00ad68922b61bc17bdb57f6e4a13d90dc5fe333a1bfbc35",
+    "reviewed_skill_md_sha256": "297130c2276851a6a00ad68922b61bc17bdb57f6e4a13d90dc5fe333a1bfbc35",
+    "skill_dir_digest": "1245c0f42887c7748ce2e252f8d4fbbf6a54006c673dea5c7c4a02b821c2184c"
+  },
+  "reviewed_paths": [
+    "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/harness-creator-spec-reflection.md",
+    "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/upstream-pins.json"
+  ],
+  "document_hashes": {
+    "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/harness-creator-spec-reflection.md": "131a9ba9d63923b146b733b2041c9308d936840ad5a3d928e978eb2c905f1e52",
+    "plugins/plugin-dev-planner/skills/run-plugin-dev-plan/references/upstream-pins.json": "643596d4a1217023afe206a393af7e804aa18e22846353b73530e0fa30cd41a4"
+  },
+  "C1_C4": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": "B4は設定解決契約不変更と明記し、manifest祖先の実装と整合。"
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": "B4/D1に新しい解決所在を反映し、upstream pin8件は実hashと一致。"
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": "owner-qualified URLの説明と現goal-seek文書が一致。既存SKILLのrubric低/中2件はscorewriterへ保持しeleganceへ重複計上しない。"
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": "source/path/hashの対応を現物で確認。plannerが設定解決ロジックを複製しない方針を保持。"
+    }
+  },
+  "rubric": {
+    "score": 87,
+    "threshold": 80,
+    "machine_findings_preserved": [
+      {
+        "id": "FM-005",
+        "severity": "low",
+        "area": "frontmatter",
+        "message": "description first phrase 'プラグイン構想から' is not a verb",
+        "loc": "frontmatter.description"
+      },
+      {
+        "id": "BD-002",
+        "severity": "medium",
+        "area": "body",
+        "message": "missing '## Gotchas' (or '## つまずきやすい点')",
+        "loc": "body"
+      }
+    ],
+    "pending_judgments": {
+      "BD-004": {
+        "verdict": "PASS",
+        "reason": "descriptionの構想から13phase/inventory/task-graphを生成する経路とupdate還流はsnapshotと同一SKILLで保持される。今回のB4/D1反映・upstream pinsは参照する実装と分類の所在を正確にするもので、生成手順や発動条件を変更しない。"
+      }
+    }
+  },
+  "scoped_cli": "dry-run noop; no directory refresh support; new focused verdicts generated instead",
+  "validation": {
+    "elegance-verdict.json": null,
+    "rubric-verdict.json": null,
+    "pair": null
+  },
+  "limits": [
+    "snapshot full-review reuse only for identical SKILL bytes",
+    "docs delta actually read; no whole-skill reread claimed",
+    "no live/30-paradigm/code reapproval",
+    "privacy artifacts and original transcript verdict digests untouched"
+  ]
+}

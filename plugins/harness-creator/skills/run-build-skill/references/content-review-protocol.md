@@ -53,7 +53,52 @@ profile は `incremental|exhaustive|build-only` の閉列挙で、無指定は `
 
 ### incremental: unresolved semantic batch (必要なcontextだけ)
 
-`plan-verification-obligations.py` の各 `llm_batches[]` について、列挙された `obligation_ids` と `context_paths` だけを `assign-skill-design-evaluator` へ渡す。対象外skill、全repository、全route reportは読ませない。batch内で(a)矛盾なし、(b)漏れなし、(c)規約整合、(d)依存関係整合、(e)rubric high severity 0 を一度に判定する。findings が無ければ同じ評価結果を互換2 verdictへ分け、両方をreceiptへ束縛する。findings があれば該当obligationの対象だけを修正し1回再評価する。30思考法を使用したと申告してはならない。
+`plan-verification-obligations.py` の各 `llm_batches[]` について、列挙された `obligation_ids` と `context_paths` だけを `assign-skill-design-evaluator` へ渡す。対象外skill、全repository、全route reportは読ませない。30思考法を使用したと申告してはならない。
+
+1 context が読み、合否は次元ごとに別の verdict へ書き分ける。1 つの verdict に複数次元の合否を混ぜない (`$PLUGIN_ROOT/references/orchestrate-gate-pattern.md` のアンチパターン)。
+
+| verdict | 合否を決めるもの | 中身 |
+|----|----|----|
+| `elegance-verdict.json` | LLM | C1 矛盾なし / C2 漏れなし / C3 整合性 / C4 依存関係整合。C3 のうち rubric rule で採点できる規約整合 (命名・frontmatter・行数・節の有無など) は rubric verdict の結果を参照し、同じ指摘を elegance 側に重ねて書かない |
+| `rubric-verdict.json` | `render-findings-score.py` | 機械採点の `findings[]`・score・threshold。LLM が渡すのは、機械で採点できない rule (`pending_human` と、判定の実装が無い high rule。例: BD-004) の判定だけ |
+
+rubric verdict は手で書かず、判定ファイルを渡して script に書かせる。
+
+```bash
+python3 plugins/harness-creator/skills/assign-skill-design-evaluator/scripts/render-findings-score.py \
+  --rubric-refs <L0> [<L1> ...] <L2> --target plugins/<plugin>/skills/<skill> \
+  --write-rubric-verdict eval-log/<plugin>/<skill>/content-review/rubric-verdict.json \
+  --judgments "$SCRATCH/judgments.json"
+```
+
+```json
+{"reviewer": "assign-skill-design-evaluator",
+ "judgments": {"BD-004": {"verdict": "PASS", "reason": "trigger 2 つが手順 1・2 に対応する"}},
+ "positive_feedback": ["契約の節が先頭にある"]}
+```
+
+`criteria_evaluated` を省けば frontmatter の `feedback_contract.criteria[].id` が入る。判定の欠け、機械で採点した rule への判定 (機械の結果は上書きできない)、変更した本人の reviewer、frontmatter の criteria を欠く `criteria_evaluated` があれば、script は全部を一度に stderr へ並べて exit 3 で返し、何も書かない。verdict が PASS になるのは、score が threshold 以上で、機械の high 違反が無く、判定がすべて PASS のときだけ。`target` は `lint-content-review.py --print-target` から取る。
+
+findings が無ければ 2 verdict を両方receiptへ束縛する。findings があれば該当obligationの対象だけを修正し、次節の 3 点で 1 回再評価する。
+
+### 改善後の再レビュー (3 点に絞る)
+
+初稿診断 (R5) や `run-elegant-review` で選んだ指摘を直したあとに、文書全体を 4 条件と rubric で読み直すと、すでに PASS した節をもう一度読むことになる。改善後に確かめるのは次の 3 点だけである。
+
+1. **選んだ指摘が解消したか**: 読むのは指摘の本文と、その `finding_locations` の節。
+2. **変わった hunk に新しい C1-C4 違反や rubric の high 違反が無いか**: 読むのは、適用前の写しか git との差分の hunk と、その hunk を含む節。rubric の high 違反は読んで判断せず、現在の SKILL.md で `render-findings-score.py` を回して確かめる。
+3. **criteria の被覆**: frontmatter の criteria が全部 `criteria_evaluated` に入るか。lint が機械で確かめるので LLM は読まない。
+
+結び直しは安い経路から順に試し、通らなければ次へ進む (各経路の条件は「レビュー由来の修正後の sha 結び直し」)。
+
+| 順 | 経路 | LLM | 通る条件 |
+|----|----|----|----|
+| 1 | `sync-content-review-sha.py --finding-ids` | 使わない | 変わった節が、挙げた指摘の `finding_locations` の節に収まる |
+| 2 | `sync-content-review-sha.py --replay` | 使わない | 登録済みの変換を当て直すと、現在の SKILL.md と bytes で一致する |
+| 3 | `sync-content-review-sha.py --scoped-review` | 変わった節だけを読む独立 reviewer 1 context | 範囲の上限に収まり、上の 1・2 が PASS |
+| 4 | 全体の再レビュー | 文書全体を読む 1 context (前節の incremental) | 上のどれも通らない。新しい verdict を書き、`sha_rebinds[]` はそこで切れる |
+
+rubric の指摘 (`render-findings-score.py` が書く `negative_feedback`) は `finding_locations` を持たないので、`--finding-ids rubric:N` では結び直せない。直したら 3 か 4 を使う。
 
 ### exhaustive 1: elegance review (30 思考法 × 4 条件)
 
@@ -74,18 +119,22 @@ Agent({
 Agent({
   subagent_type: "assign-skill-design-evaluator",
   prompt: "<plugin>/<skill> を rubric (ref-skill-design-rubric) で採点。
-    verdict json を eval-log/<plugin>/<skill>/content-review/rubric-verdict.json に
-    schemas/content-review-verdict.schema.json 準拠で保存すること。"
+    機械で採点できない rule の判定を judgments.json に書き、
+    render-findings-score.py --write-rubric-verdict eval-log/<plugin>/<skill>/content-review/rubric-verdict.json
+    --judgments <judgments.json> で verdict を書かせること (verdict JSON を手で書かない)。"
 })
 ```
 
 ## verdict 成果物 (CI互換projection)
 
-`schemas/content-review-verdict.schema.json` 準拠。これらは既存CIとの互換projectionであり、再利用判断の正本は `schemas/verification-evidence.schema.json` のreceipt。最小:
+`schemas/content-review-verdict.schema.json` 準拠。これらは既存CIとの互換projectionであり、再利用判断の正本は `schemas/verification-evidence.schema.json` のreceipt。`target` は手で組まず、レビューを始める前に `python3 scripts/lint-content-review.py --print-target <plugin>/<skill>` の出力をそのまま写す (`skill_md_sha256` と同じ値の `reviewed_skill_md_sha256`、references/ などを含めた `skill_dir_digest` が入る)。最小:
 
 ```json
 {
-  "target": {"plugin": "skill-foo", "skill": "run-bar", "skill_md_sha256": "..."},
+  "target": {
+    "plugin": "skill-foo", "skill": "run-bar",
+    "skill_md_sha256": "<64 hex>", "reviewed_skill_md_sha256": "<64 hex>", "skill_dir_digest": "<64 hex>"
+  },
   "review_kind": "elegance",
   "verdict": "PASS",
   "reviewer": "run-elegant-review",
@@ -100,15 +149,23 @@ Agent({
     "iteration_limit": 3,
     "hook_trigger": "manual",
     "next_action": "none"
+  },
+  "finding_locations": {
+    "elegance:1": {"sections": ["手順 > Step 2"], "source_id": "F-0003"}
   }
 }
 ```
+
+`negative_feedback` に指摘を書いたら、`finding_locations` に「その指摘を直すとき触れる節」を `<review_kind>:<n>` ごとに書く。n は `negative_feedback` の 1 始まりの位置。節は SKILL.md の見出しの文字列で、同じ見出しが複数あれば `親 > 子` で一意にする。`#` (文書全体) は挙げられない。指摘が id を持つ所見から来たとき (`/skill-improve` が振る `F-NNNN`、`run-elegant-review` の `findings.json` の `issues[].id`、初稿診断 R5 の id) は、その id を `source_id` に必ず書く。改善側は利用者が選んだ id のまま `--finding-ids F-0003` と渡せ、`<review_kind>:<n>` へ読み替える必要がない。2 verdict に同じ `source_id` があれば、その id 1 つで両方の指摘を使う。`finding_locations` の無い指摘は、修正を当てても結び直せない (次節)。
 
 ## 機械検査 (CI / pre-push)
 
 `scripts/lint-content-review.py --all` (下記「強制の経路」の CI 段):
 
 - 全 skill (symlink と Codex 配布用コピーを除く) について `eval-log/<plugin>/<skill>/content-review/{elegance,rubric}-verdict.json` の存在 + `verdict=="PASS"` + `target.skill_md_sha256` が現在の SKILL.md と一致することを検査
+- `target.skill_dir_digest` があれば、SKILL.md 以外でモデルが読む文書 (references/ prompts/ schemas/ templates/ など。scripts/ tests/ fixtures/ は除く。正本は `feedback_contract_ssot.CONTENT_REVIEW_DIGEST_EXCLUDE`) の digest と一致することを検査 (stale-dir-digest)。`--changed-only` は、その範囲の file が変わった skill も検査に入れる
+- `sha_rebinds[]` の連鎖を検査 (rebind-chain): 最初の `from_sha` が `target.reviewed_skill_md_sha256`、各 `from_sha` が直前の `to_sha`、最後の `to_sha` が `target.skill_md_sha256`。各記録は `finding_ids`・`replay`・`scoped_review` のどれか 1 つだけを持つ。elegance と rubric は同じ `sha_rebinds` / `reviewed_skill_md_sha256` / `skill_dir_digest` を持ち (pair-mismatch)、1 つの指摘 (id・本文) は 1 回しか使えない
+- `scoped_review` の記録を検査 (scoped-review): reviewer が変更した本人でない、節が 1〜3 個、`content-review/scoped-reviews/<to_sha>.json` の写しがあり、その sha256 と中身 (plugin・skill・from/to・sections・reviewer・PASS/PASS・指摘 0 件) が記録と一致する。1 本の連鎖に範囲つき再レビューは 2 回まで
 - `feedback_loop` は必須。`criteria_evaluated` は**量産先 SKILL.md frontmatter** の `feedback_contract.criteria[].id` 全件と突合し、未評価 ID があれば PASS 不可（frontmatter が正本＝携帯する評価基準。trace は frontmatter 不在時の後方互換 fallback）
 - `kind: ref` / symlink skill は対象外。`harness-creator` 自身は dogfooding 対象なので CI/pre-push では除外しない
 - 違反時 exit 1 → merge ブロック
@@ -123,30 +180,67 @@ plugin / skill の改名で verdict の置き場・`target.plugin` が変わる�
 
 ### レビュー由来の修正後の sha 結び直し
 
-SKILL.md を 1 byte でも変えると `target.skill_md_sha256` がずれ、`lint-content-review.py` は stale-sha で FAIL する。レビューが勧めた修正を当てただけでも stale になるため、「再レビュー → 新しい指摘 → 編集 → また stale」が周回する。レビュー由来の修正と、審査を経ない書き換えを lint は区別できない。**lint は変えていない** (stale-sha 判定はそのまま)。区別は、修正を当てた直後にだけ呼ぶ決定論 script `run-elegant-review/scripts/sync-content-review-sha.py` が受け持つ。
+SKILL.md を 1 byte でも変えると `target.skill_md_sha256` がずれ、`lint-content-review.py` は stale-sha で FAIL する。レビューが勧めた修正を当てただけでも stale になるため、「再レビュー → 新しい指摘 → 編集 → また stale」が周回する。stale-sha の判定は変えない。レビュー由来の修正と審査を経ない書き換えの区別は、修正を当てた直後にだけ呼ぶ決定論 script `run-elegant-review/scripts/sync-content-review-sha.py` が受け持ち、lint は script が残した記録が切れずにつながっているか (連鎖) を見る。
+
+```bash
+# 指摘を当てる前に写しを取る (git に適用前の版があれば省いてよい)
+cp plugins/<plugin>/skills/<skill>/SKILL.md "$SCRATCH/before.md"
+# 指摘を当てたあと
+python3 plugins/harness-creator/skills/run-elegant-review/scripts/sync-content-review-sha.py \
+  --plugin <plugin> --skill <skill> --from-sha <修正前に実ファイルから測った sha256> \
+  --finding-ids elegance:1,rubric:2 --from-file "$SCRATCH/before.md" [--dry-run]
+```
+
+script は次の 5 条件を**全部**満たすときだけ、両 verdict の `target.skill_md_sha256` を現在の sha へ結び直す (c・d は `--finding-ids` のとき。`--replay` と `--scoped-review` は c・d の代わりに下記の条件を見る)。
+
+- a. `elegance-verdict.json` と `rubric-verdict.json` が両方あり、どちらも `verdict=PASS`。`target.plugin` / `target.skill` が対象と一致する。
+- b. 両 verdict の `target.skill_md_sha256` が `--from-sha` と一致し、`sha_rebinds[]` の最後の `to_sha` ともつながっている。つまり verdict を取った後、今回の修正より前に別の編集が入っていない。
+- c. `--finding-ids` が空でなく、各 id が実在の指摘を指し、過去の結び直しで使われていない。id は `<review_kind>:<n>` (n はその verdict の `feedback_loop.negative_feedback` の 1 始まりの位置) か、`finding_locations[*].source_id` に書かれた元の id (`F-0003` など)。どの verdict の `source_id` にも無い id は拒否する。記録には読み替えた後の `<review_kind>:<n>` を残す。
+- d. 変わった節が、挙げた指摘の `finding_locations` の節 (とその子の節) に収まる。適用前の SKILL.md (`--from-file`、無ければ git の index・HEAD・直近 64 commit から sha256 が `--from-sha` の版) と現在を見出しで節に分けて比べる。code fence の中の `#` 行は見出しに数えない。さらに、下の範囲つき再レビューと同じ上限と保護を当てる。変わった節が 3 を超える、変わった行が 60 を超える、変わった節が入出力契約の中にある、または criteria が名指す節 (とその子の節) にあるときは拒否する。経路で境目が違うと、大きな変更ほど緩い経路で通せてしまうためである。
+- e. verdict が `target.skill_dir_digest` を持つなら、それが現在の skill ディレクトリの digest と一致する。
+
+結び直しでは `sha_rebinds[]` に `{from_sha, to_sha, finding_ids, rebound_at, tool}` を追記し、`target.reviewed_skill_md_sha256` が無ければ元のレビューの sha を書く (連鎖の起点)。`verdict` / `reviewer` / `reviewed_at` / `iterations` / `feedback_loop` / `finding_locations` は変えない。両ファイルは一時ファイルと `os.replace` で置換し、片方だけ書き換わった状態を残さない。現在の sha が `--from-sha` と同じなら noop、両 verdict がすでに現在の sha なら already-bound を返す。どちらも書き込みはなく exit 0。2 verdict の `target.reviewed_skill_md_sha256`・`skill_dir_digest`・`sha_rebinds` が食い違うとき (lint の pair-mismatch) は、どの経路でも書く前に拒否する。拒否は exit 1、引数や入出力の誤り (`--from-file` の sha が `--from-sha` と違うとき、verdict の `target` や `sha_rebinds` の形が崩れているとき、SKILL.md が UTF-8 で読めないときを含む) は exit 2。
+
+**機械的な移行 (`--replay <移行 id>`)**: 内容の意味を変えない決定的な変換か、全 skill 共通の契約の定型語句だけを置き換える決定的な変換を全 skill へ当てたとき (例: `artifact-delivery-v1` = 契約の写しを `artifact_delivery: artifact-delivery-v1` の参照へ置き換える harness-vvd の移行、`diagnostic-choice-2way` = 初回の選択肢を 4 択から `accept-as-is / diagnose` の 2 択へ書き換える harness-znj の移行) は、`--finding-ids` の代わりに `--replay artifact-delivery-v1` を渡す。script は登録済みの変換 (`REPLAYS`。いまは `lint-entrypoint-artifact-first.py` の `rewrite_copied_contract` と `rewrite_diagnostic_choices`) を適用前の SKILL.md に当て直し、結果が現在の SKILL.md と bytes で一致するときだけ結び直す。記録は `finding_ids` の代わりに `replay` を持つ。変換のほかに 1 文字でも変えていれば拒否する。変換を登録するのは、変換の持ち主が「frontmatter の他のキーと本文を変えない」こと、共通契約の定型語句を置き換える変換なら「語句の表の外を 1 文字も変えず、表で直せない書き方が残る SKILL.md には当てない」ことを test で示したものだけ。skill ごとの判断に触れる書き換えは、この経路を使わず再レビューする。
+
+**範囲つき再レビュー (`--scoped-review <JSON>`)**: 指摘を当てたついでに節の外も少し直したときなど、`--finding-ids` の節に収まらない小さな変更を、全体を読み直さずに結び直す。差分の大きさだけで結び直すことはしない。必ず独立 reviewer が変わった節を読む。reviewer は変更した本人以外で、`assign-skill-design-evaluator` か `run-elegant-review` を使う (`root`・`self`・`elegant-improvement-executor` は不可)。reviewer は変わった節だけを「改善後の再レビュー」の 3 点で読み、次の JSON を作業用の場所に書く。rubric の PASS は感想で書かない。現在の SKILL.md で `render-findings-score.py` を回して high 違反が無く、変わった節にかかる判定 rule (BD-004 など) を読み直して PASS のときだけ書く。
+
+```json
+{"kind": "scoped-content-review", "plugin": "<plugin>", "skill": "<skill>",
+ "from_sha": "<修正前の sha256>", "to_sha": "<現在の sha256>",
+ "sections": ["手順 > Step 2"], "verdicts": {"elegance": "PASS", "rubric": "PASS"},
+ "negative_feedback": [], "reviewer": "assign-skill-design-evaluator", "reviewed_at": "2026-11-14T12:00:00Z"}
+```
 
 ```bash
 python3 plugins/harness-creator/skills/run-elegant-review/scripts/sync-content-review-sha.py \
-  --plugin <plugin> --skill <skill> --from-sha <修正前に実ファイルから測った sha256> \
-  --finding-ids elegance:1,rubric:2 [--dry-run]
+  --plugin <plugin> --skill <skill> --from-sha <修正前の sha256> \
+  --scoped-review "$SCRATCH/scoped-review.json" --from-file "$SCRATCH/before.md"
 ```
 
-script は次の 3 条件を**全部**満たすときだけ、両 verdict の `target.skill_md_sha256` を現在の sha へ結び直す。
+`--finding-ids` とは同時に渡せない。次のどれかに当たると script は拒否し、全体の再レビューを求める。上限の正本は `feedback_contract_ssot.SCOPED_REVIEW_*` で、schema・lint・script は同じ値を使う。
 
-- a. `elegance-verdict.json` と `rubric-verdict.json` が両方あり、どちらも `verdict=PASS`。`target.plugin` / `target.skill` が対象と一致する。
-- b. 両 verdict の `target.skill_md_sha256` が `--from-sha` と一致する。つまり verdict を取った後、今回の修正より前に別の編集が入っていない。
-- c. `--finding-ids` が空でなく、各 id が実在の指摘を指し、過去の結び直しで使われていない。id は `<review_kind>:<n>` で、n はその verdict の `feedback_loop.negative_feedback` の 1 始まりの位置。実在 verdict は指摘に安定 id を持たないので、位置で引く。
+- 2 つの verdicts が PASS でない、または `negative_feedback` が空でない。指摘が出たら、直してから全体を再レビューする。
+- frontmatter、見出し (追加・削除・改名・並び替え)、最初の見出しより前のどれかが変わった。
+- 変わった節が `sections` の外にある。`sections` が 3 を超える。変わった行が 60 を超える。
+- 変わった節が入出力契約の節 (`Purpose & Output Contract` / `入出力契約`) にある。または frontmatter の criteria が名指す節かその子の節である。成果物の約束と評価基準は、一部だけ読んで決めない。
+- `sections` のどれかが入出力契約の節を名指す (`親 > 子` のどの段でも)。lint はこの記録を通さないので、script も書く前に止める。
+- 前の全体レビューから数えて、範囲つき再レビューがすでに 2 回ある。小さな結び直しを重ねるうちに、誰も全体を読まない状態が続くのを防ぐ。
+- 起点の sha (`target.reviewed_skill_md_sha256`) が無い。連鎖が切れている。`skill_dir_digest` が合わない。
 
-結び直しでは `sha_rebinds[]` に `{from_sha, to_sha, finding_ids, rebound_at, tool}` を追記する。`verdict` / `reviewer` / `reviewed_at` / `iterations` / `feedback_loop` は変えない。両ファイルは一時ファイルと `os.replace` で置換し、片方だけ書き換わった状態を残さない。現在の sha が `--from-sha` と同じなら noop、両 verdict がすでに現在の sha なら already-bound を返す。どちらも書き込みはなく exit 0。拒否は exit 1、引数や入出力の誤りは exit 2。
+通ると script はレビューの写しを `content-review/scoped-reviews/<to_sha>.json` に置き、`sha_rebinds[]` に `scoped_review` (sections・reviewer・reviewed_at・写しの path と sha256) を足す。lint は写しが残っているかと、写しの sha256 と中身が記録と一致するかを確かめる。写しを後から書き換えると lint で落ちる。
 
 **再レビューが要る場合** (script は exit 1 で拒否し、結び直さない):
 
 - verdict が FAIL / INCOMPLETE か、片方の verdict が無い。
-- `--from-sha` が verdict の sha と一致しない。審査を経ない編集が先に入っている。
+- `--from-sha` が verdict の sha と一致しない。審査を経ない編集が先に入っている。`sha_rebinds[]` の連鎖が切れている。
 - 指摘の無い verdict (`negative_feedback` が空) しかない。引ける id が無いので、どんな編集も再レビューになる。
 - id が存在しないか、すでに使われている (1 指摘で結び直せるのは 1 回)。使用済みかは指摘本文でも見るので、2 verdict に同じ本文で並ぶ指摘を、片方の id で使ったあともう片方の id で再び使うことはできない。
+- 挙げた指摘に `finding_locations` が無い、節が見つからない・一意に決まらない、または変更がその節の外にある。frontmatter・見出し (追加・削除・改名・並び替え・段の変更)・最初の見出しより前・`#` 直下の前書きの変更は、どの指摘の節にも入らないので必ず再レビューになる。
+- references/ などを変えて `skill_dir_digest` が合わない。
+- 適用前の SKILL.md が `--from-file` にも git にも無い。
 
-拒否されたら verdict JSON を手で書き換えず、「要再レビュー」として報告し、独立 evaluator に再生成させる。script は差分が指摘どおりかまでは確かめないので、`sha_rebinds[]` の from / to / ids を監査の手がかりにし、疑わしければ再レビューする。`sha_rebinds[]` を手で書くのは偽装である。
+拒否されたら verdict JSON を手で書き換えず、「要再レビュー」として報告する。変更が範囲つき再レビューの上限に収まるなら `--scoped-review` を使い、収まらなければ独立 evaluator に verdict を作り直させる。script は変更が節に収まることまでは確かめるが、節の中の書き換えが指摘どおりかまでは確かめない。`sha_rebinds[]` の from / to / ids を監査の手がかりにし、疑わしければ再レビューする。`sha_rebinds[]` を手で書くのは偽装であり、連鎖検査がつなぎ目の食い違いを止める。
 
 ## 強制の経路 (CI / pre-push)
 

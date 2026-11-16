@@ -379,19 +379,21 @@ def check_pkg_002(plugin_dir: Path) -> list[dict]:
 
 # byte-compile の生成物は配布物ではない。.pyc には元ファイルの絶対パスと mtime が埋まるので、
 # 正本とコピーで別々に生成されると中身が同じでも fingerprint がずれ、PKG-003 の偽陽性になる。
-# macOS の Finder が置く .DS_Store も同じ理由で除く。
+# pytest が起動したディレクトリに置く .pytest_cache と、macOS の Finder が置く .DS_Store も同じ理由で除く。
 # 除外と算出は plugins/harness-creator/scripts/feedback_contract_ssot.py の directory_content_sha256 と
 # 同じにする (配布物では SSOT を import できる位置に無いので写す。一致は test で固定している)。
 _BYTECODE_CACHE_DIR = "__pycache__"
 _BYTECODE_SUFFIXES = (".pyc", ".pyo")
+_PYTEST_CACHE_DIR = ".pytest_cache"
 _FINDER_METADATA = ".DS_Store"
 
 
 def _is_local_artifact(relative: Path) -> bool:
-    """fingerprint に含めない、手元で生成されるファイル (bytecode cache と .DS_Store)。"""
+    """fingerprint に含めない、手元で生成されるファイル (bytecode cache・pytest cache・.DS_Store)。"""
     return (
         _BYTECODE_CACHE_DIR in relative.parts
         or relative.suffix in _BYTECODE_SUFFIXES
+        or _PYTEST_CACHE_DIR in relative.parts
         or relative.name == _FINDER_METADATA
     )
 
@@ -400,7 +402,7 @@ def _tree_fingerprint(root: Path) -> str:
     """Directory 内容を path・種類 (file/dir/symlink) 込みで hash し、物理 vendored copy の同一性を判定する。
 
     symlink は辿らず link 先の文字列を hash する。空のディレクトリも数える。
-    bytecode cache と .DS_Store は除く。読めないファイルは OSError を上げる (main で exit 2)。
+    bytecode cache・.pytest_cache・.DS_Store は除く。読めないファイルは OSError を上げる (main で exit 2)。
     """
     digest = hashlib.sha256()
     for path in sorted(root.rglob("*"), key=lambda item: item.relative_to(root).as_posix()):

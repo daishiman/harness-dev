@@ -2,37 +2,42 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "assign-plugin-package-evaluator",
-    "skill_md_sha256": "acbd5ab1c12f03d6e20cd8b3e8b477e8cde839fef5b18291ae08564ae6e51078"
+    "skill_md_sha256": "4223a15837e5b3400560be61b43909ea1a5f4958ecfdf89d01424b8a9b54b57c",
+    "reviewed_skill_md_sha256": "4223a15837e5b3400560be61b43909ea1a5f4958ecfdf89d01424b8a9b54b57c",
+    "skill_dir_digest": "b02da22c3670c0fcb24b93f149f58b2eea75ac7093d744c8919d72f4b085bd06"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
-  "reviewer": "reset-observer-publication-independent",
-  "reviewed_at": "2026-11-16T03:44:06.958025Z",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-16T03:12:34.320018Z",
   "iterations": 1,
-  "feedback_loop": {
-    "loop_scope": "both",
-    "criteria_evaluated": [
-      "C1",
-      "C2",
-      "C3",
-      "C4"
-    ],
-    "positive_feedback": [
-      "PKG007の対象集合と実行規則を別の正本へ分け、説明の重複を減らしている。",
-      "read-only単発評価で全指定IDを採点し、入力エラーとfail findingsを分離する。"
-    ],
-    "negative_feedback": [],
-    "iteration": 1,
-    "iteration_limit": 3,
-    "hook_trigger": "manual-incremental-publication-content-review",
-    "next_action": "none"
-  },
-  "notes": "公開base実物の選択変更に対する新規独立review。全30思考法・liveを主張しない。 C1-C4の根拠はdocs/pkg007-runtime/review-historyの独立summaryへ保存。",
+  "human_review_required": false,
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
     "smell": 0
-  }
+  },
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "C1",
+      "C2",
+      "C3",
+      "C4",
+      "C5"
+    ],
+    "positive_feedback": [
+      "対象範囲はcatalog、実行規則はcheck_pkg_007へ集約し、SKILL/R1の規則複製とLLMのPKG007手動判定を除去した。",
+      "script_refsはYAMLとして機械検証され、候補の先勝ち・配布内解決・実体単位集約が同じ実装と回帰テストに束縛される。",
+      "通常起動へ検査を追加せず、開発・配布時のpackage検査とrepo build lintへ責務を分けた。"
+    ],
+    "negative_feedback": [],
+    "iteration": 1,
+    "iteration_limit": 1,
+    "hook_trigger": "manual-authorized-pkg007-scope-reassessment",
+    "next_action": "none"
+  },
+  "notes": "独立評価者 /root/system_analyst（APE実装者とは別）が、今回ユーザー承認の明示script_refs＋既存root検査という限定変更を再評価した。旧reviewは上限到達INCOMPLETEとしてindependent-review-history/before-authorized-pkg007-scopeへ両verdictを原本byteのまま凍結保存した。今回の承認はuser-authorization.jsonのscopeと実行コスト条件に対応し、以前の上限を黙って延長したものではない。今回の限定再評価は1回で終了する。前回の30思考法9+12+9件の観測を再利用したが、30思考分析やlive trialを新たに走らせたとは申告しない。変更hunkとその契約節、check_pkg_007とhelper/YAML解析、関連テスト名・既存199 passedログを確認した。親から報告された23plugin package gate PASSとVENDORED330/feedback lint PASSは補助証拠であり、本評価者が全pluginの再走を行った証拠ではない。C1: scopeがcatalogと36章で一致し、SKILL/R1が実行規則を複製せずcheck_pkg_007を参照する。単発採点・入力エラーexit2・subprocess異常skipも整合。C2: 明示script_refsとroot scriptsが機械検査され、YAML型/重複key/解決先の先勝ち/外部・broken symlink/実体単位集約/属性とI/O失敗が実装・テストで定まる。他の*_refsと本文は今回のPKG007から除外する明示scopeであり、それらの存在・実行属性まで本PASSが保証するとは主張しない。C3: field名evidence/suggested_fix・catalogへの参照・構造化fork入力が契約に一致し、規約採点は機械rubricへ委ねた。C4: PKG009の例外はPKG007の配布内解決を免除しない。helperにはAST機械判定と006の追加意味判断がある。開発時検査と通常起動を分離し、この変更は通常のskill起動へ追加LLM/追加repo走査/検査ループを持ち込まない。旧レビューの適用内6指摘は、scope明文化・機械化・実体単位finding・AST判定・R1再列挙除去により解消。旧対象外のhook/slug指摘には後続実装とテストがあり、007手動追加201参照という前提も解消した。C5: rubricはrender-findings-score.pyが100/80、機械high違反0でPASS生成し、pending BD-004のみ独立に判断した。targetは評価前後ともprint-targetから採取して一致し、実ファイルSHAも一致した。sha_rebindsは作らずgenuine新規生成。"
 }

@@ -14,7 +14,9 @@
       "properties": {
         "plugin": {"type": "string"},
         "skill": {"type": "string"},
-        "skill_md_sha256": {"type": "string", "description": "評価時の SKILL.md ハッシュ。SKILL.md 変更後の verdict 期限切れ判定に使う。"}
+        "skill_md_sha256": {"type": "string", "description": "評価時の SKILL.md ハッシュ。SKILL.md 変更後の verdict 期限切れ判定に使う。sha_rebinds があれば最後の to_sha と同じ。"},
+        "reviewed_skill_md_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "レビューした時点の SKILL.md sha256。sha_rebinds の最初の from_sha と同じで、結び直しの連鎖の起点になる。lint-content-review.py --print-target の出力をそのまま書く。"},
+        "skill_dir_digest": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SKILL.md 以外でモデルが読む文書 (references/ prompts/ schemas/ templates/ など。scripts/ tests/ fixtures/ は除く) の digest。値があれば lint がそれらの変更も期限切れとして止める。feedback_contract_ssot.content_review_dir_digest が正本。"}
       }
     },
     "review_kind": {
@@ -87,6 +89,25 @@
       }
     },
     "notes": {"type": "string", "description": "FAIL/INCOMPLETE 時の要約 (任意)"},
+    "finding_locations": {
+      "type": "object",
+      "description": "指摘が SKILL.md のどの節に関わるか。sync-content-review-sha.py は、修正で変わった節がここに挙げた節 (またはその子の節) に収まるときだけ sha を結び直す。key は自分の review_kind の id。",
+      "propertyNames": {"pattern": "^(elegance|rubric):[1-9][0-9]*$"},
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sections"],
+        "properties": {
+          "sections": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1},
+            "description": "見出しの文字列。同じ見出しが複数あるときは「親 > 子」で書く。H1 (文書全体) は挙げられない。"
+          },
+          "source_id": {"type": "string", "minLength": 1, "description": "元の指摘の id (例: F-0003 や R5 の id)。対応を追うためだけに使う。"}
+        }
+      }
+    },
     "retargeted_from": {
       "type": "object",
       "additionalProperties": false,
@@ -99,11 +120,16 @@
     },
     "sha_rebinds": {
       "type": "array",
-      "description": "レビュー由来の修正を当てた後に target.skill_md_sha256 を結び直した監査記録 (content-review-protocol §レビュー由来の修正後の sha 結び直し)。run-elegant-review/scripts/sync-content-review-sha.py だけが追記する。手書きは偽装。",
+      "description": "連鎖する (最初の from_sha = target.reviewed_skill_md_sha256、各 from_sha = 直前の to_sha、最後の to_sha = target.skill_md_sha256)。レビュー由来の修正を当てた後に target.skill_md_sha256 を結び直した監査記録 (content-review-protocol §レビュー由来の修正後の sha 結び直し)。run-elegant-review/scripts/sync-content-review-sha.py だけが追記する。手書きは偽装。",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["from_sha", "to_sha", "finding_ids", "rebound_at", "tool"],
+        "required": ["from_sha", "to_sha", "rebound_at", "tool"],
+        "oneOf": [
+          {"required": ["finding_ids"], "not": {"anyOf": [{"required": ["replay"]}, {"required": ["scoped_review"]}]}},
+          {"required": ["replay"], "not": {"anyOf": [{"required": ["finding_ids"]}, {"required": ["scoped_review"]}]}},
+          {"required": ["scoped_review"], "not": {"anyOf": [{"required": ["finding_ids"]}, {"required": ["replay"]}]}}
+        ],
         "properties": {
           "from_sha": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "修正を当てる前の SKILL.md sha256 (このときの verdict の判定対象)"},
           "to_sha": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "修正を当てた後の SKILL.md sha256"},
@@ -113,6 +139,24 @@
             "uniqueItems": true,
             "items": {"type": "string", "pattern": "^(elegance|rubric):[1-9][0-9]*$"},
             "description": "当てた指摘。<review_kind>:<n> = その verdict の feedback_loop.negative_feedback の n 番目 (1 始まり)"
+          },
+          "replay": {
+            "type": "string",
+            "enum": ["artifact-delivery-v1", "diagnostic-choice-2way"],
+            "description": "登録済みの機械的な移行の id。レビューした版 (from_sha) にその変換を当てると現在の版 (to_sha) と 1 バイトも違わないことを sync が確かめた記録。"
+          },
+          "scoped_review": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["sections", "reviewer", "reviewed_at", "review_ref", "review_sha256"],
+            "description": "変えた節だけを読んだ独立レビュー (kind=scoped-content-review) が両 verdict とも PASS・指摘 0 件を返したので結び直した記録。変わった節はすべて sections (とその下位) に入り、変更は SCOPED_REVIEW_MAX_SECTIONS 節・SCOPED_REVIEW_MAX_CHANGED_LINES 行以内で、契約の節と criteria が名指す節には触れていない (正本: repo-root scripts/feedback_contract_ssot.py の SCOPED_REVIEW_*)。1 回の全体レビューのあと SCOPED_REVIEW_MAX_PER_FULL_REVIEW 回まで。",
+            "properties": {
+              "sections": {"type": "array", "minItems": 1, "maxItems": 3, "uniqueItems": true, "items": {"type": "string", "minLength": 1}, "description": "レビューが読んだ節 (「親 > 子」で一意に書く)"},
+              "reviewer": {"type": "string", "minLength": 1, "not": {"enum": ["root", "self", "elegant-improvement-executor"]}},
+              "reviewed_at": {"type": "string", "format": "date-time"},
+              "review_ref": {"type": "string", "pattern": "^scoped-reviews/[0-9a-f]{64}[.]json$", "description": "content-review/ からのレビューの写しの path"},
+              "review_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "レビューの写しの bytes の sha256"}
+            }
           },
           "rebound_at": {"type": "string", "format": "date-time"},
           "tool": {"const": "sync-content-review-sha"}

@@ -1,0 +1,69 @@
+{
+  "reviewer": "reset-observer-independent-runtime-review",
+  "scope": "canonical run-skill-feedback runtime文書の限定incremental review",
+  "independence": {
+    "target_author": "system",
+    "self_authored_root_lint_reviewed": false,
+    "prior_verdict_used_as_evidence": false
+  },
+  "target_before_final": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-feedback",
+    "skill_md_sha256": "eb1353f8957db3b20302149a8958d5069d968e30c8c5a5b31a818b72efa8da3f",
+    "reviewed_skill_md_sha256": "eb1353f8957db3b20302149a8958d5069d968e30c8c5a5b31a818b72efa8da3f",
+    "skill_dir_digest": "45ce60866d988824946b43a5601fa633be1cf3f8fb2954b9bc7e4522b16eec29"
+  },
+  "target_after": {
+    "plugin": "harness-creator",
+    "skill": "run-skill-feedback",
+    "skill_md_sha256": "eb1353f8957db3b20302149a8958d5069d968e30c8c5a5b31a818b72efa8da3f",
+    "reviewed_skill_md_sha256": "eb1353f8957db3b20302149a8958d5069d968e30c8c5a5b31a818b72efa8da3f",
+    "skill_dir_digest": "45ce60866d988824946b43a5601fa633be1cf3f8fb2954b9bc7e4522b16eec29"
+  },
+  "hashes_match": true,
+  "verdict": "PASS",
+  "rubric_score": 100,
+  "conditions": {
+    "C1": {
+      "verdict": "PASS",
+      "evidence": "本文とschemaはhost候補→選択対象Read→不足項目収集→承認投入→通知で一致する。goal-seek5回とfeedback評価3回は別の既存契約で、通常起動の新loopはない。"
+    },
+    "C2": {
+      "verdict": "PASS",
+      "evidence": "投入script/schema/config/tenant helperはskill内resourcesに明示される。設定/失敗手順とIN1/IN2のbuild lint宣言を保持。未登録はcreate前に停止し、CREATED行で成功を判定する。"
+    },
+    "C3": {
+      "verdict": "PASS",
+      "evidence": "schema identification_stepのhow、本文のhost候補絞込み・実在path、manifest phase順が一致する。共通guardのresolver最終1行を既存canonical CLIとして再読した。rubric機械23ruleとBD004意味判断を分離。"
+    },
+    "C4": {
+      "verdict": "PASS",
+      "evidence": "runtimeのnotion_config/tenant_runtimeは同階層で閉じ、configはmanifest祖先のowner pluginを解決する。guardはpackage-contract.depends_onに宣言され、既存plugin root resolverで解決し未導入時fail-closedに止める。"
+    }
+  },
+  "findings": [],
+  "limits": [
+    "実API送信なし",
+    "全30思考法・他skill全体レビューなし",
+    "root lint実装承認は別担当",
+    "配布copyの過去PASSは内容判定の根拠に不使用"
+  ],
+  "read_files": [
+    "run-skill-feedback/SKILL.md",
+    "run-skill-feedback/workflow-manifest.json",
+    "run-skill-feedback/references/notion-per-repo-setup.md",
+    "run-skill-feedback/references/notion-submit-contract.md",
+    "run-skill-feedback/references/feedback-to-improvement-runbook.md",
+    "run-skill-feedback/schemas/skill-list.schema.json#feedback_protocol",
+    "run-skill-feedback/schemas/improvement-request.schema.json",
+    "run-skill-feedback/scripts/notion-submit-improvement.py",
+    "run-skill-feedback/scripts/notion_config.py (root/config resolution slice)",
+    "run-skill-feedback/scripts/tenant_runtime.py (tenant resolution slice)",
+    "run-skill-feedback/scripts/extract-plugin-root.py",
+    "harness-creator/references/package-contract.json (depends_on slice)",
+    "run-build-skill/references/content-review-protocol.md",
+    "assign-skill-design-evaluator/SKILL.md",
+    "ref-skill-design-rubric/references/rubric.json",
+    "assign-skill-design-evaluator/references/rubric.json"
+  ]
+}

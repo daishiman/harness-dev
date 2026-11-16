@@ -1,0 +1,18 @@
+{
+  "artifact": "scripts/lint-vendored-ssot.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 97,
+    "notes": "genuine review（sha256 d46e271eabd07ddcbdf57957970b87968903ba017dc546f59151ca63c6f9e060 をレビュー。実行検証あり）。範囲: 未コミットの変更を含む今のファイル（221 行）と test（tests/scripts-root/test_root__lint_vendored_ssot.py、sha256 eaa09496…、20 本）。前回レビューした版（sha256 b961d187…、PASS 90）の notes の5件を1件ずつ確かめた。今回の差分は _feedback_skill_mds（L31-43。plugins/*/skills を glob し、os.path.lexists で run-skill-feedback を拾う）、check_pairs の「通常ファイルでない」の検査（L192-196）、argparse（L205-207）、docstring とコメントの直し。確かめたこと: pytest はこの test と lint-intake-vendored-ssot の test を合わせて 24 passed。実 repo では「vendored SSOT 119 件が正本と byte 一致」、exit 0。組の元になる SKILL.md の一覧は、前の glob（is_symlink を除く形）と新しい _feedback_skill_mds で 22 件とも同じだった（実 repo に symlink の plugin・skills は無い）。Makefile L138 と harness-creator-kit-ci.yml L115 は引数なしで呼ぶので、argparse を入れても呼び出しは変わらない。--help は usage で exit 0、--bogus・位置引数の extra は検査せずに exit 2。main(argv=()) なので、pytest の中で main() を呼んでも pytest の引数を読まない。境目の入力は、写しを fixture の root に置いて 15 通り試した（../work-b-r3/v/fx/）。SKILL.md が有効な symlink: 回帰として報告され、同じ組の notion-submit-contract.md の食い違いも報告された。link 先の消えた symlink: 回帰として報告された。plugin の中の相対 symlink（real.md）: 回帰として報告された。run-skill-feedback の dir が、有効な symlink・link 先の消えた symlink・自分を指す loop のどの場合も、4 件とも「経路上の … が symlink」で報告された。plugins/p/skills が有効な symlink: 4 件とも経路上の skills として報告された。SKILL.md だけが無い: 「vendored 不在」で報告された（前の glob では組ごと消えていた形）。run-skill-feedback が通常ファイル: 4 件とも「vendored 不在」。vendored が dir・canonical が dir: どちらも「通常ファイルでない」で FAIL の一覧に出て、traceback は無い。docstring L36-37 の「link 先の消えた symlink を glob が拾わない」は、Python 3.11.4 の pathlib の glob で確かめた（glob モジュールは拾うが、ここでは使っていない）。コメントの名前（render-combinators.py の apply_feedback_loop、feedback_contract_ssot.py の is_feedback_deploy_exempt、lint-feedback-protocol.py の R7、lint-intake-vendored-ssot.py）はどれも実在する。前回の指摘の扱い: [中] SKILL.md のファイルの symlink で、その plugin の組がまるごと検査から消える点は解消（上の fixture のとおり）。[低] vendored が dir だと traceback で落ちる点は解消（vendored・canonical の両方を「通常ファイルでない」で報告する）。[低] 引数を読まない点は解消（argparse）。[低] コメントのずれ3か所は解消（L13-15 に lib/・vendor/・references/・schemas/・skills/run-skill-feedback/ を挙げ、L46-47 に doc/schema を足し、L65-66 は SKILL.md も含めて「3点のどれかを欠くと存在検査で落ちる」と書き、これは fixture で確かめたとおり）。[低] PEP 723 の `# /// script` header が無い点は残る。作者の言う「repo 直下の lint-*.py は 31 本中 16 本だけが持つ」は数えて合った。CI の lint-script-frontmatter は harness-creator の scripts と skill の scripts にしかかからず、repo 直下の scripts/ は見ていない。それでも、このファイルの欠けとして残る。指摘: [低] PEP 723 の header が無い（上のとおり。方針は Beads に回されている）。観察（減点しない）: plugins/p/skills や plugins/p そのものが link 先の消えた symlink だと、pathlib の glob が拾わないので、その plugin の run-skill-feedback の組は消えて何も言わない。ただし CI の lint-feedback-protocol.py --strict の R7 が「配備なし」で落とすので、見逃しにはならない。vendored を読めない（chmod 000）と read_bytes が PermissionError の traceback で落ちる。exit 1 で止まるので fail-closed で、git から入る形でもない。check_pairs の docstring（L168）は、新しい「通常ファイルでない」の検査を挙げていない。plugin の中を指す相対 symlink にも「単独 install で dangling になる」と出る（実体コピーに戻せ、という方針としては正しい）。DEDUCTION: 100 -3（PEP 723 の header なし。前回と同じ尺度）→ 97。前回の [中] 1件と [低] 3件はすべて直り、境目の入力 15 通りのうち、読めないファイルの traceback は exit 1 で止まり、組の欠け（skills・plugin の dir が link 先の消えた symlink）は R7 が落とす（上の観察）。PASS。"
+  },
+  "reviewed_by": "coverage-reviewer-pr85-20261012-b",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

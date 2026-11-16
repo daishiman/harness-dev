@@ -1,0 +1,351 @@
+{
+  "expected_graph_revision": 26,
+  "artifacts": [
+    {
+      "project_id": "harness-creator",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "remaining-publication",
+        "mvp",
+        "source-integration"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [],
+      "subtype_sections": {},
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "specification",
+      "slug": "remaining-publication",
+      "title": "元ブランチ残存を失わず安全に公開する仕様",
+      "depends_on": [],
+      "related_nodes": [
+        "arch-remaining-publication",
+        "feature-remaining-publication"
+      ],
+      "classification": {
+        "reason": "harness-esj6で承認された元ブランチ残存の公開統合を記録するspecification。",
+        "decision": "auto",
+        "candidates": [
+          {
+            "artifact_kind": "specification",
+            "confidence": 0.97
+          },
+          {
+            "artifact_kind": "document",
+            "confidence": 0.03
+          }
+        ]
+      },
+      "sections": {
+        "目的と成功状態": "元ブランチの未公開実装・説明・検証成果を、最新mainの公開済み修復を保った追加PRへ統合する。元rootにも正常commitの履歴を残した後、公開branchの履歴へ揃え、公開済みなのにgsへ残る状態を解消する。",
+        "スコープ": "7機能群の未公開差分、対応仕様と正規5文書、全statusの分類manifest、匿名化派生物と履歴、最小ゲート、対象限定commit/push/draft PRと元rootの履歴収束。秘密や承認runtimeの公開、新exact13計画、実API/live再走、既存未達のPASS化は対象外。",
+        "用語と主体": "mainは公開済み正本、source snapshotは今回統合対象の入力、公開manifestは全statusの分類と対応先を持つ台帳。公開担当が統合・privacy・最小ゲートを管理し、host担当作業は当該hostが実行した証拠を残す。",
+        "ユースケースとユーザーフロー": "元statusを台帳へ取り込み、main公開済みと未公開差分を分ける。3way統合後に7機能群と説明を突き合わせ、公開3派生物と非公開tempを分類する。最小ゲート後に追加draft PRへ出し、元rootを正常commitと公開branchの履歴へ収束させる。",
+        "機能要件": "FR1: YAML cache: 正規builderがcacheと索引を作り、節・見出しの必要範囲だけをReadする。hash/取得日時の不一致は停止し、ネット取得なしのreindexを提供する。\nFR2: run model budget: convergence-policyを正本にrun_id全体のAI起動予算を計算し、gate/launcher/plannerが起動前に同じ台帳へ予約する。再試行の重複課金と並行予約の超過を防ぎ、枯渇時はfail-closedで起動しない。\nFR3: knowledge-loop: 既存schema/lint/engineと参照文書の整合を取り、4資料、consult_at、検索・記録CLIとruntime境界を正しく案内する。新しい外部知能engineを導入する変更とは区別する。\nFR4: artifact delivery: state-machineの各所の写しをglobal policy参照へ寄せ、現状で試す/診断するの選択を先に、改善深度を診断後の1回へ整理する。通常のplugin追加や起動に全repo走査・LLM評価を要求しない。\nFR5: runtime profiles: 構築時DAGと実行時DAGを分け、最小十分なinlineを既定にする。独立contextや実依存がある場合だけfork/task-graphを使い、同pluginの正本参照・別pluginへの実体配布・配線なし理由・冗長path宣言を検査する。\nFR6: system-dev-planner: CLI/in-processで同じrealpath境界を要求し、壊れたsymlink、UTF-8/IO、policy違反、RFC3339、世代markerの扱いを明確化する。既存exact13契約を新しい計画生成なしで維持する。\nFR7: evidence and host work: hashに束縛した検査再利用、traceとbriefの一致、検証予算、C1-C4レポート、transcript計測、runtime evidence ledgerを整える。install/enable/trust/new-session等のhost担当作業は保留証拠を残し、未実行をPASSへ置き換えない。\nFR8: 初期gsの2284status項目すべてに公開対象manifest上の対応を持たせ、main公開済み/新規統合/履歴保存/秘密匿名化/非公開tempを理由付きで分類する。公開できない原locatorはopaque IDまたはSHAで照合し、分類漏れを許さない。\nFR9: 最新mainのPR91公開済みPKG007・配布closure・owner-qualified資料・既存25node/receiptを維持する。sourceの古いfileを丸ごと上書きせず、未公開の新機能hunkと必要な履歴だけを統合する。\nFR10: 公開対象3ファイルは秘密/個人情報を匿名化した派生物として保存し、元bytesと元SHAは非公開保管する。公開文書へprivate raw locatorを書かない。旧FAIL/INCOMPLETEと旧verdictのreviewed SHAを保持し、現在の成功へ付け替えない。",
+        "非機能要件": "必要な節だけを読み、不要な検査往復・model context起動を増やさない。通常のplugin追加処理と通常runtimeに、今回の公開作業を理由とする全repo走査やLLMを追加しない。hash/予算/境界検査は決定論的にfail-closedとする。速度向上は測定結果なしに断言しない。",
+        "UI・状態遷移": "成果物を先に提示し、accept-as-isでは追加診断contextを起動しない。diagnose後にだけ意味診断と改善深度の選択へ進む。host担当保留はpending/deferredとして明示し、handoff完了と未実行作業の受入れを混同しない。",
+        "ビジネスルールと検証": "公開済みmainを古いsourceへ戻さない。run_idは差戻しでも同じ予算に束縛する。cache/indexは同じ内容・取得日・SHAへ束縛し、取得日を新しく偽装しない。検査再利用は入力slice・brief・生成物・checker契約の一致を条件とし、読めない/古い証拠を成功扱いしない。",
+        "API契約": "新規外部HTTP APIは追加しない。内部CLI・policy・trace・runtime ledgerの契約変更は7機能群の正本へ反映する。既存Notionやhost providerの実操作を今回の静的公開確認から推定しない。",
+        "データモデル": "YAML索引、run予算台帳、build trace、検証receiptとruntime evidence ledgerを既存正本schemaへ対応させる。外部DB構造の新規変更はない。履歴の原SHAと匿名化派生物のSHAを区別し、公開manifestで由来を追跡する。",
+        "認証・認可": "既存の認証・承認方式を保持し、token・鍵・署名付きruntime承認記録を公開しない。privacy派生物は原本ではないと明記する。正規guard、host担当境界、realpath containmentを緩めない。",
+        "エラー・例外・回復": "cache/index不一致、AI予算超過、外部へのsymlink、壊れた入力、証拠の不一致は理由付きで停止する。再試行は既存run・claimへ結び、予算を二重予約しない。元rootの履歴収束が失敗した場合は原snapshotと公開manifestを残して停止し、無関係な差分を破棄しない。",
+        "イベント・非同期処理": "通常runtimeに新しい全体監査jobやLLMを追加しない。公開処理の全status照合と最小ゲートは開発時だけ実行する。host依存作業は完了を偽らず正規の保留証拠で後続へ渡す。",
+        "可観測性": "初期gsの2284status項目すべてに公開対象manifest上の対応を持たせ、main公開済み/新規統合/履歴保存/秘密匿名化/非公開tempを理由付きで分類する。公開できない原locatorはopaque IDまたはSHAで照合し、分類漏れを許さない。 公開対象3ファイルは秘密/個人情報を匿名化した派生物として保存し、元bytesと元SHAは非公開保管する。公開文書へprivate raw locatorを書かない。旧FAIL/INCOMPLETEと旧verdictのreviewed SHAを保持し、現在の成功へ付け替えない。 判定理由・対応先・実ログ・writer receipt・quality gateを辿れるようにする。",
+        "互換性・移行・リリース": "最新mainのPR91公開済みPKG007・配布closure・owner-qualified資料・既存25node/receiptを維持する。sourceの古いfileを丸ごと上書きせず、未公開の新機能hunkと必要な履歴だけを統合する。 公開版の採番/metadataは親の正規release手順と実結果に従い、本文へ未確定の版を固定しない。元rootはまず正常commitしてから公開branchと履歴を揃える。自動mergeやmanual completionの自動done化は行わない。",
+        "テストと受入条件": "最小ゲートのコマンド・実結果・test件数・対象版は親が管理するsystem-spec/remaining-publication/quality-gates.jsonを正とする。全体LLM再評価、live再走、全coverage達成認定は追加しない。 加えて2284status全件分類、privacy3派生物の原SHA追跡、旧verdict SHA保全、新規5nodeのschema/readinessと他25node不変、元rootの履歴収束を受入条件とする。",
+        "未決事項": "既存全体coverage未達、既存openの安全性/運用follow-up、未実行の実API/live/host操作は継続して明示する。新規登録はdraft/pendingであり、公開や台帳登録を製品全体の受入れ達成へ読み替えない。"
+      }
+    },
+    {
+      "project_id": "harness-creator",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "remaining-publication",
+        "mvp",
+        "source-integration"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [
+        "backend"
+      ],
+      "subtype_sections": {
+        "backend": {
+          "Runtime and architecture pattern": "公開統合は独立worktreeで行い、通常runtimeと分離する。正本policy/辞書/validatorへ委譲し、呼出しごとの全repo走査やLLMを増やさない。",
+          "Domain and module boundaries": "YAML抽出、run予算、knowledge参照、artifact global policy、runtime profiles、SDP境界、証拠/host ledgerの7境界を維持する。単一taskへまとめても各正本を新文書へ複製しない。",
+          "API and service contracts": "内部CLI/JSONの変更は既存schemaとhelpを正とする。外部HTTP/DBの新規APIはない。host providerでしか実行できない操作をローカルunitの成功と区別する。",
+          "Data and transaction behavior": "status分類manifestは初期2284項目へ対応する。C02はcontent→graph→immutable receiptをatomicに登録する。公開3派生物・非公開原本・旧verdictのSHAは別の由来として保存する。",
+          "Async processing": "追加の常駐監査や全体LLM jobは作らない。host担当の非同期完了は既存receiptへ束縛し、未完了はpending/deferredで扱う。",
+          "Security and resilience": "secret/approval runtimeを公開しない。realpath境界、予算予約、最新FAIL/読取不能のfail-closedを保持する。private raw locatorは公開成果物へ書かない。",
+          "Operations and verification": "最小ゲートのコマンド・実結果・test件数・対象版は親が管理するsystem-spec/remaining-publication/quality-gates.jsonを正とする。全体LLM再評価、live再走、全coverage達成認定は追加しない。 input/status manifest照合、privacy確認、C02新5node/旧25nodeの不変性と元rootのcommit履歴収束を追加で確認する。"
+        }
+      },
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "architecture",
+      "slug": "remaining-publication",
+      "title": "main保全・全件分類・証拠分離による公開統合設計",
+      "depends_on": [],
+      "related_nodes": [
+        "spec-remaining-publication"
+      ],
+      "classification": {
+        "reason": "harness-esj6で承認された元ブランチ残存の公開統合を記録するarchitecture。",
+        "decision": "auto",
+        "candidates": [
+          {
+            "artifact_kind": "architecture",
+            "confidence": 0.97
+          },
+          {
+            "artifact_kind": "document",
+            "confidence": 0.03
+          }
+        ]
+      },
+      "sections": {
+        "Architecture overview": "sourceの全残存を最新mainへ3way統合し、公開すべき実装・履歴・匿名化派生物と非公開runtimeを台帳で分ける。正本と証拠の由来を保持し、不要な全体再評価を追加しない。",
+        "Context and drivers": "実装済みでも元worktreeに未公開のまま残った改善がある。一方、PR91は既にmainへ公開済みであり、元sourceの古い配置/版/参照を丸ごと適用すると公開修復が戻る。安全な履歴収束と利用者に分かる公開成果が必要。",
+        "Goals and non-goals": "未公開7機能群の価値を失わず公開し、2284statusを理由付きで全件追跡する。新しい機能要望の拡張、全system-spec再ヒアリング、exact13生成、全LLM評価、実API/live実行、既存未達の隠蔽はしない。",
+        "System context and boundaries": "source snapshot、最新main、公開worktree、非公開原本保管、親の公開manifest/quality台帳を別authorityとして扱う。公開側は原snapshotのprivate locatorを必要とせず、opaque IDとSHAで由来を検証する。",
+        "Container and component view": "YAML cache: 正規builderがcacheと索引を作り、節・見出しの必要範囲だけをReadする。hash/取得日時の不一致は停止し、ネット取得なしのreindexを提供する。\nrun model budget: convergence-policyを正本にrun_id全体のAI起動予算を計算し、gate/launcher/plannerが起動前に同じ台帳へ予約する。再試行の重複課金と並行予約の超過を防ぎ、枯渇時はfail-closedで起動しない。\nknowledge-loop: 既存schema/lint/engineと参照文書の整合を取り、4資料、consult_at、検索・記録CLIとruntime境界を正しく案内する。新しい外部知能engineを導入する変更とは区別する。\nartifact delivery: state-machineの各所の写しをglobal policy参照へ寄せ、現状で試す/診断するの選択を先に、改善深度を診断後の1回へ整理する。通常のplugin追加や起動に全repo走査・LLM評価を要求しない。\nruntime profiles: 構築時DAGと実行時DAGを分け、最小十分なinlineを既定にする。独立contextや実依存がある場合だけfork/task-graphを使い、同pluginの正本参照・別pluginへの実体配布・配線なし理由・冗長path宣言を検査する。\nsystem-dev-planner: CLI/in-processで同じrealpath境界を要求し、壊れたsymlink、UTF-8/IO、policy違反、RFC3339、世代markerの扱いを明確化する。既存exact13契約を新しい計画生成なしで維持する。\nevidence and host work: hashに束縛した検査再利用、traceとbriefの一致、検証予算、C1-C4レポート、transcript計測、runtime evidence ledgerを整える。install/enable/trust/new-session等のhost担当作業は保留証拠を残し、未実行をPASSへ置き換えない。",
+        "Cross-cutting contracts": "最新mainのPR91公開済みPKG007・配布closure・owner-qualified資料・既存25node/receiptを維持する。sourceの古いfileを丸ごと上書きせず、未公開の新機能hunkと必要な履歴だけを統合する。 公開対象3ファイルは秘密/個人情報を匿名化した派生物として保存し、元bytesと元SHAは非公開保管する。公開文書へprivate raw locatorを書かない。旧FAIL/INCOMPLETEと旧verdictのreviewed SHAを保持し、現在の成功へ付け替えない。 正本cache/index・run予算・global policyへの参照を一意にし、通常追加LLM/全repo走査0を維持する。",
+        "Architecture decisions": "ADR1: 原statusの全件台帳対応とmain/source/公開結果の分類を採用する。\nADR2: 公開済みPKG007と既存25nodeを保存し、今回5nodeを別に追加する。\nADR3: privacy3派生物は原本から分離し、旧verdict SHAを付け替えない。\nADR4: host担当操作を保留証拠で渡し、未実行をPASSにしない。\nADR5: テスト件数・版は親quality台帳の実結果へ委譲し、C02の反復更新を避ける。",
+        "Delivery, migration and rollback": "公開branch devgraph/ と tasks/remaining-publication.md の frontmatter.graph_node_id を連結したbranchからmain向け追加draft PRへ提出する。正常commitで元rootの成果を履歴へ残した後、公開branchと整合させる。rollbackは今回commitのrevertまたは公開前snapshotからの対象限定復旧とし、他案件を消さない。",
+        "Risks and verification": "sourceの古い参照/版によるmain退行、public/private混在、旧PASSの現在版への偽装、unit成功からhost完了の誤推定を防ぐ。分類漏れ・SHA不一致・secret検出は停止し、MVPで見ない既存未達は残課題へ明示する。"
+      }
+    },
+    {
+      "project_id": "harness-creator",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "remaining-publication",
+        "mvp",
+        "source-integration"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [],
+      "subtype_sections": {},
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "feature",
+      "slug": "remaining-publication",
+      "title": "元ブランチ全残存を追跡可能な追加PRへ公開する",
+      "depends_on": [],
+      "related_nodes": [
+        "spec-remaining-publication",
+        "doc-remaining-publication"
+      ],
+      "macro": {
+        "purpose": "未公開の改善・仕様・検証成果を失わず公開し、元rootも公開履歴へ揃える",
+        "goal": "初期2284statusすべての行き先と理由が台帳で追え、main公開済み修復を保った7機能群が追加draft PRへ提出され、元rootに正常commitの履歴が残って公開branchと整合する",
+        "scope_in": [
+          "7機能群の未公開hunkと必要履歴の3way統合",
+          "main公開済み/新規統合/履歴保存/秘密匿名化/非公開tempの全件分類",
+          "privacy3派生物と旧verdict SHAの由来保全",
+          "正規5文書・writer receipt・親quality台帳による最小ゲート",
+          "対象限定commit/push/draft PRと元rootの履歴収束"
+        ],
+        "scope_out": [
+          "secret/鍵/実行時承認記録/private raw locatorの公開",
+          "PR91 PKG007と既存25nodeの退行",
+          "新exact13・全system-spec再ヒアリング",
+          "全LLM評価/実API/live再走",
+          "既存全体coverage達成やmanual completionの自動done認定"
+        ],
+        "acceptance": [
+          "初期2284statusが理由と対応先付きでmanifestへ全件対応する",
+          "mainの公開済み修復と既存25nodeを保持する",
+          "親quality-gatesの今回最小ゲートが成功する",
+          "privacy3派生物と旧SHAを検証でき秘密/非公開tempを公開しない",
+          "今回5nodeがdraft/pending/readiness completeで登録される",
+          "元rootに正常commitの履歴を残した後に公開branchの履歴へ揃える"
+        ],
+        "architecture_refs": [
+          "arch-remaining-publication"
+        ]
+      },
+      "sections": {
+        "Handoff": "Beads harness-esj6 / tasks/remaining-publication.md の frontmatter.graph_node_idで追跡する。公開担当がquality/impact/manifestと公開操作、文書担当が今回5nodeとC02 receiptを担当する。completion policyはmanual。draft PR作成やmanifest登録だけでdoneに昇格せず、既存未達・host担当保留を明記する。"
+      }
+    },
+    {
+      "project_id": "harness-creator",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "remaining-publication",
+        "mvp",
+        "source-integration"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [],
+      "subtype_sections": {},
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "document",
+      "slug": "remaining-publication",
+      "title": "残っていた改善を安全に公開するための案内",
+      "depends_on": [],
+      "related_nodes": [
+        "spec-remaining-publication",
+        "arch-remaining-publication",
+        "feature-remaining-publication",
+        "task-remaining-publication"
+      ],
+      "classification": {
+        "reason": "harness-esj6で承認された元ブランチ残存の公開統合を記録するdocument。",
+        "decision": "auto",
+        "candidates": [
+          {
+            "artifact_kind": "document",
+            "confidence": 0.97
+          },
+          {
+            "artifact_kind": "task",
+            "confidence": 0.03
+          }
+        ]
+      },
+      "sections": {
+        "目的": "何を追加公開するのか、何を守るのか、まだ完了していないことは何かを利用者と専門担当が理解できるようにする。",
+        "対象読者": "普段pluginを使う利用者、元ブランチの担当者、公開PRのreviewer。専門知識なしで読める説明と正本/検証境界を併記する。",
+        "要約": "机に残っていた改善を全部持ち物表で点検し、既に配った物、新しく配る物、記録として残す物、秘密なので配らない物に分ける。新しい改善だけを今の公開版へ合わせ、元の机もきちんと履歴が残る状態へそろえる。",
+        "本文": "中学生向け\n大きな説明書を毎回全部読む代わりに、目次から必要なページだけを開きます。AIを呼ぶ回数には共通の上限を設け、使い切ったら止まります。使う場面に合う小さな仕組みを選び、実物を見せてから追加の診断を選べます。端末側でしかできない操作は、まだ終わっていないと正直に記録します。秘密は公開用のコピーで伏せ、元の記録を書き換えません。\n\n専門向け\nYAML cache: 正規builderがcacheと索引を作り、節・見出しの必要範囲だけをReadする。hash/取得日時の不一致は停止し、ネット取得なしのreindexを提供する。\nrun model budget: convergence-policyを正本にrun_id全体のAI起動予算を計算し、gate/launcher/plannerが起動前に同じ台帳へ予約する。再試行の重複課金と並行予約の超過を防ぎ、枯渇時はfail-closedで起動しない。\nknowledge-loop: 既存schema/lint/engineと参照文書の整合を取り、4資料、consult_at、検索・記録CLIとruntime境界を正しく案内する。新しい外部知能engineを導入する変更とは区別する。\nartifact delivery: state-machineの各所の写しをglobal policy参照へ寄せ、現状で試す/診断するの選択を先に、改善深度を診断後の1回へ整理する。通常のplugin追加や起動に全repo走査・LLM評価を要求しない。\nruntime profiles: 構築時DAGと実行時DAGを分け、最小十分なinlineを既定にする。独立contextや実依存がある場合だけfork/task-graphを使い、同pluginの正本参照・別pluginへの実体配布・配線なし理由・冗長path宣言を検査する。\nsystem-dev-planner: CLI/in-processで同じrealpath境界を要求し、壊れたsymlink、UTF-8/IO、policy違反、RFC3339、世代markerの扱いを明確化する。既存exact13契約を新しい計画生成なしで維持する。\nevidence and host work: hashに束縛した検査再利用、traceとbriefの一致、検証予算、C1-C4レポート、transcript計測、runtime evidence ledgerを整える。install/enable/trust/new-session等のhost担当作業は保留証拠を残し、未実行をPASSへ置き換えない。\n最新mainのPR91公開済みPKG007・配布closure・owner-qualified資料・既存25node/receiptを維持する。sourceの古いfileを丸ごと上書きせず、未公開の新機能hunkと必要な履歴だけを統合する。\n公開対象3ファイルは秘密/個人情報を匿名化した派生物として保存し、元bytesと元SHAは非公開保管する。公開文書へprivate raw locatorを書かない。旧FAIL/INCOMPLETEと旧verdictのreviewed SHAを保持し、現在の成功へ付け替えない。",
+        "決定事項": "今回公開だけをharness-esj6で追跡し、既存PKG007仕様は維持する。全statusを5分類の理由付きmanifestへ結ぶ。通常plugin追加/起動へ全repo走査やLLMを追加しない。元rootは正常commitの後で公開branchへ履歴収束させる。5nodeとcompletionはdraft/pending/manualを維持する。",
+        "運用・更新方法": "実装・正本・参照文書を同じ変更で整合させ、cache/indexやvendorは正規生成経路で同期する。最終件数・版・実ゲートは親quality台帳へ一元化する。既存open follow-upやhost保留を公開の成功と区別して引き継ぐ。",
+        "関連資料": "specs/remaining-publication.md、architecture/remaining-publication.md、features/remaining-publication.md、tasks/remaining-publication.md、system-spec/remaining-publication/quality-gates.json。全status対応・privacy派生物・旧SHAの詳細は同品質台帳が指す公開manifestと受領書を辿る。非公開原locatorは記載しない。",
+        "変更履歴": "2026-11-16: harness-esj6の元ブランチ全残存公開に対応する正規5文書をC02 addで新規登録。既存PR91のPKG007文書を別scopeとして維持。",
+        "PR用要約": "問題: 元ブランチに実装済みの改善・仕様・検証成果が残り、公開済みmainとの差やprivate runtimeが混在していた。\n変更: YAML必要節Read、run予算fail-closed、knowledge文書整合、global artifact policy参照、runtime最小profile、SDP境界、証拠再利用/host担当保留の7群を統合する。\n保全: 初期2284statusを理由付きmanifestへ対応させ、PR91修復・privacy3派生物・旧verdict SHA・未達の区別を保持する。\n検証: 親quality-gatesの実コマンド/結果を正とし、未確定の件数や版を固定しない。全LLM評価や実API/liveを追加しない。\n追跡: Beads harness-esj6、tasks/remaining-publication.md の frontmatter.graph_node_id、devgraph/ と tasks/remaining-publication.md の frontmatter.graph_node_id を連結したbranch→main draft。元rootは正常commit後に公開branchの履歴へそろえる。",
+        "残課題": "既存全体coverage、既存open follow-up、実API/live/host操作の未実行は残す。公開3派生物は原本ではなく、旧verdictのPASSを現在版へ付け替えない。全statusの分類と公開台帳に欠落があれば公開を止め、未完了を捏造しない。"
+      }
+    },
+    {
+      "project_id": "harness-creator",
+      "domain": "development-workflow",
+      "tracker_binding": "none",
+      "owners": [
+        "harness-maintainers"
+      ],
+      "tags": [
+        "remaining-publication",
+        "mvp",
+        "source-integration"
+      ],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "resource_scope": [],
+      "artifact_subtypes": [],
+      "subtype_sections": {},
+      "api_contracts": [],
+      "source_lineage": {
+        "origin_kind": "manual",
+        "source_plugin": null,
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "artifact_kind": "task",
+      "slug": "remaining-publication",
+      "title": "元ブランチ全残存を最終統合し仕様反映して追加PRへ公開する",
+      "depends_on": [
+        "spec-remaining-publication",
+        "arch-remaining-publication"
+      ],
+      "related_nodes": [
+        "feature-remaining-publication",
+        "doc-remaining-publication"
+      ],
+      "classification": {
+        "reason": "harness-esj6で承認された元ブランチ残存の公開統合を記録するtask。",
+        "decision": "auto",
+        "candidates": [
+          {
+            "artifact_kind": "task",
+            "confidence": 0.97
+          },
+          {
+            "artifact_kind": "document",
+            "confidence": 0.03
+          }
+        ]
+      },
+      "sections": {
+        "目的": "harness-esj6で承認された元ブランチ全残存だけを公開統合し、最終review→仕様反映→対象限定commit/push/draft PR→元root履歴収束まで追跡する。",
+        "背景": "原rootにはPR91公開済み差分と未公開の改善、履歴、privacy対象、runtime/tempが混在する。最新mainを基準に新機能hunkだけを取り込み、既存PKG007を戻さずに全残存の行き先を確定する必要がある。",
+        "入力と前提条件": "初期gsの2284status、正常commitされたsource snapshot、最新main、公開統合worktree、既存Beadsと原検証履歴を入力とする。公開branchはdevgraph/ と tasks/remaining-publication.md の frontmatter.graph_node_id を連結したbranch。private raw locatorを公開文書へ書かない。",
+        "出力と成果物": "統合済み7機能群、理由付き全status公開manifest、privacy3派生物と元SHAの対応、旧verdict履歴、正規5文書/graph/実writer receipt、親quality/impact受領書、追加draft PRと元rootの正常な履歴。",
+        "依存関係": "spec-remaining-publicationとarch-remaining-publicationに依存する。harness-s7d、harness-r44等の既存追跡とharness-esj6の公開完了範囲を分け、既存openを公開だけで閉じない。",
+        "実装対象": "YAML cache: 正規builderがcacheと索引を作り、節・見出しの必要範囲だけをReadする。hash/取得日時の不一致は停止し、ネット取得なしのreindexを提供する。\nrun model budget: convergence-policyを正本にrun_id全体のAI起動予算を計算し、gate/launcher/plannerが起動前に同じ台帳へ予約する。再試行の重複課金と並行予約の超過を防ぎ、枯渇時はfail-closedで起動しない。\nknowledge-loop: 既存schema/lint/engineと参照文書の整合を取り、4資料、consult_at、検索・記録CLIとruntime境界を正しく案内する。新しい外部知能engineを導入する変更とは区別する。\nartifact delivery: state-machineの各所の写しをglobal policy参照へ寄せ、現状で試す/診断するの選択を先に、改善深度を診断後の1回へ整理する。通常のplugin追加や起動に全repo走査・LLM評価を要求しない。\nruntime profiles: 構築時DAGと実行時DAGを分け、最小十分なinlineを既定にする。独立contextや実依存がある場合だけfork/task-graphを使い、同pluginの正本参照・別pluginへの実体配布・配線なし理由・冗長path宣言を検査する。\nsystem-dev-planner: CLI/in-processで同じrealpath境界を要求し、壊れたsymlink、UTF-8/IO、policy違反、RFC3339、世代markerの扱いを明確化する。既存exact13契約を新しい計画生成なしで維持する。\nevidence and host work: hashに束縛した検査再利用、traceとbriefの一致、検証予算、C1-C4レポート、transcript計測、runtime evidence ledgerを整える。install/enable/trust/new-session等のhost担当作業は保留証拠を残し、未実行をPASSへ置き換えない。\n最新mainのPR91公開済みPKG007・配布closure・owner-qualified資料・既存25node/receiptを維持する。sourceの古いfileを丸ごと上書きせず、未公開の新機能hunkと必要な履歴だけを統合する。",
+        "Write scope と競合制約": "公開統合treeで各担当の所有範囲だけを修復し、他者差分を戻さない。文書担当は今回5文書とgraph/入力/preview/result/実receiptのみ。quality/impact/manifestと元rootの履歴操作は公開担当が行う。元rootは正常commit前に上書きや破棄をしない。",
+        "GitHub publication": "devgraph/ と tasks/remaining-publication.md の frontmatter.graph_node_id を連結したbranchからmain向け追加draft PRへ提出する。PR本文に目的・7群の変更・実ゲート根拠・仕様影響・2284status分類・privacy方針・harness-esj6/task node・残課題・元root履歴収束を含める。secret/private raw locatorを載せず、mainへ直接push/自動mergeしない。",
+        "実行手順": "1. 初期statusとsource snapshotを固定し、mainとの差を5分類の理由付きmanifestへ対応させる。\n2. 各担当が3way競合を解消し、公開済みPKG007と他者差分を保つ。\n3. privacy3派生物/旧SHA/非公開tempを分離し、今回5文書をC02 addのpreview→revision指定applyで1回登録する。\n4. 親quality台帳が指す最小ゲート、全status対応、SHA/secret検査を確認する。\n5. 対象限定commit/pushとdraft PRを作成し、元rootも正常commit後に公開branchの履歴へそろえる。\n6. 結果をBeadsへ記録し、manual completionの判断前にdoneへ昇格しない。",
+        "受入条件": "初期gsの2284status項目すべてに公開対象manifest上の対応を持たせ、main公開済み/新規統合/履歴保存/秘密匿名化/非公開tempを理由付きで分類する。公開できない原locatorはopaque IDまたはSHAで照合し、分類漏れを許さない。 公開対象3ファイルは秘密/個人情報を匿名化した派生物として保存し、元bytesと元SHAは非公開保管する。公開文書へprivate raw locatorを書かない。旧FAIL/INCOMPLETEと旧verdictのreviewed SHAを保持し、現在の成功へ付け替えない。 親quality台帳の最小ゲート成功、既存25node不変・今回5node draft/pending/readiness complete、元root正常commitと公開branch履歴整合を満たす。未確定test件数/版はここへ固定しない。",
+        "検証方法": "最小ゲートのコマンド・実結果・test件数・対象版は親が管理するsystem-spec/remaining-publication/quality-gates.jsonを正とする。全体LLM再評価、live再走、全coverage達成認定は追加しない。 公開manifestで2284項目の欠落・重複・理由・対応先を確認し、privacy派生物/旧verdictと証拠SHAを検証する。C02は新規5nodeのschema/readinessを検査し、既存25nodeの内容不変を比較する。原runtime承認記録や実secretをテスト入力へ混ぜない。",
+        "リスクとロールバック": "全残存という言葉で秘密や旧失敗まで現在の製品へ混ぜない。分類漏れやmain退行は公開を停止する。公開前の復旧は固定snapshotからの対象限定復旧、公開後は今回commitのrevertを使い、原成果・他者差分・旧証拠を削除しない。",
+        "Handoff": "completion policyはmanual。5nodeはdraft/pendingであり、draft PR作成や台帳登録だけでconfirmed/pass/doneへ昇格しない。品質受入れ・元root履歴収束・残課題を公開担当へ渡し、既存未達やhost担当保留を成功と誤認させない。"
+      }
+    }
+  ]
+}

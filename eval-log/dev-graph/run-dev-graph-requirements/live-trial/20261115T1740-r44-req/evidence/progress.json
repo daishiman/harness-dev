@@ -1,0 +1,87 @@
+{
+  "skill": "run-dev-graph-requirements",
+  "original_goal_hash": "04482e65a513cf4eb345f2c370d45ce5751e7732b0d3ef89c786c5eac4266c96",
+  "loops_used": 2,
+  "max_loops": 5,
+  "updated_at": "2026-11-15T08:53:32.560583+00:00",
+  "state": "semantic_evaluator_started",
+  "artifact_delivery": {
+    "selected_level": "diagnose",
+    "depth": "standard",
+    "record": "eval-log/run-dev-graph-requirements/artifact-delivery-choice.json"
+  },
+  "checklist": [
+    {
+      "id": "CL1",
+      "status": "pass",
+      "evidence": [
+        "eval-log/run-dev-graph-requirements/guard.json#closure (15 ready)",
+        "eval-log/run-dev-graph-requirements/c11.json (canonical, valid:true)",
+        "agent R1 round2 PASS"
+      ]
+    },
+    {
+      "id": "CL2",
+      "status": "pass",
+      "evidence": [
+        "eval-log/run-dev-graph-requirements/binding.json (exit 0, violations 0, c11==c02)",
+        "agent requirements-verifier re-run PASS"
+      ]
+    },
+    {
+      "id": "CL3",
+      "status": "pass",
+      "evidence": [
+        "eval-log/run-dev-graph-requirements/guard.json (missing_sections [], blocked [] fully surfaced; exit 0)",
+        "pass: tests/test_acceptance_gaps_a1.py -k handoff|withheld|incomplete|missing → 6 passed (plugin acceptance test, tmp-based)"
+      ]
+    },
+    {
+      "id": "CL4",
+      "status": "pass",
+      "evidence": [
+        "eval-log/run-dev-graph-requirements/handoff/capability-build-handoff.json (graph_snapshot_digest == binding.graph.digest == guard.graph.digest, digest_match true)"
+      ]
+    },
+    {
+      "id": "CL5",
+      "status": "pass",
+      "evidence": [
+        "git status: no code files created; implementation_code_generated 0"
+      ]
+    }
+  ],
+  "feedback_contract": {
+    "iterations_used": 1,
+    "max_iterations": 3,
+    "criteria": {
+      "IN1": {
+        "status": "pass",
+        "verify_by": "script",
+        "evidence": "eval-log/run-dev-graph-requirements/binding.json"
+      },
+      "OUT1": {
+        "status": "pass",
+        "verify_by": "live-trial",
+        "evidence": "eval-log/run-dev-graph-requirements/handoff/ + independent dev-graph-requirements-verifier"
+      },
+      "OUT2": {
+        "status": "pass",
+        "verify_by": "test",
+        "evidence": "pass: tests/test_acceptance_gaps_a1.py -k handoff|withheld|incomplete|missing → 6 passed (plugin acceptance test, tmp-based)"
+      }
+    }
+  },
+  "advisory_findings": [
+    {
+      "code": "heading_missing",
+      "node": "architecture-system",
+      "count": 10,
+      "enforced": false,
+      "owner": "upstream run-dev-graph-system-spec / architecture owner",
+      "evidence": "eval-log/run-dev-graph-requirements/c11-strict-advisory.json",
+      "note": "strict-artifact-readiness is out of this skill's contract; not a handoff blocker (SKILL step 3)"
+    }
+  ],
+  "blockers": []
+}

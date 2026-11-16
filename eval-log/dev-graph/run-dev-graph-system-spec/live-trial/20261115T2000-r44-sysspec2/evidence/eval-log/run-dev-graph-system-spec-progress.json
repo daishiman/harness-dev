@@ -1,0 +1,17 @@
+{
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "checklist": [
+    {"item": "system_spec content root が caller repo 内で repository_id/common-dir と一致する", "status": "achieved", "evidence": "eval-log/run-dev-graph-system-spec/c24-receipt.json; independent R0 verification eval-log/run-dev-graph-system-spec/R0-context/verification.json PASS"},
+    {"item": "system-spec-harness が plugin-composition.yaml の version の範囲と required 4 entry points を満たす", "status": "achieved", "evidence": "preflight-report.json (0.1.28 in >=0.1.22 <1.0.0, 4 entry points present); R1-preflight/verification.json PASS"},
+    {"item": "elicit/条件付き doc-fetch/compile/evaluator が system-spec-harness Skill 経由だけで実行される", "status": "achieved", "evidence": "Skill calls run-system-spec-elicit --resume, run-system-spec-compile, assign-system-spec-completeness-evaluator (args = build-evaluation-context skill_args); doc-fetch skipped because source-citation already covers all targets; R2-delegate/verification.json PASS"},
+    {"item": "coverage/source-citation/evaluator gate が全て PASS である", "status": "achieved", "evidence": "validate-coverage-matrix --require-complete --require-basis --require-foundation exit 0; validate-source-citation --state exit 0; eval-log/system-spec-completeness-report.json verdict PASS"},
+    {"item": "C02 登録 node の source_lineage/confirmation/evaluator evidence/readiness が欠落0である", "status": "achieved", "evidence": "receipt .dev-graph/state/receipts/node-r000001-add.json; import-report.json; r3-lineage.json pass checked 2; validate-graph-schema --strict-artifact-readiness exit 0; integrity auditor PASS; R3-import/verification.json PASS"},
+    {"item": "dev-graph 内に同等 elicitation/compile logic の複製が0件である", "status": "achieved", "evidence": "R1-preflight verification: run-dev-graph-system-spec holds only SKILL.md, prompts and build-evaluation-context.py; no elicit/compile code in dev-graph scripts; registration only via C02 build-graph-node.py"}
+  ],
+  "feedback_criteria": [
+    {"id": "IN1", "status": "PASS", "evidence": "loop 1: coverage exit 0, source-citation exit 0, graph-schema --strict-artifact-readiness exit 0"},
+    {"id": "OUT1", "status": "external_pending"}
+  ],
+  "loops": 1,
+  "overall": "PASS"
+}

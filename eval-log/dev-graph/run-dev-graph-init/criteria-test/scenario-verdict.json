@@ -4,10 +4,10 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-init",
     "component_id": "C01",
-    "skill_md_sha256": "03c93563a963879f379dd75e2d2e4dc03f983746fbba56c1a8e3b4133e834808"
+    "skill_md_sha256": "3580eb96c28513d6bffadfa58c052e85ee6c822651b72fc713ed54c5a9d43995"
   },
   "verdict": "PASS",
-  "reviewer": "/root/codex_acceptance_contract（現source/原証拠を独立照合。旧長文観測はiteration4/canonical-originals/positive-refreshの原bytesへ保持）",
+  "reviewer": "fresh-receipt-evaluator-run-dev-graph-init-r44-20261115",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -26,13 +26,14 @@
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.json",
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-init/scenario-verdict.json"
       ],
-      "observed": "現行初期化のschema事前検査をsourceで確認し、invalid configが書込前に停止する製品テストを今回再実行した。新実走の初回C11も違反0。過去のscratch検査を今回の実行として扱わない。"
+      "observed": "現行初期化のschema事前検査をsourceで確認し、invalid configが書込前に停止する製品テストを今回再実行した。新実走の初回C11も違反0。過去のscratch検査を今回の実行として扱わない。\n2026-11-15再評価: SKILL.md差分(+4/-19)はartifact_delivery表記と選択肢(accept-as-is/diagnose)だけでscript契約は不変。test_build_init_scaffold.py 6 passed(rc0)。r44 transcript L40の初回CLIはschema_result violation_count=0、子transcript L72のvalidate-graph-schema.pyはexit 0・違反0。fixture-final/.dev-graph/state/graph.json(sha 27ef0078…)を現行validatorで再検証しrc0・violation_count 0。"
     },
     "OUT1": {
       "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "test_refs": [
+        "eval-log/dev-graph/run-dev-graph-init/live-trial/20261115T1810-r44-init-codex/verdict.json",
         "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/verdict.json",
         "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/goal-evaluation.json",
         "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/transcript.jsonl",
@@ -44,9 +45,9 @@
         "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/fixture-final/eval-log/init-second-cli-result.json",
         "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/fixture-final/eval-log/init-second-independent-audit.json"
       ],
-      "observed": "Codex新原実行を独立再照合。初回の6root/routing/graph/C11、同引数2回目のplanned_changes=0/write0、README/編集template保持、config禁則0・plugin hook sourceの3観測を全回収。native適用・実Read・親子・予算・goal-seek・fresh goalとcurrent/frozen両source対応が一致。複数native入力の試行であり単一入力自走とは主張しない。",
+      "observed": "Codex新原実行を独立再照合。初回の6root/routing/graph/C11、同引数2回目のplanned_changes=0/write0、README/編集template保持、config禁則0・plugin hook sourceの3観測を全回収。native適用・実Read・親子・予算・goal-seek・fresh goalとcurrent/frozen両source対応が一致。複数native入力の試行であり単一入力自走とは主張しない。\n2026-11-15再評価: r44 Codex 0.165 run(20261115T1810-r44-init-codex、4 turn、gate 2回=各native呼出しのaccept-as-is/diagnose)を照合。transcript sha 378f1923…と閉包(codex) 4acb0bb9…がverdictと一致。初回L40はstatus applied・planned_changes 36・write_count 36で6 root・routing policy・graph storeを作成。二回目L184はexit 0・status noop・planned_changes 0・write_count 0・created 0件。fixture-finalを自分で再計算し、管理24件の変化0・追加0、README 101Bとtemplate README 5332Bがsnapshotとbytes一致、config禁則finding 0・hook source plugin、validator rc0。監査の子はfork_turns無しのspawn_agentで親履歴(ordinal 48まで)を継承した非分離fork。二回目CLI値は親が書いたinit-second-result.jsonの写しで、値はL184の実出力と一致。",
       "scenario_id": "C01-OUT1-positive-idempotence-fixture-standard-v2-codex-v1",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20261102T043829-codex-ci4/verdict.json"
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-init/live-trial/20261115T1810-r44-init-codex/verdict.json"
     },
     "OUT2": {
       "status": "PASS",
@@ -60,7 +61,7 @@
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.json",
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-init/scenario-verdict.json"
       ],
-      "observed": "今回、初回scaffold・再実行noop・編集済みtemplate保持の製品テストを実行。新実走でも編集task templateのSHA保持と欠落0を独立auditで照合した。"
+      "observed": "今回、初回scaffold・再実行noop・編集済みtemplate保持の製品テストを実行。新実走でも編集task templateのSHA保持と欠落0を独立auditで照合した。\n2026-11-15再評価: test_build_init_scaffold.py 6 passed(rc0、edited_template_is_keptとrerun_is_noopを含む)。r44 fixture-finalのtemplates 21件はplugin側21件に対し欠落0・追加0で、差分はREADME.mdだけ(利用者編集、sha 6051d2be…、5332Bでsnapshotと一致)。二回目L184のmigration_previewは同ファイルをplugin sha c9137638…と別として報告し、上書きしていない。"
     },
     "OUT3": {
       "status": "PASS",
@@ -75,7 +76,7 @@
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.json",
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-init/scenario-verdict.json"
       ],
-      "observed": "今回、同一symlink harnessのrepo A/B分離、project-root不一致・broken content linkの拒否、harness切断のwrite前停止と修復後実行をlinked製品テストで再確認した。実サービスやhook実配達の成功とは主張しない。"
+      "observed": "今回、同一symlink harnessのrepo A/B分離、project-root不一致・broken content linkの拒否、harness切断のwrite前停止と修復後実行をlinked製品テストで再確認した。実サービスやhook実配達の成功とは主張しない。\n2026-11-15再評価: test_acceptance_gaps_a1.py 19 passed(うちinit_out3系6件)、test_init_preflight_gate.py 3 passed、どちらもrc0。SKILL.md差分はpreflight契約に触れない。r44 init receiptのpreflightはstatus pass・link_state absent。r44 live-trialはrepo A/B分離を実走していない。"
     },
     "OUT4": {
       "status": "PASS",
@@ -90,7 +91,7 @@
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.json",
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-init/scenario-verdict.json"
       ],
-      "observed": "現行exampleのGitHub enabled=false、owner/project number/field mappingと、schemaのadditionalProperties=falseを直接確認した。config不正時の無書込・冪等scaffold製品テストを今回実行し、新実走configのtoken/node-ID/絶対path禁則finding0も照合した。自由文字列すべての秘密判定を保証するものではない。"
+      "observed": "現行exampleのGitHub enabled=false、owner/project number/field mappingと、schemaのadditionalProperties=falseを直接確認した。config不正時の無書込・冪等scaffold製品テストを今回実行し、新実走configのtoken/node-ID/絶対path禁則finding0も照合した。自由文字列すべての秘密判定を保証するものではない。\n2026-11-15再評価: test_build_init_scaffold.py 6 passed(rc0)。exampleのgithub.enabled=false・owner_login/project_number/field_mappingsと、schemaのadditionalProperties=false(topとgithub)を確認。r44 fixture-final/.dev-graph/config.json(sha a5cc3236…)を自分で走査し、絶対path・token・node IDのfinding 0、github.enabled=false、owner_login/project_number/field_mappingsを保持。"
     },
     "OUT5": {
       "status": "PASS",
@@ -104,7 +105,7 @@
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.json",
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-init/scenario-verdict.json"
       ],
-      "observed": "今回、plugin既定からfallbackへの非破壊merge・event各1回/既存hash保持、正確なrollback/再実行noop/漂流拒否、disabled/managed/duplicate/link条件のwrite0を製品テストで確認した。Codex native hookの実発火をこの静的結果で認定しない。"
+      "observed": "今回、plugin既定からfallbackへの非破壊merge・event各1回/既存hash保持、正確なrollback/再実行noop/漂流拒否、disabled/managed/duplicate/link条件のwrite0を製品テストで確認した。Codex native hookの実発火をこの静的結果で認定しない。\n2026-11-15再評価: test_build_project_hook_fallback.py 5 passed(rc0)。r44 configのclaude_hooks.source=plugin、init receiptのhook_source=plugin、fallbackの適用なし。Codex native hookの実発火は今回も認定しない。"
     }
   }
 }

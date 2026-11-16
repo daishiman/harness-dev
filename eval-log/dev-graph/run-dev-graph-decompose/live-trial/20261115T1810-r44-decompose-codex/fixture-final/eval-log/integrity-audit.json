@@ -1,0 +1,194 @@
+{
+  "verdict": "PASS",
+  "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+  "planned_graph_digest": "sha256:9fc821cc42663cf451ca23d005e56f257498687302f5b3ea8b926004a01d5e82",
+  "checks": {
+    "selection_order": {
+      "verdict": "PASS",
+      "evidence": "diagnose選択記録を監査開始前に実Read"
+    },
+    "existing_schema": {
+      "verdict": "PASS",
+      "evidence": {
+        "artifact_readiness": {
+          "enforced": false,
+          "finding_count": 0,
+          "findings": [],
+          "missing_sections": [],
+          "status": "complete"
+        },
+        "graph_validation": {
+          "status": "pass",
+          "violation_count": 0
+        },
+        "implementation_readiness": "complete",
+        "missing_sections": [],
+        "node_readiness": {
+          "complete": 15,
+          "incomplete": 0,
+          "incomplete_nodes": [],
+          "not_applicable": 0,
+          "unknown": 0
+        },
+        "schema": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/providers/plugins/dev-graph/schemas/graph-node.schema.json",
+        "valid": true,
+        "violations": []
+      }
+    },
+    "planned_schema": {
+      "verdict": "PASS",
+      "evidence": {
+        "source": "C02正規preview内部C11",
+        "input_sha256": "a7d966057815767f76cd272fba776c3db189f0ef920ace225876a1de17f7898d",
+        "findings": 0,
+        "note": "C02の完全予定graphを再作成せず正規writerの検証receiptを検査"
+      }
+    },
+    "macro_purity": {
+      "verdict": "PASS",
+      "evidence": {
+        "macro_node_ids": [
+          "ARCH-LT-001",
+          "LT-FEATURE-001",
+          "feature-render-diff",
+          "feature-render-diff-summary"
+        ],
+        "existing_task_count": 13,
+        "new_task_count": 0
+      }
+    },
+    "macro_required_fields": {
+      "verdict": "PASS",
+      "evidence": {
+        "required_keys": [
+          "purpose",
+          "goal",
+          "scope_in",
+          "scope_out",
+          "acceptance",
+          "architecture_refs"
+        ]
+      }
+    },
+    "macro_orphans": {
+      "verdict": "PASS",
+      "evidence": {
+        "edges": [
+          [
+            "feature-render-diff",
+            "LT-FEATURE-001"
+          ],
+          [
+            "feature-render-diff-summary",
+            "feature-render-diff"
+          ]
+        ],
+        "architecture_refs": [
+          [
+            "LT-FEATURE-001",
+            [
+              "ARCH-LT-001"
+            ]
+          ],
+          [
+            "feature-render-diff",
+            [
+              "ARCH-LT-001"
+            ]
+          ],
+          [
+            "feature-render-diff-summary",
+            [
+              "ARCH-LT-001"
+            ]
+          ]
+        ]
+      }
+    },
+    "macro_dag": {
+      "verdict": "PASS",
+      "evidence": {
+        "node_count": 4,
+        "edge_count": 2
+      }
+    },
+    "full_dag": {
+      "verdict": "PASS",
+      "evidence": {
+        "existing_nodes": 15,
+        "planned_nodes": 2
+      }
+    },
+    "path_containment": {
+      "verdict": "PASS",
+      "evidence": {
+        "path_count": 17,
+        "duplicate_path_count": 0
+      }
+    },
+    "exact13_package": {
+      "verdict": "PASS",
+      "evidence": {
+        "count": 13,
+        "phases": [
+          "P01",
+          "P02",
+          "P03",
+          "P04",
+          "P05",
+          "P06",
+          "P07",
+          "P08",
+          "P09",
+          "P10",
+          "P11",
+          "P12",
+          "P13"
+        ],
+        "parent_feature": "LT-FEATURE-001",
+        "feature_package_id": "feature-package/LT-FEATURE-001",
+        "receipt_source_digest": "sha256:d85dfa3dc8b643020a2f9c37d897d34a71e63a6e8198c599794b3cc791aa7e84",
+        "source_digests": [
+          "d85dfa3dc8b643020a2f9c37d897d34a71e63a6e8198c599794b3cc791aa7e84"
+        ]
+      }
+    },
+    "immutable_inputs": {
+      "verdict": "PASS",
+      "evidence": {
+        "baseline_path": ".dev-graph/cache/decompose-input/baseline.json",
+        "checked_file_count": 18
+      }
+    },
+    "digest_binding": {
+      "verdict": "PASS",
+      "evidence": {
+        "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+        "planned_graph_digest": "sha256:9fc821cc42663cf451ca23d005e56f257498687302f5b3ea8b926004a01d5e82",
+        "graph_revision": 3,
+        "planned_revision_before": 3
+      }
+    },
+    "draft_gate": {
+      "verdict": "PASS",
+      "evidence": {
+        "new_nodes": [
+          "feature-render-diff",
+          "feature-render-diff-summary"
+        ],
+        "C28": "planned:true promotion_gate blocked",
+        "plain_C02_add_applied_count": 0
+      }
+    }
+  },
+  "findings": [],
+  "outer_criteria": {
+    "OUT1": "external_pending",
+    "OUT2": "external_pending",
+    "OUT3": "external_pending",
+    "OUT4": "external_pending",
+    "OUT5": "external_pending",
+    "OUT6": "external_pending",
+    "OUT7": "external_pending"
+  }
+}

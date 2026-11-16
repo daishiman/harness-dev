@@ -67,32 +67,17 @@ feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts
       loop_scope: outer
       text: "実 feature-context を入力に end-to-end で R1-elicit→R2-decompose→R3-emit を走らせ、生成された 13 task specs が staging へ atomic promotion される。その後に対象 feature の generation lineage (現行世代の digest 再計算と supersede 済み世代の marker) をゲートし、二回目実行で構造が変化しないことを受入テストが確認する"
       verify_by: live-trial
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/diagnoseを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 
 # System development planning
@@ -103,8 +88,8 @@ dev-graph の1 feature を、確定 system-spec を起点に P01..P13 各1件の
 
 - **入力**: `--feature-id <graph-node-id>` と `--feature-context <repo-relative-json>` (必須)、任意の `--repo-root` と `--config`。`init` は caller repository の layout だけを用意する。
 - **出力 (pre-choice)**: staging の exact-13 package (`feature-package.json`・`task-specs/phase-01..13.md`・`workstream-inventory.json`・`task-graph.json`・`system-build-handoff.json`・`staging-manifest.json`)。C12 deterministic validation を通した path・digest・開き方を示す。
-- **出力 (light/standard/detailed 選択後)**: 同じ canonical digest を再検証した atomic promotion の receipt・registration manifest・feature 別 current pointer と、best-effort の `plan-structure-report.html`・`task-specs.html`。
-- **完了条件 (light/standard/detailed 選択後)**: C12 deterministic validation と fork evaluator C1..C4 が同一 canonical digest で PASS し、C11 の atomic promotion receipt が発行され、二回目実行で構造が変化しない。加えて対象 feature だけに scope した `validate-generation-lineage.py --repo-root <repo-root> --package <package-slug>` (書込なし) が exit 0 であること、すなわち現行世代の実バイトが pointer/receipt の digest と一致し、supersede 済み世代があればそれが byte-for-byte 不変で現行世代を指す marker を持つことまでを完了条件に含める。`<package-slug>` は C11 が書いた feature 別 current pointer (`<state>/current/<package-slug>.json`) のファイル名で、`feature_package_id` の英数字・`.`・`_`・`-` 以外を `-` に置換した値。marker 欠落は同じ scope の `--write-markers` (欠落時だけ作る create-only) で是正し、書込なしで再確認して完了とする。task projection (`tasks/<parent_feature>/<id>.md`) は本 run が発行した registration request を dev-graph が適用した後に初めて生成されるため、`build-task-projection-rerun.py` は本 run の完了条件に含めない。これは契約 1.3.0 未満で登録済みの projection を移行する別運用であり (`references/feature-execution-package-contract.md` §2.3)、repository 全件の移行・監査と同様に 1 feature run の完了スコープに混ぜない。
+- **出力 (diagnose 選択後)**: 同じ canonical digest を再検証した atomic promotion の receipt・registration manifest・feature 別 current pointer と、best-effort の `plan-structure-report.html`・`task-specs.html`。
+- **完了条件 (diagnose 選択後)**: C12 deterministic validation と fork evaluator C1..C4 が同一 canonical digest で PASS し、C11 の atomic promotion receipt が発行され、二回目実行で構造が変化しない。加えて対象 feature だけに scope した `validate-generation-lineage.py --repo-root <repo-root> --package <package-slug>` (書込なし) が exit 0 であること、すなわち現行世代の実バイトが pointer/receipt の digest と一致し、supersede 済み世代があればそれが byte-for-byte 不変で現行世代を指す marker を持つことまでを完了条件に含める。`<package-slug>` は C11 が書いた feature 別 current pointer (`<state>/current/<package-slug>.json`) のファイル名で、`feature_package_id` の英数字・`.`・`_`・`-` 以外を `-` に置換した値。marker 欠落は同じ scope の `--write-markers` (欠落時だけ作る create-only) で是正し、書込なしで再確認して完了とする。task projection (`tasks/<parent_feature>/<id>.md`) は本 run が発行した registration request を dev-graph が適用した後に初めて生成されるため、`build-task-projection-rerun.py` は本 run の完了条件に含めない。これは契約 1.3.0 未満で登録済みの projection を移行する別運用であり (`references/feature-execution-package-contract.md` §2.3)、repository 全件の移行・監査と同様に 1 feature run の完了スコープに混ぜない。
 - **禁則**: 1 run で2つ以上の feature を扱わない。14件目の task と別の13 phase 文書を作らない。staging lock の JSON を C13 以外から作成・書換・削除しない。途中で失敗しても published/current の旧世代を壊さない。
 
 ## Runtime root contract
@@ -119,7 +104,7 @@ dev-graph の1 feature を、確定 system-spec を起点に P01..P13 各1件の
 
 - caller repository の解決と全 path 検査は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/resolve-project-context.py` に一元化する。`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` は code/assets の位置決めだけに使い、caller の文書・状態の authority にはしない。
 - 1 run は1 `parent_feature` のみを扱い、P01..P13 各1件の exact 13 executable tasks を生成する。別の13 phase 文書と14件目は生成しない。
-- C08 readiness、C14 handoff producer、C12 deterministic validationが一致したactual exact-13 packageをusable draftとして書き出し、path/digest/開き方を先に提示する。fork evaluator C1..C4はlight/standard/detailed選択後だけ起動し、初回提示を待たせない。post-choiceのfinal promotion/publishは同じcanonical digestを再検証してから行う。
+- C08 readiness、C14 handoff producer、C12 deterministic validationが一致したactual exact-13 packageをusable draftとして書き出し、path/digest/開き方を先に提示する。fork evaluator C1..C4はdiagnose選択後だけ起動し、初回提示を待たせない。post-choiceのfinal promotion/publishは同じcanonical digestを再検証してから行う。
 - staging lock は C13 `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/manage-system-plan-lock.py` だけが生成・更新・解放する。`repository_id/run_id/session_owner/feature_id/feature_digest/acquired_at/heartbeat_at/expires_at` を束縛し、開始時に `acquire`、各動的計画反復に `renew`、成否にかかわらず終了処理で `release` を実行する。他 component は lock JSON を直接作成・書換・削除しない。
 - `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/hooks/guard-implementation-readiness.py` は run 識別 env に依存せず repository-local canonical lock を自己発見し、malformed same-repository lock を fail-closed 拒否し、`expires_at` 超過 lock は C13 と同じ audit receipt 規則で cleanup する。
 
@@ -133,7 +118,7 @@ missing config keys/directories だけを作成し、既存値・docs/specs/task
 
 `--feature-id` と `--feature-context` は必須。feature context は caller repository 相対 JSON で、`graph_node_id`, `artifact_kind=feature`, `purpose`, `goal`, `scope_in`, `scope_out`, `acceptance`, `architecture_refs`, `updated_at` を持つ。C09 が realpath containment を検証し、JSON の `graph_node_id` と `--feature-id` が一致しなければ staging 作成前に停止する。absolute path、`..`、root 外 symlink、別 repository の context は拒否する。
 
-pre-choiceではmain contextがexact-13 packageの最小usable draftを1回生成し、C12 deterministic validationを通してpath/digestを提示する。以下の動的計画・fork evaluator・反復・promotionは利用者がlight/standard/detailedを選んだ後だけ開始する。
+pre-choiceではmain contextがexact-13 packageの最小usable draftを1回生成し、C12 deterministic validationを通してpath/digestを提示する。以下の動的計画・fork evaluator・反復・promotionは利用者がdiagnoseを選んだ後だけ開始する。
 
 実装を始める前に、外側ループの `purpose`（なぜ行うか）/`background`（どの経緯・制約か）/`goal`（何をもって完了か）を goal-spec に固定する。各 P01..P13 は portable 契約 `system-task-goal-seek/v1` の内側ループとして、汎用実行 prompt・task goal・rubric・前周の feedback を入力に実行し、独立評価の `rubric verdict=PASS` まで修正と再評価を反復する。反復上限で PASS に届かなければ fail-closed で停止する。P13 は実行結果・判断・改善点を確定 system spec と architecture へ書き戻し、次回の外側ループへ引き継ぐ。
 
@@ -154,7 +139,7 @@ pre-choiceではmain contextがexact-13 packageの最小usable draftを1回生�
 
 ## Failure handling
 
-light/standard/detailed選択後だけ `component-inventory.json` の `goal_seek.max_loops=5` を有効化する。5周で未達なら自動続行せず findings と staging path を報告する。accept-as-isではこの周回を0回のまま終了する。途中失敗時も published/current は旧世代を維持する。発見した独立作業は package に追加せず follow-up feature candidate として返す。
+diagnose選択後だけ `component-inventory.json` の `goal_seek.max_loops=5` を有効化する。5周で未達なら自動続行せず findings と staging path を報告する。accept-as-isではこの周回を0回のまま終了する。途中失敗時も published/current は旧世代を維持する。発見した独立作業は package に追加せず follow-up feature candidate として返す。
 
 ## Gotchas
 
@@ -163,4 +148,4 @@ light/standard/detailed選択後だけ `component-inventory.json` の `goal_seek
 - **lock は C13 だけが触る**: 開始時の `acquire`、各反復の `renew`、成否にかかわらない終了時の `release` を `manage-system-plan-lock.py` で行う。lock JSON を手で書き換えて形が崩れると、guard hook が malformed lock として fail-closed で拒否する。
 - **兄弟 plugin を `${PLUGIN_ROOT}/..` で探さない**: install 先では `..` の先が同じ plugin の別 version 群になる。harness-creator の reporter は `extract-plugin-root.py` で解決する。
 - **reporter に `--goal-spec` を渡し忘れない**: 渡さないと `plan-structure-report.html` の価値セクションが警告なしに欠ける。
-- **accept-as-is は周回を回さない**: `goal_seek.max_loops=5` が有効になるのは light/standard/detailed を選んだ後だけで、5周で未達なら自動続行せず findings と staging path を返す。
+- **accept-as-is は周回を回さない**: `goal_seek.max_loops=5` が有効になるのは diagnose を選んだ後だけで、5周で未達なら自動続行せず findings と staging path を返す。

@@ -1,0 +1,124 @@
+{
+  "schema_version": 1,
+  "beads_id": "harness-esj6",
+  "graph_node_id": "task-remaining-publication",
+  "impact": "あり",
+  "judgment": "run予算・cache節Read・検証再利用・artifact delivery選択/guard・runtime保留・profile/context境界・証跡鮮度の仕様と依存に影響。未公開実装を最新mainへ統合し7群を正規5文書へ反映。",
+  "no_impact": [
+    {
+      "area": "業務データ/API/DB/認証の提供方式",
+      "reason": "新たな業務API/DB/認証方式は追加せず、生成/評価/配布の開発支援契約を改善する。guardの秘密鍵はcheckout固有へ分離し旧キー削除を公開する。"
+    },
+    {
+      "area": "通常pluginの追加LLM評価・全repo走査",
+      "reason": "通常起動へ追加しない。YAMLは必要節だけReadし、byte一致証拠と既存レビューの再利用を保持。"
+    }
+  ],
+  "flow": {
+    "writer": "dev-graph C02 build-graph-node.py",
+    "operation": "add preview/apply r26→27",
+    "receipt": ".dev-graph/state/receipts/node-r000027-add.json",
+    "existing_nodes_unchanged": 25,
+    "new_nodes": 5,
+    "completion": "draft/pending/manual"
+  },
+  "documents": [
+    "specs/remaining-publication.md",
+    "architecture/remaining-publication.md",
+    "features/remaining-publication.md",
+    "docs/remaining-publication.md",
+    "tasks/remaining-publication.md"
+  ],
+  "source_commit": "1bf6fa8f9b19129c40b265109b1a5a6b760ca80a",
+  "source_status_paths": 2284,
+  "source_manifest": "docs/remaining-publication/manifest.json",
+  "quality_gates": "system-spec/remaining-publication/quality-gates.json",
+  "normalization": "docs/remaining-publication/source-normalization.json",
+  "privacy_receipt": "docs/remaining-publication/privacy/transcript-sanitization-receipt.json",
+  "related_task_policy": "harness-s7d等の既存残課題や旧live受入れをdoneへ昇格しない。今回harness-esj6は全残存公開の範囲。",
+  "evidence": [
+    {
+      "path": "specs/remaining-publication.md",
+      "sha256": "861951e81a0521f94ba00b3e8d8301f2cf8f711a906f8afcb2104b848ae0983f"
+    },
+    {
+      "path": "architecture/remaining-publication.md",
+      "sha256": "e3b7f6998727b7022edabb03ba8afeb55ec78a5dcd136e7c6d4789b48e1a4a11"
+    },
+    {
+      "path": "features/remaining-publication.md",
+      "sha256": "5c535607f92f1db59ee32192f4e63ccfb65b8de62d7c711f2b5513407eb1d261"
+    },
+    {
+      "path": "docs/remaining-publication.md",
+      "sha256": "1539bd0efd5d859a473f86dbbd1134b08a3fa8f1424fc11053cad0fe5b96495d"
+    },
+    {
+      "path": "tasks/remaining-publication.md",
+      "sha256": "e189d267ced5471a2c3269855ec57293162c1df232c01307cbfc4a988db22792"
+    },
+    {
+      "path": ".dev-graph/state/graph.json",
+      "sha256": "6060fd3364e14b773e04703abefbaf3a3bbeb3c64747162b288b1ef98bf7d21f"
+    },
+    {
+      "path": ".dev-graph/state/receipts/node-r000027-add.json",
+      "sha256": "2d811399b309427845481e05ca897206ceaf2386d2a3229425ab85e7b3d4f550"
+    },
+    {
+      "path": "docs/remaining-publication/source-normalization.json",
+      "sha256": "234d397f31f59306016be8eadbece63034715b2bb787ef3ddf2579d4211d936d"
+    },
+    {
+      "path": "docs/remaining-publication/privacy/transcript-sanitization-receipt.json",
+      "sha256": "071166713adb0b066acc6cc545b56337986248803f59e439acec1a519c4ed9b1"
+    },
+    {
+      "path": "system-spec/remaining-publication/quality-gates.json",
+      "sha256": "84b5bc81640de16c6790efebc97ad877b4997878a2a18cfb84a2a11a16875569"
+    },
+    {
+      "path": "docs/remaining-publication/integration-code-review.json",
+      "sha256": "e5f27c3e0a5c241b496ef071000842c81e8e557d8b5bc5ff60216b11e6de32b3"
+    },
+    {
+      "path": "docs/remaining-publication/history-join.json",
+      "sha256": "d97a7f91927d1303aaab15f851eb0445db78d4d06849587814ab8ca3d6a1cf36"
+    },
+    {
+      "path": "docs/remaining-publication/checks/governance-final.json",
+      "sha256": "3d4ee3d565ad3909a71ba9aeb243d703048935f287ce5276df03e0aa728a7e8c"
+    },
+    {
+      "path": ".claude/changelog/governance-log.jsonl",
+      "sha256": "a6d515cb6dafffab3a39d11f287b8416c16e8b64d241059a1e0bf5da0ce31b51"
+    },
+    {
+      "path": ".dev-graph/state/receipts/node-r000028-update.json",
+      "sha256": "7e399b78b2f9e88d305407cb01480e33580578a983ac4e12816930abb3559ea4"
+    },
+    {
+      "path": "docs/remaining-publication/checks/ci-history-availability.json",
+      "sha256": "e198743470108ff94f57e352ffe920b00ac3be34d4ee0eb844e6611e07c38fbf"
+    },
+    {
+      "path": "docs/remaining-publication/checks/ci-native-target-tests.log",
+      "sha256": "3e15c1ae1c3e9703c6197a1c3d32c3ffee469c116fdb42a2847de676c322b3cf"
+    },
+    {
+      "path": "docs/remaining-publication/checks/ci-checkout-tests.log",
+      "sha256": "db642d347e992ce6165864a2d7bc81335813b1ff4b913e60d28547404f005500"
+    }
+  ],
+  "source_history_ref": "docs/remaining-publication/history-join.json",
+  "governance_proposal": "PROP-2026-11-16-ESJ6-REMAINING-VERSION-P1",
+  "ci_history_impact": {
+    "judgment": "CI取得前提への影響あり。製品機能/API/DB/認証/通常起動のLLM予算には変更なし。過去証跡の受領commit照合という既存検証契約をCIでも成立させる。",
+    "writer_receipt": ".dev-graph/state/receipts/node-r000028-update.json",
+    "updated_docs": [
+      "architecture/remaining-publication.md",
+      "tasks/remaining-publication.md"
+    ],
+    "revision": 28
+  }
+}

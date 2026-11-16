@@ -9,8 +9,10 @@ effect: none
 owner: team-platform
 version: 0.3.0
 since: 2026-05-24
-source: doc/knowledge-loop/
+source: plugins/harness-creator/skills/run-build-skill/schemas/knowledge-loop.schema.json
 source-tier: internal
+last-audited: 2026-11-15
+audit-trigger: source-update
 allowed-tools: [Read, Grep]
 responsibility_refs:
   - prompts/R1-search-summarize.md
@@ -20,14 +22,16 @@ responsibility_refs:
 
 ## Purpose & Output Contract
 
-生成スキルに `knowledge/` を追加する際の設計参照。構築編 (パターン選択・構造・フィールド・品質ルーブリック) と運用編 (検索・ライフサイクル・フィードバック) の 2 リファレンスを提供し、Loop A (生成物側) と Loop B (メタ側) を同一機構 SSOT で配線する。
+生成スキルに `knowledge/` を追加する際の設計参照。構築編 (パターン選択・構造・フィールド・品質ルーブリック) と運用編 (検索・ライフサイクル・フィードバック)、runtime 編 2 本 (外部知能の境界と通常 runtime の契約) の 4 リファレンスを提供し、Loop A (生成物側) と Loop B (メタ側) を同一機構 SSOT で配線する。
+
+正本はこの skill の外にある。形は `run-build-skill/schemas/knowledge-loop.schema.json`、検査は `run-build-skill/scripts/lint-knowledge-loop.py` (KL-001〜008)、雛形は `run-build-skill/templates/knowledge-skeleton/`、runtime engine は `skill-governance-adapters` の `build-external-intelligence-runtime.py`。この skill の文書が正本と食い違ったら正本に従う。
 
 **入力**: なし (Read-only 参照型)
 **出力**: 構築・検索ライフサイクル・外部知能境界の該当節と、生成スキルへ展開する 5 スクリプトのパス
 
 ## 参照内容
 
-2つのリファレンスで構成される。
+4つのリファレンスで構成される。
 
 | リファレンス | 内容 |
 |---|---|
@@ -40,7 +44,7 @@ responsibility_refs:
 
 ### 同梱スクリプト (雛形 → 生成スキルへ展開)
 
-生成スキルの `scripts/` には5本を同梱する (KL-003/KL-004/KL-008 で検証):
+生成スキルの `scripts/` には5本を同梱する。lint が実在を確かめるのは 4 本: `search_knowledge.py` (KL-003, error)・`record_usage.py` (KL-004, error)・`add_entry.py` (KL-006, warn)・`build-external-intelligence.py` (KL-008。`contract_version: 1` のとき正本との SHA-256 一致まで)。`build_index.py` を確かめる KL は無い:
 
 - `search_knowledge.py`: Stage1+Stage2 検索
 - `build_index.py`: インデックス整合性検証・自動修正

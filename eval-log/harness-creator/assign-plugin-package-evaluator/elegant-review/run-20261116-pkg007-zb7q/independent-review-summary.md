@@ -1,0 +1,15 @@
+# APE 独立再評価
+
+今回承認されたPKG007のscope・機械化・契約整理の限定差分を1回評価した。C1〜C5はPASS、新規指摘0件。
+
+旧INCOMPLETEと旧rubricは independent-review-history/before-authorized-pkg007-scope に原本byteで保存した。前回runの上限は変更せず、今回のユーザー承認を起点とする別の限定再評価として履歴を残した。
+
+前回30思考観測と既存199件の検証ログを再利用。新しい30思考分析やlive試行を行ったとは申告しない。
+
+scopeは明示script_refsとroot scripts。catalog/36章とSKILL/R1の境界が一致し、実行規則の正本はcheck_pkg_007。本文からの手動PKG007再定義はなく、通常起動へ追加検査を持ち込まない。
+
+rubricは機械100/80、high違反0、19/20採点、pending BD-004のみ独立PASS判断し、scriptでrubric verdictを生成した。eleganceはこの独立意味評価から新規生成した。SHA付替えはしていない。
+
+print-targetの評価前後は完全一致。skill SHA: 4223a15837e5b3400560be61b43909ea1a5f4958ecfdf89d01424b8a9b54b57c、dir digest: b02da22c3670c0fcb24b93f149f58b2eea75ac7093d744c8919d72f4b085bd06。
+
+この判定は他の*_refs/本文の実行属性、実走受入れ、releaseを保証しない。詳細と証拠hashはindependent-review-summary.jsonを参照。

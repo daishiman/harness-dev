@@ -1,0 +1,16 @@
+{
+  "policy_id": "artifact-delivery-v1",
+  "skill": "dev-graph:run-dev-graph-node",
+  "verb": "add",
+  "events": [
+    {"state": "artifact_created", "writer": "plugins/dev-graph/scripts/build-graph-node.py add", "input": ".dev-graph/cache/inputs/system-spec-import-apply.json", "receipt": ".dev-graph/state/receipts/node-r000001-add.json", "graph_revision_before": 0, "graph_revision_after": 1, "graph_digest_after": "sha256:893011d98c3cfea6552c050cb69024a73f55471c1044a9fffc8dd064133caaf6", "node_ids": ["spec-billing-audit-system", "arch-billing-audit-system"], "preceded_by_dry_run": "eval-log/run-dev-graph-node-dryrun.json"},
+    {"state": "minimum_guard_pass", "guards": ["parse_open", "secret", "irreversible", "corrupt"], "pre_write_validation": {"validator": "validate-graph-schema.py", "findings": 0}},
+    {"state": "artifact_presented", "artifacts": [
+      {"path": "specs/billing-audit-system.md", "sha256": "9a1f661e57bcb32a5ff434da4161deb2d47761c4dabb14a1ccaa5eca2dce9648", "open_with": "Read / markdown viewer"},
+      {"path": "architecture/billing-audit-system.md", "sha256": "559906557e7ae114206ede9ffd0c16cf5d3ed1b7f4ac80874f1cca79f84e4a4c", "open_with": "Read / markdown viewer"},
+      {"path": ".dev-graph/state/receipts/node-r000001-add.json", "sha256": "56dabd6266aac056ec290454de7d34963cb208d0c229a9e06a8b67755df02358", "open_with": "python3 -m json.tool <path>"}]},
+    {"state": "user_choice_recorded", "choice": "diagnose", "source": "fixture pre-answered contract (CLAUDE.local.md / task.md); not a repo or external-account approval"},
+    {"state": "semantic_evaluator_started"}
+  ],
+  "improvement_depth": null
+}

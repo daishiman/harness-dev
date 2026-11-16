@@ -1,0 +1,1403 @@
+{
+  "version": 1,
+  "target": {
+    "type": "custom",
+    "path": "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/harness-creator/skills/assign-plugin-package-evaluator",
+    "reviewed_at": "2026-11-16T02:37:00Z"
+  },
+  "loop_count": 0,
+  "run_status": "incomplete",
+  "paradigm_findings": [
+    {
+      "paradigm_id": 1,
+      "paradigm_name": "critical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "catalogは参照元を未列挙。SKILLはscript_refsを具体化するが対象集合の合意が必要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "catalogは参照元を未列挙。SKILLはscript_refsを具体化するが対象集合の合意が必要。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0001",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "catalogは参照元を未列挙。SKILLはscript_refsを具体化するが対象集合の合意が必要。",
+          "recommended_intervention": "担当分析結果に基づき最小修正し独立再検証する。配布構造の変更は方針回答後に適用。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/harness-creator/skills/assign-plugin-package-evaluator/SKILL.md"
+          }
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 2,
+      "paradigm_name": "deduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "root直下走査ではsymlink実体のplugin内包含を検査せず外向き参照を通す。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "root直下走査ではsymlink実体のplugin内包含を検査せず外向き参照を通す。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0002",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "root直下走査ではsymlink実体のplugin内包含を検査せず外向き参照を通す。",
+          "recommended_intervention": "担当分析結果に基づき最小修正し独立再検証する。配布構造の変更は方針回答後に適用。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py"
+          }
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 3,
+      "paradigm_name": "induction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "既存142テストは成功。参照宣言・優先順位・broken symlinkの回帰テストは無い。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 4,
+      "paradigm_name": "abduction",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "import専用とshebangは併存する。用途だけで明示script_refsを免除しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 5,
+      "paradigm_name": "vertical",
+      "category": "A-logical",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "第一候補が不正な場合のfallbackを固定し、後の有効候補で隠さない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 6,
+      "paradigm_name": "decomposition",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "catalogの+xビットとos.access(X_OK)は判定対象が異なる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "FAIL",
+          "evidence": [
+            "catalogの+xビットとos.access(X_OK)は判定対象が異なる。"
+          ],
+          "violation_count": 1
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0006",
+          "condition": "C3",
+          "severity": "medium",
+          "bucket": "other",
+          "description": "catalogの+xビットとos.access(X_OK)は判定対象が異なる。",
+          "recommended_intervention": "担当分析結果に基づき最小修正し独立再検証する。配布構造の変更は方針回答後に適用。",
+          "condition_signal": "inconsistency",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py"
+          }
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 7,
+      "paradigm_name": "mece",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "明示参照とroot走査は和集合。同一実体の重複を集約する必要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 8,
+      "paradigm_name": "two-axis",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "明示/自由記述と配布内/外の2軸で責務を分離する。009の許可は007の免除ではない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 9,
+      "paradigm_name": "process",
+      "category": "B-structural",
+      "agent": "elegant-logical-structural-analyst",
+      "observations": [
+        "不正YAMLや型の崩れを参照なし扱いしない。入力読込不能と契約違反を区別する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 10,
+      "paradigm_name": "meta",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "現行は機械と評価者の分担が明文化され、root走査だけが直ちに契約矛盾とはいえない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 11,
+      "paradigm_name": "abstraction",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "宣言抽出・候補解決・配布内包含・実行属性の4責務へ分解する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 12,
+      "paradigm_name": "double-loop",
+      "category": "C-meta",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "SKILLの単発採点とR1の反復指示が相反し、反復上限の参照先も無い。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "SKILLの単発採点とR1の反復指示が相反し、反復上限の参照先も無い。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0012",
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "other",
+          "description": "SKILLの単発採点とR1の反復指示が相反し、反復上限の参照先も無い。",
+          "recommended_intervention": "担当分析結果に基づき最小修正し独立再検証する。配布構造の変更は方針回答後に適用。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/harness-creator/skills/assign-plugin-package-evaluator/prompts/R1-run-pkg-check.md"
+          }
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 13,
+      "paradigm_name": "brainstorming",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "代替6案:現行維持、明示refs機械化、型付きrefs、隔離配布検査、全文候補lint、期限付き例外。明示refsを推奨。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 14,
+      "paradigm_name": "lateral",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "存在ファイルの再帰走査だけでは欠けた宣言参照を検出できない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 15,
+      "paradigm_name": "paradox",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "未参照helper除外と参照helperの実行属性必須は意図的な非対称。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 16,
+      "paradigm_name": "analogy",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "依存宣言は配布物の充足と別。参照許可だけではimport依存を解決できない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 17,
+      "paradigm_name": "if",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "外部・skill配下・注釈・helper・symlink等の境界で受入検証を行う。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 18,
+      "paradigm_name": "naive",
+      "category": "D-divergent",
+      "agent": "elegant-meta-divergent-analyst",
+      "observations": [
+        "fork入力がtarget_pluginのみという契約とpkg_ids/optionsを受け付ける契約が相反。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "FAIL",
+          "evidence": [
+            "fork入力がtarget_pluginのみという契約とpkg_ids/optionsを受け付ける契約が相反。"
+          ],
+          "violation_count": 1
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0018",
+          "condition": "C1",
+          "severity": "high",
+          "bucket": "other",
+          "description": "fork入力がtarget_pluginのみという契約とpkg_ids/optionsを受け付ける契約が相反。",
+          "recommended_intervention": "担当分析結果に基づき最小修正し独立再検証する。配布構造の変更は方針回答後に適用。",
+          "condition_signal": "contradiction",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/harness-creator/skills/assign-plugin-package-evaluator/references/evaluator-contract.md"
+          }
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 19,
+      "paradigm_name": "systems",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "submit→notion_config→tenant_runtimeとlint→schema/upsert/全pluginsは別依存系。現物69参照は配布内で未解決。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "FAIL",
+          "evidence": [
+            "submit→notion_config→tenant_runtimeとlint→schema/upsert/全pluginsは別依存系。現物69参照は配布内で未解決。"
+          ],
+          "violation_count": 1
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0019",
+          "condition": "C4",
+          "severity": "high",
+          "bucket": "other",
+          "description": "submit→notion_config→tenant_runtimeとlint→schema/upsert/全pluginsは別依存系。現物69参照は配布内で未解決。",
+          "recommended_intervention": "担当分析結果に基づき最小修正し独立再検証する。配布構造の変更は方針回答後に適用。",
+          "condition_signal": "dependency_break",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/harness-creator/skills/run-skill-feedback/SKILL.md"
+          }
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 20,
+      "paradigm_name": "causal",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "submitをそのままコピーするとROOT/plugins/harness-creator/scriptsを二重に探す。配置とimportを一緒に修復する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 21,
+      "paradigm_name": "causal-loop",
+      "category": "E-system",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "静的属性だけを修復するとimport依存が残る。現物129参照の実行権と3参照のshebang欠落も必要。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "FAIL",
+          "evidence": [
+            "静的属性だけを修復するとimport依存が残る。現物129参照の実行権と3参照のshebang欠落も必要。"
+          ],
+          "violation_count": 1
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [
+        {
+          "id": "F-0021",
+          "condition": "C2",
+          "severity": "high",
+          "bucket": "other",
+          "description": "静的属性だけを修復するとimport依存が残る。現物129参照の実行権と3参照のshebang欠落も必要。",
+          "recommended_intervention": "担当分析結果に基づき最小修正し独立再検証する。配布構造の変更は方針回答後に適用。",
+          "condition_signal": "omission",
+          "location": {
+            "file": "/Users/dm/orca/workspaces/harness/harness-creatorの改善/plugins/harness-creator/skills/run-skill-feedback/SKILL.md"
+          }
+        }
+      ],
+      "score": 0.5
+    },
+    {
+      "paradigm_id": 22,
+      "paradigm_name": "trade-on",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "正本と配布自己完結性は生成コピーと一致検査で両立できる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 23,
+      "paradigm_name": "plus-sum",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "repo全体lintは開発側に残す。利用者のruntimeへ不要なrepo依存を持ち込まない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 24,
+      "paradigm_name": "value-proposition",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "利用者の価値は投入可能性。対話資料・preview・失敗原因の説明を優先する。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 25,
+      "paradigm_name": "strategic",
+      "category": "F-strategic",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "repo-bundled限定と単独配布の提供範囲を明確に分ける。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 26,
+      "paradigm_name": "why",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "動かない→import先不存在→repo配置前提→script_refsだけでコピー範囲決定→参照実在と依存閉包を同一視。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 27,
+      "paradigm_name": "kaizen",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "注釈の無い明示pathは機械へ移し、同じ規則の文章改訂を繰り返さない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 28,
+      "paradigm_name": "hypothesis",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "3本bytecopy仮説は隔離実行でnotion_configのModuleNotFoundErrorとなる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 29,
+      "paradigm_name": "issue",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "PKG適合・repo-only可否・standalone実行可否は別論点。009の許可を007に転用しない。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    },
+    {
+      "paradigm_id": 30,
+      "paradigm_name": "kj",
+      "category": "G-problem",
+      "agent": "elegant-system-strategic-analyst",
+      "observations": [
+        "参照検査、import/root、対話資料、guard/設定、開発lintの5群に分類し、提供元と検証責任を割り当てる。"
+      ],
+      "condition_matrix": {
+        "C1": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C2": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C3": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        },
+        "C4": {
+          "verdict": "PASS",
+          "evidence": [
+            "この思考法の観測範囲では該当条件の独立した追加違反なし。"
+          ],
+          "violation_count": 0
+        }
+      },
+      "issues": [],
+      "score": 1.0
+    }
+  ],
+  "four_conditions": {
+    "C1": {
+      "verdict": "FAIL",
+      "evidence": [
+        "SKILLの単発採点とR1の反復指示が相反し、反復上限の参照先も無い。",
+        "fork入力がtarget_pluginのみという契約とpkg_ids/optionsを受け付ける契約が相反。"
+      ],
+      "violation_count": 2
+    },
+    "C2": {
+      "verdict": "FAIL",
+      "evidence": [
+        "catalogは参照元を未列挙。SKILLはscript_refsを具体化するが対象集合の合意が必要。",
+        "静的属性だけを修復するとimport依存が残る。現物129参照の実行権と3参照のshebang欠落も必要。"
+      ],
+      "violation_count": 2
+    },
+    "C3": {
+      "verdict": "FAIL",
+      "evidence": [
+        "catalogの+xビットとos.access(X_OK)は判定対象が異なる。"
+      ],
+      "violation_count": 1
+    },
+    "C4": {
+      "verdict": "FAIL",
+      "evidence": [
+        "root直下走査ではsymlink実体のplugin内包含を検査せず外向き参照を通す。",
+        "submit→notion_config→tenant_runtimeとlint→schema/upsert/全pluginsは別依存系。現物69参照は配布内で未解決。"
+      ],
+      "violation_count": 2
+    }
+  },
+  "variable_abstraction": [],
+  "thought_method_coverage": {
+    "used": [
+      "critical",
+      "deduction",
+      "induction",
+      "abduction",
+      "vertical",
+      "decomposition",
+      "mece",
+      "two-axis",
+      "process",
+      "meta",
+      "abstraction",
+      "double-loop",
+      "brainstorming",
+      "lateral",
+      "paradox",
+      "analogy",
+      "if",
+      "naive",
+      "systems",
+      "causal",
+      "causal-loop",
+      "trade-on",
+      "plus-sum",
+      "value-proposition",
+      "strategic",
+      "why",
+      "kaizen",
+      "hypothesis",
+      "issue",
+      "kj"
+    ],
+    "skipped_with_reason": [],
+    "total": 30
+  }
+}

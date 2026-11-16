@@ -1368,3 +1368,194 @@ def test_validate_rubric_accepts_partial_overlay_and_repo_rubrics():
     assert RFS.validate_rubric({"rules": [], "threshold": "80"}, "s")["threshold"] == "80"
     for path in sorted(ROOT.glob("plugins/*/skills/*/references/rubric.json")):
         RFS.load_rubric(path)  # 例外を出さない
+
+
+# ============================================================================
+# --write-rubric-verdict: 機械採点 + LLM 判定から rubric-verdict.json を書く (harness-g67 step 2)
+# ============================================================================
+
+from jsonschema import Draft7Validator  # noqa: E402
+
+VERDICT_SCHEMA = ROOT / "plugins/harness-creator/skills/run-build-skill/schemas/content-review-verdict.schema.json"
+CRITERIA_FRONT = (
+    "feedback_contract:\n  max_iterations: 2\n  criteria:\n"
+    "    - id: IN1\n      text: 入力を確かめる\n      verify_by: script\n"
+)
+JUDGED_RULES = [_rule("FM-001", "low"), _rule("BD-004", "high", "body"), _rule("XX-999", "high", "body")]
+
+
+def _verdict_repo(tmp_path, name="run-do-thing", front=CRITERIA_FRONT):
+    """lint-content-review.py --print-target が使える最小の repo (tmp に閉じる)。"""
+    (tmp_path / ".git").mkdir()
+    (tmp_path / "scripts").mkdir()
+    for script in ("lint-content-review.py", "feedback_contract_ssot.py"):
+        (tmp_path / "scripts" / script).write_bytes((ROOT / "scripts" / script).read_bytes())
+    d = tmp_path / "plugins" / "p1" / "skills" / name
+    d.mkdir(parents=True)
+    (d / "SKILL.md").write_text(
+        f"---\nname: {name}\ndescription: Score things. Use when A, or B.\n{front}---"
+        "\n## Purpose & Output Contract\nx\n## Gotchas\ny\n",
+        encoding="utf-8",
+    )
+    out = tmp_path / "eval-log" / "p1" / name / "content-review" / "rubric-verdict.json"
+    return d, out
+
+
+def _judgments(tmp_path, **override):
+    doc = {
+        "reviewer": "assign-skill-design-evaluator",
+        "judgments": {
+            "BD-004": {"verdict": "PASS", "reason": "trigger 2 つが手順 1・2 に対応する"},
+            "XX-999": {"verdict": "PASS", "reason": "本文を読んで満たすと判断した"},
+        },
+        "positive_feedback": ["契約の節が先頭にある"],
+    }
+    doc.update(override)
+    path = tmp_path / "judgments.json"
+    path.write_text(json.dumps(doc, ensure_ascii=False), encoding="utf-8")
+    return path
+
+
+def _write_verdict(monkeypatch, tmp_path, rules=JUDGED_RULES, judgments=None, skill=None):
+    rp = tmp_path / "rubric.json"
+    rp.write_text(json.dumps(_rubric([])), encoding="utf-8")
+    d, out = skill or _verdict_repo(tmp_path)
+    _stub_compose(monkeypatch, _rubric(rules))
+    rc = _run_main(monkeypatch, [
+        "--rubric", str(rp), "--target", str(d),
+        "--write-rubric-verdict", str(out), "--judgments", str(judgments or _judgments(tmp_path)),
+    ])
+    return rc, out
+
+
+def _lint_of(tmp_path):
+    spec = importlib.util.spec_from_file_location("lint_content_review_rfs", tmp_path / "scripts" / "lint-content-review.py")
+    lint = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(lint)
+    return lint
+
+
+def test_rubric_verdict_is_written_from_the_score_and_the_judgments(monkeypatch, tmp_path, capsys):
+    rc, path = _write_verdict(monkeypatch, tmp_path)
+    captured = capsys.readouterr()
+    assert rc == 0, captured.err
+    stdout = json.loads(captured.out)
+    assert stdout["rubric_verdict"] == {"path": str(path), "verdict": "PASS"}
+    verdict = json.loads(path.read_text(encoding="utf-8"))
+    assert verdict["review_kind"] == "rubric" and verdict["verdict"] == "PASS"
+    assert verdict["reviewer"] == "assign-skill-design-evaluator"
+    assert verdict["feedback_loop"]["criteria_evaluated"] == ["IN1"]  # frontmatter の criteria から
+    assert verdict["feedback_loop"]["negative_feedback"] == []
+    assert verdict["feedback_loop"]["next_action"] == "none"
+    assert "BD-004, XX-999" in verdict["notes"] and stdout["rubric_hash"] in verdict["notes"]
+    Draft7Validator(json.loads(VERDICT_SCHEMA.read_text(encoding="utf-8"))).validate(verdict)
+    # target は lint の --print-target と同じで、lint の検査をそのまま通る
+    lint = _lint_of(tmp_path)
+    assert verdict["target"]["skill_md_sha256"] == lint._skill_sha256("p1", "run-do-thing")
+    assert verdict["target"]["skill_dir_digest"] == lint._skill_dir_digest("p1", "run-do-thing")
+    assert lint._check_verdict(path, "p1", "run-do-thing", "rubric-verdict.json") is None
+
+
+def test_every_gap_is_reported_at_once_and_nothing_is_written(monkeypatch, tmp_path, capsys):
+    judgments = _judgments(tmp_path, judgments={"BD-004": {"verdict": "PASS", "reason": "ok"}}, positive_feedback=[])
+    rc, path = _write_verdict(monkeypatch, tmp_path, judgments=judgments)
+    err = capsys.readouterr().err
+    assert rc == 3
+    assert "XX-999: 判定が無い" in err and "positive_feedback が空" in err  # 1 回で全部並ぶ
+    assert not path.exists()
+
+
+@pytest.mark.parametrize("override, message", [
+    ({"judgments": {"BD-004": {"verdict": "PASS", "reason": "ok"}, "XX-999": {"verdict": "PASS", "reason": "ok"},
+                    "FM-001": {"verdict": "PASS", "reason": "上書き"}}}, "FM-001: 機械で採点した rule"),
+    ({"judgments": {"BD-004": {"verdict": "OK", "reason": "ok"}, "XX-999": {"verdict": "PASS", "reason": "ok"}}}, "BD-004: verdict は"),
+    ({"judgments": {"BD-004": {"verdict": "PASS", "reason": " "}, "XX-999": {"verdict": "PASS", "reason": "ok"}}}, "BD-004: reason"),
+    ({"reviewer": "elegant-improvement-executor"}, "独立した評価者"),
+    ({"reviewer": ""}, "reviewer が無い"),
+    ({"criteria_evaluated": ["OUT1"]}, "['IN1'] が無い"),
+    ({"criteria_evaluated": ["IN1", "IN1"]}, "重複の無い"),
+    ({"notes": 3}, "notes は文字列"),
+])
+def test_judgments_that_do_not_close_the_gaps_are_rejected(monkeypatch, tmp_path, capsys, override, message):
+    rc, path = _write_verdict(monkeypatch, tmp_path, judgments=_judgments(tmp_path, **override))
+    assert rc == 3
+    assert message in capsys.readouterr().err
+    assert not path.exists()
+
+
+def test_a_skill_without_criteria_needs_criteria_evaluated(monkeypatch, tmp_path, capsys):
+    skill = _verdict_repo(tmp_path, front="")
+    rc, path = _write_verdict(monkeypatch, tmp_path, skill=skill)
+    assert rc == 3 and "評価した criteria が無い" in capsys.readouterr().err and not path.exists()
+    rc, path = _write_verdict(monkeypatch, tmp_path, skill=skill, judgments=_judgments(tmp_path, criteria_evaluated=["C1"]))
+    assert rc == 0 and json.loads(path.read_text(encoding="utf-8"))["feedback_loop"]["criteria_evaluated"] == ["C1"]
+
+
+def test_a_failed_judgment_makes_the_verdict_fail(monkeypatch, tmp_path, capsys):
+    judgments = _judgments(tmp_path, judgments={
+        "BD-004": {"verdict": "FAIL", "reason": "trigger の 2 つ目に対応する手順が無い"},
+        "XX-999": {"verdict": "PASS", "reason": "ok"},
+    })
+    rc, path = _write_verdict(monkeypatch, tmp_path, judgments=judgments)
+    assert rc == 0
+    verdict = json.loads(path.read_text(encoding="utf-8"))
+    assert verdict["verdict"] == "FAIL"
+    assert verdict["feedback_loop"]["negative_feedback"] == ["[judgment] BD-004: trigger の 2 つ目に対応する手順が無い"]
+    assert verdict["feedback_loop"]["next_action"] == "improve"
+    assert json.loads(capsys.readouterr().out)["rubric_verdict"]["verdict"] == "FAIL"
+
+
+def test_a_machine_high_finding_fails_the_verdict_whatever_the_judgments_say(monkeypatch, tmp_path):
+    skill = _verdict_repo(tmp_path, name="run-do-thing")
+    rules = [_rule("NM-002", "high", "naming"), *JUDGED_RULES[1:]]
+    md = skill[0] / "SKILL.md"
+    md.write_text(md.read_text(encoding="utf-8").replace("name: run-do-thing", "name: do-thing"), encoding="utf-8")
+    rc, path = _write_verdict(monkeypatch, tmp_path, rules=rules, skill=skill)
+    assert rc == 0
+    verdict = json.loads(path.read_text(encoding="utf-8"))
+    assert verdict["verdict"] == "FAIL"
+    assert verdict["feedback_loop"]["negative_feedback"][0].startswith("[high] NM-002: ")
+
+
+def test_a_low_finding_is_listed_but_does_not_fail_the_verdict(monkeypatch, tmp_path):
+    skill = _verdict_repo(tmp_path)
+    md = skill[0] / "SKILL.md"
+    md.write_text(md.read_text(encoding="utf-8").replace("name: run-do-thing", "name: Run-Do-Thing"), encoding="utf-8")
+    rc, path = _write_verdict(monkeypatch, tmp_path, skill=skill)
+    assert rc == 0
+    verdict = json.loads(path.read_text(encoding="utf-8"))
+    assert verdict["verdict"] == "PASS"
+    (finding,) = verdict["feedback_loop"]["negative_feedback"]
+    assert finding.startswith("[low] FM-001: ") and finding.endswith("(frontmatter.name)")
+    assert verdict["findings_summary"]["smell"] == 1
+
+
+def test_a_repo_without_the_lint_is_an_input_error(monkeypatch, tmp_path, capsys):
+    d, path = _verdict_repo(tmp_path)
+    (tmp_path / "scripts" / "lint-content-review.py").unlink()
+    rc, path = _write_verdict(monkeypatch, tmp_path, skill=(d, path))
+    assert rc == 2 and "lint-content-review.py" in capsys.readouterr().err
+    assert not path.exists()
+
+
+def test_unreadable_judgments_are_an_input_error(monkeypatch, tmp_path, capsys):
+    broken = tmp_path / "judgments.json"
+    broken.write_text("{not json", encoding="utf-8")
+    rc, path = _write_verdict(monkeypatch, tmp_path, judgments=broken)
+    assert rc == 2 and "--judgments" in capsys.readouterr().err
+    assert not path.exists()
+
+
+@pytest.mark.parametrize("extra", [
+    ["--write-rubric-verdict", "x/rubric-verdict.json"],
+    ["--judgments", "j.json"],
+    ["--write-rubric-verdict", "x/elegance-verdict.json", "--judgments", "j.json"],
+])
+def test_write_rubric_verdict_argument_errors_exit_2(tmp_path, extra):
+    d, _ = _write_skill_dir(tmp_path)
+    proc = subprocess.run(
+        [sys.executable, str(SCRIPT), "--rubric", str(tmp_path / "r.json"), "--target", str(d), *extra],
+        capture_output=True, text=True,
+    )
+    assert proc.returncode == 2
+    assert not (tmp_path / "x").exists()

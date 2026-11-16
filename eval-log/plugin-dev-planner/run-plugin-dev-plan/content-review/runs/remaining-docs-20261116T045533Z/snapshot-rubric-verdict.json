@@ -1,0 +1,43 @@
+{
+  "target": {
+    "plugin": "plugin-dev-planner",
+    "skill": "run-plugin-dev-plan",
+    "skill_md_sha256": "297130c2276851a6a00ad68922b61bc17bdb57f6e4a13d90dc5fe333a1bfbc35",
+    "reviewed_skill_md_sha256": "297130c2276851a6a00ad68922b61bc17bdb57f6e4a13d90dc5fe333a1bfbc35",
+    "skill_dir_digest": "2b7f24f8adb87ec72de4a80cbd6dccda6fffbcb87a10432a9721fb2282c92448"
+  },
+  "review_kind": "rubric",
+  "verdict": "PASS",
+  "findings_summary": {
+    "contradiction": 0,
+    "omission": 0,
+    "inconsistency": 0,
+    "dependency_break": 0,
+    "smell": 2
+  },
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-15T08:59:22Z",
+  "iterations": 1,
+  "human_review_required": false,
+  "feedback_loop": {
+    "loop_scope": "both",
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
+    ],
+    "positive_feedback": [
+      "frontmatter の goal_seek から plan_dir/spec/progress/intermediate を消しても、置き場は「ゴールシーク配線」の本文 (specfm.plan_output_dir で <PLAN_DIR> を解決し、goal-spec.json・run-plugin-dev-plan-progress.json・run-plugin-dev-plan-intermediate.jsonl を置く) と io-contract §9 の表と .gitignore の 2 行で一意に定まっている。goal-seek-paradigm.md L83 の「path は本文に書き、frontmatter に重ねない」と同じ向き。"
+    ],
+    "negative_feedback": [
+      "[low] FM-005: description first phrase 'プラグイン構想から' is not a verb (frontmatter.description)",
+      "[medium] BD-002: missing '## Gotchas' (or '## つまずきやすい点') (body)"
+    ],
+    "iteration": 1,
+    "iteration_limit": 3,
+    "hook_trigger": "manual",
+    "next_action": "none"
+  },
+  "notes": "render-findings-score が機械採点 (score 87/threshold 80, sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9, scored 23/24) と LLM 判定 1 件 (BD-004) から生成した。"
+}

@@ -1,0 +1,38 @@
+{
+  "responsibility_id": "R1-elicit",
+  "scope": {
+    "selector": "all",
+    "closure": "全graphの全13nodeを対象。subtree絞り込みなし。",
+    "node_ids": [
+      "task-base-schema",
+      "task-base-auth",
+      "task-api-users",
+      "task-api-orders",
+      "task-api-users-cache",
+      "task-cache-warmup",
+      "task-docs-runbook",
+      "task-api-users-e2e",
+      "task-release-gate",
+      "task-draft-idea",
+      "task-unconfirmed-migration",
+      "task-eval-failed-report",
+      "task-readiness-incomplete-ui"
+    ]
+  },
+  "max_parallel": 4,
+  "candidate_kinds": {
+    "features": "feature計画候補の専用ready-set/batch",
+    "tasks": "task実行候補の専用ready-set/batch"
+  },
+  "actual_input_kinds": [
+    "task"
+  ],
+  "binding_modes": [
+    "none"
+  ],
+  "input_graph_ref": ".dev-graph/state/graph.json",
+  "input_graph_sha256": "2ca637a84eda9717b0d61bb684f77d4d83d8cd07d3c55217610b20382dd88a7c",
+  "authority": "read-only",
+  "questions_required": false,
+  "user_constraint": "グラフ改変なし、active lease尊重、外部接続なし"
+}

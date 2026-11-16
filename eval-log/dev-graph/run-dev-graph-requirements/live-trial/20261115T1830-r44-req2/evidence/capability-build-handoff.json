@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "kind": "capability-build/task-graph-handoff",
+  "producer": "dev-graph:run-dev-graph-requirements",
+  "consumer": "capability-build/task-graph build",
+  "status": "emitted",
+  "feature_id": "FEATURE-1",
+  "feature_package_id": "feature-package/feat",
+  "source_digest": "sha256:851f6700701209795092ce6bb141be5100af2099bd3f22a59ed26a00f03a71a4",
+  "validated_digest": "sha256:851f6700701209795092ce6bb141be5100af2099bd3f22a59ed26a00f03a71a4",
+  "graph_snapshot": {
+    "path": ".dev-graph/state/graph.json",
+    "digest": "sha256:63e2c21bb55aada5e6dab7813febe50839db6ca63f128a9443f09ed0ebf23ba5",
+    "graph_revision": 2,
+    "binding_relation": "registered_snapshot",
+    "guard_digest_match": true
+  },
+  "readiness_digest": "sha256:27256fc4056eeef3904be2499615ab815baa70e40be805976982d38c376711cb",
+  "package_reference": {
+    "package_dir": ".dev-graph/plans/generations/feature-package-feat/851f6700701209795092ce6bb141be5100af2099bd3f22a59ed26a00f03a71a4",
+    "system_build_handoff": ".dev-graph/plans/generations/feature-package-feat/851f6700701209795092ce6bb141be5100af2099bd3f22a59ed26a00f03a71a4/system-build-handoff.json",
+    "system_build_handoff_sha256": "987fa53fcfcd7a3b3c2087572ea70ce45365341f5668d2f3152b87e0d1c49aa0",
+    "task_graph": ".dev-graph/plans/generations/feature-package-feat/851f6700701209795092ce6bb141be5100af2099bd3f22a59ed26a00f03a71a4/task-graph.json",
+    "task_graph_sha256": "507a83333140712db23c2d1e775a08c3e31d006b8ef4e6906aa4c10dc08c0a60",
+    "feature_package": ".dev-graph/plans/generations/feature-package-feat/851f6700701209795092ce6bb141be5100af2099bd3f22a59ed26a00f03a71a4/feature-package.json",
+    "feature_package_sha256": "a742d04e376cc63ed6533e62547595d7fad4d46e6853f2bc0d0c4f46cd2201b2",
+    "registration_receipt": ".dev-graph/state/registration-receipts/feat.json",
+    "registration_receipt_sha256": "e4f3edfe14798051d4f768b0d62444aa79177b753f5e7da43d518076c7fef73f",
+    "phase_refs": ["P01", "P02", "P03", "P04", "P05", "P06", "P07", "P08", "P09", "P10", "P11", "P12", "P13"]
+  },
+  "requirements_document": "eval-log/run-dev-graph-requirements/handoff/FEATURE-1-requirements.md",
+  "readiness_matrix": "eval-log/run-dev-graph-requirements/handoff/readiness-matrix.json",
+  "handoff_nodes": ["FEATURE-1", "SYS-P01", "SYS-P02", "SYS-P03", "SYS-P04", "SYS-P05", "SYS-P06", "SYS-P07", "SYS-P08", "SYS-P09", "SYS-P10", "SYS-P11", "SYS-P12", "SYS-P13"],
+  "handoff_count": 14,
+  "missing_sections": [],
+  "gates": {
+    "validate_readiness_binding": {"exit": 0, "status": "pass", "violations": []},
+    "guard_requirements_handoff": {"exit": 0, "status": "handoff", "handoff_count": 14},
+    "validate_system_plan": {"exit": 0, "status": "pass"},
+    "c11": {"status": "pass", "violation_count": 0}
+  },
+  "implementation_boundary": {
+    "implementation_code_generated_by_this_skill": 0,
+    "task_specs_generated_by_this_skill": 0,
+    "implementation_owner": "capability-build/task-graph build"
+  }
+}
