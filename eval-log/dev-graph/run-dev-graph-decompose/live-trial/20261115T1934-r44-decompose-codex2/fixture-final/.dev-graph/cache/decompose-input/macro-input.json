@@ -1,0 +1,66 @@
+{
+  "artifacts": [
+    {
+      "artifact_kind": "feature",
+      "slug": "render-diff",
+      "title": "render結果の前回比較",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "tracker_binding": "beads",
+      "depends_on": [
+        "LT-FEATURE-001"
+      ],
+      "macro": {
+        "purpose": "render間の変化を読み手が把握できるようにする",
+        "goal": "現在と前回のrenderを比較し差分を返す",
+        "scope_in": [
+          "現在と前回のrenderの比較",
+          "追加・削除・変更の識別"
+        ],
+        "scope_out": [
+          "13 phase taskの生成",
+          "render本体の変更"
+        ],
+        "acceptance": [
+          "同一renderでは差分なしを返す",
+          "変更があるrenderでは追加・削除・変更を区別して示す",
+          "前回renderがない場合は比較不能を明示する"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    },
+    {
+      "artifact_kind": "feature",
+      "slug": "render-diff-summary",
+      "title": "render差分の要約",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "tracker_binding": "beads",
+      "depends_on": [
+        "feature-render-diff"
+      ],
+      "macro": {
+        "purpose": "差分の主要な変化を読み手が短時間で理解できるようにする",
+        "goal": "比較featureの差分から根拠のある要約を示す",
+        "scope_in": [
+          "差分の主要変更の要約",
+          "読み手への要約表示"
+        ],
+        "scope_out": [
+          "13 phase taskの生成",
+          "render本体の変更"
+        ],
+        "acceptance": [
+          "差分の主要な追加・削除・変更を要約に含める",
+          "差分なしでは変化なしと示す",
+          "比較不能では要約不能を明示する"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    }
+  ]
+}

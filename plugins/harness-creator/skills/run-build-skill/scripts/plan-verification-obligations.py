@@ -3,7 +3,7 @@
 # name: plan-verification-obligations
 # purpose: 検証 obligation の DAG を LLM を起動せずに解決し、再利用できる PASS 証跡と未解決の claim を分けた plan を出す
 # inputs:
-#   - argv: --contract <json> --evidence-dir <dir>（必須） [--repo-root] [--profile] [--stage] [--max-context-bytes] [--max-llm-batches] [--run-id] [--max-model-actions] [--out <json>]
+#   - argv: --contract <json> --evidence-dir <dir>（必須） [--repo-root] [--profile] [--stage] [--max-context-bytes] [--max-llm-batches] [--run-id] [--max-model-actions] [--state-dir <gate state dir>] [--budget-policy <convergence-policy.json>] [--out <json>]
 # outputs:
 #   - stdout: plan JSON（--out を付けたときは同じ内容をそのファイルにも書く）
 #   - exit: 0=OK / 2=contract を読めない・不正（非 UTF-8、NaN・Infinity・1e999 などの有限でない数を含む）、fingerprint 対象のディレクトリを読めない、--out に書けない
@@ -11,7 +11,7 @@
 # dependencies: []
 # contexts: [C]
 # network: false
-# write-scope: --out の指定先のみ（同じディレクトリの一時ファイルに書いてから置き換える。--evidence-dir は読むだけ）
+# write-scope: --out の指定先（同じディレクトリの一時ファイルに書いてから置き換える）と、--state-dir を渡したときの run の台帳 <state_dir>/run-model-actions-<sha256(run_id)>.json (+ .lock) への検証の予約。--evidence-dir は読むだけ
 # ///
 """Resolve a verification-obligation DAG without launching an LLM.
 
@@ -24,12 +24,22 @@ Fingerprints fail closed: a subdirectory that cannot be read stops the plan with
 exit 2 instead of being skipped, because skipping it would let edits inside it
 reuse a stale PASS receipt.  Directory walks have no size cap; --max-context-bytes
 limits only the LLM context packing.
+
+Receipts fail closed too.  A receipt that cannot be read at all (an evidence
+subdirectory that cannot be listed, a *.json that cannot be opened, is not
+UTF-8, or is not JSON) may be a current FAIL of any obligation, so no PASS is
+reused while one exists: such obligations escalate with
+reason=unreadable-receipt-blocks-reuse and the files are listed in the plan's
+unreadable_receipts.  A receipt that parses but is malformed, and whose
+subject/obligation_id/fingerprint still match, escalates that one obligation
+with reason=contradictory-current-evidence unless it claims PASS.
 """
 
 from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.util
 import json
 import math
 import os
@@ -72,6 +82,9 @@ ACTIVATIONS = {"changed", "always", "exhaustive"}
 DEFAULT_MAX_CONTEXT_BYTES = 120_000
 DEFAULT_INCREMENTAL_LLM_BATCHES = 1
 DEFAULT_INCREMENTAL_MODEL_ACTIONS = 4
+SKILL_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_BUDGET_POLICY_PATH = SKILL_ROOT.parent / "run-elegant-review" / "references" / "convergence-policy.json"
+BUDGET_SCRIPT_PATH = SKILL_ROOT / "scripts" / "validate-run-model-budget.py"
 
 
 class ContractError(ValueError):
@@ -110,17 +123,21 @@ def _safe_rel(raw: str) -> Path:
     return path
 
 
-def _update_with_link_target(digest: Any, link: Path) -> int:
+def _update_with_link_target(digest: Any, link: Path, expanding: frozenset[Path] = frozenset()) -> int:
     """symlink のリンク先の中身を digest に入れ、読んだ byte 数を返す。
 
     リンク先の文字列だけを hash すると、リンク先のファイルを書き換えても fingerprint が変わらず、
-    古い PASS receipt を再利用してしまう。ディレクトリは os.walk(followlinks=False) で辿るので、
-    祖先を指すリンクでも無限に潜らない (中の symlink はリンク先の文字列で hash する)。
+    古い PASS receipt を再利用してしまう。リンク先ディレクトリの中の symlink も同じ理由で、
+    リンク先の中身まで hash する。ディレクトリは os.walk(followlinks=False) で辿り、いま展開している
+    途中のリンク先 (expanding) へ戻るリンクは循環の印だけを入れるので、祖先を指すリンクでも無限に潜らない。
     """
     try:
         real = link.resolve()
     except (OSError, RuntimeError):
         digest.update(b"target-unresolvable\0")
+        return 0
+    if real in expanding:
+        digest.update(b"target-cycle\0")
         return 0
     if real.is_file():
         data = real.read_bytes()
@@ -133,6 +150,7 @@ def _update_with_link_target(digest: Any, link: Path) -> int:
         return 0
     total = 0
     digest.update(b"target-dir\0")
+    nested = expanding | {real}
     for root, dirs, files in os.walk(real, followlinks=False, onerror=_raise_unreadable):
         dirs.sort()
         base = Path(root)
@@ -141,6 +159,7 @@ def _update_with_link_target(digest: Any, link: Path) -> int:
             rel = child.relative_to(real).as_posix()
             if child.is_symlink():
                 digest.update(f"symlink\0{rel}\0{os.readlink(child)}\0".encode("utf-8"))
+                total += _update_with_link_target(digest, child, nested)
             elif child.is_file():
                 data = child.read_bytes()
                 digest.update(f"file\0{rel}\0".encode("utf-8"))
@@ -264,8 +283,12 @@ def _validate_contract(contract: dict) -> list[dict]:
             raise ContractError(f"generative obligation requires model_required boolean: {oid}")
         if item["kind"] == "deterministic":
             checker = item.get("checker")
-            if not isinstance(checker, dict) or not checker.get("id") or not checker.get("argv"):
-                raise ContractError(f"deterministic obligation requires checker.id and checker.argv: {oid}")
+            argv = checker.get("argv") if isinstance(checker, dict) else None
+            # 真偽だけで見ると id=1 や argv="true" (1文字ずつの argv) を通してしまう
+            if (not isinstance(checker, dict) or not isinstance(checker.get("id"), str) or not checker["id"].strip()
+                    or not isinstance(argv, list) or not argv or not all(isinstance(arg, str) for arg in argv)):
+                raise ContractError("deterministic obligation requires checker.id (a non-empty string) and "
+                                    f"checker.argv (a non-empty array of strings): {oid}")
         if item["kind"] == "audit" and item.get("activation") != "exhaustive":
             raise ContractError(f"audit obligation must use activation=exhaustive: {oid}")
         if item["kind"] == "observational" and not _is_one_of(item.get("observation_tier"), {"fork", "live"}):
@@ -306,21 +329,57 @@ def _topological(obligations: list[dict]) -> list[dict]:
     return ordered
 
 
-def _load_receipts(evidence_dir: Path, unreadable: list[dict] | None = None) -> list[tuple[Path, dict]]:
-    """構造が正しい receipt を返す。
+def _describe_unreadable(exc: BaseException) -> str:
+    if isinstance(exc, UnicodeDecodeError):
+        return f"not UTF-8 (byte {exc.start})"
+    if isinstance(exc, json.JSONDecodeError):
+        return f"not JSON: {exc.msg} (line {exc.lineno} column {exc.colno})"
+    if isinstance(exc, RecursionError):
+        return "not JSON: nested too deeply"
+    if isinstance(exc, OSError):
+        return f"{type(exc).__name__}: {exc.strerror or exc}"
+    return f"{type(exc).__name__}: {exc}"
 
-    unreadable を渡すと、subject・obligation_id・fingerprint は読めるが構造が壊れていて、
-    status が PASS でない receipt (finding_codes が整数の FAIL など) をそこに積む。
-    読めない FAIL を捨てて同じ fingerprint の PASS を再利用しないよう、呼び出し側で矛盾として扱う。
+
+def _load_receipts(
+    evidence_dir: Path,
+    malformed: list[dict] | None = None,
+    unreadable: list[dict] | None = None,
+) -> list[tuple[Path, dict]]:
+    """構造が正しい receipt を返す。読めない FAIL を捨てて同じ fingerprint の PASS を再利用しないよう、
+    使えなかった receipt を2種類に分けて呼び出し側へ渡す。
+
+    malformed を渡すと、JSON として読めて subject・obligation_id・fingerprint も読めるが構造が壊れていて、
+    status が PASS でない receipt (finding_codes が整数の FAIL など) をそこに積む。どの obligation の
+    ものか分かるので、呼び出し側はその obligation の矛盾として扱う。
+
+    unreadable を渡すと、中身を読めず、どの obligation のものかも分からないもの (一覧を取れない
+    サブディレクトリ、開けない・非 UTF-8・JSON でない *.json) を {"path", "error"} としてそこに積む。
+    どれの今の FAIL でもありうるので、呼び出し側はどの PASS の再利用も止める。
+    JSON として読めて receipt の形でないもの (識別の key が無い object や配列) は receipt でないとみなして読み飛ばす。
     """
     receipts: list[tuple[Path, dict]] = []
     if not evidence_dir.is_dir():
         return receipts
-    for path in sorted(evidence_dir.rglob("*.json")):
+
+    def note_unreadable(path: Any, exc: BaseException, prefix: str = "") -> None:
+        if unreadable is not None:
+            unreadable.append({"path": str(path), "error": prefix + _describe_unreadable(exc)})
+
+    # rglob と同じ集合 (symlink のディレクトリには潜らない) を os.walk で集める。rglob は一覧を取れない
+    # サブディレクトリを黙って飛ばすので、その中の FAIL を見落として PASS を再利用してしまう
+    paths: list[Path] = []
+    for root, _dirs, files in os.walk(
+        evidence_dir, followlinks=False,
+        onerror=lambda exc: note_unreadable(exc.filename or evidence_dir, exc, "cannot list directory: "),
+    ):
+        paths.extend(Path(root) / name for name in files if name.endswith(".json"))
+    for path in sorted(paths):
         try:
             doc = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError, RecursionError):
-            # 壊れた receipt (非 UTF-8 の UnicodeDecodeError を含む) は読み飛ばし、計画全体を止めない
+        except (OSError, ValueError, RecursionError) as exc:
+            # 計画全体は止めない (exit 2 にしない) が、黙って捨てもしない
+            note_unreadable(path, exc)
             continue
         required = {"schema_version", "subject", "obligation_id", "fingerprint_sha256", "status", "confidence", "verifier", "evidence", "finding_codes", "produced_at"}
         structurally_valid = (
@@ -340,10 +399,10 @@ def _load_receipts(evidence_dir: Path, unreadable: list[dict] | None = None) -> 
         )
         if structurally_valid:
             receipts.append((path, doc))
-        elif (unreadable is not None and isinstance(doc, dict) and doc.get("status") != "PASS"
+        elif (malformed is not None and isinstance(doc, dict) and doc.get("status") != "PASS"
               and all(isinstance(doc.get(key), str)
                       for key in ("subject", "obligation_id", "fingerprint_sha256"))):
-            unreadable.append(doc)
+            malformed.append(doc)
     return receipts
 
 
@@ -406,6 +465,48 @@ def _pack_llm_batches(records: list[dict], snapshots: dict[str, dict], max_conte
     return batches
 
 
+def verification_required(consumed_by_subject: dict[str, int], subject: str, planned: int) -> dict[str, int]:
+    """台帳に「少なくとも」で予約する検証の量: 各 subject の消費に、今の subject のこれからの分を足す。"""
+    required = {name: count for name, count in consumed_by_subject.items() if count > 0}
+    if planned > 0 or subject in required:
+        required[subject] = required.get(subject, 0) + planned
+    return required
+
+
+def _run_budget(state_dir: Path, run_id: str, policy_path: Path, *, subject: str, consumed_by_subject: dict[str, int], verification_planned: int) -> dict:
+    """検証用 model action を run の台帳に予約し、run 全体 (初回診断・改善・検証) の残りを返す。
+
+    予約は validate-run-model-budget.reserve_verification の lock の中で行う。並行する検証どうしが
+    それぞれ lock の外で残りを読んで起動し、合わせて total を超えることはない。足りなければ何も
+    予約せず remaining を負にして返す (呼び出し側が run-model-action-budget-exceeded で block する)。
+    台帳を空と読み違えないよう、無い dir は台帳の置き場所として受け付けない。
+    """
+    if not Path(state_dir).is_dir():
+        raise ContractError(f"--state-dir is not an existing directory (the run ledger lives there): {state_dir}")
+    spec = importlib.util.spec_from_file_location("validate_run_model_budget", BUDGET_SCRIPT_PATH)
+    if spec is None or spec.loader is None:
+        raise ContractError(f"cannot load run model-action budget script: {BUDGET_SCRIPT_PATH}")
+    budget_mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(budget_mod)
+    required = verification_required(consumed_by_subject, subject, verification_planned)
+    try:
+        total = budget_mod.load_budget(Path(policy_path))["total"]
+        status = budget_mod.reserve_verification(Path(state_dir), run_id, required=required, total=total)
+        ledger_consumed, remaining = status["consumed"], status["remaining"]
+    except budget_mod.BudgetExhausted as exc:
+        ledger_consumed, remaining = exc.consumed, exc.total - exc.consumed - exc.requested
+    except budget_mod.BudgetError as exc:
+        raise ContractError(f"run model-action budget: {exc}") from exc
+    return {
+        "total": total,
+        "ledger_consumed": ledger_consumed,
+        "verification_consumed": sum(consumed_by_subject.values()),
+        "verification_planned": verification_planned,
+        "verification_required": required,
+        "remaining": remaining,
+    }
+
+
 def build_plan(
     contract: dict,
     repo_root: Path,
@@ -416,6 +517,8 @@ def build_plan(
     run_id: str | None = None,
     max_model_actions: int | None = None,
     stage: str = DEFAULT_STAGE,
+    run_budget_state_dir: Path | None = None,
+    budget_policy_path: Path = DEFAULT_BUDGET_POLICY_PATH,
 ) -> dict:
     if profile not in PROFILES:
         raise ContractError(f"unsupported profile: {profile}")
@@ -443,8 +546,9 @@ def build_plan(
     repo_root = repo_root.resolve()
     obligations = _topological(_validate_contract(contract))
     subject = str(contract["subject"])
+    malformed_receipts: list[dict] = []
     unreadable_receipts: list[dict] = []
-    receipts = _load_receipts(evidence_dir.resolve(), unreadable_receipts)
+    receipts = _load_receipts(evidence_dir.resolve(), malformed_receipts, unreadable_receipts)
 
     snapshots: dict[str, dict] = {}
     fingerprints: dict[str, str] = {}
@@ -540,15 +644,19 @@ def build_plan(
                 if doc.get("status") == "PASS" and float(doc.get("confidence", 0)) >= minimum_confidence
             ]
             may_reuse = item.get("reuse", True) and item.get("activation") != "always"
-            unreadable_non_pass = any(
+            malformed_non_pass = any(
                 doc.get("subject") == subject
                 and doc.get("obligation_id") == oid
                 and doc.get("fingerprint_sha256") == fingerprint
                 and _receipt_artifacts_current(repo_root, doc)
-                for doc in unreadable_receipts
+                for doc in malformed_receipts
             )
-            if len(statuses) > 1 or (passes and unreadable_non_pass):
+            if len(statuses) > 1 or (passes and malformed_non_pass):
                 record.update(action="escalate", reason="contradictory-current-evidence")
+            elif may_reuse and passes and unreadable_receipts:
+                # 読めない receipt は どの obligation のものか分からず、この obligation の今の FAIL かもしれない。
+                # 再利用はせず、unreadable_receipts を直すか片付けるまで人へ渡す
+                record.update(action="escalate", reason="unreadable-receipt-blocks-reuse")
             elif may_reuse and passes:
                 path, _ = sorted(passes, key=lambda pair: str(pair[0]))[-1]
                 record.update(action="reuse", reason="exact-proof-current", reused_evidence=str(path))
@@ -589,16 +697,19 @@ def build_plan(
         budget_reasons.append("semantic-context-batch-exceeds-byte-budget")
     if effective_max_batches is not None and len(llm_batches) > effective_max_batches:
         budget_reasons.append("semantic-batch-count-exceeds-run-budget")
-    consumed_action_keys = {
-        str(doc.get("model_action_id") or path)
-        for path, doc in receipts
-        if run_id
-        and doc.get("subject") == subject
-        and doc.get("run_id") == run_id
-        and isinstance(doc.get("verifier"), dict)
-        and doc["verifier"].get("kind") in {"llm", "live"}
-    }
-    consumed_model_actions = len(consumed_action_keys)
+    # 予算は run 全体のものなので、同じ run の別の subject の消費も数える。1 つの model action が
+    # 複数の subject の receipt を出したときは、path の順で最初の subject に 1 回だけ付ける。
+    action_subject: dict[str, str] = {}
+    for path, doc in sorted(receipts, key=lambda pair: str(pair[0])):
+        if (
+            run_id
+            and doc.get("run_id") == run_id
+            and isinstance(doc.get("verifier"), dict)
+            and doc["verifier"].get("kind") in {"llm", "live"}
+        ):
+            action_subject.setdefault(str(doc.get("model_action_id") or path), str(doc.get("subject")))
+    consumed_by_subject = dict(sorted(Counter(action_subject.values()).items()))
+    consumed_model_actions = len(action_subject)
     planned_model_actions = (
         sum(
             1
@@ -613,6 +724,14 @@ def build_plan(
         and consumed_model_actions + planned_model_actions > effective_max_model_actions
     ):
         budget_reasons.append("cumulative-model-actions-exceed-run-budget")
+    run_budget = None
+    if run_budget_state_dir is not None:
+        if not run_id:
+            raise ContractError("--state-dir requires --run-id (the run budget ledger is keyed by run_id)")
+        run_budget = _run_budget(run_budget_state_dir, run_id, budget_policy_path, subject=subject,
+                                 consumed_by_subject=consumed_by_subject, verification_planned=planned_model_actions)
+        if run_budget["remaining"] < 0:
+            budget_reasons.append("run-model-action-budget-exceeded")
     pending_draft = sorted(
         record["id"]
         for record in records
@@ -682,6 +801,7 @@ def build_plan(
             "semantic_context_bytes": total_context_bytes,
             "escalations": counts.get("escalate", 0),
             "consumed_model_actions": consumed_model_actions,
+            "consumed_model_actions_by_subject": consumed_by_subject,
             "planned_model_actions": planned_model_actions,
         },
         "budget_gate": {
@@ -690,6 +810,7 @@ def build_plan(
             "max_context_bytes_per_batch": max_context_bytes,
             "max_llm_batches": effective_max_batches,
             "max_model_actions": effective_max_model_actions,
+            "run_budget": run_budget,
             "instruction": "Do not launch model work while blocked; narrow context/contract or obtain an explicit budget override.",
         },
         "llm_batch_count": len(llm_batches),
@@ -697,6 +818,8 @@ def build_plan(
         "generation_queue": [record["id"] for record in records if record["action"] == "generate"],
         "observational_queue": [record["id"] for record in records if record["action"] == "observe"],
         "automation_candidates": automation_candidates,
+        # 中身を読めず どの obligation のものか分からない receipt。1件でもあれば PASS を再利用しない
+        "unreadable_receipts": sorted(unreadable_receipts, key=lambda entry: entry["path"]),
         "obligations": records,
     }
 
@@ -733,6 +856,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--max-llm-batches", type=int)
     parser.add_argument("--run-id")
     parser.add_argument("--max-model-actions", type=int)
+    parser.add_argument("--state-dir", help="build-improvement-gate の --state-dir (実在する dir)。渡すと検証用 model action をその run の台帳に予約し、run 全体の残りを budget_gate.run_budget に出す")
+    parser.add_argument("--budget-policy", default=str(DEFAULT_BUDGET_POLICY_PATH))
     parser.add_argument("--out")
     args = parser.parse_args(argv)
     try:
@@ -749,6 +874,8 @@ def main(argv: list[str] | None = None) -> int:
             args.run_id,
             args.max_model_actions,
             args.stage,
+            Path(args.state_dir) if args.state_dir else None,
+            Path(args.budget_policy),
         )
         rendered = json.dumps(plan, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
         if args.out:

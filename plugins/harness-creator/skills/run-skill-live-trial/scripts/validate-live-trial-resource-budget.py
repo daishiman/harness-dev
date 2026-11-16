@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Validate scenario-bound live-trial budgets and transcript token accounting.
 
 The budget is part of the scenario contract, not an operator-tunable hint.  A

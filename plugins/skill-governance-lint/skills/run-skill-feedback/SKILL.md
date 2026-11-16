@@ -25,29 +25,31 @@ since: 2026-05-25
 version: 0.1.0
 max_loops: 5
 reference_refs:
-  - plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md
-  - plugins/harness-creator/skills/run-skill-feedback/references/notion-submit-contract.md
+  - references/goal-seek-paradigm.md
+  - references/notion-submit-contract.md
+  - references/feedback-to-improvement-runbook.md
+  - references/notion-per-repo-setup.md
 schema_refs:
-  - doc/notion-schema/skill-list.schema.json
-  - doc/notion-schema/improvement-request.schema.json
+  - schemas/skill-list.schema.json
+  - schemas/improvement-request.schema.json
 responsibility_refs:
   - scripts/notion-submit-improvement.py
-  - scripts/lint-feedback-protocol.py
   - workflow-manifest.json
 script_refs:
   - scripts/notion-submit-improvement.py
   - scripts/validate-inline-goal-seek-anchor.py
-  - plugins/harness-creator/scripts/notion_config.py
-  - scripts/lint-feedback-protocol.py
+  - scripts/notion_config.py
+  - scripts/tenant_runtime.py
+  - scripts/extract-plugin-root.py
 source: doc/ClaudeCodeスキルの設計書/
 source-tier: internal
 last-audited: 2026-05-25
 audit-trigger: on-change
 manifest: workflow-manifest.json
 completeness_exempt:
-  - "prompts: 対話手順は doc/notion-schema/skill-list.schema.json#feedback_protocol 正本 (Notion §7 と同一) から本文に展開している (初見実行の自己完結性のため)。整合は scripts/lint-feedback-protocol.py で発火条件と参照経路を検証。prompt-creator の R-id 単位 7 層プロンプトは適用外 (二重定義禁止 [[project_ssot_dedup_mechanism]])。"
+  - "prompts: 対話手順は schemas/skill-list.schema.json#feedback_protocol 正本 (Notion §7 と同一) から本文に展開している (初見実行の自己完結性のため)。整合は workflow-manifest.json#build_validation.lint_feedback_protocol で発火条件と参照経路を検証。prompt-creator の R-id 単位 7 層プロンプトは適用外 (二重定義禁止 [[project_ssot_dedup_mechanism]])。"
 combinators: [with-feedback-contract]
-feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.py)。content-review verdict の criteria_evaluated と突合
+feedback_contract: # per-skill 評価基準。repo の共有定義に従い content-review verdict の criteria_evaluated と突合
   activation_state: semantic_evaluator_started
   max_iterations: 3
   criteria:
@@ -71,33 +73,22 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 利用者発端のフィードバックループが摩擦最小で起動でき収集した構造化要望が improvement-request schema 準拠で時系列ログ性質(重複除去を AI 判定しない)を保つ妥当な対話設計である
       verify_by: evaluator
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 # run-skill-feedback
 
-> **配布注記**: 本 skill の `script_refs` / `schema_refs` は repo-root 配置 (`scripts/`, `doc/notion-schema/`) に依存する。distribution: repo-bundled 前提 (単独配布非対応)。
+> **配布注記**: runtime の script・schema・参照資料は本 skill 内に同梱する。Notion 設定と承認用の skill-governance-adapters は別途必要。repo lint は workflow-manifest.json の build_validation で管理し、通常の投入時には実行しない。
+
+同梱 schema と共有 runtime は正本からの byte 一致コピーで、変更は生成元へ行い配布前に同期する。
 
 ## Purpose & Output Contract
 
+必要な項目だけ確認し、既に示された目的・対象は聞き直さない。references は設定不備・失敗の調査など必要な箇所だけ読む。通常実行に全 plugin 走査、LLM レビュー、配布検査や追加の検査ループを入れない。
+
 利用者が既存スキルに対して「こう直してほしい」と感じた瞬間に発火し、構造化フィードバックを Notion 改善要望 DB へ N:1 relation 付きでプッシュする。スキル一覧の `未対応要望数` rollup が自動更新され、優先度判断シグナルになる。
 
-**責務境界**: 本 skill の責務は「要望の**収集**と優先度シグナル化」まで。収集した要望を実際の改善 (plugin-dev-planner の改善計画 → harness 再構築) へ繋ぐのは**人間ブリッジ** (`plugins/harness-creator/references/feedback-to-improvement-runbook.md` Stage 2-3)。本 skill も `未対応要望数` rollup も改善着手を自動発火しない (fail-open 回避のため Notion は機械 SSOT にしない設計)。
+**責務境界**: 本 skill の責務は「要望の**収集**と優先度シグナル化」まで。収集した要望を実際の改善 (plugin-dev-planner の改善計画 → harness 再構築) へ繋ぐのは**人間ブリッジ** (`references/feedback-to-improvement-runbook.md` Stage 2-3)。本 skill も `未対応要望数` rollup も改善着手を自動発火しない (fail-open 回避のため Notion は機械 SSOT にしない設計)。
 
 **前提**: 利用者はプラグイン名・スキル名を知らない。「何をしようとしていたか」という目的から逆算して対象を同定してから要望を収集する。
 
@@ -108,16 +99,17 @@ artifact_delivery:
 - `runtime_root_policy: host-skill-path` を適用する。
 - Claude Codeでは `CLAUDE_PLUGIN_ROOT` をplugin rootとして使用する。
 - Codexではホストが提示したこの `SKILL.md` のabsolute pathから、plugin manifestを持つ祖先を上方探索して論理 `PLUGIN_ROOT` を解決する。
+- SKILL_ROOT は host が提示する本 SKILL.md の絶対ディレクトリとし、実行 script はその配下から解決する。
 - `cwd` からplugin rootを推測せず、literal placeholderをshellへ渡さない。各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する。
 - `prompts/` 配下はこのowner Skill契約を継承する。
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物またはremote mutation previewをmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方またはpreview receiptを提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはmutationを実行せずhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物またはremote mutation previewをmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方またはpreview receiptを提示してからaccept-as-is/diagnoseを記録する。accept-as-isはmutationを実行せずhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
 
 <!-- external-mutation-guard-cli:v1 -->
 ### Canonical external mutation receipt flow (mandatory)
@@ -155,7 +147,7 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 ## 発火条件 (SSOT)
 
-発火条件・対話項目・状態遷移は `doc/notion-schema/skill-list.schema.json` の `feedback_protocol` を唯一の正本 (SSOT) とする。本 SKILL.md / `scripts/notion-upsert-plugin.py` / Notion スキル一覧ページ本文 §7 の三者は全てこの正本から派生する。整合の保証範囲: 発火条件・参照経路は `scripts/lint-feedback-protocol.py` で機械検証、対話文面の逐語一致は対象外 (正本変更時は本文を手動同期する)。
+発火条件・対話項目・状態遷移は `schemas/skill-list.schema.json` の `feedback_protocol` を唯一の正本 (SSOT) とする。本 SKILL.md / repo 側の Notion 本文 renderer / Notion スキル一覧ページ本文 §7 の三者は全てこの正本から派生する。整合の保証範囲: 発火条件・参照経路は `workflow-manifest.json#build_validation.lint_feedback_protocol` で機械検証、対話文面の逐語一致は対象外 (正本変更時は本文を手動同期する)。
 
 具体的な発火条件 (schema `feedback_protocol.firing_conditions` 抜粋):
 - プラグインを使って「ここが分かりにくい」と感じた
@@ -175,20 +167,20 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 ## Key Rules
 
-1. **SSOT 厳守**: 発火条件・同定フロー・対話項目は `doc/notion-schema/skill-list.schema.json` の `feedback_protocol` を唯一の正本とし、本 SKILL.md / スクリプト / Notion 本文の三者は派生のみ。
+1. **SSOT 厳守**: 発火条件・同定フロー・対話項目は `schemas/skill-list.schema.json` の `feedback_protocol` を唯一の正本とし、本 SKILL.md / スクリプト / Notion 本文の三者は派生のみ。
 2. **目的逆算同定を必ず先行させる**: `plugin` 引数があっても identification_step を省略しない。目的確認と現状仕様の提示を経てから要望収集へ進むこと (孤児・文脈ズレ防止)。
-3. **存在確認は本投入内の fail-closed に委ねる**: 未登録プラグインは `find_plugin_page()` が改善要望ページ作成**前**に exit 2 で止めるため孤児レコードは出ない。**`--dry-run` は引数を印字して return するだけで Notion に触れないので登録確認には使えない** (未登録でも必ず成功する)。exit 2 (未登録) を見たら `run-build-skill --notion-register` を案内して中断。**exit 3 は別事象**で、登録操作では解決しない — token の有効期限・integration の DB 共有・ネットワークを確認させる。切り分けは query か create かではなく**原因が誰の手元にあるか**: exit 2 = 入力が Notion 側の実体と噛み合っていない (未登録・config 不在) ので利用者が直せる、exit 3 = API へ到達/認可できない (401/403/5xx・curl 失敗) ので直せない。**改善要望ページ作成 (`POST /v1/pages`) の失敗も exit 3** に入る。詳細は `references/notion-submit-contract.md` §3-§4。
-4. **token / DB ID は notion-config SSOT 経由**: `plugins/harness-creator/scripts/notion_config.py` が解決順を一元管理する。token は **Keychain 既定** (env `NOTION_TOKEN` は `INTAKE_ALLOW_ENV_TOKEN=1` 明示時のみ)、DB ID は key 別 env (`NOTION_DB_SKILL_LIST` / `NOTION_DB_IMPROVEMENT_REQUEST`) > `.notion-config.json`、config path は env `NOTION_CONFIG_PATH` > repo-root > plugin-root。**CLI 引数で token / DB ID を渡す経路は無い**。token / DB ID をコンテキストに乗せない。詳細は `references/notion-submit-contract.md` §1。
+3. **存在確認は本投入内の fail-closed に委ねる**: 未登録プラグインは `find_plugin_page()` が改善要望ページ作成**前**に exit 2 で止めるため孤児レコードは出ない。**`--dry-run` は引数を印字して return するだけで Notion に触れないので登録確認には使えない** (未登録でも必ず成功する)。exit 2 (未登録) を見たら 開発担当による対象プラグインの Notion 登録を案内して中断。**exit 3 は別事象**で、登録操作では解決しない — token の有効期限・integration の DB 共有・ネットワークを確認させる。切り分けは query か create かではなく**原因が誰の手元にあるか**: exit 2 = 入力が Notion 側の実体と噛み合っていない (未登録・config 不在) ので利用者が直せる、exit 3 = API へ到達/認可できない (401/403/5xx・curl 失敗) ので直せない。**改善要望ページ作成 (`POST /v1/pages`) の失敗も exit 3** に入る。詳細は `references/notion-submit-contract.md` §3-§4。
+4. **token / DB ID は notion-config SSOT 経由**: `scripts/notion_config.py` が解決順を一元管理する。token は **Keychain 既定** (env `NOTION_TOKEN` は `INTAKE_ALLOW_ENV_TOKEN=1` 明示時のみ)、DB ID は key 別 env (`NOTION_DB_SKILL_LIST` / `NOTION_DB_IMPROVEMENT_REQUEST`) > `.notion-config.json`、config path は env `NOTION_CONFIG_PATH` > repo-root > plugin-root。**CLI 引数で token / DB ID を渡す経路は無い**。token / DB ID をコンテキストに乗せない。詳細は `references/notion-submit-contract.md` §1。
 5. **重複除去は人手**: 時系列ログ性質を保つため AI は重複判定せず投入する。
 6. **people 型は UI で人手追加**: API 経由でメール宛指定不可のため起票者/担当者は完了通知時に案内。
 
 ## ゴールシーク実行
 
-固定手順は書かず、ゴール+チェックリストへ向け都度手順を生成・反復する。正本は harness-creator plugin の `skills/run-build-skill/references/goal-seek-paradigm.md` (出典表記)。
+固定手順は書かず、ゴール+チェックリストへ向け都度手順を生成・反復する。必要時の実行方針は references/goal-seek-paradigm.md を参照する。
 
 ### ゴール (Goal)
 
-利用者の「こう直してほしい」要望が、`doc/notion-schema/improvement-request.schema.json` 準拠の構造化フィードバックとして Notion 改善要望 DB にプッシュされ、スキル一覧 DB の `未対応要望数` rollup が更新され、起票完了通知 (ページ URL + 人手追加項目案内) がユーザーに返された状態になっている。
+利用者の「こう直してほしい」要望が、`schemas/improvement-request.schema.json` 準拠の構造化フィードバックとして Notion 改善要望 DB にプッシュされ、スキル一覧 DB の `未対応要望数` rollup が更新され、起票完了通知 (ページ URL + 人手追加項目案内) がユーザーに返された状態になっている。
 
 ### 目的・背景 (Why)
 
@@ -221,7 +213,7 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 ### ゴールシーク検証
 
-毎周回末と完了報告前に、上のルートから絶対 `progress_path` / `intermediate_path` を解決して以下を実行する。validator は生成元 `run-build-skill/templates/goal-seek-runtime/scripts/validate-inline-goal-seek-anchor.py` と byte 一致で同梱される（`lint-vendored-ssot.py` が一致を強制する）。実行時は兄弟プラグインの存在に依存しない。
+毎周回末と完了報告前に、上のルートから絶対 `progress_path` / `intermediate_path` を解決して以下を実行する。validator は生成元と byte 一致で同梱される（配布前の vendored SSOT lint が一致を強制する）。実行時は兄弟プラグインの存在に依存しない。
 
 ```bash
 python3 "$SKILL_ROOT/scripts/validate-inline-goal-seek-anchor.py" "$progress_path" "$intermediate_path"
@@ -243,17 +235,9 @@ python3 "$SKILL_ROOT/scripts/validate-inline-goal-seek-anchor.py" "$progress_pat
 >
 > （例: 契約書を作ろうとしたら途中で止まった / スキルを作ろうとしたら出力がおかしかった）
 
-**Step 2 — 全スキルを収集してマッチング**
+**Step 2 — 登録済み候補から対象を絞る**
 
-Grep ツールで全 SKILL.md の frontmatter を集める (allowed-tools に `Bash(grep *)` は無い。シェルへ落とさない):
-
-- Grep: `pattern="^(name|description):"`, `glob="plugins/*/skills/*/SKILL.md"`, `output_mode="content"`, `-n=true`
-
-> glob を `**/SKILL.md` にしない。ワークスペース全体では 229 件ヒットし、その大半は `.claude/skills/` への projection・`.worktrees/` 配下・plan 生成物で、**同一スキルが別パスで何度も現れる**。候補提示の段で同じ名前が並ぶと利用者は選べない。`plugins/*/skills/*/SKILL.md` に絞っても、量産プラグインへ配備された `run-skill-feedback` のように 1 スキルが複数プラグイン下に現れる正当な重複は残る (実体 94 に対し 116 ヒット) ので、**候補は name で名寄せしてから 1〜3 件に絞る**。
-
-
-
-ユーザーの回答のキーワード（動詞・対象物・症状）とスキルの description を照合し、候補を 1〜3 件に絞る。
+host が提示するスキル名・description と実在する SKILL.md の絶対 path を使う。現在の作業や指定済み対象を優先し、目的に合う候補だけを 1〜3 件に絞る。repo 全体・全 plugin の走査はしない。同名の配布コピーは重複表示せず、host が選んだ実在 path を使う。
 
 **Step 3 — 候補を提示して確認**
 
@@ -265,13 +249,13 @@ Grep ツールで全 SKILL.md の frontmatter を集める (allowed-tools に `B
 > 1. ○○ — 〜〜するためのスキル
 > 2. △△ — 〜〜するためのスキル」
 
-確定したら `plugin` と `skill_name` を内部で設定する。絞れない場合は全スキル一覧を要約して選ばせる。対象プラグインを確定できなければ投入を中断し、Step 1 の追加ヒアリングへ戻る (「不明」名では投入しない)。
+確定したら `plugin` と `skill_name` を内部で設定する。絞れない場合は利用した機能や目的を一つ追加で確認する。対象プラグインを確定できなければ投入を中断し、Step 1 の追加ヒアリングへ戻る (「不明」名では投入しない)。
 
 **Step 4 — 対象スキルの現状仕様を提示**
 
 Read ツールで確定したスキルの SKILL.md を開く (`Bash(cat *)` は allowed-tools に無い):
 
-- Read: `plugins/<plugin>/skills/<skill_name>/SKILL.md` (Read ツールの引数はワークスペース相対で解決する。`${VAR}` は shell 経由でないので展開されず、リテラルのまま渡って必ず失敗する — 変数を書かない)
+- Read: host が示した対象 SKILL.md の実在する絶対 path。repo の `plugins/` 配置を仮定せず、shell の変数表現を Read の引数へ渡さない。
 
 
 Purpose & Output Contract を 2〜3 行に要約してユーザーへ提示:
@@ -296,13 +280,13 @@ Purpose & Output Contract を 2〜3 行に要約してユーザーへ提示:
 
 ```bash
 # 引数の型・必須項目を印字するだけ。Notion へは一切アクセスしない
-python3 ${HARNESS_ROOT:-.}/scripts/notion-submit-improvement.py --plugin <plugin> --dry-run \
+python3 "$SKILL_ROOT/scripts/notion-submit-improvement.py" --plugin <plugin> --dry-run \
   --title "<title>" --type <type> --desire "<desire>"
 ```
 
 **これは登録確認ではない** (未登録プラグインでも必ず成功する)。スキル一覧 DB への登録有無は
 次の本投入が `find_plugin_page()` で判定し、未登録ならページ作成前に exit 2 で止まる。
-その時に `run-build-skill --notion-register` を先に走らせる旨を案内して中断する。
+その時に 開発担当に対象プラグインの Notion 登録を依頼する旨を案内して中断する。
 
 ### 改善要望投入
 
@@ -333,8 +317,8 @@ script は `[CREATED] ... -> <page_id>` を印字する (URL は出さない)。
 ## Additional Resources
 
 - 上流: 利用者の口頭・Slack・PR コメントなど任意の発火源
-- 下流 (人間ブリッジ): スキル一覧 DB の `未対応要望数` rollup は**人間の優先度判断シグナル**。着手要望を改善計画へ橋渡しする手順は `plugins/harness-creator/references/feedback-to-improvement-runbook.md` (E3 人間ブリッジ = Stage 2→3→6)。**本 skill / rollup は改善着手を自動発火せず、`/skill-improve` も Notion / rollup を読まない** (機械の自動 read-back は goal-spec 制約6 で意図的に回避)。
-- スキーマ正本: `doc/notion-schema/improvement-request.schema.json`
+- 下流 (人間ブリッジ): スキル一覧 DB の `未対応要望数` rollup は**人間の優先度判断シグナル**。着手要望を改善計画へ橋渡しする手順は `references/feedback-to-improvement-runbook.md` (E3 人間ブリッジ = Stage 2→3→6)。**本 skill / rollup は改善着手を自動発火せず、`/skill-improve` も Notion / rollup を読まない** (機械の自動 read-back は goal-spec 制約6 で意図的に回避)。
+- スキーマ正本: `schemas/improvement-request.schema.json`
 - 物理スクリプト: `scripts/notion-submit-improvement.py`
-- 設定ローダー: `plugins/harness-creator/scripts/notion_config.py`（token/DB ID 解決 SSOT）
+- 設定ローダー: `scripts/notion_config.py`（token/DB ID 解決 SSOT）
 - 1:1 で生成元を辿りたい場合は `紐づくヒアリングシート` → `Skillヒアリングシート` DB

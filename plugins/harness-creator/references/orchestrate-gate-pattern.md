@@ -5,7 +5,7 @@
 > **read_when** (G9, plugin-level resource-map):
 > - Step 5 / 5.5 / 6 の三段ゲート設計を新規 plugin に展開する時
 > - Gate 間で同一 finding が重複検出された時 (優先順位 A>B>C>D を適用)
-> - 1 ゲートで複数次元採点する設計提案を検出した時 (アンチパターン)
+> - 1 つの verdict に複数次元の合否を混ぜる設計提案を検出した時 (アンチパターン)
 >
 > 正本: `plugins/harness-creator/references/resource-map.yaml#orchestrate-gate-pattern`
 
@@ -51,7 +51,7 @@ Gate D は `run-skill-live-trial` が担い、対象は **behavioral trait (自�
 
 ## アンチパターン
 
-- 1 ゲートで複数次元を採点する (検出粒度と修正粒度が一致しない)
+- 1 つの verdict に複数次元の合否を混ぜる (検出粒度と修正粒度が一致しない)。禁じるのは合否の混合であり、1 つの context が複数次元を読むことではない。incremental の content-review は 1 context で elegance (Gate B) と rubric (Gate C) を読むが、合否は `elegance-verdict.json` と `rubric-verdict.json` に分けて出す。rubric の合否は LLM が書かず、`assign-skill-design-evaluator/scripts/render-findings-score.py --write-rubric-verdict` が機械採点から決める。LLM が rubric に渡すのは、機械で採点できない rule の判定だけである (`run-build-skill/references/content-review-protocol.md`)
 - ゲート間で findings を握りつぶす (proposer ≠ approver 違反)
 - Gate B / C で write を許す (read-only 強制で Sycophancy 予防)。write は別 step に分離
 

@@ -1,0 +1,83 @@
+{
+  "verdict": "FAIL",
+  "review_mode": "diagnostic-only",
+  "reviewed_artifact": ".dev-graph/cache/decompose-input/macro-report.json",
+  "reviewed_artifact_sha256": "97262ac3bb5d7d303be17355dc0a22114f469688afb32a21b8ff4cbbeb8fa860",
+  "graph_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+  "checks": {
+    "diagnose_recorded_before_agent": true,
+    "macro_feature_count_two": true,
+    "requested_value_and_acceptance_preserved": true,
+    "requested_dependency_chain": true,
+    "architecture_reused": true,
+    "macro_contract_not_plain_add": true,
+    "new_nodes_draft_pending": true,
+    "c02_schema_findings_zero": true,
+    "new_draft_c28_blocked_planned": true,
+    "original_protected_bytes_unchanged": true,
+    "fake_bd_only_version_where": true,
+    "all_targets_routing_correct": false,
+    "all_input_package_targets_covered": false,
+    "canonical_dag_audit": "not_responsible",
+    "outer_criteria": "external_pending"
+  },
+  "findings": [
+    {
+      "id": "SEM-001",
+      "node_id": "LT-FEATURE-001",
+      "severity": "high",
+      "evidence": {
+        "actual_tracker_binding": "none",
+        "reported_binding": "beads",
+        "path": ".dev-graph/cache/decompose-input/macro-report.json#/publication_targets/0"
+      },
+      "detail": "既存render featureのbinding=noneをbeadsに置き換えて投影対象として記載している。C28のpromotion passはbinding変更の許可ではない。",
+      "suggested_fix": "既存renderはbinding=none、operation=外部writeなしと記載。正規C28結果はpromotion状態の検査証拠としてのみ扱い、publication eligible対象から外す。"
+    },
+    {
+      "id": "SEM-002",
+      "node_id": "feature-render-diff",
+      "severity": "high",
+      "evidence": {
+        "source_id": "feature-render-diff",
+        "source_binding": "beads",
+        "dependency_id": "LT-FEATURE-001",
+        "dependency_binding": "none",
+        "path": ".dev-graph/cache/decompose-input/macro-report.json#/edges/0"
+      },
+      "detail": "cross_binding_dependencyの起点edgeをbeads/beadsと誤記しcreate後edgeとして扱っている。",
+      "suggested_fix": "差分featureをcross_binding_dependencyでblockedとし、元edgeの両端id/bindingを明記。dep-addを呼ばずcreate後に張るedgeとも書かない。"
+    },
+    {
+      "id": "SEM-003",
+      "node_id": "feature-render-diff-summary",
+      "severity": "high",
+      "evidence": {
+        "dependency_id": "feature-render-diff",
+        "root_edge": [
+          "feature-render-diff",
+          "LT-FEATURE-001"
+        ],
+        "path": ".dev-graph/cache/decompose-input/macro-report.json#/edges/1"
+      },
+      "detail": "要約featureにもcross_binding_dependencyによる推移的な投影保留が必要。",
+      "suggested_fix": "要約featureを同じ元edgeへ束縛してblockedとし、依存edgeにdep-addを予定しない。"
+    },
+    {
+      "id": "SEM-004",
+      "node_id": "LT-FEATURE-001-P01..P13",
+      "severity": "medium",
+      "evidence": {
+        "registered_task_count": 13,
+        "binding": "beads",
+        "beads_linkage": null,
+        "path": ".dev-graph/state/graph.json"
+      },
+      "detail": "入力である登録済みexact-13 packageについてtaskごとのpublication operation/decisionが未記載。",
+      "suggested_fix": "登録operationなしを維持し、未linkageの13 taskそれぞれに正規C28 create --dry-runを当て、gate状態とoperation/digestを一覧化する。package内edgeは実bindingとlinkageに応じて分類する。"
+    }
+  ],
+  "generated_at": "2026-11-15T10:42:17.309949+00:00",
+  "target_edited": false,
+  "recommended_improvement_depth": "standard"
+}

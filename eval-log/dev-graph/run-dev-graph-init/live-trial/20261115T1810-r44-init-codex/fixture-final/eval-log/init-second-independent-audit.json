@@ -1,0 +1,80 @@
+{
+  "kind": "independent-semantic-evaluation",
+  "scenario": "C01-OUT1-positive-idempotence-fixture-standard-v2-codex-v1",
+  "status": "PASS",
+  "phase": "init-second-post-choice",
+  "input_directive": "同じargsのnative init-secondを適用し、planned_changes=0とwrite_count=0、eval-log/init-second-baseline.jsonの全digestとbytes snapshot不変を独立監査する。",
+  "choice_evidence": "eval-log/artifact-delivery-choice-init-second.json",
+  "checks": {
+    "initial_artifacts_and_C11": {
+      "status": "pass",
+      "roots": [
+        "issues",
+        "tasks",
+        "specs",
+        "architecture",
+        "features",
+        "docs"
+      ],
+      "routing_policy": true,
+      "graph_store_exists": true,
+      "validator": "validate-graph-schema.py",
+      "validator_exit_code": 0,
+      "violation_count": 0,
+      "evidence": [
+        "eval-log/init-first-independent-audit.json",
+        ".dev-graph/state/graph.json"
+      ]
+    },
+    "second_init_noop": {
+      "status": "pass",
+      "observed_cli": {
+        "status": "noop",
+        "exit_code": 0,
+        "planned_changes": 0,
+        "write_count": 0,
+        "idempotent": true,
+        "preflight_status": "pass",
+        "schema_violation_count": 0,
+        "receipt_path": ".dev-graph/state/receipts/init-20261115T092657117855Z.json"
+      },
+      "evidence": "eval-log/init-second-result.json"
+    },
+    "managed_file_preservation": {
+      "status": "pass",
+      "baseline_count": 24,
+      "changed": [],
+      "extra_files": [],
+      "evidence": "eval-log/init-second-baseline.json"
+    },
+    "user_edits": [
+      {
+        "path": "README.md",
+        "bytes_equal": true,
+        "sha256_equal": true,
+        "bytes": 101
+      },
+      {
+        "path": ".dev-graph/templates/README.md",
+        "bytes_equal": true,
+        "sha256_equal": true,
+        "bytes": 5332
+      }
+    ],
+    "config_storage": {
+      "status": "pass",
+      "prohibited_information_findings": [],
+      "github_enabled": false,
+      "hook_source": "plugin",
+      "evidence": ".dev-graph/config.json"
+    }
+  },
+  "scope_limits": [
+    "plugin source選択とconfig保存を確認した。Claude Stopやnative plugin hook実配達は未証明。",
+    "OUT3のクロスrepo・故障注入、およびOUT5のfallback suiteは未実施。全skillの全criteria達成を意味しない。"
+  ],
+  "external_connections": 0,
+  "source_writes": 0,
+  "init_reexecutions_by_auditor": 0,
+  "recorded_at": "2026-11-15T09:31:42.685377+00:00"
+}

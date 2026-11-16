@@ -129,7 +129,7 @@ def test_external_confirmation_public_proof_survives_private_removal_and_detects
     ext=cfg['external_confirmation_fixture']
     for source,name in [('guard_script','guard-source.py'),('hook_wrapper','hook-wrapper.py'),('hook_event_log','hook-events.jsonl')]:
         shutil.copyfile(ext[source],folder/name)
-    shutil.copytree(cfg['repo_root'],work/'fixture-final',ignore=shutil.ignore_patterns('.guard-key'))
+    shutil.copytree(cfg['repo_root'],work/'fixture-final',ignore=shutil.ignore_patterns('.guard-key*'))
     state['external_fixture_policy']={'allowed_commands':ext['allowed_commands'],'target_scopes':ext['target_scopes'],
         'guard_source_ref':'external-confirmations/guard-source.py','hook_wrapper_ref':'external-confirmations/hook-wrapper.py',
         'hook_events_ref':'external-confirmations/hook-events.jsonl','fake_adapter_ref':'fixture-final/tools/fake-gh.py'}
@@ -186,7 +186,7 @@ def test_gate_requires_current_assistant_presentation_and_real_bytes(tmp_path):
     request = {"kind": "artifact-delivery-choice", "state": "waiting_user_choice",
                "target_skill": "dev-graph:run-dev-graph-node", "invocation_id": "add-1",
                "artifacts": [{"path": str(artifact), "sha256": sha}]}
-    text = f"成果物 {artifact} SHA-256 {sha}。open: cat {artifact}。accept-as-is/light/standard/detailedを選択してください。"
+    text = f"成果物 {artifact} SHA-256 {sha}。open: cat {artifact}。現状で試す (accept-as-is) か診断する (diagnose) かを選択してください。"
     assert mod.validate_choice_request(request, fixture=fx, assistant_text=text,
                                        permitted_skills={request['target_skill']}, seen_ids=set())
     with pytest.raises(ValueError, match="assistant"):
@@ -210,7 +210,7 @@ def test_gate_rejects_symlink_escape_unknown_skill_and_second_answer(tmp_path):
     req = {"kind": "artifact-delivery-choice", "state": "waiting_user_choice",
            "target_skill": "p:s", "invocation_id": "once",
            "artifacts": [{"path": str(alias), "sha256": sha}]}
-    text = f"{alias} {sha} open accept-as-is light standard detailed"
+    text = f"{alias} {sha} open accept-as-is diagnose"
     with pytest.raises(ValueError, match="fixture"):
         mod.validate_choice_request(req, fixture=fx, assistant_text=text,
                                     permitted_skills={"p:s"}, seen_ids=set())
@@ -344,6 +344,8 @@ def test_secret_material_is_excluded_and_copy_is_explicitly_redacted():
     mod = load()
     assert mod.secret_file(Path('.env.local'))
     assert mod.secret_file(Path('.guard-key'))
+    assert mod.secret_file(Path('.guard-key-local'))
+    assert mod.secret_file(Path('.guard-key-local.tmp1a2b'))
     raw = b'Authorization: Bearer abcdefghijklmnopqrstuvwxyz\nfixture-secret-001'
     transformed = mod.public_bytes(raw, ['fixture-secret-001'])
     assert b'abcdefghijklmnopqrstuvwxyz' not in transformed

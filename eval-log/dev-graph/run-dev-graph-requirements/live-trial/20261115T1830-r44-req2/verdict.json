@@ -1,0 +1,158 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-requirements",
+  "args": "--repo-root /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/requirements2/fx --feature-id FEATURE-1 --package-dir /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/requirements2/fx/.dev-graph/plans/generations/feature-package-feat/851f6700701209795092ce6bb141be5100af2099bd3f22a59ed26a00f03a71a4",
+  "requested_model": "",
+  "actual_model": [
+    "claude-opus-5-5"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 0,
+  "gate_kind": "rescue",
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "a35a4f730d17279f4b8da6012ac8aebd5bffa72392f0fcd29183e25219f872df",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "fresh-evaluator-req2-r44-20261115"
+    },
+    "transcript_sha256": "a1dff6fe9729f4ce74a38eebcd77ff18d59721218b39d969271da22eb3366c31",
+    "evidence_refs": [
+      "transcript.jsonl",
+      "task.md",
+      "out/status.json",
+      "fixture-provenance.json",
+      "poll-state.json",
+      "evidence/capability-build-handoff.json",
+      "evidence/FEATURE-1-requirements.md",
+      "evidence/readiness-matrix.json",
+      "evidence/fx-delta.json",
+      "evidence/goal-spec.json",
+      "evidence/progress.json",
+      "evidence/intermediate.jsonl",
+      "evidence/artifact-delivery-presentation.json",
+      "evidence/artifact-delivery-choice.json",
+      "evidence/transcript-extracts/manifest.json",
+      "evidence/transcript-extracts/c24.json",
+      "evidence/transcript-extracts/c11-summary.txt",
+      "evidence/transcript-extracts/binding.json",
+      "evidence/transcript-extracts/guard.json",
+      "evidence/transcript-extracts/artifact-guard.txt",
+      "evidence/transcript-extracts/goal-seek-check.txt"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-requirements"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "bb51e943b3aaef4d195661b5fa07d6b6d3cb79d44eb9101e66367b6ac17f6610",
+  "transcript_sha256": "a1dff6fe9729f4ce74a38eebcd77ff18d59721218b39d969271da22eb3366c31",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": "2.1.325",
+    "tmux": true,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "bypassPermissions"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 375.68848729133606
+  },
+  "scenario_id": "C04-OUT1-positive-ready-handoff-r2",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json",
+    "scenario_id": "C04-OUT1-positive-ready-handoff-r2",
+    "required_observations": [
+      "a capability-build task-graph handoff is emitted for the exact-13 package",
+      "the handoff remains bound to the feature and source digest",
+      "the requirements skill generates no implementation source file"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "a capability-build task-graph handoff is emitted for the exact-13 package",
+        "evidence_ref": "evidence/capability-build-handoff.json"
+      },
+      {
+        "index": 2,
+        "observation": "the handoff remains bound to the feature and source digest",
+        "evidence_ref": "evidence/transcript-extracts/binding.json"
+      },
+      {
+        "index": 3,
+        "observation": "the requirements skill generates no implementation source file",
+        "evidence_ref": "evidence/fx-delta.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --feature-id <ready-feature-id> --package-dir <published-package-dir>",
+      "template_flags": [
+        "--feature-id",
+        "--package-dir",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--feature-id",
+        "--package-dir",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 7000000,
+      "max_wall_clock_s": 1500
+    },
+    "resource_usage": {
+      "wall_clock_s": 375.68848729133606,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "a8c6d2c8d7a226e9298b55f8edc1aecd8913fedc4aa014e29187eb0c34499b2b",
+      "tokens": {
+        "input_tokens": 70,
+        "cache_creation_input_tokens": 92946,
+        "cache_read_input_tokens": 2821936,
+        "output_tokens": 22883,
+        "total_tokens": 2937835,
+        "assistant_messages": 32,
+        "assistant_message_ids": 32,
+        "invalid_or_missing_usage_messages": 0,
+        "idless_assistant_records": 0,
+        "transcript_files": 1,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

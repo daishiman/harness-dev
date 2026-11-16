@@ -1,0 +1,39 @@
+{
+  "responsibility": "R0-context",
+  "skill": "dev-graph:run-dev-graph-system-spec",
+  "verifier": "independent (read-only, fresh context)",
+  "original_goal_sha256": "30a1de05fc91233a51fb054852bc389252948f969d89393207f5ef5c382ce454",
+  "verdict": "PASS",
+  "checklist": [
+    {
+      "item": "system_spec realpathがcaller repo内でrepository_id/common-dir一致になる",
+      "status": "achieved",
+      "evidence": "realpath(system-spec) = <FX>/system-spec (inside repo_root; git rev-parse --show-toplevel = FX, --git-common-dir = .git). find over FX (excluding .git) returns 0 symlinks; system-spec holds 21 regular entries. Fresh read-only resolve-repo-context.py --repo-root FX --mode read (rc 0) matches c24-receipt on repository_id (local:sha256:868d1e87...846e), git_common_dir, git_dir, repo_root, worktree_id (wt_bbfc28a0b40313de), head_sha (73a18cd7...), branch, content_roots.system_spec. c24-receipt sha256 = dbb97771...da6f equals preflight-report.caller_root.receipt_sha256, so the receipt is the one preflight used (not replaced)."
+    },
+    {
+      "item": "validate-source-lineage.py が exit 0 で、checked に応じて新規作成か再開かを決めた",
+      "status": "achieved",
+      "evidence": "preflight-report.lineage_gate_R0 = {exit 0, status pass, checked 0, decision new-import}, recorded at 20:13 before import-report.json (20:30) / r3-lineage.json (20:27); checked=0 → new import is the unique decision per Layer 2. Current run: validate-source-lineage.py --repo-root FX → rc 0, status pass, checked 2 (spec-billing-audit-system, arch-billing-audit-system), violations []. checked>=1 now is consistent with R3 having imported 2 nodes after the R0 decision."
+    },
+    {
+      "item": "宣言した入力が全て検証済みである (caller context / repo-local system-spec root / plugin source)",
+      "status": "achieved",
+      "evidence": "caller context verified by fresh resolution; system-spec root contained; plugin_source in receipt = dev-graph plugin root, scripts resolve-repo-context.py and validate-source-lineage.py exist there."
+    },
+    {
+      "item": "出力が宣言した shape と authority を満たす (repository identity / content root / code authority の分離)",
+      "status": "achieved",
+      "evidence": "receipt separates repository identity (repository_id, worktree_id, git_common_dir), content_roots (system_spec etc.) and plugin_source (code authority); root_trust_evidence all true, selected_by explicit --repo-root."
+    },
+    {
+      "item": "責務境界に反する read/write/delegation が0件である",
+      "status": "achieved",
+      "evidence": "graph.json source refs are repo-relative (system-spec/index.md, system-spec/00-requirements-definition.md); 0 occurrences of /Users/dm or /private/tmp absolute paths in graph.json; no symlink sources; git status unchanged before/after verifier's read-only commands."
+    }
+  ],
+  "observations": [
+    "c24-receipt.json stores absolute environment paths; this is the raw output shape of resolve-repo-context (fixed C24 receipt, under eval-log), while downstream artifacts (preflight-report, graph.json) use repo-relative paths. Not treated as a blocker.",
+    "Receipt diagnostics include default_branch_fallback_main (no remote); does not affect containment."
+  ],
+  "blockers": []
+}

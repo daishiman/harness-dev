@@ -9,6 +9,7 @@ import shlex
 import shutil
 import subprocess
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -947,3 +948,353 @@ def test_pretool_denies_newline_smuggled_after_a_guard_call():
     output = json.loads(result.stdout)
     assert output["hookSpecificOutput"]["permissionDecision"] == "deny"
     assert "full Bash command" in output["hookSpecificOutput"]["permissionDecisionReason"]
+
+
+# --- 署名の鍵 (harness-olh) -------------------------------------------------
+# 旧名 .guard-key の鍵は cf93ab33 で公開 repo に commit された。新しい guard は鍵を
+# .guard-key-local に置き、旧名を一切読まない。鍵を作るときにそれ以前の preview を
+# 退役記録に残し、検証できなくなった古い preview で Bash が永久に止まらないようにする。
+
+STATE = pathlib.Path(".artifact-delivery") / "external-mutation"
+FORGED_ARGV = ["bd", "create", "forged"]
+
+
+def _pretool(project: pathlib.Path, command: str) -> dict | None:
+    payload = {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "cwd": str(project),
+        "tool_input": {"command": command},
+    }
+    result = _run("pretool", input_text=json.dumps(payload))
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout) if result.stdout else None
+
+
+def _cancel(project: pathlib.Path, receipt_path: str) -> subprocess.CompletedProcess[str]:
+    return _run("cancel", "--project-root", str(project), "--preview-receipt", receipt_path)
+
+
+def _published_key_preview(project: pathlib.Path) -> pathlib.Path:
+    """A preview sealed by the published key, as every pre-fix checkout has them."""
+    module = _guard_module(name="guard_published_key")
+    state = project / STATE
+    state.mkdir(parents=True)
+    published = bytes(range(32))
+    (state / module.PUBLISHED_KEY_NAME).write_bytes(published)
+    receipt_id = "a" * 32
+    body = {
+        **module._base("preview", receipt_id, now=int(time.time())),
+        "entrypoint_ref": "plugin:fixture/skills/run-fixture/SKILL.md",
+        "target_scope": "remote:forged",
+        "command_argv": FORGED_ARGV,
+        "command_sha256": module._command_sha256(FORGED_ARGV),
+        "action_class": "beads-issue-write",
+        "diff_summary": "forged with the published key",
+        "side_effect_summary": "forged with the published key",
+        "challenge_sha256": hashlib.sha256(b"0" * 24).hexdigest(),
+        "status": "pending-user-confirmation",
+    }
+    return module._write_receipt(state, f"preview-{receipt_id}.json", body, published)
+
+
+def test_published_key_is_never_trusted_and_its_previews_are_retired(tmp_path):
+    forged = _published_key_preview(tmp_path)
+    state = tmp_path / STATE
+    # 新しい鍵がまだ無い: 何も確認・許可できないので Bash は止めず、変更系だけ止める
+    assert _pretool(tmp_path, "git status --short") is None
+    denied = _pretool(tmp_path, " ".join(FORGED_ARGV))
+    assert denied["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert _confirm(tmp_path, "0" * 24)["status"] == "confirmation-unmatched"
+    refused = _cancel(tmp_path, str(forged))
+    assert refused.returncode == 2 and "guard key is missing" in refused.stderr
+
+    preview = _preview(tmp_path, [sys.executable, "-c", "print('fresh')"])
+    key_path = state / ".guard-key-local"
+    assert key_path.stat().st_mode & 0o777 == 0o600
+    assert key_path.read_bytes() != (state / ".guard-key").read_bytes()
+    records = list(state.glob("key-rotation-*.json"))
+    assert len(records) == 1
+    record = json.loads(records[0].read_text())
+    assert record["retired_previews"] == [
+        {"name": forged.name, "sha256": hashlib.sha256(forged.read_bytes()).hexdigest()}
+    ]
+    assert record["expires_at"] == record["issued_at"]  # 許可としては決して通らない
+
+    # 公開済みの鍵で作った preview は、新しい鍵では確認も取り消しもできない
+    assert _confirm(tmp_path, "0" * 24)["status"] == "confirmation-unmatched"
+    assert _cancel(tmp_path, str(forged)).returncode == 2
+    # 待っているのは新しい preview だけ。取り消せば、退役した古い preview は Bash を止めない
+    blocked = _pretool(tmp_path, "git status --short")
+    assert blocked["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert _cancel(tmp_path, preview["receipt_path"]).returncode == 0
+    assert _pretool(tmp_path, "git status --short") is None
+
+
+def test_unverifiable_preview_outside_the_retirement_record_still_blocks(tmp_path):
+    forged = _published_key_preview(tmp_path)
+    preview = _preview(tmp_path, [sys.executable, "-c", "print('fresh')"])
+    assert _cancel(tmp_path, preview["receipt_path"]).returncode == 0
+    assert _pretool(tmp_path, "git status --short") is None
+    # 退役後に書き換えられた preview は一覧の digest と合わないので止める
+    original = forged.read_text()
+    forged.write_text(original.replace("remote:forged", "remote:edited"))
+    assert _pretool(tmp_path, "git status --short") is not None
+    forged.write_text(original)
+    assert _pretool(tmp_path, "git status --short") is None
+    # 一覧に無い、検証できない preview も今までどおり止める
+    (tmp_path / STATE / f"preview-{'b' * 32}.json").write_text(original)
+    assert _pretool(tmp_path, "git status --short") is not None
+
+
+def test_missing_key_fails_closed_for_every_consumer(tmp_path):
+    command = [sys.executable, "-c", "print('never')"]
+    preview = _preview(tmp_path, command)
+    confirmation = _confirm(tmp_path, preview["challenge"])
+    authorized = json.loads(
+        _run(
+            "authorize",
+            "--project-root", str(tmp_path),
+            "--preview-receipt", preview["receipt_path"],
+            "--confirmation-receipt", confirmation["receipt_path"],
+        ).stdout
+    )
+    (tmp_path / STATE / ".guard-key-local").unlink()
+    calls = (
+        ("execute", "--authorization-receipt", authorized["receipt_path"],
+         "--command-json", json.dumps(command)),
+        ("cancel", "--preview-receipt", preview["receipt_path"]),
+        ("authorize", "--preview-receipt", preview["receipt_path"],
+         "--confirmation-receipt", confirmation["receipt_path"]),
+    )
+    for action, *rest in calls:
+        result = _run(action, "--project-root", str(tmp_path), *rest)
+        assert result.returncode == 2, action
+        assert "guard key is missing" in result.stderr, action
+    # 確認や許可の側は鍵を作らない。作れるのは preview と意図の付与だけ
+    assert not (tmp_path / STATE / ".guard-key-local").exists()
+
+
+def test_concurrent_first_previews_share_one_key(tmp_path):
+    command = [sys.executable, "-c", "print('race')"]
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        previews = list(pool.map(lambda _: _preview(tmp_path, command), range(6)))
+    state = tmp_path / STATE
+    assert sorted(p.name for p in state.iterdir() if p.name.startswith(".guard-key")) == [
+        ".guard-key-local"
+    ]
+    for preview in previews:
+        assert _cancel(tmp_path, preview["receipt_path"]).returncode == 0
+    assert _pretool(tmp_path, "git status --short") is None
+
+
+def test_repo_never_tracks_the_signing_key():
+    tracked = subprocess.run(
+        ["git", "-C", str(ROOT), "ls-files", "--", str(STATE)],
+        capture_output=True, text=True, check=True,
+    ).stdout.split()
+    assert not [name for name in tracked if pathlib.PurePath(name).name.startswith(".guard-key")]
+    for name in (".guard-key", ".guard-key-local", ".guard-key-local.tmp123"):
+        ignored = subprocess.run(
+            ["git", "-C", str(ROOT), "check-ignore", "--no-index", "-q", str(STATE / name)],
+            check=False,
+        )
+        assert ignored.returncode == 0, name
+
+
+# --- G16 (harness-fit): 壊れた入力で hook が traceback と exit 1 にならないこと -------------
+# PreToolUse の exit 1 は「止めないエラー」なので、traceback は fail-open と同じ意味になる。
+DIRECT_ISSUE_WRITE = " ".join(["gh", "issue", "create", "--title", "x", "--body", "y"])
+
+
+def _raw_pretool(project: pathlib.Path | str, command: str) -> subprocess.CompletedProcess[str]:
+    payload = {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "cwd": str(project),
+        "tool_input": {"command": command},
+    }
+    return _run("pretool", input_text=json.dumps(payload))
+
+
+def _assert_blocks(result: subprocess.CompletedProcess[str]) -> None:
+    assert "Traceback" not in result.stderr, result.stderr
+    if result.returncode == 2:
+        return
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def _live_state(project: pathlib.Path) -> pathlib.Path:
+    """鍵のある正規の state を作り、待ちの preview は残さない。"""
+    preview = _preview(project, [sys.executable, "-c", "print('resolved')"])
+    assert _cancel(project, preview["receipt_path"]).returncode == 0
+    assert _pretool(project, "git status --short") is None
+    return project / STATE
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        pytest.param(b"\xff\xfe{\"kind\": \"preview\"}", id="non-utf8"),
+        pytest.param(b"{\"kind\": \"preview\"", id="broken-json"),
+        pytest.param(b"[\"preview\"]", id="non-object"),
+    ],
+)
+def test_malformed_preview_blocks_bash_instead_of_crashing_open(tmp_path, body):
+    state = _live_state(tmp_path)
+    (state / f"preview-{'c' * 32}.json").write_bytes(body)
+    for command in ("git status --short", DIRECT_ISSUE_WRITE):
+        _assert_blocks(_raw_pretool(tmp_path, command))
+
+
+def test_nul_in_paths_never_reaches_a_traceback(tmp_path):
+    # runner の語に NUL: canonical ではないので、guard 名を含む呼び出しとして拒む
+    _assert_blocks(_raw_pretool(tmp_path, f"python3 /guard\x00/{RUNNER.name} cancel "
+                                          "--project-root /tmp --preview-receipt r"))
+    # cwd に NUL: project を読めないので待ち状態は無い。直接の変更は拒み、ほかは通す
+    _assert_blocks(_raw_pretool(f"{tmp_path}\x00", DIRECT_ISSUE_WRITE))
+    passed = _raw_pretool(f"{tmp_path}\x00", "git status --short")
+    assert passed.returncode == 0 and passed.stdout == "", passed.stderr
+    # 確認の prompt でも、cwd が読めなければ何も作らず prompt を止めない
+    confirm = _run("hook-confirm", input_text=json.dumps({
+        "hook_event_name": "UserPromptSubmit", "cwd": f"{tmp_path}\x00",
+        "session_id": "s", "prompt": "CONFIRM EXTERNAL MUTATION " + "0" * 24,
+    }))
+    assert confirm.returncode == 0 and confirm.stdout == "", confirm.stderr
+
+
+def test_undecodable_hook_payload_fails_closed():
+    import os
+
+    result = subprocess.run(
+        [sys.executable, str(RUNNER), "pretool"],
+        input=b"\xff\xfe\xfd",
+        capture_output=True,
+        check=False,
+        env={**os.environ, "PYTHONIOENCODING": "utf-8"},
+    )
+    assert result.returncode == 2
+    assert b"Traceback" not in result.stderr
+    assert b"unexpected UnicodeDecodeError" in result.stderr
+
+
+def test_expiry_is_decided_by_type_not_by_the_word_in_the_path(tmp_path):
+    project = tmp_path / "expired-project"
+    project.mkdir()
+    state = _live_state(project)
+    module = _guard_module(name="guard_expiry_type")
+    key = (state / module.KEY_NAME).read_bytes()
+    # 期限の切れた正規の preview は待ちに数えない
+    old = int(time.time()) - 2 * module.TTL_SECONDS
+    body = {
+        **module._base("preview", "d" * 32, now=old),
+        "entrypoint_ref": "plugin:fixture/skills/run-fixture/SKILL.md",
+        "target_scope": "remote:fixture",
+        "command_argv": FORGED_ARGV,
+        "command_sha256": module._command_sha256(FORGED_ARGV),
+        "action_class": "beads-issue-write",
+        "diff_summary": "expired",
+        "side_effect_summary": "expired",
+        "challenge_sha256": hashlib.sha256(b"1" * 24).hexdigest(),
+        "status": "pending-user-confirmation",
+    }
+    module._write_receipt(state, f"preview-{'d' * 32}.json", body, key)
+    assert _pretool(project, "git status --short") is None
+    # path に expired を含んでいても、壊れた preview は止める (例外文の部分一致では飛ばさない)
+    (state / f"preview-{'e' * 32}.json").write_bytes(b"\xff")
+    _assert_blocks(_raw_pretool(project, "git status --short"))
+    assert '"expired" in str' not in RUNNER.read_text(encoding="utf-8")
+
+
+def test_pending_denial_names_the_preview_and_a_working_cancel(tmp_path):
+    preview = _preview(tmp_path, [sys.executable, "-c", "print('abandon me')"])
+    reason = _pretool(tmp_path, "git status --short")["hookSpecificOutput"][
+        "permissionDecisionReason"
+    ]
+    assert "pending guard context" in reason
+    assert preview["receipt_path"] in reason
+    cancel_line = next(line for line in reason.splitlines() if " cancel --project-root " in line)
+    command = cancel_line.split("run exactly (one per preview): ", 1)[1]
+    # 拒否文が示す cancel は、そのまま canonical な呼び出しとして通り、待ちを解く
+    assert _pretool(tmp_path, command) is None
+    done = subprocess.run(command, shell=True, capture_output=True, text=True, check=False)
+    assert done.returncode == 0, done.stderr
+    assert _pretool(tmp_path, "git status --short") is None
+
+
+def test_zsh_subscripts_and_modifiers_are_not_one_canonical_word():
+    module = _guard_module()
+    for command in (
+        f'{CANONICAL_PREFIX} cancel --project-root "$path[@]" --preview-receipt r',
+        f'{CANONICAL_PREFIX} cancel --project-root "$HOME:h" --preview-receipt r',
+        f'{CANONICAL_PREFIX} cancel --project-root /tmp --preview-receipt "$r[1]"',
+    ):
+        assert _shape(module, command) is None, command
+    # 波括弧の形と、$NAME の後ろの / はそのまま通す
+    for command in (
+        f'{CANONICAL_PREFIX} cancel --project-root "${{HOME}}" --preview-receipt r',
+        f'{CANONICAL_PREFIX} cancel --project-root "$HOME/x" --preview-receipt r',
+    ):
+        assert _shape(module, command) == "cancel", command
+
+
+def test_state_dir_refuses_an_escaping_parent_before_creating_anything(tmp_path):
+    project = tmp_path / "project"
+    outside = tmp_path / "outside"
+    project.mkdir()
+    outside.mkdir()
+    outside.chmod(0o755)
+    (project / ".artifact-delivery").symlink_to(outside, target_is_directory=True)
+    result = _run(
+        "preview", "--project-root", str(project),
+        "--entrypoint-ref", "plugin:fixture/skills/run-fixture/SKILL.md",
+        "--target-scope", "remote:fixture",
+        "--diff-summary", "x", "--side-effect-summary", "x",
+        "--command-json", json.dumps(["bd", "create", "x"]),
+    )
+    assert result.returncode == 2
+    assert "escapes project root" in result.stderr
+    assert list(outside.iterdir()) == []
+    assert outside.stat().st_mode & 0o777 == 0o755
+
+
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        "PRはまだ作成しないで",
+        "PRの作成は不要です",
+        "この課題は閉じないでください",
+        "issue を close しないこと",
+        "チケットは更新せずに調べて",
+        "PR: please do not create it yet",
+        "issue, don't close it",
+    ],
+)
+def test_negated_requests_grant_nothing(tmp_path, prompt):
+    payload = {
+        "hook_event_name": "UserPromptSubmit", "cwd": str(tmp_path),
+        "session_id": "session-fixture", "prompt": prompt,
+    }
+    result = _run("hook-confirm", input_text=json.dumps(payload))
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "", prompt
+
+
+def test_negation_only_removes_the_negated_class(tmp_path):
+    grant = _intent(tmp_path, "PRは作成しないで、issue は立てて")
+    assert grant["status"] == "intent-granted"
+    assert grant["granted_classes"] == ["beads-issue-write", "github-issue-write"]
+    # 条件の「なら」は打ち消しではない
+    assert _intent(tmp_path, "テストが通ったらPRを作るなら教えて")["granted_classes"] == [
+        "github-pr-write"
+    ]
+
+
+def test_unrelated_prompt_with_a_vanished_cwd_is_not_blocked(tmp_path):
+    payload = {
+        "hook_event_name": "UserPromptSubmit", "cwd": str(tmp_path / "gone"),
+        "session_id": "session-fixture", "prompt": "このテストが落ちる原因を調べて",
+    }
+    result = _run("hook-confirm", input_text=json.dumps(payload))
+    assert result.returncode == 0 and result.stdout == "", result.stderr

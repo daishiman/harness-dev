@@ -301,6 +301,46 @@ def test_requirement_coverage_non_array_fails(tmp_path):
     assert errs == ["requirement_coverage must be array"]
 
 
+# --- RTM 除外集合の正本は skill-brief.schema.json の x-rtm-exempt ---
+
+def test_rtm_exempt_fields_come_from_brief_schema():
+    # 除外集合は schema の印から作る。印の付いた property は schema に実在し、
+    # 理由が空でないことを確かめる (手書き集合との二重管理をやめた回帰の検知)。
+    schema = json.loads(MOD.BRIEF_SCHEMA_PATH.read_text(encoding="utf-8"))
+    marked = {
+        k for k, v in schema["properties"].items()
+        if isinstance(v, dict) and "x-rtm-exempt" in v
+    }
+    assert MOD._RTM_EXEMPT_LOAD_ERROR is None
+    assert MOD.NON_REQUIREMENT_BRIEF_FIELDS == frozenset(marked)
+    # 要件を担う field は除外されてはならない
+    for field in ("goal", "trigger_conditions", "output_contract", "key_constraints", "boundary"):
+        assert field not in MOD.NON_REQUIREMENT_BRIEF_FIELDS
+
+
+def test_rtm_exempt_mark_without_reason_is_rejected(tmp_path):
+    schema_p = tmp_path / "skill-brief.schema.json"
+    schema_p.write_text(json.dumps({"properties": {
+        "skill_name": {"type": "string", "x-rtm-exempt": "識別"},
+        "prefix": {"type": "string", "x-rtm-exempt": "  "},
+    }}), encoding="utf-8")
+    fields, err = MOD._load_rtm_exempt_fields(schema_p)
+    assert fields == frozenset()
+    assert err and "prefix.x-rtm-exempt" in err
+
+
+def test_rtm_exempt_unreadable_schema_fails_coverage(tmp_path, monkeypatch):
+    # 除外の正本を読めないときは、空集合で続けて全 field を要求するのでも、
+    # 検査を飛ばして PASS にするのでもなく、理由付きで止める。
+    fields, err = MOD._load_rtm_exempt_fields(tmp_path / "missing.schema.json")
+    assert fields == frozenset() and err
+    monkeypatch.setattr(MOD, "NON_REQUIREMENT_BRIEF_FIELDS", fields)
+    monkeypatch.setattr(MOD, "_RTM_EXEMPT_LOAD_ERROR", err)
+    trace, tp = _rtm_trace(tmp_path, _full_coverage())
+    errs = MOD._validate_requirement_coverage(trace, tp)
+    assert len(errs) == 1 and "RTM 除外の正本を読めない" in errs[0]
+
+
 # --- C09: prompt_provenance バイパス不能性 (_validate_prompt_provenance) ---
 
 def _required_pgm():

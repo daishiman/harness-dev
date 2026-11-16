@@ -49,6 +49,8 @@ dist/
 # run-ubm-challenge の実行記録（挑戦宣言の本文＝個人の目標を含む。正本は vault で、公開 repo に入れない）
 eval-log/ubm-goal-setting/run-ubm-challenge/handoff-run-ubm-challenge.json
 eval-log/ubm-goal-setting/run-ubm-challenge/run-ubm-challenge-intermediate.jsonl
+# run-extract-blueprint が run ごとに移した goal-seek の intermediate と progress (監査用にローカルへ残す)
+eval-log/run-extract-blueprint-archive/
 eval-log/**/.claude/handoff/
 .worktrees/
 # run-* スキルの transient 作業ディレクトリ (skill-tree 第13条 nested dir 禁止)
@@ -60,6 +62,10 @@ eval-log/**/.claude/handoff/
 # 直下の .artifact-delivery/ だけで、plugin 配下のものは install copy と
 # fingerprint に混ぜない。
 plugins/*/.artifact-delivery/
+# guard の署名の鍵は checkout ごとに作る秘密で、repo には載せない (harness-olh)。
+# 旧名 .guard-key は cf93ab33 で commit され公開済みなので、新しい guard は読まない。
+# receipt は publication-manifest と eval-log が参照するので、追跡を続ける。
+.artifact-delivery/external-mutation/.guard-key*
 # skill-intake 実行中フラグ lock (hook-guard-skillgen.py が生成・解除する揮発状態)
 eval-log/intake-locks/
 # sync-native-surfaces.py の lock と native surface の projection evidence (揮発状態)
@@ -141,3 +147,6 @@ plugin-plans/*/task-execution-report.html
 # (2026-08-14-pg001-... などの別名) はこのパターンに一致しないので tracked のまま残る。
 .claude/state/
 plugins/harness-creator/skills/run-skill-rubric-governance/proposals/*-rubric-update.md
+
+# dev-graph preview の一時監査。公開根拠は docs/ と正規 receipt に保存する。
+.dev-graph/tmp/

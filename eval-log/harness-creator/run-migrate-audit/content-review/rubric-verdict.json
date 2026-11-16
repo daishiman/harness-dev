@@ -2,7 +2,9 @@
   "target": {
     "plugin": "harness-creator",
     "skill": "run-migrate-audit",
-    "skill_md_sha256": "e9ebd695060fce1cfdbb0421bef1935fe6963ed609206a14b71ef45df7ecf4ae"
+    "skill_md_sha256": "bc2f3a9ac8ad8663785b63d307aa11b9b29382085b655c2d2e14ac12199d8bc5",
+    "reviewed_skill_md_sha256": "bc2f3a9ac8ad8663785b63d307aa11b9b29382085b655c2d2e14ac12199d8bc5",
+    "skill_dir_digest": "e3fb28933d3787fdd49e917a63b29885177a88c5c084215d87dd0f9be6a26018"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -11,10 +13,10 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 2
   },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:09Z",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-15T09:34:33Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -26,13 +28,16 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "inline/inline がread/write局面を同一制御contextで扱う分類brief生成に適合し、下流run-build-skillとの責務境界も明確である。"
+      "移行先の lint を「候補を足す前の基準線」と定め、基準線の有無を lint を回す前に */SKILL.md の件数で決める規則が、ゴール・目的・背景・完了チェックリスト・ゴールシークループ・局面カタログと frontmatter の IN1 で同じ言い方になっている。lint の exit 2 が循環の検出や Step 7-4 を確かめられないことにも使われるので、exit を見て N/A にしないという理由も書いてある。そのため、lint の失敗を N/A に言い換える抜け道が無い。"
     ],
-    "negative_feedback": [],
+    "negative_feedback": [
+      "[low] FM-005: description first phrase '既存' is not a verb (frontmatter.description)",
+      "[medium] PD-002: body head 30 lines lack a Key Rule / 禁則 (MUST / NEVER / 禁止 / 必ず / '## 守ること') (progressive-disclosure)"
+    ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
+  "notes": "render-findings-score が機械採点 (score 87/threshold 80, sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9, scored 23/24) と LLM 判定 1 件 (BD-004) から生成した。"
 }

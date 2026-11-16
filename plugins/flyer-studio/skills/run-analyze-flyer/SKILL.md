@@ -39,22 +39,7 @@ reference_refs:
   - references/analysis-contract.md
   - ../../references/stage-common.md
   - ../../references/design-knowledge-index.json
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 # 現物を診断し、根拠のある改善案へまとめる
@@ -70,13 +55,13 @@ artifact_delivery:
 
 ## 選ぶ前の実成果物の作成
 
-「Purpose & Output Contract」の最小の実成果物を親コンテキストで作る。ここでの実成果物は、元画像を 1 枚ずつ開いて書いた診断と改善案の下書き（読み順・保持点・問題の観察・要求ごとの改善案と採否の仮置き）である。effect に応じた最低限の検査（元画像が読み込めて開けるか・秘密情報・取り消せない操作・壊れたファイル）だけを行い、現物（会話に示した下書き本文。ファイルに書いた場合はパス・ハッシュ値・開き方）を見せたうえで、現状で試す／軽微／標準／詳細のどれにするかを記録する（記録する値は順に `accept-as-is`・`light`・`standard`・`detailed`）。現状で試すならその場で引き継ぎを完了とし、後続の節を実行しない。
+「Purpose & Output Contract」の最小の実成果物を親コンテキストで作る。ここでの実成果物は、元画像を 1 枚ずつ開いて書いた診断と改善案の下書き（読み順・保持点・問題の観察・要求ごとの改善案と採否の仮置き）である。effect に応じた最低限の検査（元画像が読み込めて開けるか・秘密情報・取り消せない操作・壊れたファイル）だけを行い、現物（会話に示した下書き本文。ファイルに書いた場合はパス・ハッシュ値・開き方）を見せたうえで、現状で試すか診断するかを記録する（記録する値は順に `accept-as-is`・`diagnose`）。現状で試すならその場で引き継ぎを完了とし、後続の節を実行しない。
 
 下書きは analysis.json ではなく、制作へ渡す分析の代わりにもならない。analysis-template・analysis-seal・提案評価の台帳づくりと、stage agent への受け渡しは、この段ではしない。現状で試すを選んだときは提案評価で PASS した分析が無いため、制作の段へは進めない。提案評価の FIX や premise の戻しで入り直したときは前に記録した深さを引き継ぎ、選び直しを求めない（共通の規則は[深さの選択と戻り](../../references/stage-common.md#深さの選択と戻り)）。
 
 ## 選んだ深さでの改善の実行
 
-以下の既存の節（ゴールシーク実行・Gotchas・実行への接続）は、軽微・標準・詳細のどれかが記録されて `semantic_evaluator_started` へ遷移したときだけ実行する。リリースと完全監査は別イベントとして明示されたときだけ行う。
+以下の既存の節（ゴールシーク実行・Gotchas・実行への接続）は、「診断する」が記録されて `semantic_evaluator_started` へ遷移したときだけ実行する。リリースと完全監査は別イベントとして明示されたときだけ行う。
 
 選んだ後は stage agent が analysis.json を作り、別 context の[提案評価](../assign-flyer-analysis-evaluator/SKILL.md)と、その FIX をここで直す改善 cycle を回す。
 

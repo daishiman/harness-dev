@@ -921,3 +921,43 @@ def test_non_utf8_route_report_is_named_as_route_report_failure(tmp_path):
     report.write_bytes(NON_UTF8)
     with pytest.raises(ValueError, match="route-report 読込/parse 失敗"):
         sts._assert_covered(str(report), "T1")
+
+
+# ─────────────────────────── task-events の symlink ───────────────────────────
+def test_cli_rejects_symlinked_events_and_leaves_target_untouched(tmp_path):
+    """task-events.jsonl が外のファイルへの symlink なら、辿らずに止める (state も書かない)。"""
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    victim = outside / "victim.txt"
+    victim.write_text("original\n", encoding="utf-8")
+    build = tmp_path / "repo" / "build"
+    build.mkdir(parents=True)
+    (build / "task-events.jsonl").symlink_to(victim)
+    graph_path = tmp_path / "repo" / "graph.json"
+    graph_path.write_text(json.dumps({"nodes": [{"id": "T1"}], "edges": []}), encoding="utf-8")
+    state_path = build / "task-state.json"
+    rc = sts.main([
+        "--task-state", str(state_path), "--task-graph", str(graph_path),
+        "--initialize-from-graph",
+    ])
+    assert rc == 2
+    assert victim.read_text(encoding="utf-8") == "original\n"
+    assert not state_path.exists()
+
+
+def test_append_event_refuses_symlink(tmp_path):
+    victim = tmp_path / "victim.txt"
+    victim.write_text("", encoding="utf-8")
+    link = tmp_path / "task-events.jsonl"
+    link.symlink_to(victim)
+    with pytest.raises(OSError):
+        sts.append_event(link, {"type": "x"})
+    assert victim.read_text(encoding="utf-8") == ""
+
+
+def test_append_event_creates_and_appends_regular_file(tmp_path):
+    events = tmp_path / "task-events.jsonl"
+    sts.append_event(events, {"type": "a"})
+    sts.append_event(events, {"type": "b"})
+    lines = [json.loads(line) for line in events.read_text(encoding="utf-8").splitlines()]
+    assert [line["type"] for line in lines] == ["a", "b"]

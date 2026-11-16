@@ -1,0 +1,566 @@
+# Prompt: R0-context
+
+> C24でcaller repo/config/content rootsを解決し、全read/write realpathがroot内であることをpreflightする
+
+## Layer 1: 基本定義層
+
+- `responsibility_id`: `R0-context`
+- `skill`: `run-dev-graph-node`
+- 不変目的: C24でcaller repo/config/content rootsを解決し、全read/write realpathがroot内であることをpreflightする
+- 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
+
+## Layer 2: ドメイン層
+
+### 入力契約
+
+- caller context、repo config、artifact input、graph/content候補path。
+
+### 出力契約
+
+- repository identityと全realpath containment判定を持つwriter preflight receipt。
+
+### 責務境界
+
+- graph/contentを変更せずroot外・broken symlink・別common-dirを許容しない。
+
+### 受入条件
+
+- 全候補pathがroot内でrepository_idがconfig/graphと一致する。
+
+## Layer 3: インフラ層
+
+- 使用資産: `resolve-repo-context.py --mode write`。
+- path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
+
+## Layer 4: 共通ポリシー層
+
+- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。
+
+## Layer 5: エージェント層 (l5-contract v2.0.0)
+
+- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。
+
+### 5.1 担当 agent
+
+- `run-dev-graph-node/R0-context`
+
+### 5.2 ゴール定義
+
+- 目的: C24でcaller repo/config/content rootsを解決し、全read/write realpathがroot内であることをpreflightする
+- 達成ゴール: repository identityと全realpath containment判定を持つwriter preflight receiptが生成され、受入条件を満たした状態になっている。
+
+### 5.3 完了チェックリスト (ゴール到達の停止条件)
+
+- [ ] 全候補pathがroot内でrepository_idがconfig/graphと一致する
+
+## Layer 6: オーケストレーション層
+
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。
+- PASS receiptだけをR1/R3/R4へ渡す。
+
+## Layer 7: UserInput
+
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。
+
+## 出力指示
+
+Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+
+# Prompt: R1-classify
+
+> 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない
+
+## Layer 1: 基本定義層
+
+- `responsibility_id`: `R1-classify`
+- `skill`: `run-dev-graph-node`
+- 不変目的: 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない
+- 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
+
+## Layer 2: ドメイン層
+
+### 入力契約
+
+- artifact本文、kind/domain/project hint、routing policy、template contract。
+
+### 出力契約
+
+- kind/domain/project/path/confidence/reasonと第二候補を持つclassification preview。
+
+### 責務境界
+
+- 保存先を質問せず書込まずfeatureはC14 macro contract時だけ候補化する。
+
+### 受入条件
+
+- 通常5 artifactが正規rootに写像されconfidence/top-two marginが再現可能になる。
+
+## Layer 3: インフラ層
+
+- 使用資産: Readとrouting policy。
+- path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
+
+## Layer 4: 共通ポリシー層
+
+- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。
+
+## Layer 5: エージェント層 (l5-contract v2.0.0)
+
+- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。
+
+### 5.1 担当 agent
+
+- `run-dev-graph-node/R1-classify`
+
+### 5.2 ゴール定義
+
+- 目的: 成果物内容からartifact_kind/domain/project_id候補、confidence、reason、候補pathを推定する。保存先を質問しない
+- 達成ゴール: kind/domain/project/path/confidence/reasonと第二候補を持つclassification previewが生成され、受入条件を満たした状態になっている。
+
+### 5.3 完了チェックリスト (ゴール到達の停止条件)
+
+- [ ] 通常5 artifactが正規rootに写像されconfidence/top-two marginが再現可能になる
+
+## Layer 6: オーケストレーション層
+
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。
+- R2へ候補集合と根拠を渡す。
+
+## Layer 7: UserInput
+
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。
+
+## 出力指示
+
+Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+
+# Prompt: R2-preview
+
+> 分類previewを提示し、閾値未達時だけ確認して正規pathを確定する
+
+## Layer 1: 基本定義層
+
+- `responsibility_id`: `R2-preview`
+- `skill`: `run-dev-graph-node`
+- 不変目的: 分類previewを提示し、閾値未達時だけ確認して正規pathを確定する
+- 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
+
+## Layer 2: ドメイン層
+
+### 入力契約
+
+- R1候補、confidence/margin閾値、任意user decision。分類を伴わない `bind-github` は R1 候補を持たず、代わりに切り替え対象の確定済み issue/task の `bindings[]` (`graph_node_id` と任意の `publication_mode`) を受け取る。`link-github` も分類を伴わず、`links[]` (`graph_node_id` と任意の `issue_linkage`・`github_project_linkages`) を受け取る。`link-beads` も分類を伴わず、`links[]` (`graph_node_id`・`bd_issue_id` と任意の `sync_state`) を受け取る。`confirm-feature` も分類を伴わず、`confirmations[]` (`graph_node_id`・`package`・`receipt`・`feature_context`) を受け取る。
+
+### 出力契約
+
+- 自動確定または明示確認済みkind/domain/project/path decision receipt。分類を伴わない `bind-github`/`link-github`/`link-beads`/`confirm-feature` は decision receipt を作らず、`graph_node_id` と preview の `graph_revision_before` だけを返す。
+
+### 責務境界
+
+- 閾値達成時は質問せず未達時だけAskUserQuestionを使い任意pathを要求しない。
+- preview は `build-graph-node.py add|update|bind-github|link-github|link-beads|confirm-feature --dry-run` だけで作り、write 0 とする。`bind-github` は確定済みの既存 issue/task の binding を切り替えるだけなので kind/domain/project/path を分類せず、preview の `graph_revision_before` だけを R3 へ渡す。
+
+### 受入条件
+
+- decision sourceが`auto`/`user_confirmed`のどちらか (C14 が宣言した feature と、それが参照する architecture だけは`c14_macro_contract`。分類を伴わない `bind-github`/`link-github`/`link-beads`/`confirm-feature` は decision source を持たない) で、候補とpreviewの`graph_revision_before`がR3へ渡す`expected_graph_revision`と一致する。
+
+## Layer 3: インフラ層
+
+- 使用資産: AskUserQuestionとRead、`build-graph-node.py add|update|bind-github|link-github|link-beads|confirm-feature --dry-run` (preview)。
+- path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
+
+## Layer 4: 共通ポリシー層
+
+- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。
+
+## Layer 5: エージェント層 (l5-contract v2.0.0)
+
+- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。
+
+### 5.1 担当 agent
+
+- `run-dev-graph-node/R2-preview`
+
+### 5.2 ゴール定義
+
+- 目的: 分類previewを提示し、閾値未達時だけ確認して正規pathを確定する
+- 達成ゴール: 自動確定または明示確認済みkind/domain/project/path decision receipt (`bind-github`/`link-github`/`link-beads`/`confirm-feature` では `graph_node_id` と `graph_revision_before`) が生成され、受入条件を満たした状態になっている。
+
+### 5.3 完了チェックリスト (ゴール到達の停止条件)
+
+- [ ] decision sourceが`auto`/`user_confirmed`のどちらか (C14 が宣言した feature と、それが参照する architecture だけは`c14_macro_contract`。分類を伴わない `bind-github`/`link-github`/`link-beads`/`confirm-feature` は decision source を持たない) で、候補とpreviewの`graph_revision_before`がR3へ渡す`expected_graph_revision`と一致する
+
+## Layer 6: オーケストレーション層
+
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。
+- decisionをR3/R4へ渡す。
+
+## Layer 7: UserInput
+
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。
+
+## 出力指示
+
+Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+
+# Prompt: R3-write
+
+> artifact_kindからtemplateを選び単一transactionで差分書込みする。feature package登録はexact 13 nodeのP01..P13、共通parent/package、機能内dependency/bindingを検証しpartial 0件のreceiptを生成する
+
+## Layer 1: 基本定義層
+
+- `responsibility_id`: `R3-write`
+- `skill`: `run-dev-graph-node`
+- 不変目的: artifact_kindからtemplateを選び単一transactionで差分書込みする。feature package登録はexact 13 nodeのP01..P13、共通parent/package、機能内dependency/bindingを検証しpartial 0件のreceiptを生成する
+- 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
+
+## Layer 2: ドメイン層
+
+### 入力契約
+
+- containment receipt、classification decision (bind-github・link-github・link-beads・confirm-feature では不要)、artifact・feature package・bind-github の `bindings[]`・link-github と link-beads の `links[]`・confirm-feature の `confirmations[]` のいずれか、R2 preview の `graph_revision_before`。apply の入力 JSON には必ず `expected_graph_revision` として渡し、省略しない (省略すると writer が `missing_expected_graph_revision` で拒否する)。
+
+### 出力契約
+
+- atomic node updateまたはimmutable package receiptと`graph_revision_after` (書込み時は新revision、`bind-github`/`link-github`/`link-beads`/`confirm-feature` の noop では`graph_revision_before`のまま)。
+
+### 責務境界
+
+- C02単一writer/lockのみで書き物理削除・partial commit・cross-feature edgeを禁止する。
+- graph・content・receipt を Write/Edit や自作 script で直接書かない。
+
+### 受入条件
+
+- 通常writeはschema PASS、packageはP01..P13 exact 13・共通parent/package・DAG、失敗時applied_count=0になる。`bind-github` は `tracker_binding=github` へ切り替わり、本文のバイト列と `evaluation_status=pass` を保ち、既に同じ状態なら noop になる。`link-github` と `link-beads` は linkage (`issue_linkage`・`github_project_linkages`、または `beads_linkage`) だけを書き換え、本文・`evaluation_status`・`updated_at` を保ち、変化が無ければ noop になる。
+
+## Layer 3: インフラ層
+
+- 使用資産: 通常 artifact の add/update と、確定済み issue/task の GitHub への切り替え (bind-github) と GitHub linkage・`field_snapshot` の記録 (link-github) と Beads の起票結果の記録 (link-beads) と package を根拠にした feature の確定 (confirm-feature) は`build-graph-node.py`、exact-13 package は`register-package.py`、両者の書込み前検証は`validate-graph-schema.py`。bind-github も R2 preview の `graph_revision_before` を `expected_graph_revision` に渡す。
+- path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
+
+## Layer 4: 共通ポリシー層
+
+- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。
+
+## Layer 5: エージェント層 (l5-contract v2.0.0)
+
+- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。
+
+### 5.1 担当 agent
+
+- `run-dev-graph-node/R3-write`
+
+### 5.2 ゴール定義
+
+- 目的: artifact_kindからtemplateを選び単一transactionで差分書込みする。feature package登録はexact 13 nodeのP01..P13、共通parent/package、機能内dependency/bindingを検証しpartial 0件のreceiptを生成する
+- 達成ゴール: atomic node updateまたはimmutable package receiptと`graph_revision_after` (`bind-github`/`link-github`/`link-beads`/`confirm-feature` の noop では`graph_revision_before`のまま) が生成され、受入条件を満たした状態になっている。
+
+### 5.3 完了チェックリスト (ゴール到達の停止条件)
+
+- [ ] 通常writeはschema PASS、packageはP01..P13 exact 13・共通parent/package・DAG、失敗時applied_count=0になる。`bind-github` は `tracker_binding=github` へ切り替わり、本文のバイト列と `evaluation_status=pass` を保ち、既に同じ状態なら noop になる。`link-github` と `link-beads` は linkage (`issue_linkage`・`github_project_linkages`、または `beads_linkage`) だけを書き換え、本文・`evaluation_status`・`updated_at` を保ち、変化が無ければ noop になる
+
+## Layer 6: オーケストレーション層
+
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。
+- receiptをC14/C27/呼出元へ返す。
+
+## Layer 7: UserInput
+
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。
+
+## 出力指示
+
+Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+
+# Prompt: R4-apply-template
+
+> 確定したartifact_kind (architectureはsubtype複数選択、specificationはAPI変更有無) からtemplates/template-contract.jsonが示す本文骨格を適用し、template_id/template_version/artifact_subtypesをfrontmatterへ書き込む。既存文書は全書換せず不足セクションのみ差分追記する (要件C18/C19)
+
+## Layer 1: 基本定義層
+
+- `responsibility_id`: `R4-apply-template`
+- `skill`: `run-dev-graph-node`
+- 不変目的: 確定したartifact_kind (architectureはsubtype複数選択、specificationはAPI変更有無) からtemplates/template-contract.jsonが示す本文骨格を適用し、template_id/template_version/artifact_subtypesをfrontmatterへ書き込む。既存文書は全書換せず不足セクションのみ差分追記する (要件C18/C19)
+- 成功条件は Layer 2 の受入条件と Layer 5 の二値 checklist の同時充足とする。
+
+## Layer 2: ドメイン層
+
+### 入力契約
+
+- artifact kind、architecture subtype集合、API変更判定、既存Markdown、template contract、既存 node の `implementation_readiness.missing_sections`。
+
+### 出力契約
+
+- 不足sectionのみ加えたbody patchとtemplate metadata。writer は不足 section を自動では補わないので、R4 は writer が返す `readiness_fill[]` の `via` と `key` をそのまま使って本文を渡す (placeholder の見出しは `set_sections`、見出しが無い section は `append_sections` の末尾 H2、API block が無ければ `add_api_contracts`、feature の projection は `macro_patch` の field か `node_patch.depends_on`)。placeholder とは全行が template の雛形行か placeholder だけの行である section を指し、`<` や `未定` を含むだけの本文は埋まっている扱いになる。`via=null` は埋める経路が無いので停止して報告し、readiness の項目名を見出しキーに使わない。subtype/API の追加は `add_subtypes`/`add_api_contracts` で渡し、block の位置と生成 section の再生成は writer に任せる。
+
+### 責務境界
+
+- 既存本文を全書換せずsubtypeを間引かずAPI変更なしでoverlayを加えない。
+- 本文を Write/Edit で直接書き換えない。
+
+### 受入条件
+
+- 必須見出し欠落0、既存非管理section digest不変になる。
+
+## Layer 3: インフラ層
+
+- 使用資産: template contract と`build-graph-node.py`の合成 (add は kind template、update は `set_sections`/`append_sections`/`add_subtypes`/`add_api_contracts` の差分 patch)。
+- path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
+
+## Layer 4: 共通ポリシー層
+
+- 共通の内容は `../../references/prompt-common-layers.md` (skill root 起点) の「Layer 4」に従う。
+
+## Layer 5: エージェント層 (l5-contract v2.0.0)
+
+- 共通の内容 (5.1 の fork 方針、5.2 の背景、5.3 の共通項目、5.4 実行方式) は `../../references/prompt-common-layers.md` の「Layer 5」に従う。5.3 は共通項目と下の項目がすべて YES のときに到達とする。
+
+### 5.1 担当 agent
+
+- `run-dev-graph-node/R4-apply-template`
+
+### 5.2 ゴール定義
+
+- 目的: 確定したartifact_kind (architectureはsubtype複数選択、specificationはAPI変更有無) からtemplates/template-contract.jsonが示す本文骨格を適用し、template_id/template_version/artifact_subtypesをfrontmatterへ書き込む。既存文書は全書換せず不足セクションのみ差分追記する (要件C18/C19)
+- 達成ゴール: 不足sectionのみ加えたbody patchとtemplate metadataが生成され、受入条件を満たした状態になっている。
+
+### 5.3 完了チェックリスト (ゴール到達の停止条件)
+
+- [ ] 必須見出し欠落0、既存非管理section digest不変になる
+
+## Layer 6: オーケストレーション層
+
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 6」に従う。
+- R3 atomic candidateへpatchを渡す。
+
+## Layer 7: UserInput
+
+- 共通の内容は `../../references/prompt-common-layers.md` の「Layer 7」に従う。
+
+## 出力指示
+
+Layer 2 の入力・出力・責務境界・受入条件を正本としてこの単一責務だけを実行し、思考過程を出力せず、artifact/receipt、検証結果、未達 blocker だけを返す。
+
+    else:
+        raise WriterError("tracker_binding_unresolved", "tracker_binding must be beads/github/none or repo-config-default")
+    if binding == "github":
+        # schema allOf[14]+[9]: github binding needs an issue publication mode, which only confirmed/pass/complete
+        # issue|task nodes may carry. A writer that creates drafts cannot satisfy it, so it refuses up front.
+        raise WriterError("github_binding_requires_confirmed_node",
+                          "register the draft with tracker_binding=none; after confirm/pass switch it with `build-graph-node.py bind-github`, then C12 (gh-bridge) publishes it")
+    return binding
+
+
+def _spec_confirmation(raw: Any, kind: str, lineage: dict[str, Any], root: Path, label: str) -> dict[str, str]:
+    """C19 R3 の確定取込み: 完成度 evaluator の PASS report を根拠に、system-spec-harness 由来の章だけを確定で登録する。
+
+    evaluated_digest は取込元 bytes の source_digest に pin する。取込後に章が変われば lineage gate が落ち、
+    PASS が別の bytes へ流用されることはない。report は repo 内の通常ファイルで、評価した spec_dir が取込元の
+    ディレクトリと一致し、verdict が PASS のものだけを受ける。
+    """
+    if kind not in SPEC_IMPORT_KINDS or lineage.get("origin_kind") != "system-spec-harness":
+        raise WriterError("confirmation_requires_spec_import",
+                          f"{label}: confirmation_evidence is only for specification/architecture imported from system-spec-harness")
+    if not isinstance(raw, dict) or set(raw) != {"evaluator", "evidence_ref", "evaluated_digest"}:
+        raise WriterError("invalid_confirmation_evidence", f"{label}: confirmation_evidence is {{evaluator, evidence_ref, evaluated_digest}}")
+    if raw["evaluator"] != SPEC_EVALUATOR:
+        raise WriterError("invalid_confirmation_evidence", f"{label}: evaluator must be {SPEC_EVALUATOR}")
+    if raw["evaluated_digest"] != lineage.get("source_digest"):
+        raise WriterError("invalid_confirmation_evidence", f"{label}: evaluated_digest must equal source_lineage.source_digest")
+    ref = raw["evidence_ref"]
+    if not isinstance(ref, str) or not ref or Path(ref).is_absolute() or ".." in Path(ref).parts:
+        raise WriterError("invalid_confirmation_evidence", f"{label}: evidence_ref must be a repo-relative path")
+    try:
+        report = load_json(contained(root / ref, root, must_exist=True))
+    except (ContractError, OSError, ValueError) as exc:
+        raise WriterError("invalid_confirmation_evidence", f"{label}: evidence_ref {ref} is unreadable ({exc})") from exc
+    if not isinstance(report, dict) or report.get("verdict") != "PASS":
+        raise WriterError("confirmation_evidence_not_pass", f"{label}: {ref} verdict is not PASS")
+    spec_dir = report.get("spec_dir")
+    source_dir = (root / str(lineage["source_path"])).parent.resolve()
+    evaluated = Path(spec_dir).expanduser() if isinstance(spec_dir, str) and spec_dir else None
+    if evaluated is None or (evaluated if evaluated.is_absolute() else root / evaluated).resolve() != source_dir:
+        raise WriterError("invalid_confirmation_evidence", f"{label}: {ref} evaluated {spec_dir!r}, not the import source directory")
+    return {"evaluator": raw["evaluator"], "evidence_ref": ref, "evaluated_digest": raw["evaluated_digest"]}
+
+
+# ---------------------------------------------------------------- operations
+
+def _plan_add(payload: dict[str, Any], nodes: list[dict[str, Any]], root: Path, ctx: dict[str, Any],
+              composer: Composer, now: str) -> list[dict[str, Any]]:
+    entries = payload.get("artifacts")
+    if not isinstance(entries, list) or not entries or not all(isinstance(item, dict) for item in entries):
+        raise WriterError("invalid_input", "add input needs artifacts[] objects")
+    keys = list(composer.contract["common_frontmatter"]["required"])
+    mode = _tracker_mode(ctx)
+    taken_ids = {node.get("graph_node_id") for node in nodes}
+    taken_paths = {node.get("file_path") for node in nodes}
+    plan = []
+    for index, entry in enumerate(entries):
+        label = f"artifacts[{index}]"
+        kind = entry.get("artifact_kind")
+        _check_keys(entry, ADD_KEYS, label)
+        if kind == "feature" and "macro" not in entry:
+            _reject_feature(kind)
+        if kind not in KIND_PREFIX:
+            raise WriterError("invalid_kind", f"{label}: artifact_kind must be one of {sorted(KIND_PREFIX)}")
+        if kind != "feature" and "macro" in entry:
+            raise WriterError("invalid_input", f"{label}: macro is the C14 contract of feature nodes only")
+        if kind == "feature" and "classification" in entry:
+            raise WriterError("invalid_input", f"{label}: features are declared by C14, not classified; drop classification")
+        slug = entry.get("slug")
+        if not isinstance(slug, str) or not SLUG.match(slug):
+            raise WriterError("invalid_slug", f"{label}: slug must match {SLUG.pattern}")
+        graph_node_id, file_path = f"{KIND_PREFIX[kind]}-{slug}", f"{VGS.ROOT_BY_KIND[kind]}/{slug}.md"
+        if graph_node_id in taken_ids or file_path in taken_paths:
+            raise WriterError("duplicate_node", f"{label}: {graph_node_id} or {file_path} already exists")
+        target = contained(_content_root(ctx, root, kind) / f"{slug}.md", root, must_exist=False)
+        if target.exists() or target.is_symlink():
+            raise WriterError("artifact_path_exists", f"{label}: {file_path} exists outside the graph")
+        sections = entry.get("sections") or {}
+        subtype_sections = entry.get("subtype_sections") or {}
+        api_contracts = entry.get("api_contracts") or []
+        if not isinstance(sections, dict) or not isinstance(subtype_sections, dict) or not isinstance(api_contracts, list):
+            raise WriterError("invalid_input", f"{label}: sections/subtype_sections are objects and api_contracts is a list")
+        subtypes = _subtypes(kind, entry.get("artifact_subtypes", []), len(api_contracts))
+        if kind != "architecture" and subtype_sections or set(subtype_sections) - set(subtypes):
+            raise WriterError("invalid_input", f"{label}: subtype_sections must target selected architecture subtypes")
+        if kind != "specification" and api_contracts:
+            raise WriterError("invalid_input", f"{label}: api_contracts apply to specification only")
+        operations = [item.get("operation") for item in api_contracts if isinstance(item, dict)]
+        if len(set(operations)) != len(operations):
+            raise WriterError("duplicate_section", f"{label}: api_contracts repeat an operation")
+        if kind == "feature":
+            macro = _macro(entry.get("macro"), label, partial=False)
+            classified = _declared(kind, file_path, "declared by the C14 macro contract (run-dev-graph-decompose)")
+        else:
+            macro = {"purpose": None, "goal": None, "scope_in": [], "scope_out": [], "acceptance": [], "architecture_refs": []}
+            classified = _classification(entry.get("classification"), kind, slug)
+        for field in ("title", "project_id", "domain"):
+            if not isinstance(entry.get(field), str) or not entry[field].strip():
+                raise WriterError("missing_required_field", f"{label}.{field} must be a non-empty string")
+            if SECRET.search(entry[field]):
+                raise WriterError("secret_like_content", f"{label}.{field}")
+        node = {
+            "graph_node_id": graph_node_id, "artifact_kind": kind, "artifact_subtypes": subtypes,
+            "title": entry.get("title"), "project_id": entry.get("project_id"), "domain": entry.get("domain"),
+            "status": "draft", "owners": entry.get("owners", []), "tags": entry.get("tags", []),
+            "priority": entry.get("priority"), "start_date": entry.get("start_date"),
+            "target_date": entry.get("target_date"), "iteration": entry.get("iteration"),
+            "created_at": now, "updated_at": now, "depends_on": entry.get("depends_on", []),
+            "related_nodes": entry.get("related_nodes", []), "resource_scope": entry.get("resource_scope", []),
+            **macro,
+            "parent_feature": None, "feature_package_id": None, "phase_ref": None,
+            "file_path": file_path, "template_id": kind, "template_version": composer.contract["template_version"],
+            "confirmation_status": "draft", "evaluation_status": "pending",
+            "confirmation_evidence": {"evaluator": None, "evidence_ref": None, "evaluated_digest": None},
+            "source_lineage": entry.get("source_lineage") or {
+                "origin_kind": "generated" if kind == "feature" else "manual",
+                "source_plugin": "dev-graph" if kind == "feature" else None, "source_path": None,
+                "source_version": None, "source_digest": None, "imported_at": None},
+            "classification_confidence": classified["confidence"], "classification_reason": classified["reason"],
+            "classification_candidates": classified["candidates"],
+            "github_publication": {"mode": "local_only", "project_aliases": [], "labels": [], "milestone": None},
+            "issue_linkage": None, "tracker_binding": _tracker(entry.get("tracker_binding"), mode), "beads_linkage": None,
+            "github_project_linkages": [], "pull_request_linkages": [], "execution_contexts": [],
+            "completion_evidence": {"policy": "manual", "status": "not_applicable", "source": None,
+                                    "completed_at": None, "reconciled_at": None, "evidence_refs": []},
+        }
+        lineage = LINEAGE.lineage_findings([node], root)
+        if lineage:
+            # 取込元が消えた・変わった lineage を登録すると、C19 の resume gate が後から必ず落ちる node になる。
+            raise WriterError("source_lineage_unverified",
+                              f"{label}: source_lineage does not resolve to the current system-spec bytes", lineage)
+        evidence = None
+        if "confirmation_evidence" in entry:
+            evidence = _spec_confirmation(entry["confirmation_evidence"], kind, node["source_lineage"], root, label)
+        state = {"subtypes": subtypes, "api_count": len(api_contracts), "node": node}
+        body = composer.compose(kind, state, sections, subtype_sections, api_contracts)
+        fill = composer.readiness(kind, subtypes, body)
+        missing = [item["item"] for item in fill]
+        node["implementation_readiness"] = {"status": "incomplete" if missing else "complete",
+                                            "missing_sections": missing, "checked_at": now}
+        if evidence is not None:
+            if missing:
+                # schema allOf[7]: pass は readiness complete を要する。確定で取り込む章は全 section を埋めて渡す。
+                raise WriterError("confirmed_import_requires_complete_readiness",
+                                  f"{label}: fill {missing} before importing as confirmed")
+            # 確定した仕様は書き終えた成果物なので done にする。active だと schedule が着手候補として推薦してしまう。
+            node.update({"status": "done", "confirmation_status": "confirmed", "evaluation_status": "pass",
+                         "confirmation_evidence": evidence})
+        text = _frontmatter(node, keys) + "\n" + "".join(body)
+        taken_ids.add(graph_node_id)
+        taken_paths.add(file_path)
+        detail = {"graph_node_id": graph_node_id, "file_path": file_path,
+                  "classification": {key: classified[key] for key in ("decision", "confidence", "margin")},
+                  "implementation_readiness": node["implementation_readiness"]["status"],
+                  "missing_sections": missing, "readiness_fill": fill}
+        plan.append({"node": node, "before_node": None, "path": target, "before": None, "text": text,
+                     "label": label, "detail": detail, "declared": classified["decision"] == "c14_macro_contract"})
+    kinds = {node.get("graph_node_id"): node.get("artifact_kind") for node in nodes}
+    kinds.update({item["node"]["graph_node_id"]: item["node"]["artifact_kind"] for item in plan})
+    cited = {ref for item in plan if item["node"]["artifact_kind"] == "feature" for ref in item["node"]["architecture_refs"]}
+    for item in plan:
+        if item["node"]["artifact_kind"] == "feature":
+35:    "source_lineage",
+390:    "source_lineage": {
+1351:          "source_lineage": {
+1365:          "source_lineage": {
+{
+ "type": "object",
+ "required": [
+  "origin_kind",
+  "source_plugin",
+  "source_path",
+  "source_version",
+  "source_digest",
+  "imported_at"
+ ],
+ "properties": {
+  "origin_kind": {
+   "type": "string",
+   "enum": [
+    "manual",
+    "github",
+    "system-spec-harness",
+    "system-dev-planner",
+    "generated"
+   ]
+  },
+  "source_plugin": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "source_path": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+  },
+  "source_version": {
+   "type": [
+    "string",
+    "null"
+   ]
+  },
+  "source_digest": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "pattern": "^[a-f0-9]{64}$"
+  },
+  "imported_at": {
+   "type": [
+    "string",
+    "null"
+   ],
+   "format": "date-time"
+  }
+ },
+ "additionalProperties": false,
+ "description": "\u5f15\u7528\u30fbimport\u5143\u3092\u8ffd\u8de1\u3057\u3001C19\u304a\u3088\u3073external plugin system-dev-planner\u7531\u6765\u306eimport\u304c\u5916\u90e8\u6b63\u672c\u3092\u5229\u7528\u3057\u305f\u3053\u3068\u3092\u691c\u8a3c\u3059\u308b"
+}

@@ -2,7 +2,9 @@
   "target": {
     "plugin": "plugin-dev-planner",
     "skill": "run-plugin-dev-plan",
-    "skill_md_sha256": "5749bf5a15ccfbca0d15276a21dfa5e742396fa768910130776763563a73151e"
+    "skill_md_sha256": "297130c2276851a6a00ad68922b61bc17bdb57f6e4a13d90dc5fe333a1bfbc35",
+    "reviewed_skill_md_sha256": "297130c2276851a6a00ad68922b61bc17bdb57f6e4a13d90dc5fe333a1bfbc35",
+    "skill_dir_digest": "2b7f24f8adb87ec72de4a80cbd6dccda6fffbcb87a10432a9721fb2282c92448"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -13,8 +15,8 @@
     "dependency_break": 0,
     "smell": 0
   },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-04T22:30:28Z",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-15T08:59:48Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -26,21 +28,39 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "skill 相対で兄弟 plugin を指していた参照 (`../../../harness-creator/...`) を、repo root 起点の `plugins/harness-creator/...` へ漏れなく置き換えた。対象は frontmatter reference_refs 2 件、SKILL.md:212 の goal-seek 正本、prompts/R1-elicit-goal.md:72、references/resource-map.yaml の goal_seek_paradigm、agents/plugin-dev-plan-elicitor.md の委譲 schema。plugin-dev-planner 全域を grep して `../../../` の残りは 0 件、参照先 (pipeline-boundary-contract.md、goal-seek-paradigm.md、goal-spec.schema.json) はすべて実在する。scripts/lint-sibling-plugin-paths.py も OK (exit 0)。",
-      "新しい書き方は scripts/lint-sibling-plugin-paths.py の docstring の方針 (repo-bundled 前提の plugin と frontmatter の *_refs は `plugins/<name>/...`) に一致している。plugin-dev-planner は distributable:false かつ NEVER_DISTRIBUTE 登録で、配布注記 (SKILL.md:158) が「repo root 起点・repo-bundled 前提」と「lint/スクリプト起動は repo-root cwd 前提、skill 資産は self-relative」を同じ段落で述べるため、参照の基点が 2 種類あることとその理由が 1 か所で読める。",
-      "frontmatter の *_refs を repo root 形にしても、consumer の lint (plugin skill-governance-lint の lint-skill-completeness.py) は skill dir 相対、repo root 相対、plugins/*/skills/<name> の順で解決するので壊れない。名前で照合する lint-skill-dep-step7.py にも影響しない。repo 全体の scripts/validate-plugin-completeness.py は exit 0。",
-      "配布注記 (SKILL.md:158) に、skill 相対の兄弟参照を使わない理由 (install 先では `../` を重ねても兄弟 plugin に届かない) を書き残した。次に誰かが参照を足すときの判断材料が本文にある。",
-      "前回評価した変更 (install 義務の P13 到達、slug 正本、component 帰属拒否、repo-root 相対の条項コマンド) は今回の書き換えと衝突していない。plugin-creator-contract の「条項のコマンドは repo-root 相対パス」と配布注記の「repo-root cwd 前提」が同じ向きで、sample-plan の P13 条項と task-graph の title も同じ形のまま。"
+      "frontmatter の goal_seek から plan_dir/spec/progress/intermediate の 4 キーを消しても、置き場は一意に定まっている。「ゴールシーク配線」が specfm.plan_output_dir(target_plugin_slug, out_dir) で <PLAN_DIR> (既定 plugin-plans/<plugin-slug>/) を解決し、<PLAN_DIR>/goal-spec.json・<PLAN_DIR>/run-plugin-dev-plan-progress.json・<PLAN_DIR>/run-plugin-dev-plan-intermediate.jsonl を置く。io-contract §9 の出力先の表と .gitignore の 2 行 (progress と intermediate) も同じ path を指す。消したキーを読むコードは repo に無く、specfm が生成する goal_seek も engine/fork/max_loops だけなので、goal-seek-paradigm.md の「path は本文に書き、frontmatter に重ねない」と同じ向きになった。lint-goal-seek も OK。",
+      "artifact_delivery を契約 id の 1 行 (artifact-delivery-v1) に置き換えても、本文の「Pre-choice usable artifact execution」「Post-choice selected improvement execution」の 2 節は accept-as-is/diagnose の 2 択と、所見を見せた後に改善の深さを 1 回だけ聞く流れのまま整合している。lint-entrypoint-artifact-first も OK。",
+      "upstream-pins.json の 4 pin (E1/B1/A4/D1) の更新は、指しているファイルの今の sha と一致する (check-upstream-pins.py: 8 件一致・exit 0)。対応する harness-creator-spec-reflection.md の行の記述は、上流の変更で古くなっていない。",
+      "前回からの持ち越し指摘 2 件は解消済み。check-spec-gates.py は保存済み task-graph の P13 leaf にも _component_install_obligations を掛けており、io-contract の「derive() の leaf と保存済み graph の両方で帰属を検出する」と主要ルール 4 の記述に実装が追いついた。主要ルール 4 には install を持たない既存 plan の移行手順 (次回 --mode update で plugin_meta.install・P13 条項・task-graph 再生成を足す) と、P13 の entities_covered を [] に保つ理由が並んでいる。",
+      "R4 を独立 skill assign-plugin-plan-evaluator へ委譲し、評価器は plan を書き換えず plan-findings.json だけを返す。proposer と approver の分離が skill の境界で構造的に保証されている。"
     ],
     "negative_feedback": [
-      "[low / omission (生成 plan への指示・差分外の既存文言)] 本 skill は生成する plan が兄弟 plugin をどう参照すべきかを指示する立場にある。しかしその指示 (io-contract.md F8 の L257、SKILL.md 主要ルール 8 の L205、harness-creator-spec-reflection.md F8 の L82、component-domain.md L89) は「cross-plugin SSOT は vendoring (byte 一致) または self-derive fail-soft loader」だけを挙げる。新しい方針の resolver (`scripts/extract-plugin-root.py <name>`、Python からは importlib で resolve())、メタデータの `plugin:<name>/<path>` 記法、本文の出典表記、再発防止の scripts/lint-sibling-plugin-paths.py は案内していない。矛盾ではない。vendoring は新方針の同梱と一致し、self-derive は先行事例 (harness-creator の check-review-trigger.py) を見ると自 plugin 名を __file__ から導く手法で、親ディレクトリ経由の兄弟参照ではない。ただし、生成 plan の component が兄弟 plugin の script を実行する必要があるときの解決手段が plan に焼かれず、check-runtime-portability.py も build_target の `plugins/` 始まりと `..` 不在しか見ない。lint-sibling-plugin-paths は Makefile:162 と harness-creator-kit-ci.yml:131 に組み込まれており、build 後の実 plugin で親ディレクトリ起点の参照は repo の CI で止まるため low とした。直し方: io-contract F8 に、兄弟 plugin の実行は同梱 resolver で解決し、メタデータは `plugin:` 記法、本文の引用は出典表記で書く旨を 1 文足し、主要ルール 8 と spec-reflection F8 から参照する。",
-      "[low / inconsistency (gate と文書のずれ)・前回からの持ち越し] component 帰属の検査は derive() が今つくる P13 leaf にしか掛からず (check-spec-gates.py:318-329)、保存済み task-graph 側 (同:330-360) は条項が含まれるかどうかだけを見る。io-contract L209 は「derive() の leaf と保存済み graph の両方を突合し、欠落・古い条項・component に帰属した条項を検出する」のままで、保存済み graph でも帰属を検出するように読める。今回の差分はこの箇所を変えていない。gate の前に derive-task-graph.py を必ず実行する手順 (SKILL.md:301) があるため low。",
-      "[low / omission (移行手順)・前回からの持ち越し] 主要ルール 4 (SKILL.md:201) の移行方針は「次回 --mode update で plugin_meta.install・P13 条項・task-graph 再生成を Edit 差分で足す」と列挙するが、同じルールの「P13 の entities_covered は [] に保つ」を移行で戻す手順が無い。gate のエラー文が直し方を示すため low。"
+      "[low / omission (検証の projection の欠け)・今回の差分外の既存文言] 「Purpose & Output Contract」の完了条件と io-contract §11 の表 (総数と一覧の単一正本) は拡張ゲート 7 本に check-requirements-coverage.py を含め、「ゴールシークループ」も検証は §11 の表に従うと書く。しかし「ゴールシーク検証」の bash は拡張ゲートのうち 6 本しか起動せず、「完了チェックリスト (Checklist)」にも check-requirements-coverage の項目が無い。script_refs には載っている。R4 で委譲先の evaluate-plan.py が G9 として fail-closed で回すため、要件の取りこぼしが素通りすることはなく low とした。直し方: 検証の bash の拡張ゲートの並びに `python3 \"$SKILL_DIR/scripts/check-requirements-coverage.py\" \"$PLAN_DIR\"` を 1 行足し、完了チェックリストに「check-requirements-coverage.py <PLAN_DIR> が exit0 (goal-spec checklist の各 id が index の完了チェックリスト/受入確認で引用される)」を 1 項目足す。",
+      "[low / inconsistency (依存の宣言漏れ)・今回の差分外の既存文言] 「ゴールシーク検証」の bash は同じ skill の scripts/lint-sibling-coupling.py を advisory として起動するが、frontmatter の script_refs に載っていない (ファイルは実在する)。script_refs を依存の一覧として読む側からは見えない。advisory で非ゲート (`|| true`) のため low。直し方: script_refs に `scripts/lint-sibling-coupling.py` を足す (frontmatter の変更になる)。",
+      "[low / omission (生成 plan への指示)・前回からの持ち越し] 主要ルール 8 と io-contract F8 の (c) は、cross-plugin SSOT の携帯手段として vendoring と self-derive だけを挙げ、兄弟 plugin の script を実行する手段 (同梱 resolver の scripts/extract-plugin-root.py)、メタデータの `plugin:<name>/<path>` 記法、親ディレクトリ起点の参照を止める scripts/lint-sibling-plugin-paths.py を案内していない。矛盾ではなく、lint-sibling-plugin-paths は repo の CI に入っているため low。直し方: io-contract F8 に、兄弟 plugin の実行は同梱 resolver で解決し、メタデータは `plugin:` 記法で書く旨を 1 文足し、主要ルール 8 から参照する。"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "前回 verdict (sha ae09a2d0…61fc) は HEAD ではなく、PR #83 の follow-up 実装 (check-spec-gates.py、specfm.py、tests/test_check_spec_gates.py など) の直後の状態を評価したもの。その後に入った install 先での兄弟参照の修正を主な対象に、builder とは別 context の独立 evaluator が incremental profile の focused combined review を 1 回行った。git diff HEAD には前回評価済みの変更も混ざるため、前回 verdict の notes と照らして新しい変更 (frontmatter reference_refs 2 件、SKILL.md:158 の配布注記、SKILL.md:212、prompts/R1-elicit-goal.md:72、references/resource-map.yaml、agents/plugin-dev-plan-elicitor.md、未追跡の scripts/extract-plugin-root.py) に焦点を当て、全体の矛盾の有無も確認した。(a)矛盾 (b)漏れ (c)記述規約整合 (d)依存関係整合 (e)rubric high severity を同時に判定し、elegance/rubric の 2 verdict へ分けて投影した。30 思考法は実施しておらず、実施したとも申告しない。確認したこと: 現行 SKILL.md 全文 (sha は書き込み直前に再計算)、SKILL.md と prompts・references・examples・agents の差分、check-spec-gates.py の install 関連部、lint-sibling-plugin-paths.py の docstring、lint-skill-completeness.py の *_refs 解決順、生成 plan への兄弟参照の指示 4 か所。決定論の確認: plugin-dev-planner の pytest は 937 passed / 2 skipped、scripts/lint-sibling-plugin-paths.py OK、repo 全体の scripts/validate-plugin-completeness.py exit 0、同梱 resolver の byte 一致は scripts/lint-vendored-ssot.py で OK。参考情報で finding ではないもの: assign-plugin-plan-evaluator の resource-map の書き換えは担当外の skill。plugin-dev-plan-elicitor.md では自 plugin の schema (plugin root 相対) と委譲先 schema (repo root 相対) が隣り合うが、配布注記の基点の使い分けどおりである。harness-creator-spec-reflection.md:78 の `harness-creator/` は表の記述で参照パスではない。結果は high/medium 0 件、low 3 件 (うち 1 件は差分外の既存文言、2 件は前回からの持ち越し)。PASS の射程は design claim (SKILL.md と参照契約・gate の静的設計 adequacy) に限る。install 先の cache から本 skill を起動したときの挙動は検証していない (本 skill は repo-bundled 前提で、repo-root cwd での起動を前提にしている)。"
+  "notes": "前回の PASS 以降に入った全 skill 共通の変更 3 つ (artifact-delivery-v1 の契約 id 参照、diagnostic-choice-2way、goal_seek の死んだキーの削除) と、この skill 固有の upstream-pins.json の pin 更新を受けて、builder とは別 context の評価者が文書全体を読む focused combined review を 1 回行った。読んだもの: 現行 SKILL.md の全体、前回の版との差分 (frontmatter の goal_seek の 4 行の削除だけ)、references/io-contract.md の §9・§11・F8、references/upstream-pins.json と harness-creator-spec-reflection.md の対応行、goal-seek-paradigm.md の path の規則、check-spec-gates.py の install 義務の検査、委譲先 assign-plugin-plan-evaluator の evaluate-plan.py のゲート一覧。決定論の確認: check-upstream-pins.py は 8 件一致で exit 0、lint-entrypoint-artifact-first OK、lint-goal-seek OK。消した 4 キーを frontmatter から読むコードは repo に無い (plan_dir の参照はすべて goal-spec や handoff のフィールド)。結果は high/medium 0 件、low 3 件 (うち 2 件は今回の差分外の既存文言、1 件は前回からの持ち越し)。前回の low 3 件のうち 2 件 (保存済み graph の帰属検査、主要ルール 4 の移行手順) は解消を確かめて外した。C3 のうち rubric で採点できる規約整合 (description の動詞始まり、Gotchas 節の見出し) は rubric verdict に任せ、ここには重ねていない。PASS の射程は SKILL.md と参照契約・gate の静的な設計の妥当性に限る。",
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "ゴールシーク検証",
+        "完了チェックリスト (Checklist)"
+      ]
+    },
+    "elegance:2": {
+      "sections": [
+        "ゴールシーク検証"
+      ]
+    },
+    "elegance:3": {
+      "sections": [
+        "主要ルール"
+      ]
+    }
+  }
 }

@@ -170,6 +170,34 @@ def test_vendored_feedback_skill_ignores_finder_metadata(tmp_path):
     assert FC.directory_content_sha256(copied) == FC.directory_content_sha256(canonical)
 
 
+def test_pytest_cache_does_not_change_digests(tmp_path):
+    # skill のディレクトリで pytest を回すと .pytest_cache ができる。.gitignore の対象で CI の checkout には無いので、
+    # digest に入ると手元で記録した content-review の digest が CI で食い違い、配布コピーも重複計上される。
+    plugins = tmp_path / "plugins"
+    canonical = plugins / "harness-creator" / "skills" / "run-skill-feedback"
+    copied = plugins / "consumer" / "skills" / "run-skill-feedback"
+    for skill in (canonical, copied):
+        (skill / "references").mkdir(parents=True)
+        (skill / "SKILL.md").write_text("same\n", encoding="utf-8")
+        (skill / "references" / "guide.md").write_text("guide\n", encoding="utf-8")
+    review_digest = FC.content_review_dir_digest(copied)
+
+    cache = copied / ".pytest_cache" / "v" / "cache"
+    cache.mkdir(parents=True)
+    (cache / "lastfailed").write_text('{"tests/test_x.py::test_a": true}', encoding="utf-8")
+    (copied / ".pytest_cache" / "CACHEDIR.TAG").write_text("Signature: 8a477f597d28d172789f06886806bc55\n", encoding="utf-8")
+    (copied / "references" / ".pytest_cache").mkdir()
+
+    assert FC.content_review_dir_digest(copied) == review_digest
+    assert FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+    assert FC.directory_content_sha256(copied) == FC.directory_content_sha256(canonical)
+
+    # 名前が似ているだけの文書は digest に入ったまま (除くのは .pytest_cache という名の path 要素だけ)
+    (copied / "references" / ".pytest_cache.md").write_text("note\n", encoding="utf-8")
+    assert FC.content_review_dir_digest(copied) != review_digest
+    assert not FC.is_vendored_feedback_skill(copied, plugins_dir=plugins)
+
+
 def test_unreadable_symlink_target_yields_none(tmp_path, monkeypatch):
     # symlink の読み取りに失敗しても例外を投げず、digest を作れない (None) として返す。
     root = tmp_path / "skill"

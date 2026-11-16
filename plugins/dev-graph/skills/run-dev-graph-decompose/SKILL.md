@@ -96,31 +96,16 @@ feedback_contract:
       loop_scope: outer
       text: "同一featureに対する自動起動結果と手動`/system-dev-plan`実行結果は同じparent_featureで登録され、経路の違いによる二重登録が生じない"
       verify_by: test
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/diagnoseを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 
 # run-dev-graph-decompose
@@ -199,6 +184,9 @@ frontmatter の `goal_seek.engine: inline` / `fork: subagent` / `max_loops: 5` �
 - 開始時に C24 `resolve-repo-context.py --mode write` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>` に固定する。cwd から再解決しない。
 - 元のゴールを `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-goal-spec.json` へ、各 checklist の status/evidence を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-progress.json` へ記録する。
 - 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
+  - Codex では `Agent` を `spawn_agent` に写し、`fork_turns="none"` を指定して親の履歴を受け継がせない (既定は親の履歴を子へ写すので、分離 context にならない)。子には正本の絶対 path と入力 (入力の path、上で固定した `DEV_GRAPH_ROOT` の値、C24 receipt の JSON) だけを渡し、子が自分で全文を読む。子は repo root を cwd から解き直さない。親の会話や判定の要約は渡さない。起動の受理を結果として扱わず、`wait_agent` で子の完了を待ってから最終応答を受け取る。`wait_agent` は timeout や、ほかの子の更新でも返るので、その子の完了が届くまで待ち直す。`task_name` は小文字・数字・underscore だけで作り、周回番号を付けて一意にする。同じ周回で同じ名前の子を起こし直すときは、試行番号を足す (例: `dev_graph_integrity_auditor_loop2_a2`)。
+    - responsibility の子: `task_name` は R-id を小文字にしてハイフンを underscore に変え、周回番号を付ける (例: `r3_decompose_loop2`)。渡す正本は `prompts/<R-id>.md` で、書込みはその prompt の「責務境界」に従う。
+    - Macro flow 2 の独立 auditor の子: 親が R2 の子の完了を待ってから起動する。R2 の子は auditor を起動しない。`task_name` は `dev_graph_integrity_auditor` に周回番号を付ける。渡す正本は `../../agents/dev-graph-integrity-auditor.md` で、読取専用の境界も渡す。入力はその Layer 2 の入力の path で、C14 の receipt には R2 が返したマクロ分解案を渡す。再監査も新しい子で行い、監査を終えた子へ追加の指示を送らない。
 - 各周回末に `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-decompose-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。
 - 5周到達時に未達が残れば完了扱いせず、progress と blocker を親へ handoff する。全 checklist が `achieved` か上の規則の `not_applicable` で、inner criterion (IN1) が PASS のときだけ完了する。outer criterion (OUT1-OUT7) は、この run の後の live trial と content review が判定するので、run の中では PASS と書かず `external_pending` と書く。
 

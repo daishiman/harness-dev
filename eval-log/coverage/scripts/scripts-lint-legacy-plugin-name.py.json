@@ -1,0 +1,18 @@
+{
+  "artifact": "scripts/lint-legacy-plugin-name.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 93,
+    "notes": "genuine review（sha256 3181b042dafffaf9aa303d0614ef55935090f3d40933e21caf1c00663651136e をレビュー。実行検証あり）。範囲: 今の全 169 行を 5 軸で読み直した。HEAD からの差分は 3 つ。L116-126 の tracked_files（git ls-files -z）、L130-135 の exit 2 の扱い、L59-60 の ALLOWLIST の 1 項目。呼び出し（.github/workflows/governance-check.yml:37、Makefile:145）と test を突き合わせた。どちらの呼び出しも 0 以外で落ちるので、新しい exit 2 でも fail-closed のまま。確かめたこと: python3 -m pytest -q -p no:cacheprovider tests/scripts-root/test_root__lint_legacy_plugin_name.py は 7 passed。足された test は 2 本で、K5（quotepath=true のまま日本語の path を検査する）と、git の失敗を exit 2 で返すもの。probe は scratchpad の cov4/legacy/probe.py。実 repo は読むだけで、書くのは cov4/legacy/work/ の tmp repo だけ。前回の指摘: 1.[中] git ls-files を -z なしで読む → 直った。L123 が `git ls-files -z` で、NUL で分ける。GIT_CONFIG_COUNT=1 で core.quotepath=true にしても、追跡中の 28995 本のうち引用符つきは 0 本で、非 ASCII の 847 本はそのままの path で返る。前回と同じく module を importlib で読み、メモリの上だけで ALLOWLIST から doc/マルチ企業展開/クリーンアップ計画.md を外して main() を走らせた。quotepath=false でも true でも rc 1「doc/マルチ企業展開/クリーンアップ計画.md:17: 旧固有名 'skill-creator'」になる（前回は true で rc 0）。改行を含む path の file も検査する（L7 で rc 1）。実 repo は quotepath=true でも rc 0。2.[低] ALLOWLIST の件数 0 の項目 → 直っていない。.beads/config.yaml と README.md は今も旧名が 0 件。3.[低] manifest の例外と不正行 → 直っていない。L96 の read_text は、L136 で try の外から呼ばれる。UTF-8 でない manifest は UnicodeDecodeError の traceback になる（L3）。`|` の無い行・sha でない行・`# aidd-agent-kit manifest v1` も owned に入る（L3b で '.claude/# aidd-agent-kit manifest v1'・'.claude/agents/a.md'・'.claude/skills/run-x/SKILL.md'）。docstring L88 の「不正行は読み飛ばす」とはまだ合わない。4.[低] UTF-8 で読めない file を黙って飛ばす → 直っていない（L146-147）。UTF-16 の file に旧名を書いても rc 0 の OK になる（L4）。5.[低] frontmatter → 一部。main の docstring（L130）に exit 0/1/2 の契約が入った。`# /// script` の block（name・purpose・inputs・outputs・write-scope）は今も無い。scripts/*.py の 75 本のうち 42 本はこの block を持つ。6.[低] 1 file につき 1 token → 直っていない（L148-154）。1 行目に skill-creator、2 行目に skill_creator、3 行目にまた skill-creator を置いても、報告は「x.md:1」の 1 件だけ（L5）。7.[低] git の失敗の traceback → 直った（L131-135）。GIT_DIR を無い dir にすると rc 2「git ls-files に失敗しました (fatal: not a git repository …)」、PATH に git が無いと rc 2「[Errno 2] No such file or directory: 'git'」になり、どちらも traceback は出ない。新しい指摘: なし。修正で入った bug は見つからなかった。surrogateescape で decode した path も ROOT/rel でそのまま開ける。exit 2 は CI と Makefile で落ちる側に働く。responsibility（旧名の再流入の検査 1 つに収まる）と side-effect-safety（read-only）は問題なし。減点しない観察: ALLOWLIST に足した yaml-spec-index.json はまだ追跡されていない。この lint は追跡された file だけを見るので、commit されるまで ALLOWLIST の項目は効かない。DEDUCTION: 2 古い ALLOWLIST -2、3 manifest の例外と不正行 -2、4 読めない file を黙って飛ばす -1、5 `# /// script` の block が無い -1、6 1 file 1 token -1 → 93。[高] が 0 件で、直っていない [中] も 0 件なので PASS。"
+  },
+  "reviewed_by": "independent-code-review-20261115-cov4-recheck",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

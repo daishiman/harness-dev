@@ -2,14 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://harness/plugins/prompt-creator/run-prompt-create/schemas/handoff.schema.json",
   "title": "Prompt Gate Handoff Record",
-  "description": "各 Gate 通過時に eval-log/handoff-<step>.json として書き出される共通スキーマ。PostCompact hook が復元キーとして利用する。run-skill-create と互換形式。",
+  "description": "各 phase の終わりに workflow-manifest.json phases[].handoff の path へ書き出される共通スキーマ。PostCompact hook が復元キーとして利用する。必須 key は run-skill-create と互換。",
   "type": "object",
   "additionalProperties": false,
   "required": ["step", "timestamp", "gate_id", "approver", "artifacts", "next_phase"],
   "properties": {
     "step": {"type": "string", "description": "phase id (workflow-manifest.json phases[].id) または after_<phase>。"},
     "timestamp": {"type": "string", "format": "date-time"},
-    "gate_id": {"type": ["integer", "number", "null"], "description": "通過した Gate 番号 (1, 2, 2.5, 3, 4)。Step 通過のみで Gate 無しなら null。"},
+    "gate_id": {"type": ["integer", "number", "null"], "description": "数値の Gate を持つのは p0-lint の Gate 2 だけ (gate_id=2)。ほかの phase は null。"},
     "approver": {"type": "string", "enum": ["user", "solo_operator_auto", "system_auto"]},
     "artifacts": {
       "type": "array",
@@ -19,7 +19,7 @@
         "required": ["path", "kind"],
         "properties": {
           "path": {"type": "string"},
-          "kind": {"type": "string", "enum": ["brief", "prompt", "build-trace", "lint-log", "evaluator-result", "elegant-findings", "governance-decision", "report", "other"]},
+          "kind": {"type": "string", "enum": ["brief", "prompt", "build-trace", "lint-log", "evaluator-result", "governance-decision", "report", "other"]},
           "checksum": {"type": "string"}
         }
       }
@@ -29,6 +29,20 @@
     "responsibility_id": {"type": "string", "pattern": "^R[0-9]+$"},
     "mode": {"type": "string", "enum": ["create", "update"]},
     "required_fixes": {"type": "array", "items": {"type": "string"}},
-    "resume_command": {"type": "string"}
+    "user_choice": {"type": "string", "enum": ["accept-as-is", "diagnose"], "description": "diagnostic-choice で利用者が明示的に選んだ値。"},
+    "improvement_depth": {"type": "string", "enum": ["findings-only", "light", "standard", "detailed"], "description": "design-evaluate で指摘を見せたあとに利用者が選んだ改善の深さ (manifest design-evaluate.depth_choice)。"},
+    "improvement_round": {"type": "integer", "minimum": 0, "description": "design-evaluate の診断の周回番号。最初の診断が 0 で、再診断ごとに 1 足す (manifest design-evaluate.depth_choice.round_rule)。"},
+    "release_event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recorded_at", "user_quote"],
+      "description": "利用者が自分から release を求めた発言の記録。質問の選択肢からは作らない (manifest diagnostic-choice.release_event_rule)。governance を起動する条件の証跡。",
+      "properties": {
+        "recorded_at": {"type": "string", "format": "date-time"},
+        "user_quote": {"type": "string", "minLength": 1}
+      }
+    },
+    "governance_decision": {"type": "string", "enum": ["approved", "blocked"], "description": "governance (R3) の判定。blocked なら required_fixes に理由を書く。"},
+    "resume_command": {"type": "string", "description": "report の handoff で、利用者が次に起動できるコマンド (例: accept-as-is のあとで release を求められたときの --mode update での再実行)。"}
   }
 }

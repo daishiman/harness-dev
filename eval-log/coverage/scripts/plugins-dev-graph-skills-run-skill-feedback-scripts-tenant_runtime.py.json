@@ -1,0 +1,30 @@
+{
+  "artifact": "plugins/dev-graph/skills/run-skill-feedback/scripts/tenant_runtime.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 92,
+    "notes": "proof reuse（機械投影、新LLM採点なし）。source artifact=scripts/tenant_runtime.py; source SHA256=948b223f50515d28292dc83375fa5a8c41bb8d1415021c9118003c4e821c9d65; source record SHA256=7ee436e36270ec587300b7846d4f8fed74eb6b793be52711ca7eaa314f6f537a; copy SHA256=948b223f50515d28292dc83375fa5a8c41bb8d1415021c9118003c4e821c9d65; source/copy bytes一致を今回機械確認。正本の真正PASS評価（score=92）を保持して再利用。同じbytesを別artifactとして再読・再採点せず、owner source評価1回＋byte identityの証拠再利用とする。同階層runtime4資産の存在も確認済み。元評価の範囲・残存課題はsource_recordを参照。"
+  },
+  "reviewed_by": "proof-reuse-projection-20261116-meta-analyst",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ],
+  "provenance": {
+    "method": "byte-identity-proof-reuse",
+    "source_artifact": "scripts/tenant_runtime.py",
+    "source_sha256": "948b223f50515d28292dc83375fa5a8c41bb8d1415021c9118003c4e821c9d65",
+    "source_record": "eval-log/coverage/scripts/scripts-tenant_runtime.py.json",
+    "source_record_sha256": "7ee436e36270ec587300b7846d4f8fed74eb6b793be52711ca7eaa314f6f537a",
+    "copy_artifact": "plugins/dev-graph/skills/run-skill-feedback/scripts/tenant_runtime.py",
+    "copy_sha256": "948b223f50515d28292dc83375fa5a8c41bb8d1415021c9118003c4e821c9d65",
+    "byte_identity_verified": true,
+    "review_reuse_reason": "owner canonical sourceを1回評価し、現source/copyのbyte完全一致と同階層runtime4資産の存在を機械検証したため。copy個別の新LLM採点は行っていない。runtime環境の適合は別package/vendor検査が担保する。",
+    "source_reviewer": "independent-code-review-20261116-meta-analyst-tenant-runtime"
+  }
+}

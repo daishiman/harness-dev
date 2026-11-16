@@ -2,7 +2,8 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "assign-blueprint-fidelity-evaluator",
-    "skill_md_sha256": "df32fbdcd67224d049ee49383e472b3703bc99142f4500bec7b4f2264352c81d"
+    "skill_md_sha256": "203ae6592872cee0007886a614cd445d70211eab8a79544c15d687ce8431b140",
+    "reviewed_skill_md_sha256": "df32fbdcd67224d049ee49383e472b3703bc99142f4500bec7b4f2264352c81d"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -34,5 +35,22 @@
     "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "install 先での兄弟 plugin 解決 (PR #83 follow-up) の incremental focused combined review。`git diff HEAD` の SKILL.md 差分 (L87 の引用書き換え 1 行) を読み、SKILL.md の frontmatter・Runtime root contract・Key Rules・ゴールシーク節を再読して (a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定した。引用先 plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md と節見出しの実在を確認し、skill 配下 (SKILL.md・prompts・references) に親ディレクトリ起点の兄弟参照が残っていないことを grep と scripts/lint-sibling-plugin-paths.py (exit 0) で確認した。この skill の scripts と references は今回変更されていない。criteria_evaluated は frontmatter feedback_contract の IN1/OUT1 全件。finding は 0 件で PASS とする。PASS の射程は design claim (静的設計 adequacy) に限る。"
+  "notes": "install 先での兄弟 plugin 解決 (PR #83 follow-up) の incremental focused combined review。`git diff HEAD` の SKILL.md 差分 (L87 の引用書き換え 1 行) を読み、SKILL.md の frontmatter・Runtime root contract・Key Rules・ゴールシーク節を再読して (a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定した。引用先 plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md と節見出しの実在を確認し、skill 配下 (SKILL.md・prompts・references) に親ディレクトリ起点の兄弟参照が残っていないことを grep と scripts/lint-sibling-plugin-paths.py (exit 0) で確認した。この skill の scripts と references は今回変更されていない。criteria_evaluated は frontmatter feedback_contract の IN1/OUT1 全件。finding は 0 件で PASS とする。PASS の射程は design claim (静的設計 adequacy) に限る。",
+  "sha_rebinds": [
+    {
+      "from_sha": "df32fbdcd67224d049ee49383e472b3703bc99142f4500bec7b4f2264352c81d",
+      "to_sha": "203ae6592872cee0007886a614cd445d70211eab8a79544c15d687ce8431b140",
+      "scoped_review": {
+        "sections": [
+          "ゴールシーク実行"
+        ],
+        "reviewer": "assign-skill-design-evaluator",
+        "reviewed_at": "2026-11-15T08:55:04Z",
+        "review_ref": "scoped-reviews/203ae6592872cee0007886a614cd445d70211eab8a79544c15d687ce8431b140.json",
+        "review_sha256": "9b6edf23cbd320f35488f0a4a452fc301426ec8df7bbc227dfa53d3248cf71b5"
+      },
+      "rebound_at": "2026-11-15T08:57:39Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

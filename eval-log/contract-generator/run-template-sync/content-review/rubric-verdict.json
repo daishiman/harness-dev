@@ -2,7 +2,8 @@
   "target": {
     "plugin": "contract-generator",
     "skill": "run-template-sync",
-    "skill_md_sha256": "85bf537301227dc4c25b669e7e046b52cadc91166dfc7ec44cd85ba3de837240"
+    "skill_md_sha256": "0f9e525022c69b915f9f5fc29cb48038c1d9fa2cd2170e6fffb8baec65da147f",
+    "reviewed_skill_md_sha256": "85bf537301227dc4c25b669e7e046b52cadc91166dfc7ec44cd85ba3de837240"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -40,5 +41,21 @@
     "hook_trigger": "manual:install-portability",
     "next_action": "none"
   },
-  "notes": "elegance 側と同一の focused combined review（独立 evaluator context）の rubric 投影。ref-skill-design-rubric の全 rule を機械実行して数値 score を出したのではなく、差分（guard block の差し替え）が frontmatter の feedback_contract.criteria 全 3 件（IN1/IN2/OUT1）の対象を崩していないこと、rubric の high severity に当たる問題が 0 であることを、実読と決定論の確認（resolver の exit 0/1/2 の実測、cache 模擬、build-artifact-delivery.py --check、lint-sibling-plugin-paths.py、lint-vendored-ssot.py、pytest 28 件 pass）で確かめた。finding は low 3 件だけで high と medium は 0。PASS の射程は design claim（静的設計 adequacy）に限り、live trial や criteria acceptance の証拠を代替しない。30 思考法は実施しておらず、実施も申告しない。"
+  "notes": "elegance 側と同一の focused combined review（独立 evaluator context）の rubric 投影。ref-skill-design-rubric の全 rule を機械実行して数値 score を出したのではなく、差分（guard block の差し替え）が frontmatter の feedback_contract.criteria 全 3 件（IN1/IN2/OUT1）の対象を崩していないこと、rubric の high severity に当たる問題が 0 であることを、実読と決定論の確認（resolver の exit 0/1/2 の実測、cache 模擬、build-artifact-delivery.py --check、lint-sibling-plugin-paths.py、lint-vendored-ssot.py、pytest 28 件 pass）で確かめた。finding は low 3 件だけで high と medium は 0。PASS の射程は design claim（静的設計 adequacy）に限り、live trial や criteria acceptance の証拠を代替しない。30 思考法は実施しておらず、実施も申告しない。",
+  "sha_rebinds": [
+    {
+      "from_sha": "85bf537301227dc4c25b669e7e046b52cadc91166dfc7ec44cd85ba3de837240",
+      "to_sha": "db7bf68a73028a80a2889bd248cbb978748eb00be45d782df5e66e44666d8b32",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:44Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "db7bf68a73028a80a2889bd248cbb978748eb00be45d782df5e66e44666d8b32",
+      "to_sha": "0f9e525022c69b915f9f5fc29cb48038c1d9fa2cd2170e6fffb8baec65da147f",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:52Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

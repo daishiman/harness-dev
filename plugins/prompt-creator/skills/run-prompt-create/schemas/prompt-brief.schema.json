@@ -197,7 +197,7 @@
     },
     "user_confirmed": {
       "type": "boolean",
-      "description": "Gate 1 (run-prompt-create) またはヒアリング時の導出確認でユーザー承認済みであることを示すフラグ。run-prompt-creator-7layer は brief 供給時に本フラグ=true を Phase 2 導出確認 skip の根拠とする (invariant「導出確認は brief.user_confirmed に委譲」)。false / 欠落時は skip せず、単独起動時と同様に導出確認を実施する。"
+      "description": "推定値がヒアリング時の導出確認で利用者に承認されたことを示すフラグ。run-prompt-create は成果物の前に質問しないので、run-prompt-elicit --batch で推定した brief は false のまま渡し、仮定は open_questions に残す。run-prompt-creator-7layer は brief 供給時は値に関係なく Phase 1-3 の対話をしない (invariant「brief 供給時は全ユーザー対話を skip」)。導出確認でユーザー承認を取るのは 7layer の単独起動時だけ。"
     },
     "output_language": {
       "type": "string",

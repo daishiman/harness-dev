@@ -1,8 +1,9 @@
 # PKG ID 機械可読カタログ
 # 正本: doc/ClaudeCodeスキルの設計書/36-plugin-package-harness-contract.md
 # 改廃: 27章 §4.1 rubric governance 経由必須
-version: "1.0"
-last_updated: "2026-05-23"
+# script: plugins/harness-creator/skills/ からの相対 path。<plugin> は検査する plugin の名前で、--plugin は省けない。
+version: "1.1"
+last_updated: "2026-11-15"
 source_chapter: "36"
 
 pkg_ids:
@@ -11,7 +12,7 @@ pkg_ids:
     phase: 0
     package_modes: [bundle]
     severity: P0
-    script: "scripts/run-plugin-validate-strict.sh"
+    script: "run-plugin-package-check/scripts/run-plugin-validate-strict.sh --plugin <plugin>"
     description: "公式 CLI strict validate が exit 0"
 
   PKG-002:
@@ -19,7 +20,7 @@ pkg_ids:
     phase: 0
     package_modes: [bundle, skill-only]
     severity: P0
-    script: "scripts/validate-plugin-package.py --check pkg-002"
+    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-002"
     description: "公式 plugin.json の name/version/description と references/package-contract.json の package_mode/entry_points 必須キー充足"
 
   PKG-003:
@@ -27,7 +28,7 @@ pkg_ids:
     phase: 0
     package_modes: [bundle]
     severity: P0
-    script: "scripts/validate-plugin-package.py --check pkg-003"
+    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-003"
     description: "同一 marketplace 内で skill/agent/hook/permission 名の衝突なし"
     related_chapter: "34a §4"
 
@@ -36,7 +37,8 @@ pkg_ids:
     phase: 0
     package_modes: [bundle, skill-only]
     severity: P0
-    script: "scripts/validate-frontmatter.py --skills-dir plugins/<plugin>/skills"
+    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-004"
+    repo_clone_script: "scripts/validate-frontmatter.py --skills-dir plugins/<plugin>/skills"
     description: "03章必須キー + responsibility_refs/schema_refs/manifest"
 
   PKG-005:
@@ -44,7 +46,7 @@ pkg_ids:
     phase: 0
     package_modes: [bundle]
     severity: P0
-    script: "scripts/validate-plugin-package.py --check pkg-005"
+    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-005"
     description: "agents/*.md の name と SKILL.md subagent_refs が一致"
 
   PKG-006:
@@ -52,23 +54,23 @@ pkg_ids:
     phase: 0
     package_modes: [bundle]
     severity: P0
-    script: "scripts/validate-plugin-package.py --check pkg-006"
-    description: "hooks/*.{json,sh} が settings 断片の hooks 配列で全て参照、逆方向の未登録なし"
+    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-006"
+    description: "hooks/*.{py,sh} が settings 断片の hooks 配列で全て参照、逆方向の未登録なし"
 
   PKG-007:
     name: "script 存在 + 実行可能"
     phase: 0
     package_modes: [bundle]
     severity: P0
-    script: "scripts/validate-plugin-package.py --check pkg-007"
-    description: "参照される scripts/* が plugin root 配下、shebang あり、+x ビット"
+    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-007"
+    description: "対象は SKILL.md の明示 script_refs と plugin root 直下の scripts/*.{py,sh}。plugin 内に実在し shebang と +x ビットを持つ。本文・他の *_refs は対象外。実行規則の正本は validate-plugin-package.py の check_pkg_007"
 
   PKG-008:
     name: "settings 断片 lint"
     phase: 0
     package_modes: [bundle]
     severity: P0
-    script: "scripts/validate-plugin-package.py --check pkg-008"
+    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-008"
     description: "34a 章 INV-1〜12 を満たし Layer3 衝突なし"
 
   PKG-009:
@@ -76,15 +78,15 @@ pkg_ids:
     phase: 0
     package_modes: [bundle]
     severity: P0
-    script: "scripts/lint-external-refs.py --skills-dir plugins/<plugin>/skills --fail-on-external"
-    description: "plugin 内ファイルが plugin root 外を参照しない（34章公式制約e）"
+    script: "run-plugin-package-check/scripts/lint-pkg-009.py --skills-dir plugins/<plugin>/skills --fail-on-external"
+    description: "SKILL.md が plugin root 外を参照しない（34章公式制約e）。例外は package-contract.json の宣言 (depends_on・owned-vendored の写し・repo_refs) と既定の許可 prefix (.claude/・eval-log/・references/・scripts/) だけ。repo_refs は repo clone での実在を確かめるが、既定の許可 prefix は宣言なしで通り実在も確かめない"
 
   PKG-010:
     name: "install smoke"
     phase: 1
     package_modes: [bundle]
     severity: P0
-    script: "scripts/smoke-plugin-install.sh"
+    script: "run-plugin-package-check/scripts/smoke-plugin-install.sh --plugin <plugin>"
     description: "local marketplace install smoke、Install UX Contract 検証"
 
   PKG-011:
@@ -92,7 +94,7 @@ pkg_ids:
     phase: 2
     package_modes: [bundle]
     severity: P1
-    script: "scripts/smoke-plugin-uninstall.sh"
+    script: "run-plugin-package-check/scripts/smoke-plugin-uninstall.sh --plugin <plugin>"
     description: "uninstall 後に symlink/settings/hook 残存なし"
 
   PKG-012:
@@ -100,7 +102,7 @@ pkg_ids:
     phase: 2
     package_modes: [bundle]
     severity: P1
-    script: "scripts/smoke-plugin-upgrade.sh"
+    script: "run-plugin-package-check/scripts/smoke-plugin-upgrade.sh --plugin <plugin>"
     description: "同一 version re-install が no-op、異 version で破壊変更なし"
 
   PKG-013a:
@@ -108,7 +110,7 @@ pkg_ids:
     phase: 2
     package_modes: [bundle]
     severity: P0
-    script: "scripts/validate-plugin-permissions.py --plugin <name> --check 013a"
+    script: "run-plugin-package-check/scripts/validate-plugin-permissions.py --plugin <plugin> --check 013a"
     description: "Bash 等の許可コマンド範囲が plugin スコープ宣言内"
 
   PKG-013b:
@@ -116,7 +118,7 @@ pkg_ids:
     phase: 2
     package_modes: [bundle]
     severity: P0
-    script: "scripts/validate-plugin-permissions.py --plugin <name> --check 013b"
+    script: "run-plugin-package-check/scripts/validate-plugin-permissions.py --plugin <plugin> --check 013b"
     description: "読み書き対象が plugin root 配下に閉じる"
 
   PKG-013c:
@@ -124,7 +126,7 @@ pkg_ids:
     phase: 2
     package_modes: [bundle]
     severity: P0
-    script: "scripts/validate-plugin-permissions.py --plugin <name> --check 013c"
+    script: "run-plugin-package-check/scripts/validate-plugin-permissions.py --plugin <plugin> --check 013c"
     description: "外部通信先 allowlist が manifest 宣言と一致"
 
   PKG-013d:
@@ -132,7 +134,7 @@ pkg_ids:
     phase: 2
     package_modes: [bundle]
     severity: P0
-    script: "scripts/validate-plugin-permissions.py --plugin <name> --check 013d"
+    script: "run-plugin-package-check/scripts/validate-plugin-permissions.py --plugin <plugin> --check 013d"
     description: "Notion/Drive/Gmail 等の MCP scope が manifest と一致"
 
   PKG-014:
@@ -140,7 +142,7 @@ pkg_ids:
     phase: 2
     package_modes: [bundle]
     severity: P1
-    script: "scripts/validate-plugin-package.py --check pkg-014"
+    script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-014"
     description: "SKILL.md kind/combinator 宣言と実 runtime 挙動の一致（28章）"
 
   PKG-015:
@@ -148,7 +150,7 @@ pkg_ids:
     phase: 2
     package_modes: [bundle]
     severity: P1
-    script: "run-plugin-package-check/scripts/run-pkg-015.py --plugin <name> --log-dir <log-dir> --out <pkg-log>"
+    script: "run-plugin-package-check/scripts/run-pkg-015.py --plugin <plugin> --log-dir <log-dir> --out <pkg-log>"
     description: "直近 release で 27章 rubric 違反率が governance 設定値未満"
 
   PKG-016:

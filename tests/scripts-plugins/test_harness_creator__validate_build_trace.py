@@ -629,3 +629,21 @@ def test_cli_trace_lint_target_sha256_format(tmp_path, value, expected_rc):
     proc = _run(str(f), cwd=ROOT)
     assert proc.returncode == expected_rc, proc.stderr
     assert ("lint_target_sha256 must be" in proc.stderr) is (expected_rc == 1)
+
+
+@pytest.mark.parametrize(
+    ("value", "expected_rc"),
+    [(None, 0), ("b" * 64, 0), ("NOT-A-SHA", 1), ("B" * 64, 1), (123, 1)],
+)
+def test_cli_trace_lint_brief_sha256_format(tmp_path, value, expected_rc):
+    # Step 12 の build-conformance は lint_brief_sha256 が今の brief と一致するときだけ Step 4 の
+    # lint PASS を receipt にする。値の無い旧 trace は通し (使い回さないだけ)、形の崩れた値だけを止める。
+    data = json.loads((ROOT / "eval-log" / "skill-build-trace.json").read_text(encoding="utf-8"))
+    data.pop("lint_brief_sha256", None)
+    if value is not None:
+        data["lint_brief_sha256"] = value
+    f = tmp_path / "skill-build-trace.json"
+    f.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    proc = _run(str(f), cwd=ROOT)
+    assert proc.returncode == expected_rc, proc.stderr
+    assert ("lint_brief_sha256 must be" in proc.stderr) is (expected_rc == 1)

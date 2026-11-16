@@ -2,7 +2,8 @@
   "target": {
     "plugin": "skill-governance-config",
     "skill": "run-governance-config",
-    "skill_md_sha256": "dd1c12c2d35c3bc0a372938373fa8f564b659edcd29edd854d1165c6cfcda055"
+    "skill_md_sha256": "60cd94a8a1fd4c76d58762ae934d9bc04606bc5e7b72df752f307bc3c1f67306",
+    "reviewed_skill_md_sha256": "dd1c12c2d35c3bc0a372938373fa8f564b659edcd29edd854d1165c6cfcda055"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -32,5 +33,21 @@
     "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "現行 bytes、git diff、criteria、plugin-composition、config 参照を再確認。runtime-profile/frontmatter/tree lint は exit 0。full goal-seek wiring 未注入の warning 3件は推奨扱いで exit 0。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。"
+  "notes": "現行 bytes、git diff、criteria、plugin-composition、config 参照を再確認。runtime-profile/frontmatter/tree lint は exit 0。full goal-seek wiring 未注入の warning 3件は推奨扱いで exit 0。 high/medium findingは0。incremental focused reviewであり、exhaustive 30思考法は実施していない。",
+  "sha_rebinds": [
+    {
+      "from_sha": "dd1c12c2d35c3bc0a372938373fa8f564b659edcd29edd854d1165c6cfcda055",
+      "to_sha": "f166a739eb4375e25e1b3b4687393a4f08d05ae35dd269ac67ba96c348901cff",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:48Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "f166a739eb4375e25e1b3b4687393a4f08d05ae35dd269ac67ba96c348901cff",
+      "to_sha": "60cd94a8a1fd4c76d58762ae934d9bc04606bc5e7b72df752f307bc3c1f67306",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:56Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

@@ -1,0 +1,41 @@
+{
+  "skill": "run-dev-graph-system-spec",
+  "kind": "pre-choice-preflight-report",
+  "caller_root": {
+    "receipt_ref": "eval-log/run-dev-graph-system-spec/c24-receipt.json",
+    "receipt_sha256": "dbb97771fe723a86bd2a7872e51fed56e1e6fcc16effc184b3bc83bec143da6f",
+    "mode": "write",
+    "repository_id": "local:sha256:868d1e87b695e3e1ee26a33edad57ef0a8b1a5c7e7c951594fbc4aeb6b20846e",
+    "worktree_id": "wt_bbfc28a0b40313de",
+    "repo_root_equals_content_roots_repository": true,
+    "system_spec_root": "system-spec",
+    "system_spec_inside_repo": true
+  },
+  "dependency": {
+    "plugin": "system-spec-harness",
+    "manifest_version": "0.1.28",
+    "composition_range": ">=0.1.22 <1.0.0",
+    "in_range": true,
+    "required_entry_points": {
+      "run-system-spec-elicit": "present",
+      "run-system-spec-doc-fetch": "present",
+      "run-system-spec-compile": "present",
+      "assign-system-spec-completeness-evaluator": "present"
+    }
+  },
+  "lineage_gate_R0": {
+    "script": "dev-graph/scripts/validate-source-lineage.py",
+    "exit": 0,
+    "status": "pass",
+    "checked": 0,
+    "decision": "new-import (no system-spec origin nodes yet)"
+  },
+  "guards": {
+    "parse_open": "pass",
+    "secret": "none-detected",
+    "irreversible": "none (local-artifact, declared target scope = fixture repo)",
+    "corrupt": "none"
+  },
+  "R0": "PASS",
+  "R1": "PASS"
+}

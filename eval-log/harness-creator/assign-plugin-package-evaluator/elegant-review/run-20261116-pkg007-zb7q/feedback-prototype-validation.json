@@ -1,0 +1,104 @@
+{
+  "status": "scratchのみ・製品未変更",
+  "prototype_root": "/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pkg007-elegant-hkkg1bky/feedback-prototype",
+  "runtime_copy_changes": [
+    "submitの同階層import",
+    "notion_configのmanifest祖先root解決"
+  ],
+  "copied_assets": [
+    {
+      "source": "scripts/notion-submit-improvement.py",
+      "target": "scripts/notion-submit-improvement.py"
+    },
+    {
+      "source": "plugins/harness-creator/scripts/notion_config.py",
+      "target": "scripts/notion_config.py"
+    },
+    {
+      "source": "scripts/tenant_runtime.py",
+      "target": "scripts/tenant_runtime.py"
+    },
+    {
+      "source": "plugins/harness-creator/scripts/extract-plugin-root.py",
+      "target": "scripts/extract-plugin-root.py"
+    },
+    {
+      "source": "doc/notion-schema/skill-list.schema.json",
+      "target": "schemas/skill-list.schema.json"
+    },
+    {
+      "source": "doc/notion-schema/improvement-request.schema.json",
+      "target": "schemas/improvement-request.schema.json"
+    },
+    {
+      "source": "plugins/harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md",
+      "target": "references/goal-seek-paradigm.md"
+    },
+    {
+      "source": "plugins/harness-creator/references/feedback-to-improvement-runbook.md",
+      "target": "references/feedback-to-improvement-runbook.md"
+    },
+    {
+      "source": "plugins/harness-creator/references/notion-per-repo-setup.md",
+      "target": "references/notion-per-repo-setup.md"
+    }
+  ],
+  "results": [
+    {
+      "name": "repoなし環境/任意cwd/isolated Pythonでdry-run",
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\n  \"title\": \"scratch dry run\",\n  \"plugin\": \"feedback-prototype\",\n  \"skill_name\": \"\",\n  \"req_type\": \"バグ\",\n  \"desire\": \"隔離実行を確認\",\n  \"background\": \"\",\n  \"priority\": \"中\",\n  \"importance\": \"中\",\n  \"pr_url\": \"\",\n  \"dry_run\": true\n}",
+      "stderr": "",
+      "pass": true
+    },
+    {
+      "name": "manifest祖先でowner plugin root解決",
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pkg007-elegant-hkkg1bky/feedback-prototype/standalone-plugin",
+      "stderr": "",
+      "pass": true
+    },
+    {
+      "name": "明示config優先",
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "dummy設定を明示pathから解決",
+      "stderr": "",
+      "pass": true
+    },
+    {
+      "name": "2schemaが配布内でJSON読取可能",
+      "pass": true
+    },
+    {
+      "name": "全runtime scriptのshebang/+x",
+      "pass": true,
+      "count": 5
+    },
+    {
+      "name": "dummy installed registryのguard root解決",
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "/private/var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pkg007-elegant-hkkg1bky/feedback-prototype/installed-cache/market/skill-governance-adapters/0.0.0",
+      "stderr": "",
+      "pass": true
+    },
+    {
+      "name": "guard不在時fail-closed",
+      "exit": 1,
+      "expected_exit": 1,
+      "stdout": "",
+      "stderr": "plugin not found: skill-governance-adapters (searched sibling dir, installed_plugins.json, /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pkg007-elegant-hkkg1bky/feedback-prototype/dummy-claude/plugins/cache, /var/folders/35/t3gvbkdd2w55yk8csmzskzrw0000gn/T/pkg007-elegant-hkkg1bky/feedback-prototype/dummy-codex/plugins/cache)",
+      "pass": true
+    }
+  ],
+  "limitations": [
+    "API POST/Keychainアクセスなし。dry-runを登録確認・投入成功とは扱わない。",
+    "SKILL.mdの全文・schema内同定手順の更新は未完。機械的runtime試作を優先。",
+    "build_validationは提案契約。既存lintへ未実装で現行007を免除していない。",
+    "製品側23配置のrefresh/byte一致同期は未実施。",
+    "同梱reference内部の全リンク閉包までは未検査。"
+  ]
+}

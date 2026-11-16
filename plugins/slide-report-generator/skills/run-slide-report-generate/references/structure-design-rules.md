@@ -12,7 +12,7 @@
 |------|------|----------|
 | 1スライド1メッセージ | 1枚のスライドに核心メッセージを1つだけ持たせる原則 | CONST_001 / Presentation Zen |
 | スライドタイプ | 情報構造に対応する描画形式（基本7 / 拡張8 / ビジネスFW / 図解29 / グラフ9 / D3 24） | DT-ID 98 / decision-tree |
-| structure.md | 構造化データファイル。HTML生成前にユーザー承認を得る正本 | 構造化データ先行 |
+| structure.md | 構造化データファイル。HTML生成前に仕様確定ゲート（structure-validator）の機械検証を通す正本 | 構造化データ先行 |
 | structure.json | v8経路（schemaVersion=8.0.0）の構造化データ。schema 準拠（<!-- count: slideType -->107 slideType） | structure.schema.json |
 | SVG設計メモ | 全SVG図解スライドに必須の座標・サイズ・文字数検証の記載セクション | 必須11点 / §4.4相当 |
 | STYLE BIBLE | 部分AI画像化時のスタイル統一仕様 | per-slide 画像ブロック |
@@ -22,7 +22,7 @@
 ## 評価基準（ドメイン固有の判定基準）
 
 ### スライドタイプ判定基準
-**詳細**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/slide-type-decision-tree.md` §2「決定マトリクス」（§2.2 にタイプ→詳細ファイルの対応）
+**詳細**: `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/slide-type-decision-tree.md` §2「決定マトリクス」（§2.2 にタイプ→詳細ファイルの対応）
 
 #### 基本スライド（7種）
 | タイプ | 判定条件 |
@@ -55,7 +55,7 @@
 | FABE | 特徴→利点→ベネフィット→証拠の商品紹介 |
 
 #### 図解タイプ・グラフ・D3
-複雑な関係性やデータ可視化が必要な場合は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` §0 と `slide-type-decision-tree.md` §2 を参照して最適なタイプを選択する。件数はここへ複製しない。
+複雑な関係性やデータ可視化が必要な場合は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/diagram-type-crosswalk.md` §0 と `slide-type-decision-tree.md` §2 を参照して最適なタイプを選択する。件数はここへ複製しない。
 
 ### 入力検証基準
 | 基準 | 条件 |
@@ -82,20 +82,20 @@
 - 意味テキストは overlayText（=逐語）が正本。画像へは焼き込まない。
 - 生成器は事前確認済みの text-to-image バックエンドを meta の `source` に記録する。`codex` 単体を画像生成器として扱わない。
 - per-slide ブロックは `backgroundSource`（`raster` / `svg` / `none`）を持つ。`svg` はSVG/CSSで背景を描きラスター画像を作らない指定で、`html-composite`（`raster` / `svg`）と `html-primary`（`none` / `svg`）で使う。`image-only` は `none`。
-- `pattern` / `textPolicy` / `backgroundSource` の値域定義の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/style-genome-packaging.md` §4。ここでは再定義せず参照する。
+- `pattern` / `textPolicy` / `backgroundSource` の値域定義の正本は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/style-genome-packaging.md` §4。ここでは再定義せず参照する。
 
 ### kanagawa-comic-diagram 使用時の追加設計
 `05_Project/スライド/slide-2026-06-13-skill-mass-production/vendor/assets/generated/` の画像群に近い構成を量産する場合は、各スライドで次を決める。
 
 | 項目 | 選択肢 | 基準 |
 |---|---|---|
-| `styleGenome` | `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/assets/style-genome-kanagawa-comic-diagram.json` | 既存画像群の角丸アイソメタイル、発光フロー、吹き出しラベルを再現する |
+| `styleGenome` | `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/assets/style-genome-kanagawa-comic-diagram.json` | 既存画像群の角丸アイソメタイル、発光フロー、吹き出しラベルを再現する |
 | `pattern` | `image-only` | 漫画チック図解の中に短い説明文、吹き出し、簡易表を含める |
 | `pattern` | `html-composite` | 背景・モチーフは画像、正確な説明文・表・数値はHTML |
 | `textPolicy` | `baked-with-overlay` | `image-only` かつ画像内説明文が必要な時のみ。`overlayText` が正本 |
 | `textPolicy` | `overlay-only` | HTML合成型。画像には文字を入れない |
 
-`diagramPrimitives` を書く場合は、genome `motifs[].name`（`rounded-isometric-platform` / `glowing-flow-arrow` / `speech-label` / `explanation-panel` / `mini-table-panel` / `tool-workbench` / `quality-gate` / `notion-card-stack`）の部分集合に限る。スタイルゲノム内の名称をそのまま使い、新規名称を作らない。スライド固有の文言や表項目は STYLE BIBLE に入れず、per-slide ブロックに置く。`pattern` / `textPolicy` / `backgroundSource` の値域定義の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/style-genome-packaging.md` §4。
+`diagramPrimitives` を書く場合は、genome `motifs[].name`（`rounded-isometric-platform` / `glowing-flow-arrow` / `speech-label` / `explanation-panel` / `mini-table-panel` / `tool-workbench` / `quality-gate` / `notion-card-stack`）の部分集合に限る。スタイルゲノム内の名称をそのまま使い、新規名称を作らない。スライド固有の文言や表項目は STYLE BIBLE に入れず、per-slide ブロックに置く。`pattern` / `textPolicy` / `backgroundSource` の値域定義の正本は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/style-genome-packaging.md` §4。
 
 ## ビジネスルール
 - **CONST_001 (1スライド1メッセージ)**: 1枚のスライドに複数の核心メッセージを詰め込まない。
@@ -109,15 +109,15 @@
   - 順序・因果・対比・包含のいずれかの関係を持つ要素が 3 件以上 → 図解（または表形式）。
   - カードは、その面でカードが担う役割が定義されている場合のみ使う。役割定義のないカードは不可。
   - 1 つの情報が同時に持ってよい装飾は 1 つまで（囲み・塗り・角丸・影・色・アイコンのうち 1 つ）。
-  - 分岐条件・装飾軸の逐語正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/visual-generation-rules.md` §4 / VGCONST_008。値を本ファイルへ写経しない。
+  - 分岐条件・装飾軸の逐語正本は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/skills/run-slide-report-generate/references/visual-generation-rules.md` §4 / VGCONST_008。値を本ファイルへ写経しない。
   - 目的: 長い箇条書きの可読性低下を防ぎつつ、置換先の名指しによって全情報がカード化し面の視覚階層が消えるのを防ぐ。
   - 背景: 「置換先＝chip / カード」と名指した結果、関係を持つ情報までカードの並びへ落ち、関係の情報が失われた。
 - **CONST_004 (プロセスはフロー)**: 手順・ステップ説明にはフローチャートを使用する。
   - 目的: 順序関係を視覚的に明確にする。
   - 背景: 手順をリストで書くと前後関係や分岐が伝わりにくい。
-- **CONST_005 (承認必須)**: ユーザー承認なしで次フェーズ（Phase 2.5）に進まない。
-  - 目的: 構造段階での手戻り防止と過不足の早期検出。
-  - 背景: 構造化データ先行の原則。HTML後の修正は構造修正より高コスト。
+- **CONST_005 (構成の仮定は書いて進む)**: 成果物の前に利用者の承認を取らない。素材の不足・構成で迷った点・判定の WARN は worker の返答（主 skill への handoff）の「仮定一覧」に「項目・置いた値・根拠」で書き（structure.md / structure.json には書かない）、仕様確定ゲート（structure-validator）へ進む。利用者に構成を確かめてもらうのは、成果物を見せたあと（R4 の提示と R5 の診断選択）だけ。
+  - 目的: 構造段階での過不足を早く見つけつつ、利用者を成果物の前の確認で待たせない。
+  - 背景: 構造化データ先行の原則は守る（HTML 後の修正は構造修正より高コスト）。ただし構造の過不足は仕様確定ゲートの機械検証と R6 の評価で拾い、利用者には現物と仮定一覧を並べて見せる方が、構成案だけを読ませるより判断しやすい。
 - **CONST_006 (質問スライド配置)**: 質問スライドは各セクション内の最後に配置し、セクション→背景情報→質問の順に並べる。背景を先に提示してから質問へ到達させる。
   - 目的: 聴衆が文脈を理解した状態で質問に向き合えるようにする。
   - 背景: 背景なしに質問だけ提示すると、聴衆が考える材料を持てず議論が浅くなる。
@@ -126,13 +126,13 @@
   - 背景: ビジュアル形式振り分けの退化耐性最優先方針。画像内の文字は修正が効かず誤りが固定化する。
 - **CONST_008 (読者中心の入口設計)**: ヒアリングの読者価値ブリーフ（対象範囲・共有課題/願望・視聴後の変化・専門の橋・深さの証拠・正式タイトル制約）を設計入力とする。タイトルスライド・冒頭のキーメッセージ・セクション扉は、想定聴衆の範囲内で共有される課題と「聴衆が得る変化（Before→After・根拠があれば数字）」を先に渡し、専門手段だけを主語にしない・内容理解に不要な属性スタックを置かない・発表者の資格紹介から始めない（入口ホリゾンタル）。本文スライドでは専門の深さ（確認済みの数字・手順・失敗・適用条件・限界）を保ち、各主要セクションに「自分に当てはまる兆候・判断の問い・選択肢・次の行動」のいずれかを置く（中身バーティカル＋自分ごと化）。
   - 目的: 聴衆が最初のスライドで「自分ごと」と感じて文脈へ入れるようにする。聴衆が知りたいのは発表者の知識ではなく自分の変化。
-  - 背景: 入口まで専門特化するとタイトルの時点で聴衆を失う。「ターゲットを絞る」ことと「入口まで狭くする」ことは別。ただし社内定例・技術説明・監査/契約/仕様など正式名称や検索性が必要な場合は主タイトルを維持し、subtitle/keyMessage/冒頭スライドで聴衆価値を補う。素材にない数字・実績は作らない。読者中心設計の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-narrative-logic.md` §7（slide にも同原則を適用し、違反は deck-evaluator の D5 読者フックが検出する）。
+  - 背景: 入口まで専門特化するとタイトルの時点で聴衆を失う。「ターゲットを絞る」ことと「入口まで狭くする」ことは別。ただし社内定例・技術説明・監査/契約/仕様など正式名称や検索性が必要な場合は主タイトルを維持し、subtitle/keyMessage/冒頭スライドで聴衆価値を補う。素材にない数字・実績は作らない。読者中心設計の正本は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/report-narrative-logic.md` §7（slide にも同原則を適用し、違反は deck-evaluator の D5 読者フックが検出する）。
 
 - **CONST_009 (面ごとに図か文字かを決める)**: 全面を文字で埋めない。ただし**文章を 0 にもしない**。面ごとに次の判断を通してから slideType を決める。
   - **図へ移す面**: 順序・段階・対比・役割分担・くり返し・階層のいずれかが情報の主役である面。関係が絵になるので、文章で書くと読み手に関係の再構築を強いる。
   - **文字のまま残す面**: 読み手が 1 行ずつ拾う面（チェックリスト・持ち物・記入用のひな形・時刻表・料金表）。図にすると 1 項目ずつ確認するという読み方ができなくなり、情報が落ちる。
   - **判断の順序**: 「この面の主役は関係か、項目か」を先に決める。関係なら図、項目なら表または箇条書き。迷ったら**その面で読み手が何をするか**（見て理解する / 1 行ずつ確認する / 手を動かして埋める）で決める。
-  - **図の型は描画実体を確認してから選ぶ**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/diagram-type-crosswalk.md` §10「描画してみないと分からない食い違い」を必ず読む。schema の enum に載っている＝読める絵が出る、ではない。
+  - **図の型は描画実体を確認してから選ぶ**: `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/diagram-type-crosswalk.md` §10「描画してみないと分からない食い違い」を必ず読む。schema の enum に載っている＝読める絵が出る、ではない。
   - **図が主張する関係と data が持つ関係を一致させる**: 型は順序・方向・階層を絵として持つ。data にその関係が無いのに型を選ぶと、**図が data に無い関係を足す**。ゲートは鳴らないので目視で確認する（同 §10）。
   - 目的: 「文章の面が並ぶ」状態を避けつつ、図解化が逆に情報を落とす面を守る。
   - 背景: 図解の不足を指摘されて全面を図へ寄せると、チェックリストや記入用紙まで図になり、その面の使い方（1 行ずつ確認する・その場で書き込む）が失われる。図解優先は「文章の量を減らす」規則ではなく「関係を絵で渡す」規則である。
@@ -161,7 +161,7 @@
 ### SVG設計メモ仕様（必須）
 **全SVG図解スライドに「SVG設計メモ」セクションを必ず記載する。**
 
-詳細: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/spec-registry.md` §5「SVG 設計」（SR-5-01〜SR-5-07）と §5-a「収まり計算の手順」
+詳細: `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/spec-registry.md` §5「SVG 設計」（SR-5-01〜SR-5-07）と §5-a「収まり計算の手順」
 
 #### 必須記載項目（省略不可）
 1. **viewBox**: SVG座標空間（例: `"0 0 860 480"`）
@@ -235,7 +235,7 @@ viewBox高さ = ヘッダー高さ + カード高さ + 下部テキスト高さ 
 | px禁止ルール | 全デッキで同一表現（SVG viewBox例外含む） |
 
 ### アイコン選定ロジック
-アイコン選定は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/icons.md` を参照。
+アイコン選定は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/icons.md` を参照。
 
 **選定方法**:
 1. コンテンツからキーワードを抽出

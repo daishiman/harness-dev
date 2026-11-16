@@ -2,7 +2,9 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "run-blueprint-apply",
-    "skill_md_sha256": "cd4f75db0bddf6e0b785e80b4c697309ec718cb4088f39851741b68d46732ff1"
+    "skill_md_sha256": "f3c7c6e7991ff54a9e73cd4f07de187d67a20cbce7d14ebe31653e844d6bea21",
+    "reviewed_skill_md_sha256": "f3c7c6e7991ff54a9e73cd4f07de187d67a20cbce7d14ebe31653e844d6bea21",
+    "skill_dir_digest": "fc2f63af45d33b1347abe17223fac8ecd5585f504895bc29e8e897bc1d6a09bd"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -10,28 +12,46 @@
     "contradiction": 0,
     "omission": 0,
     "inconsistency": 1,
-    "dependency_break": 0,
+    "dependency_break": 1,
     "smell": 0
   },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-04T22:32:19Z",
-  "iterations": 1,
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-16T01:13:45Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "差分は L133 の 1 行で、親ディレクトリ起点の兄弟参照 `../../../harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md` を『harness-creator plugin の `skills/run-build-skill/references/goal-seek-paradigm.md` (出典表記。本 plugin には同梱しない)』へ書き換えた。参照先は実在し、同じ plugin の run-extract-blueprint (L163) と一字一句同じ書式で揃っている。",
-      "goal-seek の実行に使う `validate-goal-seek-anchor.py` (L171) と `doc-emit.py --check-apply` (L191) は自 plugin 内の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` から解決されるので、harness-creator の文書は出典の表示にとどまり、install 先で兄弟 plugin が無くても実行は妨げられない。",
-      "差分は引用の書き方だけで、Purpose & Output Contract・fail-closed の受理順序・完了チェックリスト CL-1..CL-6・network 0 境界・artifact_delivery の状態機械は変わっていない。IN1/OUT1 の判定根拠は無傷で、skill 配下のテスト (tests/test_blueprint_apply_criteria_coverage.py) も 3 passed。"
+      "前回の medium (C1) は解消した。「ゴールシーク配線」の 1 つ目の箇条は、apply は goal-spec を持たず、共有の `eval-log/goal-spec.json` を読まないと明記している。original_goal は上記ゴール文の原文、progress の spec_ref は `inferred` に一本化された。ゴールの基準は 1 系統になり、goal-seek-paradigm の『goal アンカーは単一系で、二重宣言を禁じる』『original_goal は goal-spec.json.goal か AI 推定』に合っている。spec_ref=inferred は、plugin の schemas/goal-seek-loop.schema.json の説明『AI が文脈から推定生成した場合は inferred』どおりの値である。goal-seek に必要な入力 (「ゴール (Goal)」のゴール文、original_goal、「完了チェックリスト (Checklist)」の CL、progress と intermediate の path、max_loops 3) は欠けていない。",
+      "前回の medium (C4) は解消した。draft_hash の出所は、入力 (Purpose & Output Contract)、R1 の説明、fail-closed の順序図、局面 R1-ground、ハンドオフ、prompts/R1-ground.md の Layer 1.1・2.1-2.4・3.1・4.1・5.3・出力指示のすべてで `<blueprint_dir>/sink-status.json` に揃った。scripts/doc-emit.py は blueprint.json と sink-status.json を同じ out_dir に書き、draft_hash を {chapters, blueprint, design_tokens, coverage} の canonical sha として sink-status に記録する。C02 (assign-blueprint-fidelity-evaluator / emit-verdict.py) も同じ sink-status.json から draft_hash を読み、`<draft_hash>.verdict.json` に束縛する。受理の門は、文字どおりに満たせる照合になった。prompts/R2-recommend.md・R3-emit.md・workflow-manifest.json・references/resource-map.yaml に『blueprint の draft_hash』のような古い言い方は残っていない。",
+      "前回の low 2 件も解消した。「ゴールシーク検証」の末尾の文 (相対 path は git の toplevel から、非 repo 環境では cwd から解決するので、追記先の絶対 path を --intermediate に渡す) は、validate-goal-seek-anchor.py の `_repo_root() / args.intermediate` と合っている。pathlib は絶対 path を渡すとそちらを優先するので、この運用で書いた先と読む先が一致する。「Runtime root contract」の役割 blockquote は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点になり、sibling の run-extract-blueprint と対称になった。",
+      "共通の変更 3 つ (artifact-delivery-v1 の 1 行化、diagnose の 2 択化、goal_seek の死んだキーの削除) は、今回の直しのあとも崩れていない。scripts/lint-entrypoint-artifact-first.py の CANONICAL_CONTRACT、workflow-manifest.json の artifact_delivery_contract と一致し、旧 4 択・state_machine の写し・`goal_seek.<key>` の名前での参照は skill のディレクトリに残っていない。frontmatter の goal_seek {inline, subagent, 3}・ゴール文・責務 R1-R3 は、component-inventory.json の C14 と一致する。"
     ],
     "negative_feedback": [
-      "low (inconsistency, 今回の差分外・前回から継続): L93 の役割 blockquote が『パス解決は `$CLAUDE_PLUGIN_ROOT` 起点、成果物は `$CLAUDE_PROJECT_DIR`/cwd 配下』という移行前の表記のまま。sibling の run-extract-blueprint は『Runtime root contract の `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` 起点』へ更新済みで、散文層の表記が非対称。実行行ではないため実害は無い。"
+      "low (dependency_break, C4, 差分外・前からある): C02 は verdict receipt を `${ESB_VERDICT_DIR:-.esb-verdict}` に書き、sibling の run-extract-blueprint も同じ式で読む。本 skill の `--verdict-dir` の既定は `.esb-verdict` だけで、ESB_VERDICT_DIR を拾わない。利用者が ESB_VERDICT_DIR を設定して抽出と評価を回すと、apply は receipt を見つけられず、正しい blueprint を拒否する。fail-closed なので誤って受理することは無い。「Gotchas」の『必要なら --verdict-dir を明示する』は cwd の違いだけを理由に挙げている。直すには、既定を `${ESB_VERDICT_DIR:-.esb-verdict}` と書くか、Gotcha に env の場合を足す。",
+      "low (inconsistency, C3, 差分外・前からある): 「Key Rules」の 4 は『doc-emit.py --check-apply (C11) は C01 の自己検証・C02 の独立評価と同一ロジックを共有する唯一の機械 SSOT』と書いている。しかし C01 (run-extract-blueprint) と C02 (assign-blueprint-fidelity-evaluator) は --check-apply を呼ばず、--check-screens などを使う。check_apply() と、それが使う _collect_anchors() を呼ぶのは本 skill だけである。EVALS.json も『C01 R3 と C02 / C14 (--check-apply)』と分けて書いている。共有しているのは script (C11) の entrypoint で、apply の判定ロジックではない。実行には影響しない。『C01/C02 と同じ script (C11) に apply の検査を置き、独立 schema を作らない』のように言い直すと、主張と現物が一致する。"
     ],
-    "iteration": 1,
+    "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "install 先での兄弟 plugin 解決 (PR #83 follow-up) の incremental focused combined review。`git diff HEAD` の SKILL.md 差分 (L133 の引用書き換え 1 行) を読み、SKILL.md の frontmatter・Runtime root contract・役割 blockquote・ゴールシーク節を再読して (a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定した。引用先の実在を確認し、skill 配下 (SKILL.md・prompts・references) に親ディレクトリ起点の兄弟参照が残っていないことを grep と scripts/lint-sibling-plugin-paths.py (exit 0) で確認した。prompts の `../../../schemas/...` と resource-map の `../../../scripts/doc-emit.py` は自 plugin 内を指す参照で、兄弟参照ではない。この skill の scripts と references は今回変更されていない。criteria_evaluated は frontmatter feedback_contract の IN1/OUT1 全件。finding は差分外の low 1 件 (前回から継続) のみで、high/medium は 0 件のため PASS とする。PASS の射程は design claim (静的設計 adequacy) に限る。"
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "Purpose & Output Contract",
+        "Gotchas"
+      ]
+    },
+    "elegance:2": {
+      "sections": [
+        "Key Rules"
+      ]
+    }
+  },
+  "notes": "前回の FAIL (iteration 1) を受けた直しのあとの、1 回だけの再評価 (iteration 2)。git diff main と git diff HEAD で差分を確かめたうえで、今の SKILL.md 全体を判定した。読んだものは次のとおり。SKILL.md の全体、prompts/R1-R3、references/resource-map.yaml、workflow-manifest.json、plugin の schemas/goal-seek-loop.schema.json、scripts/doc-emit.py (sink-status.json の書き込みと check_apply)、scripts/validate-goal-seek-anchor.py、C02 の SKILL.md と emit-verdict.py、goal-seek-paradigm.md、sibling の run-extract-blueprint、component-inventory.json の C14、EVALS.json、plugin-composition.yaml。criteria_evaluated は frontmatter feedback_contract の IN1/OUT1 の全件。C1 は goal の基準が 1 系統になり合格。C2 は goal-seek の入力と、draft_hash の出所の記述に漏れが無く合格。C3 は規約の採点を rubric に任せたうえで、Key Rules 4 の言い過ぎ (low) だけを挙げた。C4 は sink-status.json と C02 の読み方が一致して合格で、ESB_VERDICT_DIR の low だけを挙げた。medium 以上は 0 件なので PASS、next_action は none。判定に入れない参考事項は次の 3 つ。(1) draft_hash は sink-status.json との照合なので、PASS のあとに blueprint.json だけが書き換えられても検出しない。C02 も同じ設計で、本 skill 固有の欠陥ではない。(2) intermediate の記録項目は required_keys の 3 つと original_goal_hash を明示するが、goal-seek-paradigm が挙げる current_goal_snapshot と drift_signal は明示していない。plugin 共有の validator が 3 キーなので、前からある plugin 全体の話として扱った。(3) component-inventory.json の C14 は IN1 の verify_by を script とし、SKILL.md は test としている。前からある 1 点だけの差。sibling の run-extract-blueprint は、レビュー中の更新で goal_seek.spec の記述が『run-blueprint-apply は読まない』に変わり、apply と整合した。ただし sibling は ESB_RUNTIME_ROOT を git -C PLUGIN_ROOT で決めており、cwd 基準の validator とは repo-root の定義がずれる。これは sibling 側の話として呼び出し元へ別に報告する。判定の射程は design claim (静的設計 adequacy) に限る。"
 }

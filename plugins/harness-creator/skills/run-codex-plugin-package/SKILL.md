@@ -44,37 +44,19 @@ manifest: workflow-manifest.json
 goal_seek:
   activation_state: semantic_evaluator_started
   engine: inline
-  spec: eval-log/goal-spec.json
-  progress: eval-log/run-codex-plugin-package-progress.json
-  intermediate: eval-log/run-codex-plugin-package-intermediate.jsonl
   max_loops: 3
   fork: subagent
 runtime_root_policy: host-skill-path
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。parse/open・secret・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはそのままhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。parse/open・secret・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/diagnoseを記録する。accept-as-isはそのままhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 # run-codex-plugin-package
 
@@ -104,8 +86,8 @@ plugin manifest と repository marketplace を決定論的に upsert する。�
 
 ### 完了チェックリスト (Checklist)
 
-- [ ] Claude/Codex manifestの `name/version/description/author` が一致する
-- [ ] Codexの `skills/hooks/mcpServers/apps` が実在資産と双方向一致する
+- [ ] Claude/Codex manifestの `name`・`version`・`description`・`author` が一致する
+- [ ] Codexの `skills`・`hooks`・`mcpServers`・`apps` が実在資産と双方向一致する
 - [ ] marketplace entryがofficial fieldsだけを持ち、sourceが対象pluginを指す
 - [ ] package entry points・composition公開surface・実体が双方向一致する
 - [ ] plugin root外を指すsymlinkが0件である
@@ -118,7 +100,7 @@ plugin manifest と repository marketplace を決定論的に upsert する。�
 
 ### ゴールシーク配線
 
-反復はfrontmatter `goal_seek.fork=subagent` で親contextから分離する。周回状態は `eval-log/run-codex-plugin-package-progress.json`、アンカーは `eval-log/run-codex-plugin-package-intermediate.jsonl` に追記し、`original_goal` を不変として次周の `merged_directive_for_next` に必ず合流させる。
+反復はfrontmatter `goal_seek.fork=subagent` で親contextから分離する。初回に `eval-log/goal-spec.json` を読み、その `goal` を `original_goal` として転記する (無ければ推定ゴールを採用し、goal-spec の `constraints` に inferred と記録する)。周回状態は `eval-log/run-codex-plugin-package-progress.json`、アンカーは `eval-log/run-codex-plugin-package-intermediate.jsonl` に追記し、`original_goal` を不変として次周の `merged_directive_for_next` に必ず合流させる。
 
 ### ゴールシーク検証
 
@@ -134,6 +116,8 @@ plugin manifest と repository marketplace を決定論的に upsert する。�
 
 - 入力: repo root 直下の `plugins/<plugin-name>/.claude-plugin/plugin.json`
 - 任意入力: `plugins/<plugin-name>/.codex-plugin-overrides.json`
+- 入力: `plugins/<plugin-name>/references/package-contract.json` (capability parity audit の必須入力。無ければ `package_contract_missing` で完了にしない)
+- 入力: `plugins/<plugin-name>/plugin-composition.yaml` (capability parity audit の必須入力)
 - 出力: `plugins/<plugin-name>/.codex-plugin/plugin.json`
 - 出力: `.agents/plugins/marketplace.json` の対応 entry
 - 非対象: user global config、plugin trust、plugin install 状態、`.claude/` projection

@@ -3,6 +3,10 @@
 本 plugin の変更履歴。plugin 化を機に v1.0.0 から新規開始する。
 移植元スキル（vault 内 `x-longpost-creator` v3.14.0）の履歴は移植していない。
 
+## 1.3.10 — 2026-11-15
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## 1.3.9 — 2026-11-02
 
 - build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。

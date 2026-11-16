@@ -1,24 +1,5 @@
 {
-  "artifact_delivery_contract": {
-    "contract": "artifact-delivery-v1",
-    "state_machine": {
-      "initial": "artifact_created",
-      "states": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started", "handoff_complete"],
-      "transitions": [
-        {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed"},
-        {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented"},
-        {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded"},
-        {"from": "user_choice_recorded", "event": "accept-as-is", "to": "handoff_complete"},
-        {"from": "user_choice_recorded", "event": "light|standard|detailed", "to": "semantic_evaluator_started"},
-        {"from": "semantic_evaluator_started", "event": "improvement_complete", "to": "handoff_complete"}
-      ],
-      "pre_choice_forbidden": ["semantic-evaluator", "task-fork", "subagent", "multi-worker", "revise-loop"],
-      "accept_contexts": {"evaluator": 0, "improver": 0}
-    },
-    "phase_activation": "gate-ordered-phases-with-delegated-choice",
-    "release": "explicit-only",
-    "exhaustive": "explicit-only"
-  },
+  "artifact_delivery_contract": {"contract": "artifact-delivery-v1", "phase_activation": "gate-ordered-phases-with-delegated-choice"},
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "schemaVersion": 1,
   "workflowId": "run-skill-create",
@@ -28,7 +9,7 @@
   "gate_order": ["G1", "G2.5", "G2"],
   "gate_order_comment": "Gate 通過順序の正本 (phases[].gate の非 null 値を実工程順 = step 1→3→4a に並べたもの)。SKILL.md は本配列を参照し Gate 番号順を直書きしない。",
   "evaluation_source": {
-    "c1_c4": "run-build-skill の初稿診断 receipt (initial-draft-review の review.json と、改善した場合の improvement-validation.json) を正本とし、本 workflow は receipt を読んで完了レポートへ転記するだけで評価し直さない。receipt が無い (accept-as-is) 場合は未診断として報告する。",
+    "c1_c4": "run-build-skill の初稿診断 receipt (initial-draft-review の review.json と、改善した場合の improvement-result.json・post-target-manifest.json・improvement-validation.json。改善後の C1-C4 は improvement-result.json から描く) を正本とし、本 workflow は scripts/render-c1-c4-section.py が receipt から描画した C1-C4 節を完了レポートへそのまま貼るだけで評価し直さない。receipt が無い (accept-as-is)・壊れている・今の成果物と合わない場合は、script が未診断と出す。",
     "governance": "rubric を変更するときだけ利用者が run-skill-rubric-governance を明示的に呼ぶ。本 workflow の既定の流れには含めない。"
   },
   "phases": [
@@ -49,7 +30,7 @@
       "delegateSkill": "run-skill-elicit",
       "fatal_exit_codes": [2],
       "handoff": "eval-log/handoff-after_elicit.json",
-      "transition": {"gate": "brief schema PASSかつGate 1の明示decisionがPASS", "on_pass": "build", "on_fail": "abort"}
+      "transition": {"gate": "brief schema PASSかつGate 1の明示decisionがPASS", "on_pass": "build", "on_fail": "abort", "on_fail_comment": "abort は run を終えるのではなく、この Gate の先 (build) へ進めないという意味 (やり直しは同じ run_id で行う。SKILL.md「ゴールシーク配線を持たない理由」)。Gate 1 の差戻しは elicit へ戻り、brief を直して Gate 1 を出し直す (差戻しの handoff の next_phase は elicit)。差戻しは同じ Gate で通算 3 周まで (prompts/R2-gate-review.md の CONST_004)。差戻し先の詳細は references/gate-templates.md"}
     },
     {
       "id": "build",
@@ -80,10 +61,11 @@
         "prompts/R2-gate-review.md"
       ],
       "delegateSkill": null,
-      "command": "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-automation)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/build-manifest-registration-plan.py\"",
+      "command": "SIBLING_PLUGIN_ROOT=\"$(python3 \"$PLUGIN_ROOT/scripts/extract-plugin-root.py\" skill-governance-automation)\" && python3 \"$SIBLING_PLUGIN_ROOT/scripts/build-manifest-registration-plan.py\" --plugin \"plugins/<plugin>\"",
+      "comment": "--plugin で生成先の plugin を渡す (省略すると script を置いた skill-governance-automation 自身を調べてしまい、どの skill を作っても同じ結果になる)。新形式 plugin は .claude-plugin/plugin.json の必須キー (name / version / description) を検査し、読んだ plugin_manifest・name・version と空の proposals を stdout に出す。legacy manifest.json を持つ plugin だけ未登録ファイルの追加提案が並ぶ。<plugin> が展開されていないか対象が見つからなければ plugin_not_found で exit 2。出力はファイルに書かず、Gate 2.5 はこの stdout を見せる。",
       "fatal_exit_codes": [1, 2],
       "handoff": "eval-log/handoff-after_manifest_register.json",
-      "transition": {"gate": "登録plan検証PASSかつGate 2.5の明示decisionがPASS", "on_pass": "bundle-register", "on_fail": "abort"}
+      "transition": {"gate": "登録plan検証PASSかつGate 2.5の明示decisionがPASS", "on_pass": "bundle-register", "on_fail": "abort", "on_fail_comment": "abort は run を終えるのではなく、この Gate の先 (bundle-register) へ進めないという意味。Gate 2.5 の差戻しは、plugin.json / manifest.json 側の誤りなら manifest-register へ戻って登録 plan を作り直し、skill 本体の誤りなら build へ戻る (差戻しの handoff の next_phase にどちらかを書く)。差戻しは同じ Gate で通算 3 周まで (prompts/R2-gate-review.md の CONST_004)。差戻し先の詳細は references/gate-templates.md"}
     },
     {
       "id": "bundle-register",
@@ -196,7 +178,7 @@
       "max_retry": 0,
       "fatal_exit_codes": [1, 2],
       "handoff": "eval-log/handoff-after_lint.json",
-      "transition": {"gate": "build lint receiptがPASSかつcreate固有のP0 lintがexit 0かつGate 2の明示decisionがPASS", "on_pass": "pkg-check", "on_fail": "abort", "on_fail_comment": "自動で build へ戻さない。失敗した lint と根本原因を利用者に提示して止め、利用者が修正と再実行を選んだときだけ build から 1 回やり直す"}
+      "transition": {"gate": "build lint receiptがPASSかつcreate固有のP0 lintがexit 0かつGate 2の明示decisionがPASS", "on_pass": "pkg-check", "on_fail": "abort", "on_fail_comment": "lint が落ちたときは自動で build へ戻さない。失敗した lint と根本原因を利用者に提示して止め、利用者が修正と再実行を選んだときだけ build から 1 回やり直す。Gate 2 の差戻しも abort で、run を終えるのではなく、この Gate の先 (pkg-check) へ進めないという意味。build へ戻って run-build-skill --mode update で作り直す (差戻しの handoff の next_phase は build)。差戻しは同じ Gate で通算 3 周まで (prompts/R2-gate-review.md の CONST_004)。差戻し先の詳細は references/gate-templates.md"}
     },
     {
       "id": "pkg-check",
@@ -222,14 +204,18 @@
       "entryHook": null,
       "exitHook": null,
       "resourceIds": [
-        "schemas/handoff.schema.json"
+        "schemas/handoff.schema.json",
+        "scripts/render-c1-c4-section.py"
       ],
       "delegateSkill": null,
+      "command": "python3 \"$PLUGIN_ROOT/skills/run-skill-create/scripts/render-c1-c4-section.py\" --plugin <plugin> --skill <skill_name>",
       "evaluation_receipts": [
         "eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/review.json",
+        "eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/improvement-result.json",
+        "eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/post-target-manifest.json",
         "eval-log/<plugin>/build/initial-draft-review/<artifact-fingerprint>/improvement-validation.json"
       ],
-      "evaluation_receipts_comment": "evaluation_source.c1_c4 の receipt をそのまま転記する。無ければ未診断と書き、ここで評価 Agent を起動しない。",
+      "evaluation_receipts_comment": "evaluation_source.c1_c4 の receipt から command が描画した C1-C4 節を完了レポートの build_evaluation_receipt へそのまま貼る。receipt が無い・壊れている・今の成果物と合わない場合は script の出力どおり未診断と書き、ここで評価 Agent を起動しない。",
       "stage_receipts": {
         "build_stage": "eval-log/build-plan.json#/flags/build_stage",
         "deferred_to_release": "eval-log/<plugin>/build/verification-plan.json#/stage_gate/deferred_to_release"

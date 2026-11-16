@@ -80,31 +80,16 @@ feedback_contract:
       loop_scope: outer
       text: "plugin hookを既定にしproject fallback選択時だけ既存.claude/settings.jsonへ非破壊mergeされ、二重登録0件、既存key/hash変更0件、managed/disabled診断とrollbackが再現できる"
       verify_by: test
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/diagnoseを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 
 # run-dev-graph-init
@@ -165,7 +150,7 @@ symlinkで配布された任意の呼出し元repository/worktreeを解決し、
 
 ### ゴールシークループ
 
-frontmatterの `goal_seek.activation_state: semantic_evaluator_started` を先に確認する。main contextが最小init artifactを作成・guard・提示し、利用者がlight/standard/detailedを選んだ場合だけ `fork: subagent` / `max_loops: 5` とfeedback反復を有効化する。accept-as-isではSubAgent/loopとも0回でhandoff完了する。
+frontmatterの `goal_seek.activation_state: semantic_evaluator_started` を先に確認する。main contextが最小init artifactを作成・guard・提示し、利用者がdiagnoseを選んだ場合だけ `fork: subagent` / `max_loops: 5` とfeedback反復を有効化する。accept-as-isではSubAgent/loopとも0回でhandoff完了する。
 
 ### ゴールシーク配線
 

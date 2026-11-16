@@ -13,9 +13,6 @@ goal_seek:
   engine: task-graph
   engine_profile: checklist-graph  # planner の full task-spec graph と非同等 (縮小 profile)
   full_task_spec_graph: false  # fail-closed capability claim。gap 一覧は build-plan.capability_gaps 参照
-  spec: eval-log/goal-spec.json                       # 任意。あればロードして利用、無ければ AI が文脈から推定
-  progress: eval-log/run-task-graph-demo-progress.json     # schemas/goal-seek-loop.schema.json 準拠
-  intermediate: eval-log/run-task-graph-demo-intermediate.jsonl  # 各周回末に append: original_goal/current_goal_snapshot/delta/merged_directive (ドリフト圧縮アンカー)
   max_loops: 5
   fork: subagent        # 本例は独立 context が必要なため明示。無指定の既定は inline
 # doc/21 source-traceability

@@ -1,0 +1,31 @@
+{
+  "skill": "dev-graph:run-dev-graph-requirements",
+  "goal_spec_ref": "eval-log/run-dev-graph-requirements-goal-spec.json",
+  "loops_used": 1,
+  "max_loops": 5,
+  "artifact_delivery": {
+    "presentation_ref": "eval-log/run-dev-graph-requirements/artifact-delivery-presentation.json",
+    "choice_ref": "eval-log/run-dev-graph-requirements/artifact-delivery-choice.json",
+    "choice": "diagnose",
+    "diagnosis_findings": [],
+    "improvement_depth_asked": false
+  },
+  "checklist": [
+    {"id": "C1", "status": "pass", "evidence": "C24 read receipt repo_root == content_roots.repository; FEATURE-1 + SYS-P01..P13 exist, parent_feature/feature_package_id consistent, file_path docs and source_lineage.source_path exist, source_digest 851f6700…71a4 on all 13 (independent R1/R2 agent PASS)"},
+    {"id": "C2", "status": "pass", "evidence": "validate-readiness-binding.py exit 0, status pass, violations [], readiness_digest.c11 == c02 == sha256:27256fc4…11cb, validated_digest == source_digest (independent requirements-verifier re-run PASS)"},
+    {"id": "C3", "status": "pass", "evidence": "guard-requirements-handoff.py exit 0, status handoff, missing_sections [], blocked [] (closure 15 nodes all ready); exit-1 path not triggered"},
+    {"id": "C4", "status": "pass", "evidence": "binding graph.digest == guard graph.digest == sha256:63e2c21b…3ba5 (digest_match true); handoff/FEATURE-1-requirements.md, readiness-matrix.json, capability-build-handoff.json all record that snapshot digest; handoff_nodes == guard.handoff (14)"},
+    {"id": "C5", "status": "pass", "evidence": "git status shows no src/ or code files; run wrote only eval-log/run-dev-graph-requirements*; graph.json not written"}
+  ],
+  "feedback_criteria": {
+    "IN1": {"status": "pass", "verify_by": "script", "evidence": "validate-readiness-binding.py exit 0 (C11/C02/validate-system-plan same digest)"},
+    "OUT1": {"status": "pass", "verify_by": "live-trial", "evidence": "capability-build-handoff.json emitted for exact-13 package; implementation_code_generated_by_this_skill 0"},
+    "OUT2": {"status": "pass", "verify_by": "test", "evidence": "guard reported missing_sections/blocked in full (empty); no incomplete node so handoff not withheld"}
+  },
+  "independent_agents": [
+    {"type": "dev-graph:dev-graph-requirements-verifier", "scope": "R2b-readiness, R3-handoff", "verdict": "PASS"},
+    {"type": "general-purpose", "scope": "R1-elicit, R2-plan", "verdict": "PASS"}
+  ],
+  "blockers": [],
+  "status": "complete"
+}

@@ -2,36 +2,41 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "run-blueprint-apply",
-    "skill_md_sha256": "cd4f75db0bddf6e0b785e80b4c697309ec718cb4088f39851741b68d46732ff1"
+    "skill_md_sha256": "f3c7c6e7991ff54a9e73cd4f07de187d67a20cbce7d14ebe31653e844d6bea21",
+    "reviewed_skill_md_sha256": "f3c7c6e7991ff54a9e73cd4f07de187d67a20cbce7d14ebe31653e844d6bea21",
+    "skill_dir_digest": "fc2f63af45d33b1347abe17223fac8ecd5585f504895bc29e8e897bc1d6a09bd"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
     "omission": 0,
-    "inconsistency": 1,
+    "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-04T22:32:19Z",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-16T01:14:35Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "OUT1"],
+    "criteria_evaluated": [
+      "IN1",
+      "OUT1"
+    ],
     "positive_feedback": [
-      "記述規約: 兄弟 plugin の文書の引用が、本文引用の規約『<name> plugin の `<path>` (出典表記)』に沿い、『本 plugin には同梱しない』と所在も明示している。参照先は実在する。",
-      "依存整合: 実行経路 (validate-goal-seek-anchor.py、doc-emit.py --check-apply、system-blueprint.schema.json) はすべて自 plugin 内で `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` から解決され、runtime_root_policy: host-skill-path と Runtime root contract 節も揃っている。",
-      "fail-closed: C02 verdict=PASS かつ draft_hash 一致のときだけ blueprint を受理し、--check-apply の exit1 は R2 へ差し戻すという受理順序は差分の影響を受けていない。"
+      "抽出 (C01)・独立評価 (C02)・適用 (本 skill) を分け、適用側は C02 PASS の blueprint だけを fail-closed で受理する。受理の門は C02 と同じ sink-status.json の draft_hash に束縛されている。proposer と approver を分ける設計が、Purpose・Key Rules 2・完了チェックリスト CL-1・R1 の禁止事項で同じ言葉で繰り返されている。",
+      "apply-recommendation の shape は独立 schema を作らず、plugin 共有の script doc-emit.py (C11) の --check-apply で機械検査する。検査の置き場所が 1 つなので、prompts と完了条件の基準がずれない。",
+      "全項目を kind=inference に限り、evidence_refs が blueprint 実在 anchor へ解決できない項目と kind=fact の新規レコードを --check-apply が exit 1 で止める。blueprint 外の無根拠主張を機械で遮断できる。"
     ],
     "negative_feedback": [
-      "low (inconsistency, 今回の差分外・前回から継続): L93 役割 blockquote のパス解決表記が `$CLAUDE_PLUGIN_ROOT` / `$CLAUDE_PROJECT_DIR` のままで、sibling の run-extract-blueprint の更新済み表記と揃っていない。"
+      "[medium] PD-002: body head 30 lines lack a Key Rule / 禁則 (MUST / NEVER / 禁止 / 必ず / '## 守ること') (progressive-disclosure)"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "rubric 観点 (single responsibility、fail-closed、SSOT 一元化、記述規約整合、依存関係整合、L0 rubric の high severity) で、現行 SKILL.md と今回の差分 (L133 の引用書き換え 1 行) を照合した。引用先の実在、親ディレクトリ起点の兄弟参照が無いこと (scripts/lint-sibling-plugin-paths.py exit 0)、skill 配下テストの通過 (3 passed) を確認した。criteria_evaluated は frontmatter feedback_contract の IN1/OUT1 全件。high/medium は 0 件、差分外の low 1 件のみのため PASS とする。PASS の射程は design claim (静的設計 adequacy) に限る。"
+  "notes": "render-findings-score が機械採点 (score 90/threshold 80, sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9, scored 23/24) と LLM 判定 1 件 (BD-004) から生成した。"
 }

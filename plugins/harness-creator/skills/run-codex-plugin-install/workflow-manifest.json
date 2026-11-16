@@ -4,69 +4,10 @@
   "workflowId": "run-codex-plugin-install",
   "skill": "run-codex-plugin-install",
   "description": "明示されたpluginをlocalまたはGit sourceからinstallし、CLI receiptとruntime identityをfail-closedで検証する。",
-  "artifact_delivery_contract": {
-    "contract": "artifact-delivery-v1",
-    "state_machine": {
-      "initial": "artifact_created",
-      "states": [
-        "artifact_created",
-        "minimal_guard_passed",
-        "artifact_presented",
-        "user_choice_recorded",
-        "semantic_evaluator_started",
-        "handoff_complete"
-      ],
-      "transitions": [
-        {
-          "from": "artifact_created",
-          "event": "minimum_guard_pass",
-          "to": "minimal_guard_passed"
-        },
-        {
-          "from": "minimal_guard_passed",
-          "event": "present_actual_artifact",
-          "to": "artifact_presented"
-        },
-        {
-          "from": "artifact_presented",
-          "event": "record_user_choice",
-          "to": "user_choice_recorded"
-        },
-        {
-          "from": "user_choice_recorded",
-          "event": "accept-as-is",
-          "to": "handoff_complete"
-        },
-        {
-          "from": "user_choice_recorded",
-          "event": "light|standard|detailed",
-          "to": "semantic_evaluator_started"
-        },
-        {
-          "from": "semantic_evaluator_started",
-          "event": "improvement_complete",
-          "to": "handoff_complete"
-        }
-      ],
-      "pre_choice_forbidden": [
-        "semantic-evaluator",
-        "task-fork",
-        "subagent",
-        "multi-worker",
-        "revise-loop"
-      ],
-      "accept_contexts": {
-        "evaluator": 0,
-        "improver": 0
-      }
-    },
-    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
-    "release": "explicit-only",
-    "exhaustive": "explicit-only"
-  },
+  "artifact_delivery_contract": {"contract": "artifact-delivery-v1", "phase_activation": "all-legacy-phases-after-semantic_evaluator_started"},
   "goal_seek": {
     "engine": "inline",
-    "spec": "eval-log/goal-spec.json",
+    "spec": "eval-log/run-codex-plugin-install-goal-spec.json",
     "progress": "eval-log/run-codex-plugin-install-progress.json",
     "intermediate": "eval-log/run-codex-plugin-install-intermediate.jsonl",
     "max_loops": 3,
@@ -76,31 +17,50 @@
     {
       "id": "preflight",
       "step": 1,
-      "title": "source・plugin identity・対象scopeを確定",
+      "title": "source・plugin identity・対象scopeを確定 (読むだけ。user-global状態は変えない)",
       "prompt": "./prompts/R1-install.md",
       "output_artifact": "eval-log/codex-plugin-install-preflight.json",
       "transition": {
-        "gate": "source種別・plugin scope・refの組合せが入力契約に一致",
-        "on_pass": "install",
+        "gate": "source種別・plugin scope・refの組合せが入力契約に一致し、previewに出ている。local sourceは対象plugin集合 (指定pluginとdependency_closure) の全名、Git sourceはcommit SHAに固定したrefと、次のphaseがmarketplace登録だけでpluginを入れないこと",
+        "on_pass": "register-marketplace",
         "on_fail": "abort"
       },
       "failure_action": "abort"
     },
     {
-      "id": "install",
-      "step": 2,
-      "title": "明示scopeのmarketplace登録とinstallを実行",
+      "id": "register-marketplace",
+      "step": 1.5,
+      "title": "Git sourceのmarketplace登録 (1段めのguard) とsnapshotからの対象plugin集合の確定",
       "dependsOn": [
         "preflight"
+      ],
+      "condition": "source_type == git",
+      "prompt": "./prompts/R1-install.md",
+      "output_artifact": "eval-log/codex-plugin-install-register.json",
+      "transition": {
+        "gate": "local source (非該当)、または1段めのguardでmarketplace登録を実行し、snapshotのrevisionが固定したcommit SHAと同じで、snapshotから求めた対象plugin集合 (指定pluginとdependency_closure) の全名が2段めのpreviewに出ている",
+        "on_pass": "install",
+        "on_fail": "abort"
+      },
+      "failure_action": "abort",
+      "comment": "ここで止まる (revisionが固定したSHAでない・closureが求まらない) か、installの最初の2段めの承認をユーザーがしないと、helperは呼ばれないのでpluginは1件も入っていないが、1段めで登録したmarketplace (user-global marketplace configとsnapshot cache) は残る。handoffで登録が残ることとsnapshotのrevisionと止まった理由を伝え、登録を残すか消すかはユーザーが決める。"
+    },
+    {
+      "id": "install",
+      "step": 2,
+      "title": "承認した対象plugin集合のinstallを実行 (local sourceはmarketplace登録を含み、Git sourceは2段めの承認と、登録済みsnapshotのupgradeを含みうる)",
+      "dependsOn": [
+        "register-marketplace"
       ],
       "prompt": "./prompts/R1-install.md",
       "output_artifact": "eval-log/codex-plugin-install-receipt.json",
       "transition": {
-        "gate": "receipt.status=installed and receipt.verified=true",
+        "gate": "receipt.status=installed and receipt.verified=true and receipt.install_order equals the approved target set (selected plugins + dependency_closure) and no plugin in the receipt (artifacts[] or plugins[]) has two or more enabled=true candidates in activation_collisions; for a Git source also receipt.resolved_revision equals the pinned commit SHA, receipt.revision_evidence.rechecked_after_plugin_add=true, and receipt.revision_evidence.git_dirty=false whenever revision_evidence.git_head is set",
         "on_pass": "verify",
         "on_fail": "abort"
       },
-      "failure_action": "abort"
+      "failure_action": "abort",
+      "comment": "helperがexit 3で止まったら、receiptのphaseとadded_pluginsで入ったまま残るpluginを、failed_pluginで入ったか分からないplugin (codex plugin list --jsonで確かめる) を伝える。Git sourceはupgradeがsnapshotを動かしたまま残ることがあり、receiptにupgradeの印は無いので、resolved_revisionと固定したSHAの差で伝える。"
     },
     {
       "id": "verify",
@@ -112,11 +72,13 @@
       "prompt": "./prompts/R1-install.md",
       "validation_by_route": {
         "local-all": [
-          "python3 ${PLUGIN_ROOT}/scripts/install-local-plugins.py --all --check"
+          "python3 ${PLUGIN_ROOT}/scripts/install-local-plugins.py --all --check [--platform claude|codex] --repo-root <source>   # when install used --all",
+          "python3 ${PLUGIN_ROOT}/scripts/install-local-plugins.py --plugin <name> [--plugin <name>...] --check [--platform claude|codex] --repo-root <source>   # when install used --plugin",
+          "assert exit 0 and report.status=verified, run from a cwd outside the repository with the same selection args (--all or --plugin, --platform) as install, and no report.plugins[] entry has two or more enabled=true candidates in activation_collisions"
         ],
         "single-local-or-git": [
           "codex plugin list --json",
-          "assert receipt.status=installed and receipt.verified=true and receipt identity matches the selected plugin"
+          "assert receipt.status=installed and receipt.verified=true and receipt identity matches the selected plugin, no receipt.artifacts[] entry has two or more enabled=true candidates in activation_collisions, and for a Git source receipt.resolved_revision equals the pinned commit SHA"
         ]
       },
       "output_artifact": "eval-log/codex-plugin-install-verify.json",

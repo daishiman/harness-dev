@@ -2,11 +2,11 @@
 # /// script
 # name: build-review-launch
 # purpose: durable gate planの配送leaseをatomic取得し、stale後は同一idempotency requestを再認可する。
-# inputs: --gate-plan <json> --runtime <claude-code|codex>
+# inputs: --gate-plan <json> --runtime <claude-code|codex> [--budget-policy <convergence-policy.json>]
 # outputs: stdout / --out <json>
 # contexts: [A, C]
 # network: false
-# write-scope: <gate state_ref>.launch.json + --out指定先
+# write-scope: <gate state_ref>.launch.json + 同じdirのrun-model-actions台帳 + --out指定先
 # dependencies: []
 # requires-python: ">=3.10"
 # ///
@@ -19,6 +19,7 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 import fcntl
 import hashlib
+import importlib.util
 import json
 import os
 import re
@@ -36,8 +37,11 @@ PROMPT_REF = "prompts/R5-initial-draft-evaluate.md"
 SCHEMA_REF = "schemas/initial-draft-review.schema.json"
 EVALUATOR_ID = "elegant-initial-draft-evaluator"
 LAUNCH_LEASE_SECONDS = 300
-PRE_DIAGNOSTIC_LEVELS = {"light", "standard", "detailed"}
+PRE_DIAGNOSTIC_LEVELS = {"diagnose"}
 INTENT_ANCHOR_MAX_CHARS = 8000
+SKILL_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_BUDGET_POLICY_PATH = SKILL_ROOT.parent / "run-elegant-review" / "references" / "convergence-policy.json"
+BUDGET_SCRIPT_PATH = SKILL_ROOT / "scripts" / "validate-run-model-budget.py"
 PRESENTATION_RECEIPT_KEYS = {
     "schema_version", "event_id", "event_type", "source", "run_id", "subject",
     "artifact_path", "artifact_sha256", "target_manifest_sha256",
@@ -495,7 +499,54 @@ def _validate_launch_consumption(value: Any, *, gate: dict, initial: dict, runti
     return receipt
 
 
-def build_launch_request(gate_plan: dict, *, runtime: str) -> dict:
+_BUDGET_MODULE = None
+
+
+def _budget_module():
+    """Load validate-run-model-budget.py once; gate and launcher share its ledger."""
+    global _BUDGET_MODULE
+    if _BUDGET_MODULE is None:
+        spec = importlib.util.spec_from_file_location("validate_run_model_budget", BUDGET_SCRIPT_PATH)
+        if spec is None or spec.loader is None:
+            raise LaunchError(f"cannot load run model-action budget script: {BUDGET_SCRIPT_PATH}")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _BUDGET_MODULE = module
+    return _BUDGET_MODULE
+
+
+def _verification_model_actions(gate: dict) -> int:
+    """The verification actions the gate counted outside the ledger when it claimed.
+
+    今の gate は検証を台帳の component (verification) として予約するので 0 を返す。古い gate が
+    claim 時点の cost_summary を台帳の外の消費として数えた claim だけが正の値を持つ。予算の前の
+    plan (run_budget が無い) も 0。
+    """
+    run_budget = gate.get("run_budget")
+    if run_budget is None:
+        return 0
+    value = run_budget.get("verification_model_actions", 0) if isinstance(run_budget, dict) else None
+    if type(value) is not int or value < 0:
+        raise LaunchError("gate plan run_budget.verification_model_actions must be a non-negative integer")
+    return value
+
+
+def _ensure_claim_reserved(state_dir: Path, *, run_id: str, claim_id: str, policy_path: Path, external_consumed: int = 0) -> None:
+    """The evaluator context must be in the run ledger before delivery.
+
+    gate が claim 時に予約済みなら同じ action_id で何も足さない。予約の無い古い claim はここで
+    1 context を予約し、予算が無ければ配送しない。再配送は同じ action_id なので二重に引かない。
+    上限判定には gate が claim 時に数えた検証用 model action (external_consumed) も足す。
+    """
+    budget_mod = _budget_module()
+    try:
+        budget = budget_mod.load_budget(Path(policy_path))
+        budget_mod.reserve(state_dir, run_id, action_id=claim_id, component="initial_diagnosis", count=1, total=budget["total"], external_consumed=external_consumed)
+    except (budget_mod.BudgetError, OSError) as exc:
+        raise LaunchError(f"run model-action budget refuses the evaluator launch: {exc}") from exc
+
+
+def build_launch_request(gate_plan: dict, *, runtime: str, budget_policy_path: Path = DEFAULT_BUDGET_POLICY_PATH) -> dict:
     """Authorize one active lease, or redeliver its same identity after expiry."""
     gate, initial, request = _prepare_launch_request(gate_plan, runtime=runtime)
     raw_state_ref = gate.get("state_ref")
@@ -515,6 +566,7 @@ def build_launch_request(gate_plan: dict, *, runtime: str) -> dict:
         )
         if now <= choice_at:
             raise LaunchError("semantic evaluator must start strictly after the pre-diagnostic choice")
+        _ensure_claim_reserved(state_path.parent, run_id=gate["run_id"], claim_id=initial["claim_id"], policy_path=budget_policy_path, external_consumed=_verification_model_actions(gate))
         if consumed_path.exists():
             try:
                 existing_value = json.loads(consumed_path.read_text(encoding="utf-8"))
@@ -568,10 +620,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--gate-plan", required=True)
     parser.add_argument("--runtime", required=True)
     parser.add_argument("--out")
+    parser.add_argument("--budget-policy", default=str(DEFAULT_BUDGET_POLICY_PATH), help="run_model_action_budget を持つ convergence-policy.json")
     args = parser.parse_args(argv)
     try:
         result = build_launch_request(
-            _read_json(Path(args.gate_plan)), runtime=args.runtime
+            _read_json(Path(args.gate_plan)), runtime=args.runtime, budget_policy_path=Path(args.budget_policy)
         )
         if args.out:
             _write_json(Path(args.out), result)

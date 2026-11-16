@@ -2,6 +2,10 @@
 
 本ファイルは [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/) に準拠し、`extract-system-blueprint` plugin の変更履歴を記録する。harness-creator 設計書 33 章 `change-governance` に紐付き、SemVer に従う。
 
+## [0.2.20] - 2026-11-15
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## [0.2.19] - 2026-11-02
 
 - build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。

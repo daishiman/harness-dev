@@ -124,19 +124,40 @@ REQUIRED_SCRIPT_CONTEXTS = {"A", "B", "C", "D", "E"}
 REQUIRED_GOVERNANCE_ROLES = {"proposer", "reviewer", "approver", "tooling"}
 
 # RTM (requirement_coverage): brief の非空フィールドのうち被覆宣言を要求しないもの。
-# 識別・分類・build フラグ配管系は他ゲート (lint-skill-name / brief schema enum /
-# variant_support クロスチェック) が既に担保している。
-NON_REQUIREMENT_BRIEF_FIELDS = {
-    "skill_name", "prefix", "kind", "role_suffix", "hierarchy_level",
-    "output_language", "parameter_language_exception",
-    "source_url_or_path", "source_tier", "last_audited_date", "audit_trigger",
-    "mass_production_profile", "paradigm_profile",
-    "consult_build_knowledge", "with_subagent_hint", "with_hooks",
-    # 初回依頼の原文は要件の出典であって要件そのものではない。要件は goal /
-    # purpose_background / key_constraints 等へ構造化済みで、原文との突合は初稿診断の evaluator が
-    # intent_anchor として担う (Step 12.6)。成果物要素への写像を求めると空宣言になる。
-    "user_request_verbatim",
-}
+# 正本は skill-brief.schema.json の property に付けた "x-rtm-exempt" (値は除外の理由)。
+# ここで手書きの集合を持つと、brief に field を足すたびに 2 か所を手で同期することになる。
+BRIEF_SCHEMA_PATH = (
+    Path(__file__).resolve().parents[2] / "run-skill-create" / "schemas" / "skill-brief.schema.json"
+)
+
+
+def _load_rtm_exempt_fields(schema_path: Path) -> tuple[frozenset[str], str | None]:
+    """schema の x-rtm-exempt から RTM 除外集合を作る。読めないときは (空集合, 理由) を返す。
+
+    除外の理由が空の印は除外として認めない。理由を書かずに被覆宣言を外せると、
+    要求を黙って RTM から落とす抜け道になるため。
+    """
+    try:
+        schema = json.loads(schema_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return frozenset(), f"{schema_path} を読めない ({exc.__class__.__name__})"
+    props = schema.get("properties") if isinstance(schema, dict) else None
+    if not isinstance(props, dict):
+        return frozenset(), f"{schema_path} に properties が無い"
+    exempt: set[str] = set()
+    for name, spec in props.items():
+        if not isinstance(spec, dict) or "x-rtm-exempt" not in spec:
+            continue
+        reason = spec["x-rtm-exempt"]
+        if not isinstance(reason, str) or not reason.strip():
+            return frozenset(), f"{schema_path} の {name}.x-rtm-exempt に除外の理由が無い"
+        exempt.add(name)
+    if not exempt:
+        return frozenset(), f"{schema_path} に x-rtm-exempt の印が 1 つも無い"
+    return frozenset(exempt), None
+
+
+NON_REQUIREMENT_BRIEF_FIELDS, _RTM_EXEMPT_LOAD_ERROR = _load_rtm_exempt_fields(BRIEF_SCHEMA_PATH)
 REQUIREMENT_DISPOSITIONS = {"mapped", "not_applicable"}
 # brief フィールドパス: 例 key_constraints[2] / boundary / knowledge_loop.pattern
 REQUIREMENT_ID_PATH_RE = re.compile(
@@ -783,6 +804,12 @@ def _validate_requirement_coverage(data: dict, trace_path: Path) -> list[str]:
             "skip しました (構造検査のみ実施)。",
             file=sys.stderr,
         )
+        return errs
+
+    if _RTM_EXEMPT_LOAD_ERROR:
+        # 除外集合が分からないまま被覆完全性を判定すると、どの field を求めるかが
+        # 決まらない。空集合で続けず、ここで止める。
+        errs.append(f"RTM 除外の正本を読めないため被覆完全性を検査できない: {_RTM_EXEMPT_LOAD_ERROR}")
         return errs
 
     # requirement_id の brief 上の実在検査 + 被覆フィールド集合の構築
@@ -1788,12 +1815,17 @@ def main() -> int:
                 errs.append(f"invalid gate status: {gate}={gates.get(gate)}")
 
     # run-skill-create は lint_target_sha256 が今の skill ディレクトリの digest と一致するときだけ
-    # lint receipt を使い回す。形の崩れた値は照合を常に外して黙って再実行に回すので、ここで止める。
-    # 値の無い旧 trace は再利用されないだけなので許す。
+    # lint receipt を使い回す。derive-verification-contract --evidence-dir は、さらに lint_brief_sha256 が
+    # 今の brief と一致するときだけ Step 12 の build-conformance を receipt にする。形の崩れた値は
+    # 照合を常に外して黙って再実行に回すので、ここで止める。値の無い旧 trace は再利用されないだけなので許す。
     if "lint_target_sha256" in data and not re.fullmatch(
         r"[0-9a-f]{64}", str(data.get("lint_target_sha256", ""))
     ):
         errs.append("lint_target_sha256 must be 64 lowercase hex chars")
+    if "lint_brief_sha256" in data and not re.fullmatch(
+        r"[0-9a-f]{64}", str(data.get("lint_brief_sha256", ""))
+    ):
+        errs.append("lint_brief_sha256 must be 64 lowercase hex chars")
 
     script_model = data.get("script_execution_model")
     if not isinstance(script_model, dict):

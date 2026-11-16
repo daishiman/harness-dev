@@ -2,7 +2,8 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-intake-kickoff",
-    "skill_md_sha256": "7bb0d337d9f0cc39942af5bee5cadc2c68822768e6153a69968814f2da5ae145"
+    "skill_md_sha256": "ebac77ee4923064bc2f5b3d932a74e375d94eb98c08597e8b2fbb76cfd012ea2",
+    "reviewed_skill_md_sha256": "7bb0d337d9f0cc39942af5bee5cadc2c68822768e6153a69968814f2da5ae145"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -37,5 +38,21 @@
     "hook_trigger": "manual:fresh-review",
     "next_action": "none"
   },
-  "notes": "rubric 側: 同じ1回の評価を rubric 1.6.0 の rule との照合の観点でまとめた。点数は render-findings-score.py の機械採点の値を写しただけで、別の採点はしていない。 incremental の focused review で、exhaustive の30思考法は実施していない。対象の差分は git diff 03050251 で SKILL.md の allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけ。builder とは別 context の独立レビュアーが、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を1回で判定し、同じ結果を elegance と rubric の2ファイルに分けて書いた。rubric は render-findings-score.py --rubric-refs rubric.json (1.6.0) --kind skill で機械採点した (結果は stdout だけで、ファイルは書いていない)。確認の中心は、SKILL.md 本文・prompts・references・呼び出し側 commands に、Bash で python3 以外の実行ファイル (git/ls/cat/find/mkdir/cp/mv/node/bash/sh/uv/jq/gh/bd/curl/open/date など) や、先頭が python3 でない形を呼ぶ指示が無いか。Read・Glob・Grep・Write で済む操作は問題にしていない。 読んだもの: SKILL.md 全文 (160行) と git diff 03050251、prompts と references の実行指示、scripts/validate-kickoff-json.py の実在、skill-intake の commands からの呼び出し。 確かめたこと: Bash の実行指示は SKILL.md:134 の `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/skills/run-intake-kickoff/scripts/validate-kickoff-json.py output/<hint>/kickoff.json` の1つだけで、python3 で始まる。kickoff.json の書き出しは Write、質問は AskUserQuestion が担う。 判定: high・medium の dependency_break と矛盾は0件で、rubric の high も0件なので PASS。 迷った例 (共通): SKILL.md:81 の Runtime root contract の定型文『各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する』は、`PLUGIN_ROOT=... python3 ...` の形 (先頭が python3 でない) にも読める。ただし本文の実行行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の展開で python3 から始まる形で書かれているので、FAIL にせず notes に残す。"
+  "notes": "rubric 側: 同じ1回の評価を rubric 1.6.0 の rule との照合の観点でまとめた。点数は render-findings-score.py の機械採点の値を写しただけで、別の採点はしていない。 incremental の focused review で、exhaustive の30思考法は実施していない。対象の差分は git diff 03050251 で SKILL.md の allowed-tools の `Bash` を `Bash(python3 *)` に絞った1行だけ。builder とは別 context の独立レビュアーが、(a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を1回で判定し、同じ結果を elegance と rubric の2ファイルに分けて書いた。rubric は render-findings-score.py --rubric-refs rubric.json (1.6.0) --kind skill で機械採点した (結果は stdout だけで、ファイルは書いていない)。確認の中心は、SKILL.md 本文・prompts・references・呼び出し側 commands に、Bash で python3 以外の実行ファイル (git/ls/cat/find/mkdir/cp/mv/node/bash/sh/uv/jq/gh/bd/curl/open/date など) や、先頭が python3 でない形を呼ぶ指示が無いか。Read・Glob・Grep・Write で済む操作は問題にしていない。 読んだもの: SKILL.md 全文 (160行) と git diff 03050251、prompts と references の実行指示、scripts/validate-kickoff-json.py の実在、skill-intake の commands からの呼び出し。 確かめたこと: Bash の実行指示は SKILL.md:134 の `python3 ${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}}/skills/run-intake-kickoff/scripts/validate-kickoff-json.py output/<hint>/kickoff.json` の1つだけで、python3 で始まる。kickoff.json の書き出しは Write、質問は AskUserQuestion が担う。 判定: high・medium の dependency_break と矛盾は0件で、rubric の high も0件なので PASS。 迷った例 (共通): SKILL.md:81 の Runtime root contract の定型文『各shell invocation内で解決済みabsolute pathを `PLUGIN_ROOT` に設定する』は、`PLUGIN_ROOT=... python3 ...` の形 (先頭が python3 でない) にも読める。ただし本文の実行行は `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` の展開で python3 から始まる形で書かれているので、FAIL にせず notes に残す。",
+  "sha_rebinds": [
+    {
+      "from_sha": "7bb0d337d9f0cc39942af5bee5cadc2c68822768e6153a69968814f2da5ae145",
+      "to_sha": "1e66edbe1442a6f7b3f68d779c7234d468e65b998f7ac74fff74066555cf369d",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:48Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "1e66edbe1442a6f7b3f68d779c7234d468e65b998f7ac74fff74066555cf369d",
+      "to_sha": "ebac77ee4923064bc2f5b3d932a74e375d94eb98c08597e8b2fbb76cfd012ea2",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:57Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

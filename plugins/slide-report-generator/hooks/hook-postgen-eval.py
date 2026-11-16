@@ -160,7 +160,7 @@ def build_context(mode: str, deck_dir: str) -> tuple[str, str]:
     if guard_status == "pass":
         ctx += (
             "artifact_presented: 成果物のpathと開き方を利用者へ先に提示する。\n"
-            "user_choice_recorded: 提示後に accept-as-is / light / standard / detailed を聞く。\n"
+            "user_choice_recorded: 提示後に accept-as-is / diagnose を聞く。\n"
             "accept-as-is はevaluator=0 / improver=0。semantic reviewは明示選択後のみ起動する。"
             " release/exhaustiveは、このchoiceとは別のexplicit eventがある場合だけ実行する。"
         )

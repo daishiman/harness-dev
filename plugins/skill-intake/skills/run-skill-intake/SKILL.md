@@ -16,9 +16,6 @@ goal_seek:
   full_task_spec_graph: false  # workflow-manifest の phase 依存だけを扱う縮小 profile
   engine_profile: checklist-graph  # planner の full task-spec graph と非同等 (縮小 profile)
   fork: inline
-  spec: eval-log/goal-spec.json
-  progress: eval-log/run-skill-intake-progress.json
-  intermediate: eval-log/run-skill-intake-intermediate.jsonl
   max_loops: 17  # 11 phase × 1.5 の追記余裕を切り上げ
 user-invocable: true
 disable-model-invocation: true
@@ -64,22 +61,7 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 業務ロジック(質問雛形・採点基準・Notion blocks 生成)を持たず 11 phase を Skill/SubAgent へ委譲し handoff JSON 契約のみで橋渡しする薄い orchestrator 設計が、非エンジニアの曖昧要望から実装可能な intake 仕様まで橋渡しする目的を最適に反映している。
       verify_by: elegant-review
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 ## Purpose & Output Contract
@@ -98,11 +80,11 @@ artifact_delivery:
 
 ## Pre-choice usable artifact execution
 
-main context は依頼文を逐語保持した `output/<hint>/intake-request.json` (`schemas/intake-request.schema.json`) と、manifest digest・予定出力・外部 mutation 範囲を示す read-only preview だけを作る。最終 `intake.md` / `intake.json` を依頼文から推測生成しない。path・digest・開き方を提示してから accept-as-is/light/standard/detailed を記録する。accept-as-is は request snapshot のローカル handoff で終了し、正式 intake / Notion URL / next-action は未生成であることを明示する。
+main context は依頼文を逐語保持した `output/<hint>/intake-request.json` (`schemas/intake-request.schema.json`) と、manifest digest・予定出力・外部 mutation 範囲を示す read-only preview だけを作る。最終 `intake.md` / `intake.json` を依頼文から推測生成しない。path・digest・開き方を提示してから accept-as-is/diagnose を記録する。accept-as-is は request snapshot のローカル handoff で終了し、正式 intake / Notion URL / next-action は未生成であることを明示する。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionおよびexternal mutation safety wrapperはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。actual mutationはcanonical preview→hook-confirm→authorize→execute wrapperだけを通し、release/exhaustiveは別の明示eventを必要とする。
 
 <!-- external-mutation-guard-cli:v1 -->
 ### Canonical external mutation receipt flow (mandatory)
@@ -142,7 +124,7 @@ Do not use an auto-approval flag or invoke the mutation command outside this rec
 
 ## Runtime workflow details
 
-intake plugin の中核 orchestrator。pre-choiceではmain contextが依頼文を `intake-request.json` へ損失なく保存し、schema guard と実行 preview を提示する。`workflow-manifest.json` の11 phaseを子Skill/SubAgentへ委譲する処理とNotion公開はlight/standard/detailed選択後だけ実行する。accept-as-isではSubAgent/公開とも0回で request snapshot のローカル handoffを完了し、正式 intake 完了とは表現しない。
+intake plugin の中核 orchestrator。pre-choiceではmain contextが依頼文を `intake-request.json` へ損失なく保存し、schema guard と実行 preview を提示する。`workflow-manifest.json` の11 phaseを子Skill/SubAgentへ委譲する処理とNotion公開はdiagnose選択後だけ実行する。accept-as-isではSubAgent/公開とも0回で request snapshot のローカル handoffを完了し、正式 intake 完了とは表現しない。
 
 **入力**: ユーザーの「スキルを作りたい」要望 (topic 引数任意) + 任意の Notion 明示指定 (`--page-url` / `--page-id` / `--database-id`)。Notion 明示指定は `notion_target` として intake.json に保持し、Phase 10 publish まで落とさない。
 
@@ -172,13 +154,13 @@ intake plugin の中核 orchestrator。pre-choiceではmain contextが依頼文�
 1. **manifest を SSOT とする**: 固定 Steps を本文に書かず `workflow-manifest.json` の `phases[]` (id / dependsOn / delegateType / delegateName / fatal_exit_codes) を読み実行順を決める。
 2. **業務ロジックを持たない**: 質問雛形 / 技法選択 / 採点基準 / Notion blocks 生成は子 Skill / SubAgent / references に閉じる。本スキルは起動順序と handoff JSON の受け渡しのみ。
 3. **handoff JSON 必須**: 各 phase 完了時に対応 JSON ファイルが存在し、`workflow-manifest.json` と各 skill / SubAgent の `schemas/` 契約に通ること。違反時は Key Rule 5 のとおり停止する（自動で戻すのは manifest の `retryOn` / `retryTo` に書かれた P8→P4 だけ）。`schemas/` を持たない phase は、委譲先 SKILL.md の完了条件で確かめる（P6 `run-intake-option-catalog` は「tier=required の連携がすべて選択または reason 付きの除外で確定し、ユーザーが選択肢の確認に答えていること」。`options.json` が `selected_integrations` と `rejected` を持つことは形の確認にとどまり、専用の lint は未実装。P10 `run-notion-intake-publish` は pipeline の exit 0 と `notion-url.txt` の有効 URL）。
-4. **SubAgent fresh context (context:fork)**: light/standard/detailed選択後のみ、Phase 2 / 3 / 5 / 8をTask toolでSubAgent起動する。accept-as-isと提示前は起動しない。
+4. **SubAgent fresh context (context:fork)**: diagnose選択後のみ、Phase 2 / 3 / 5 / 8をTask toolでSubAgent起動する。accept-as-isと提示前は起動しない。
 5. **失敗で停止**: phase が exit != 0 / handoff JSON 検証 fail / fatal_exit_codes hit なら停止し `intake-trace.json` に再開ポイントを記録、ユーザーへ提示。
-6. **Secret-Out-of-Repo**: Notion トークンは Keychain から都度取得 (`scripts/keychain_get_secret.py`)。リポジトリへ書き込まない。
+6. **Secret-Out-of-Repo**: Notion トークンは Keychain から都度取得 (`../../scripts/keychain_get_secret.py`)。リポジトリへ書き込まない。
 7. **Gate A (Phase 8) で停止可能**: summary 否認時は Phase 4 へ戻り再ヒアリング (最大 2 周)。
 8. **lint 自動修正禁止**: P0 lint fail は根本原因をユーザー提示し AI 判断で勝手に修正しない。
 9. **スキル生成を絶対に実行しない (hard stop / 機械強制)**: 本スキルは **ヒアリング〜Notion 公開〜Phase 11 next-action 推奨**までで完結し、`run-skill-create` / `run-build-skill` / `capability-build` 等のスキル生成スキルを **Skill / Task / Bash いずれでも起動しない**。Phase 11 の `next-action.json` の `mode` は**推奨情報**に過ぎず、本スキルがそれを実行に移すことはない。Phase 11 完了 = ワークフロー終了であり、完了レポート提示後は必ず停止する。現行 handoff は recommendation-only-v1 で、スキル生成はユーザーが別途明示的に開始する独立アクションである。
-   - **この禁止は自然言語の指示だけに依存しない (100% 機械保証)**: `hooks/hook-guard-skillgen.py` (PreToolUse: Skill|Task|Bash) が、`run-skill-intake` 実行中フラグ (lock) を hook 駆動で立て、intake 実行中に生成スキルが起動されると **exit 2 でツール呼び出し自体をハーネスがブロック**する。lock の作成・遮断・解除は全て hook が行いモデル挙動に依存しない。本 Key Rule (プロンプト層) は「なぜ止まるか」の意図説明であり、保証の主体は hook 層である。配線は plugin root の `hooks/hooks.json`（plugin.json は hooks キーを持たない）、実証は repo root の `tests/test_skill_intake_guard_skillgen.py`。
+   - **hook でも止めるが 100% ではない (本 Key Rule も実効の防壁)**: `../../hooks/hook-guard-skillgen.py` (PreToolUse: Skill|Task|Bash) は、`run-skill-intake` の開始時に実行中フラグ (lock) を立て、intake 実行中に生成スキルが起動されると exit 2 でツール呼び出しをハーネスに拒否させる。止める強さは経路で違う (正本は `../../hooks/README.md` の「保証範囲」)。Skill / Task 経路は名前の正規化で決定的に遮断する。Bash 経路は denylist 正規表現による best-effort で、生成名を文字列に出さない間接起動 (変数展開・base64 等) は捕まえられない。さらに hook は可用性を優先して fail-open する。lock の作成に失敗したとき (WARN を出すだけ)・lock の TTL (6 時間) が切れたとき・hook への入力や lock の中身を解釈できないときは遮断しない。この隙間で生成を止めるのはプロンプト層の禁止 (本 Key Rule) だけなので、「hook が止めるから」と本 Key Rule を軽く扱わない。配線は `../../hooks/hooks.json`（plugin.json は hooks キーを持たない）。hook の振る舞いは harness repo の CI (`harness-creator-kit-ci.yml` の pytest ステップ) が、repo root の `tests/test_skill_intake_guard_skillgen.py` で回帰検証している。この test は plugin の配布物には含まれない。
 10. **Phase 9 exitHook の inline 自己更新**: `run-intake-finalize` が `intake.json` を生成した後にだけ、`run-skill-intake` が `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/measure_value_realized.py"` を起動して計測結果を `self-update.json` へ保存する。次に同じ `python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/update_question_bank.py" --derive-from-intake` で `sections.10_self_updater.question_bank_additions` を `qb-candidates.json` へ決定論的に導出し、`--apply` なしで preview する。別ターンの明示承認後だけ `--apply`し、`declining=true` なら適用しない。採点・候補導出・重複排除ロジックは各 script を正本とし、orchestrator に再実装しない。
 
 ## ゴールシーク実行
@@ -241,7 +223,7 @@ intake plugin の中核 orchestrator。pre-choiceではmain contextが依頼文�
 3. **SubAgent context 漏洩**: Phase 2 / 3 / 5 / 8 で Task tool を使わず Skill tool で呼ぶと主スレッド context が混入し Sycophancy/バイアスが発生する。
 4. **Phase 4→5 skip 条件**: `needs_excavation=false` のときのみ skip 可。理由を `intake-trace.json` に書かない skip は禁止。skip しても purpose.json は `scripts/build-skipped-purpose.py` で作る（P6・P7・P11 が読むため、無いと P11 の `decide-mode.py` が exit 3 で止まる）。
 5. **Gate A 周回上限**: Phase 8 否認 → Phase 4 戻しは最大 2 周。3 周目は停止。
-6. **Notion トークン**: 環境変数 / リポジトリへ置かず Keychain から都度取得 (`scripts/keychain_get_secret.py`)。
+6. **Notion トークン**: 環境変数 / リポジトリへ置かず Keychain から都度取得 (`../../scripts/keychain_get_secret.py`)。
 7. **manifest 二重管理禁止**: phases[] を本 SKILL.md にコピペしない。`lint-manifest-contents.py` を必ず通す。
 8. **next-action を実行と誤読しない (最重要)**: Phase 11 の `next-action.json` / `harness_creator_handoff_phase` / 「harness-creator 引き渡し」という語は **推奨の記述**であって実行指示ではない。完了レポート提示後に `run-skill-create` 等を続けて起動してはならない。「では作成します」と続行せず、`mode` と推奨を提示して停止する (Key Rule 9)。スキル生成が必要ならユーザーが明示的に別途開始する。
 

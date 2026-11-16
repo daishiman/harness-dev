@@ -134,11 +134,11 @@ def _good_schema():
 def _patch_paths(monkeypatch, tmp_path, schema, skill_md_text, upsert_src, plugins=None):
     sp = tmp_path / "skill-list.schema.json"
     sp.write_text(json.dumps(schema, ensure_ascii=False), encoding="utf-8")
-    md = tmp_path / "SKILL.md"
-    md.write_text(skill_md_text, encoding="utf-8")
+    repo, md, _, _, _ = _build_validation_fixture(tmp_path, skill_md_text)
     up = tmp_path / "notion-upsert-plugin.py"
     up.write_text(upsert_src, encoding="utf-8")
     monkeypatch.setattr(MOD, "SCHEMA", sp)
+    monkeypatch.setattr(MOD, "ROOT", repo)
     monkeypatch.setattr(MOD, "SKILL_MD", md)
     monkeypatch.setattr(MOD, "UPSERT", up)
     monkeypatch.setattr(MOD, "PLUGINS_DIR", plugins or (tmp_path / "noplugins"))
@@ -229,3 +229,96 @@ def test_subprocess_help_exits_zero():
     r = subprocess.run([sys.executable, str(SCRIPT), "--help"], capture_output=True, text=True)
     assert r.returncode == 0
     assert "--strict" in r.stdout
+
+
+def _build_validation_fixture(tmp_path, body=""):
+    repo = tmp_path / "build-repo"
+    skill = repo / "plugins" / "demo" / "skills" / "run-skill-feedback"
+    (skill / "scripts").mkdir(parents=True)
+    (skill / "scripts" / "submit.py").write_text("#!/usr/bin/env python3\n")
+    lint = repo / "scripts" / "lint-feedback-protocol.py"
+    lint.parent.mkdir()
+    lint.write_text("#!/usr/bin/env python3\nraise RuntimeError('must not execute')\n")
+    lint.chmod(0o755)
+    md = skill / "SKILL.md"
+    md.write_text(
+        "---\nscript_refs: [scripts/submit.py]\nfeedback_contract:\n  criteria:\n"
+        "    - {id: IN1, verify_by: lint, text: lint-feedback-protocol SSOT}\n"
+        "    - {id: IN2, verify_by: lint, text: lint-feedback-protocol secrets}\n---\n" + body)
+    manifest = {
+        "resources": [{"type": "script", "path": "scripts/submit.py"}],
+        "build_validation": {"lint_feedback_protocol": {
+            "role": "build-lint", "scope": "repo", "path": "scripts/lint-feedback-protocol.py",
+            "argv": ["python3", "scripts/lint-feedback-protocol.py", "--strict"],
+            "criteria": ["IN1", "IN2"], "attributes": {"shebang": True, "executable": True},
+        }},
+    }
+    manifest_path = skill / "workflow-manifest.json"
+    manifest_path.write_text(json.dumps(manifest))
+    return repo, md, manifest_path, manifest, lint
+
+
+def _r9(monkeypatch, repo, md):
+    monkeypatch.setattr(MOD, "ROOT", repo)
+    monkeypatch.setattr(MOD, "SKILL_MD", md)
+    return MOD.check_build_validation()
+
+
+def test_build_validation_accepts_explicit_development_contract_without_running_it(tmp_path, monkeypatch):
+    repo, md, _, _, _ = _build_validation_fixture(tmp_path)
+    assert _r9(monkeypatch, repo, md) == []
+
+
+@pytest.mark.parametrize("field,value", [
+    ("role", "runtime"), ("scope", "plugin"), ("path", "scripts/other.py"),
+    ("argv", ["python3", "scripts/lint-feedback-protocol.py"]), ("argv", "python3 lint --strict"),
+    ("criteria", ["IN1"]), ("criteria", ["IN1", "IN1"]), ("criteria", "IN1 IN2"),
+    ("attributes", {"shebang": True, "executable": False}),
+    ("attributes", {"shebang": "true", "executable": True}),
+])
+def test_build_validation_rejects_contract_drift_and_type_errors(tmp_path, monkeypatch, field, value):
+    repo, md, path, data, _ = _build_validation_fixture(tmp_path)
+    data["build_validation"]["lint_feedback_protocol"][field] = value
+    path.write_text(json.dumps(data))
+    assert _r9(monkeypatch, repo, md)
+
+
+@pytest.mark.parametrize("value", [None, [], {}, {"lint_feedback_protocol": []}])
+def test_build_validation_cannot_be_evaded_by_removing_runtime_lint_refs(tmp_path, monkeypatch, value):
+    repo, md, path, data, _ = _build_validation_fixture(tmp_path)
+    data["build_validation"] = value
+    path.write_text(json.dumps(data))
+    assert _r9(monkeypatch, repo, md)
+
+
+@pytest.mark.parametrize("fault", ["missing", "shebang", "mode", "external"])
+def test_build_validation_verifies_real_lint_file_before_distribution(tmp_path, monkeypatch, fault):
+    repo, md, _, _, lint = _build_validation_fixture(tmp_path)
+    if fault == "missing":
+        lint.rename(lint.with_suffix(".missing"))
+    elif fault == "shebang":
+        lint.write_text("print('not an entrypoint')\n")
+    elif fault == "mode":
+        lint.chmod(0o644)
+    else:
+        external = tmp_path / "external.py"
+        external.write_text("#!/usr/bin/env python3\n")
+        external.chmod(0o755)
+        lint.rename(lint.with_suffix(".original"))
+        lint.symlink_to(external)
+    assert _r9(monkeypatch, repo, md)
+
+
+@pytest.mark.parametrize("fault", ["runtime-lint", "outside-resource", "missing-resource", "bad-criteria", "bad-ref-type"])
+def test_build_validation_runtime_boundary_and_criteria_remain_enforced(tmp_path, monkeypatch, fault):
+    repo, md, path, data, _ = _build_validation_fixture(tmp_path)
+    if fault == "runtime-lint":
+        md.write_text(md.read_text().replace("scripts/submit.py", "scripts/lint-feedback-protocol.py"))
+    elif fault in {"outside-resource", "missing-resource"}:
+        data["resources"][0]["path"] = "../../outside.py" if fault == "outside-resource" else "missing.py"
+    elif fault == "bad-criteria":
+        md.write_text(md.read_text().replace("id: IN2, verify_by: lint", "id: IN2, verify_by: script"))
+    else:
+        md.write_text(md.read_text().replace("script_refs: [scripts/submit.py]", "script_refs: 3"))
+    path.write_text(json.dumps(data))
+    assert _r9(monkeypatch, repo, md)

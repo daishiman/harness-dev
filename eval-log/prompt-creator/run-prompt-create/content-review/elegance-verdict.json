@@ -2,20 +2,22 @@
   "target": {
     "plugin": "prompt-creator",
     "skill": "run-prompt-create",
-    "skill_md_sha256": "888172096b442f9911e694cbe0fe5a06487e5819f6e363dca72874941cbbe411"
+    "skill_md_sha256": "9500e344f5c264fe10d54a735f64939cacce536fbab993e75ad6d5d099af5e90",
+    "reviewed_skill_md_sha256": "9500e344f5c264fe10d54a735f64939cacce536fbab993e75ad6d5d099af5e90",
+    "skill_dir_digest": "975b70caec3e7d0ea7c91e1f03cf44091b9b7839c3eb6e9ca78efc309821c011"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
   "findings_summary": {
-    "contradiction": 0,
-    "omission": 0,
-    "inconsistency": 0,
-    "dependency_break": 0,
+    "contradiction": 1,
+    "omission": 2,
+    "inconsistency": 2,
+    "dependency_break": 3,
     "smell": 0
   },
-  "reviewer": "runtime-profile-core-focused-review",
-  "reviewed_at": "2026-08-24T00:45:09Z",
-  "iterations": 1,
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-14T11:35:11Z",
+  "iterations": 3,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -25,13 +27,70 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "inline/inline が親orchestratorの制御責務に適合し、fork評価は委譲先skillの契約へ保持して二重forkを導入していない。"
+      "governance reviewer の起動が allowed-tools の Agent、manifest governance.subagent=general-purpose と execution、Key Rules 4、Gotchas 2、R3 で同じ形に揃った。main context は R3 を読まず判定の見込みも渡さず、governance の handoff (approver=solo_operator_auto / system_auto と governance_decision) は subagent だけが書く。R2 2.1 も「R2 では書かない」とし、test が approver と governance_decision の組を確かめる。組み立てた本人が承認する抜け道は閉じている。",
+      "release_event を handoff schema の field (recorded_at と minLength 1 の user_quote) にし、書く場所 (依頼の時点なら diagnostic-choice、指摘を見せたあとなら design-evaluate、accept-as-is のあとなら report) と読む側 (governance.condition_evidence) を対応させた。release を選択肢に入れず質問もしないので、自動で release に進む経路が無い。",
+      "on_blocked を next_phase・report・rework・no_override に分け、blocked の required_fixes を完了レポートの governance_required_fixes にそのまま出し、blocked を approved に書き換えないことと、preconditions が false の環境での承認は skill の外で行うことを書き分けた。",
+      "改善の周回を improvement_round (初回 0、再診断ごとに 1) と「今回の実行 = 今回の elicit の handoff より新しい」で決め、固定 path の上書きや前回の実行で残った file に左右されないようにした。深さは 1 回だけ聞き、再診断の approver を system_auto にすることも R2・manifest・SKILL.md・test で揃っている。",
+      "mode の解決 (指定に従う / 既存 prompt の有無で推定し open_questions に残す / 食い違いは exit 2) と、名指しの R-id が target_skill に無いときの exit 2 を、起動モード・R1・manifest elicit.mode_resolution の 3 か所で同じ文にした。"
     ],
-    "negative_feedback": [],
-    "iteration": 1,
+    "negative_feedback": [
+      "[low][C1] governance が blocked のあとの手直し (on_blocked.rework) で、再診断の improvement_round を 1 足すのかが 2 通りに読める。R2 2.2 と manifest の round_rule は「再診断ごとに 1 足す」とし、on_blocked.rework と R2 2.2 の blocked の項は「改善の深さの周回上限には数えず」とする。行き先は「再診断のあとは governance」と明記されているので遷移は決まるが、数えない周回の improvement_round を何にするかで、findings-only (周回 0) のあとに手直しした再診断の handoff が improvement_round=0・approver=system_auto になるか 1 になるかが変わる (R2 2.2 の改善の深さの項は improvement_round=0 を approver=user と組にしている)。test の SAMPLES にも手直しの再診断の見本が無い。「手直しの再診断も improvement_round を 1 足す。周回上限との比較には使わない」のように 1 文で決めるとよい。",
+      "[low][C2] Gate 2 の差し戻し回数を数える場所が無い。manifest p0-lint.max_retry=3、Phase 別ゴール表の p0-lint 行と Gotchas 3 は「最大 3 周、3 周で通らなければ止める」とするが、p0-lint の handoff は固定 path に上書きされ、handoff schema にも差し戻し回数の field が無い (改善の周回には improvement_round を足したのと非対称)。3 周で止めたときの handoff の next_phase と、成果物を提示しないまま report を書くのかも決まっていない。",
+      "[low][C4] build が run-prompt-creator-7layer へ渡すものが 7layer の入口と合っていない。(1) manifest build.execution は改善の周回と governance の手直しで required_fixes を「直す対象として渡す」とするが、7layer の引数 (--responsibility-id / --output / --target-agent / --skill-brief / --format / --inject-sections) にも prompt-brief.schema.json にも受け口が無い (7layer は inline で動くので会話の中では渡るが、渡し方が書かれていない)。(2) 7layer 自身も artifact-delivery-v1 で、提示後に accept-as-is / diagnose を記録する節と、diagnose 後の C1-C4 内蔵ゲート (呼出元が design-findings JSON で保証するときだけ免除) を持つ。contract.invariant 2 から「7layer の選択は本スキルの診断選択に委ねる」と読めるが、build.execution に書かれていないので、提示前に 2 つ目の質問が出るか、改善の周回で 7layer が evaluator をもう一度 fork する (Gotchas 7 の二重評価) おそれがある。build.execution に、7layer の選択は本スキルが持つことと、周回では design-evaluate の findings の path を免除の証跡として渡すことを書くとよい。",
+      "[low][C4] 推定した仮定と update の出力先を brief に入れる経路が書かれていない。起動モード・R1 2.2・manifest elicit.execution は「推定した仮定は brief の open_questions に残す」「update では既存 prompt の path を brief の output_path に書く」とするが、brief を書くのは run-prompt-elicit --batch で、渡すのは topic・target_skill・responsibility_id の 3 つだけである。run-prompt-elicit はどの値が推定かも output_path も受け取らないので、R1 が elicit の返した brief に open_questions と output_path を足す手順が要るが、R1 4.2 は「eval-log/prompt-brief.json に最終結果を保存」とだけ書く。提示 (presented_items) と完了レポートの assumptions はこの open_questions を読むので、ここが抜けると仮定が利用者に見えない。",
+      "[low][C4] standalone の 2 段の経路の 2 段目が run-prompt-creator-7layer で閉じていない。起動モード・R1・manifest elicit.execution は `run-prompt-elicit` の単独起動 → `run-prompt-creator-7layer --skill-brief <brief> --output <output_path>` を案内する。run-prompt-elicit の standalone は brief から target_skill と responsibility_id をキーごと省くが、7layer は --responsibility-id を skill-local-v1 の既定で必須とし、省くと agents-legacy (YAML) の規約になる。build-trace.schema.json も responsibility_id (^R[0-9]+$) を必須にしている。案内どおりに進めると trace の検証で止まるおそれがある。主な原因は 7layer の側 (standalone の brief の扱いが無い) なので委譲先の問題として別に報告するが、本スキルの案内もそれに依存している。",
+      "[low][C2] accept-as-is のあとで release を求められたときの resume_command (`/prompt-creator:run-prompt-create --mode update --topic \"<topic>\"`) で、release の意図と対象が引き継がれない。再実行は elicit からやり直して target_skill と responsibility_id を topic から推定し直し、build で受け入れ済みの prompt を作り直す。release_event も新しい実行の handoff には入らないので、利用者がもう一度 release を求めないと governance は起動しない。完了レポートの resume_command の行か R2 2.2 に「再実行後に diagnose を選び、改めて release を求める」と書くか、target_skill と R-id を引数で渡せるとよい。",
+      "[low][C3] Phase 別ゴール表の p0-lint 行は「`TODO` / 未展開 `{{...}}` は findings 付きで build へ差し戻し」とするが、validate-prompt.py --phase prompt の TODO 検査は `TODO(?!\\(human\\))` で、TODO(human) は Gate 2 を通る。TODO(human) を止めるのは governance の translated_placeholder_residue が使う prompt-rubric C4-003 の regex だけで、accept-as-is や release しない実行では残る。IN1 の「未解決 TODO」は TODO(human) を除くと読めば成り立つが、p0-lint 行はそう読めない。「TODO (TODO(human) を除く)」と書くか、TODO(human) を Gate 2 で止めるかを揃えるとよい。",
+      "[low][C3] IN2 の test は改善されたが、まだ自分で組み立てた見本を確かめる部分が残る。_gate2 は test の中で R2 2.2 の規則を写した関数で、9 本それぞれの失敗で next_phase=build になることと、R2 に規則の文があることを確かめる (commands が実在する script であることも確かめる)。一方、SAMPLES の handoff は test に書き込んだ値で、R2/R3 の規則が変わっても見本は落ちない (規則の文の有無で落ちるのは Gate 2 と一部だけ)。governance の手直しの再診断と、Gate 2 を 3 周で止めた場合の見本も無い。"
+    ],
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:runtime-profile-migration",
+    "hook_trigger": "manual-incremental-content-review",
     "next_action": "none"
   },
-  "notes": "runtime-profile migration の incremental focused combined review。current SKILL.md 全文と変更依存を読み、(a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合で今回導入の未解決 medium/high 0、L0 rubric high severity 0 を確認した。既存の変更差分外 medium は focused scope 外。"
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "Phase 別ゴールと完了条件 (宣言核)"
+      ]
+    },
+    "elegance:2": {
+      "sections": [
+        "Phase 別ゴールと完了条件 (宣言核)",
+        "Gotchas"
+      ]
+    },
+    "elegance:3": {
+      "sections": [
+        "Phase 別ゴールと完了条件 (宣言核)",
+        "Key Rules"
+      ]
+    },
+    "elegance:4": {
+      "sections": [
+        "起動モード"
+      ]
+    },
+    "elegance:5": {
+      "sections": [
+        "起動モード"
+      ]
+    },
+    "elegance:6": {
+      "sections": [
+        "完了レポート形式 (phase=report の出力契約)"
+      ]
+    },
+    "elegance:7": {
+      "sections": [
+        "Phase 別ゴールと完了条件 (宣言核)"
+      ]
+    },
+    "elegance:8": {
+      "sections": [
+        "Phase 別ゴールと完了条件 (宣言核)"
+      ]
+    }
+  },
+  "notes": "incremental の focused combined review (1 context)。SKILL.md 全文、workflow-manifest.json、prompts/R1-R3、references/resource-map.yaml・governance-params.json、schemas/handoff・prompt-brief・build-trace・findings、tests/criteria/test_prompt_creator__run_prompt_create.py、委譲先 run-prompt-elicit・run-prompt-creator-7layer (validate-prompt.py を含む)・assign-prompt-design-evaluator の該当箇所、共通契約 references/artifact-delivery-policy.json を読み、git diff で作者の主張を確かめたうえで、現在の文書全体に対して C1-C4 を判定した。前回 (iteration 2) の指摘: elegance:1 (governance の fork の起動手段) 直った。elegance:2 (release_event の記録先) 直った。elegance:3 (blocked のあとの行き場) 直った。elegance:4 (英語仮文の検出という無い検査) 直った (TODO(human) の扱いの差は今回の elegance:7)。elegance:5 (R2 が resourceIds に無い) 直った。elegance:6 (仮定が見えない) 直った (brief へ入れる経路は今回の elegance:4)。elegance:7 (standalone の案内) 直った (2 段目の 7layer 側の閉じ方は今回の elegance:5)。elegance:8 (IN2 の test の弱さ) 一部残る (今回の elegance:8)。elegance:9 (周回の状態) 直った (Gate 2 の差し戻し回数は今回の elegance:2、手直しの周回の数え方は今回の elegance:1)。elegance:10 (mode=update と R-id) 直った。今回の指摘はすべて low で、high / medium の C1-C4 違反は残っていないので PASS とする。criteria の判定: IN1 PASS (9 コマンドが実在し Gate 2 は exit code だけで決まる。elegance:7 は low)、IN2 PASS (pytest が通る。elegance:8 は low)、OUT1 PASS (委譲の分割・fork の起動・design-evaluate の C2 差し戻しは目的に対し過不足ない。elegance:3・4・5 は委譲先との接続の low)。mode の推定で target_skill の prompts/<R-id>-*.md が 2 つ以上あるときの扱いは書かれていないが、1 prompt = 1 責務の規約 (7layer の template) で起きにくいので指摘にしない。scripts/evaluate-create-gates.py とその test (tests/scripts-plugins/test_prompt_creator__evaluate_create_gates_r4.py)・coverage 記録は、SKILL.md・manifest・prompts・references・schemas のどこからも参照されていないので削除待ちとして扱い、C4 の問題にしない。削除するときは scripts/lint-script-naming.py の allowlist (226 行目) の行も外す必要がある (CHANGELOG.md の記述は履歴なので残してよい)。委譲先の問題 (run-prompt-elicit の batch の完了チェックリストが user_confirmed=true を求め R1 の user_confirmed=false と食い違う、run-prompt-creator-7layer の standalone の brief の扱いが無い・artifact-delivery の選択と C1-C4 内蔵ゲートを orchestrator から呼ばれたときにどうするかが無い・古い「run-prompt-create Step 3b」と「user_question_budget=1」、assign-prompt-design-evaluator の古い「caller: run-prompt-create (Step 3b)」) は本スキルの判定に含めず、別に報告する。rubric で採点できる規約整合 (PD-002 など) は rubric-verdict.json 側で扱い、ここには重ねない。"
 }

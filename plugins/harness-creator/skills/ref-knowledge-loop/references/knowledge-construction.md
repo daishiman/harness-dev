@@ -83,6 +83,7 @@ scripts/
 ```json
 {
   "version": "1.0.0",
+  "consult_at": ["runtime"],
   "categories": [
     {"id": "{category}", "label": "カテゴリ名", "file": "knowledge-{category}.json", "keywords": ["kw1"]}
   ],
@@ -115,6 +116,7 @@ scripts/
 
 ```json
 {
+  "consult_at": ["runtime"],
   "categories": {
     "{category}": {
       "files": ["{category}-{subtopic}.json"],
@@ -135,6 +137,17 @@ scripts/
 ```
 
 ナレッジ進化メカニズム: 新エントリの `tags` を `routing_rules[*].tags` とマッチングし、最もマッチ数が多いファイルに格納。エージェントはファイル名をハードコードせず必ず `router.json` 経由でファイル名を取得する。
+
+### 宣言ファイルの `consult_at` (両パターン共通・必須)
+
+宣言ファイル (`knowledge-index.json`。無ければ `router.json`) は、そのストアを誰がいつ読むかを `consult_at` に書く。値は置き場所で 1 つに決まる。
+
+| ストア | 置き場所 | `consult_at` |
+|---|---|---|
+| Loop A (生成物側) | 生成スキルが自前に持つ `knowledge/` | `["runtime"]` |
+| Loop B (メタ側) | harness-creator 自身のストア (lint を `--store-only` で走らせる) | `["build-time"]` |
+
+正本は `run-build-skill/schemas/knowledge-loop.schema.json` の KnowledgeIndex と RouterJson (どちらも `consult_at` が required)。`run-build-skill/scripts/lint-knowledge-loop.py` の KL-007 は、未宣言・空・`runtime`/`build-time` 以外の値・置き場所との食い違いを error にする。上の 2 つの例は Loop A の形。雛形 `run-build-skill/templates/knowledge-skeleton/` も `["runtime"]` で始まる。
 
 ---
 

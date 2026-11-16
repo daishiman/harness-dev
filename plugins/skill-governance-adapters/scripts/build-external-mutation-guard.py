@@ -37,7 +37,13 @@ from typing import Any
 CONTRACT_ID = "external-mutation-guard-v1"
 SCHEMA_VERSION = 1
 STATE_REL = Path(".artifact-delivery/external-mutation")
-KEY_NAME = ".guard-key"
+# 署名の鍵は checkout ごとに作り、git に載せない (.gitignore の .guard-key*)。
+# 旧名 .guard-key の鍵は cf93ab33 で公開 repo に commit されたので、誰でも封を作れる。
+# 名前を変えて旧名を一切読まないことで、公開済みの鍵を構造的に信用しない (harness-olh)。
+KEY_NAME = ".guard-key-local"
+PUBLISHED_KEY_NAME = ".guard-key"
+# 鍵を作った時点で既にあった preview の一覧。新しい鍵では検証できないので、待ち状態の判定で除く。
+KEY_ROTATION_KIND = "key-rotation"
 TTL_SECONDS = 900
 CONFIRM_RE = re.compile(r"^CONFIRM EXTERNAL MUTATION ([0-9A-F]{24})$")
 INTENT_KIND = "intent"
@@ -54,7 +60,7 @@ INTENT_PATTERNS: tuple[tuple[re.Pattern[str], frozenset[str]], ...] = (
             # 単語境界が成立せず落ちる。境界判定を ASCII 英字だけに限定する。
             r"(?:プルリク(?:エスト)?|プル\s*リクエスト|pull\s*request|(?<![A-Za-z])PR(?![A-Za-z]))"
             r"[^\n]{0,40}?"
-            r"(?:出し|出す|出せ|作成|作って|作る|上げ|開い|投げ|送っ|create|open|raise|submit)",
+            r"(?P<verb>出し|出す|出せ|作成|作って|作る|上げ|開い|投げ|送っ|create|open|raise|submit)",
             re.I,
         ),
         frozenset({"github-pr-write"}),
@@ -63,11 +69,20 @@ INTENT_PATTERNS: tuple[tuple[re.Pattern[str], frozenset[str]], ...] = (
         re.compile(
             r"(?:issue|イシュー|課題|チケット)"
             r"[^\n]{0,40}?"
-            r"(?:立て|作成|作って|作る|閉じ|クローズ|更新|create|close|reopen|update)",
+            r"(?P<verb>立て|作成|作って|作る|閉じ|クローズ|更新|create|close|reopen|update)",
             re.I,
         ),
         frozenset({"github-issue-write", "beads-issue-write"}),
     ),
+)
+# 当たった動詞を打ち消す言い回し。日本語は動詞の直後、英語は動詞の直前に来る。
+# 見落とすと頼まれていない許可が出る。見過ぎても確認の文字列を打つ手間が増えるだけなので、広めに取る。
+NEGATION_AFTER_VERB_RE = re.compile(
+    r"\s*(?:は|を|の)?\s*(?:し|せ|さ|する)?\s*"
+    r"(?:ない|なく|ません|ず|ぬ|るな(?!ら)|な(?=[。、！!\s]|$)|不要|禁止|やめ|止め|待っ|保留|見送)"
+)
+NEGATION_BEFORE_VERB_RE = re.compile(
+    r"(?:\bnot|n't|\bnever|\bno\s+need\s+to|\bwithout)\s+(?:[A-Za-z]+\s+){0,2}$", re.I
 )
 ENTRYPOINT_RE = re.compile(r"^plugin:[a-z0-9][a-z0-9-]*/skills/[a-z0-9][a-z0-9-]*/SKILL\.md$")
 PYTHON_RE = re.compile(r"^python3(?:\.\d+)?$")
@@ -129,6 +144,18 @@ class GuardError(ValueError):
     """Fail-closed receipt or execution contract violation."""
 
 
+class GuardKeyUnavailable(GuardError):
+    """The checkout has no signing key yet; nothing can be confirmed or authorized."""
+
+
+class GuardExpired(GuardError):
+    """A receipt whose seal verifies but whose TTL has passed.
+
+    待ち状態の判定は期限切れだけを飛ばす。例外文の部分一致で分けると、path に
+    "expired" を含む project で壊れた preview まで飛ばしてしまう (fail-open)。
+    """
+
+
 def _compact(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
@@ -183,11 +210,20 @@ def _action_class(argv: list[str]) -> str | None:
     return None
 
 
+def _negated(prompt: str, verb_start: int, verb_end: int) -> bool:
+    after = prompt[verb_end : verb_end + 12]
+    before = prompt[max(0, verb_start - 32) : verb_start]
+    return bool(NEGATION_AFTER_VERB_RE.match(after) or NEGATION_BEFORE_VERB_RE.search(before))
+
+
 def _intent_classes(prompt: str) -> frozenset[str]:
+    """Classes asked for by at least one affirmative phrase; negated phrases grant nothing."""
     granted: set[str] = set()
     for pattern, classes in INTENT_PATTERNS:
-        if pattern.search(prompt):
-            granted |= set(classes)
+        for match in pattern.finditer(prompt):
+            if not _negated(prompt, match.start("verb"), match.end("verb")):
+                granted |= set(classes)
+                break
     return frozenset(granted & AUTO_GRANT_CLASSES)
 
 
@@ -203,22 +239,20 @@ def _review_text(value: str, *, name: str) -> str:
 def _project_root(value: str) -> Path:
     try:
         root = Path(value).expanduser().resolve(strict=True)
-    except OSError as exc:
-        raise GuardError(f"project root does not exist: {value}") from exc
+    except (OSError, RuntimeError, ValueError) as exc:
+        # ValueError: NUL を含む path。RuntimeError: 古い Python の symlink の輪。
+        raise GuardError(f"project root does not exist: {value!r}") from exc
     if not root.is_dir():
         raise GuardError(f"project root is not a directory: {root}")
     return root
 
 
-def _state_dir(root: Path, *, create: bool) -> Path:
-    state = root / STATE_REL
-    if create:
-        state.mkdir(parents=True, exist_ok=True)
-        os.chmod(state, 0o700)
+def _contained(path: Path, root: Path) -> Path:
+    """Resolve an existing path and prove it stays inside root."""
     try:
-        resolved = state.resolve(strict=True)
-    except OSError as exc:
-        raise GuardError(f"guard state is unavailable: {state}") from exc
+        resolved = path.resolve(strict=True)
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise GuardError(f"guard state is unavailable: {path}") from exc
     try:
         resolved.relative_to(root)
     except ValueError as exc:
@@ -226,23 +260,103 @@ def _state_dir(root: Path, *, create: bool) -> Path:
     return resolved
 
 
+def _state_dir(root: Path, *, create: bool) -> Path:
+    state = root / STATE_REL
+    if create:
+        # 1 段ずつ作り、作った (または既にあった) 段が root の中に留まるのを確かめてから次へ進む。
+        # .artifact-delivery が外への symlink なら、外に dir を作ったり chmod したりする前に止まる。
+        current = root
+        last = len(STATE_REL.parts) - 1
+        for depth, part in enumerate(STATE_REL.parts):
+            current = current / part
+            try:
+                # 途中の段は今までどおり umask の既定、state そのものだけ最初から 0700。
+                os.mkdir(current, 0o700 if depth == last else 0o777)
+            except FileExistsError:
+                pass
+            except OSError as exc:
+                raise GuardError(f"guard state is unavailable: {current}") from exc
+            current = _contained(current, root)
+        os.chmod(current, 0o700)
+    return _contained(state, root)
+
+
 def _key(state: Path, *, create: bool) -> bytes:
+    """Return this checkout's signing key; only preview and intent grants may create it."""
     path = state / KEY_NAME
-    if create and not path.exists():
-        try:
-            descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        except FileExistsError:
-            pass
-        else:
-            with os.fdopen(descriptor, "wb") as handle:
-                handle.write(secrets.token_bytes(32))
     try:
         value = path.read_bytes()
+    except FileNotFoundError:
+        if not create:
+            raise GuardKeyUnavailable(
+                "guard key is missing; the next preview creates a new one"
+            ) from None
+        value = _create_key(state, path)
     except OSError as exc:
         raise GuardError("guard key is unavailable") from exc
     if len(value) != 32:
         raise GuardError("guard key is invalid")
     return value
+
+
+def _create_key(state: Path, path: Path) -> bytes:
+    """Publish a fresh key atomically, after recording the previews it can never verify.
+
+    The record is written first and sealed with the fresh key. If a concurrent preview
+    publishes its key first, this record never verifies and is ignored, and the winner's
+    own record covers the same previews. The key file only ever appears complete.
+    """
+    fresh = secrets.token_bytes(32)
+    _record_retired_previews(state, fresh)
+    descriptor, temporary = tempfile.mkstemp(prefix=f"{KEY_NAME}.", dir=state)
+    try:
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(fresh)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temporary, 0o600)
+        try:
+            os.link(temporary, path)
+        except FileExistsError:
+            return path.read_bytes()
+    finally:
+        os.unlink(temporary)
+    return fresh
+
+
+def _record_retired_previews(state: Path, key: bytes) -> None:
+    """Seal the list of previews that predate `key`, so they stop counting as pending."""
+    retired = [
+        {"name": path.name, "sha256": _sha256_file(path)}
+        for path in sorted(state.glob("preview-*.json"))
+    ]
+    now = int(time.time())
+    receipt_id = uuid.uuid4().hex
+    body = {
+        **_base(KEY_ROTATION_KIND, receipt_id, now=now),
+        # 許可ではないので発行時に期限切れにしておく。_receipt では決して通らない。
+        "expires_at": now,
+        "retired_previews": retired,
+        "reason": "new signing key; previews sealed by an earlier key can never be authorized",
+    }
+    _write_receipt(state, f"{KEY_ROTATION_KIND}-{receipt_id}.json", body, key)
+
+
+def _retired_previews(state: Path, key: bytes) -> dict[str, str]:
+    """Previews retired by the current key's rotation record: name -> sha256."""
+    retired: dict[str, str] = {}
+    for path in sorted(state.glob(f"{KEY_ROTATION_KIND}-*.json")):
+        try:
+            _, record = _sealed(state, str(path), KEY_ROTATION_KIND, key)
+        except GuardError:
+            # 前の鍵の記録。今の鍵の記録が、その時点で残っていた preview を全部持っている。
+            continue
+        for item in record.get("retired_previews") or []:
+            if isinstance(item, dict):
+                name, digest = item.get("name"), item.get("sha256")
+                if isinstance(name, str) and isinstance(digest, str):
+                    retired[name] = digest
+    return retired
 
 
 def _seal(body: dict[str, Any], key: bytes) -> str:
@@ -291,6 +405,17 @@ def _write_once(state: Path, name: str, body: dict[str, Any], key: bytes) -> Pat
 
 
 def _receipt(state: Path, raw_path: str, expected_kind: str, key: bytes) -> tuple[Path, dict[str, Any]]:
+    path, document = _sealed(state, raw_path, expected_kind, key)
+    expires_at = document.get("expires_at")
+    if not isinstance(expires_at, int):
+        raise GuardError("receipt has no integer expires_at")
+    if expires_at < int(time.time()):
+        raise GuardExpired("receipt expired")
+    return path, document
+
+
+def _sealed(state: Path, raw_path: str, expected_kind: str, key: bytes) -> tuple[Path, dict[str, Any]]:
+    """Load a receipt whose identity and seal verify; expiry is the caller's concern."""
     try:
         path = Path(raw_path).expanduser().resolve(strict=True)
         path.relative_to(state)
@@ -298,7 +423,10 @@ def _receipt(state: Path, raw_path: str, expected_kind: str, key: bytes) -> tupl
         raise GuardError("receipt path is outside canonical guard state") from exc
     try:
         document = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError) as exc:
+        # ValueError は JSONDecodeError と UnicodeDecodeError (非 UTF-8) の両方を含む。
+        # ここで GuardError にしないと、待ち状態の判定を素通りして hook が exit 1 で落ち、
+        # PreToolUse は止めないエラーとして扱うので、すべての Bash が通る (fail-open)。
         raise GuardError(f"receipt is unreadable: {path}") from exc
     if not isinstance(document, dict):
         raise GuardError("receipt root must be an object")
@@ -309,9 +437,6 @@ def _receipt(state: Path, raw_path: str, expected_kind: str, key: bytes) -> tupl
     seal = document.get("seal")
     if not isinstance(seal, str) or not hmac.compare_digest(seal, _seal(document, key)):
         raise GuardError("receipt seal mismatch; receipt may be tampered")
-    expires_at = document.get("expires_at")
-    if not isinstance(expires_at, int) or expires_at < int(time.time()):
-        raise GuardError("receipt expired")
     return path, document
 
 
@@ -413,13 +538,19 @@ def hook_confirm(*, runtime: str = "claude") -> dict[str, Any] | None:
     if not isinstance(prompt, str) or not isinstance(cwd, str) or not isinstance(session_id, str):
         return None
     stripped = prompt.strip()
-    root = _project_root(cwd)
     matched = CONFIRM_RE.fullmatch(stripped)
+    granted = frozenset() if matched is not None else _intent_classes(stripped)
+    if matched is None and not granted:
+        # 関係の無い prompt では root を解決しない。cwd が消えた session で、
+        # 利用者の prompt を exit 2 で止めて消してしまわないため。
+        return None
+    try:
+        root = _project_root(cwd)
+    except GuardError:
+        # root が無ければ確認も許可も作れない。何も作らないのが fail-closed で、prompt は止めない。
+        return None
     if matched is not None:
         return _confirm_challenge(root, stripped, session_id, matched.group(1), runtime=runtime)
-    granted = _intent_classes(stripped)
-    if not granted:
-        return None
     return _grant_intent(root, stripped, session_id, granted, runtime=runtime)
 
 
@@ -737,7 +868,13 @@ def _parameter_expansion_end(command: str, index: int) -> int | None:
             return match.end() + 1
         return None
     match = SHELL_NAME_RE.match(command, index + 1)
-    return match.end() if match else None
+    if match is None:
+        return None
+    # zsh は二重引用の中でも "$path[@]" を配列の展開、"$x:h" を修飾子として読み、
+    # 前者は複数の語になる。bash と shlex はどちらも 1 語のまま読むので、形が食い違う。
+    if command.startswith(("[", ":"), match.end()):
+        return None
+    return match.end()
 
 
 def _has_unmodeled_shell_syntax(command: str) -> bool:
@@ -838,7 +975,7 @@ def _trusted_runner_paths(cwd: str | None) -> set[Path]:
         for folder in RUNNER_DIRS:
             try:
                 candidate = (root / folder / RUNNER_NAME).resolve(strict=True)
-            except (OSError, RuntimeError):
+            except (OSError, RuntimeError, ValueError):
                 continue
             if candidate.is_file():
                 trusted.add(candidate)
@@ -863,35 +1000,52 @@ def _canonical_guard_action(command: str, cwd: str | None) -> str | None:
         path = Path(cwd) / path
     try:
         resolved = path.resolve(strict=True)
-    except (OSError, RuntimeError):
+    except (OSError, RuntimeError, ValueError):
+        # ValueError: NUL を含む語。canonical でないものとして扱い、下の拒否に回す。
         return None
     return action if resolved.is_file() and resolved in _trusted_runner_paths(cwd) else None
 
 
-def _has_pending_guard_context(payload: dict[str, Any]) -> bool:
+def _pending_guard_context(payload: dict[str, Any]) -> tuple[Path, list[Path]] | None:
+    """Return (project root, blocking previews) when a guard flow is pending, else None.
+
+    The preview list may be empty when the state itself is unreadable; that still blocks.
+    """
     cwd = payload.get("cwd")
     if not isinstance(cwd, str) or not cwd:
-        return False
+        return None
     try:
         root = _project_root(cwd)
     except GuardError:
-        return False
+        return None
     if not (root / STATE_REL).exists():
-        return False
+        return None
     try:
         state = _state_dir(root, create=False)
         key = _key(state, create=False)
+    except GuardKeyUnavailable:
+        # 鍵が無ければ確認も許可も作れないので、待っている変更は進みようがない。
+        # Bash を止めても安全は増えずセッションが詰まるだけ。次の preview が鍵を作り、
+        # それまでの preview を退役させる。直接の変更は下の DIRECT_MUTATION_PATTERNS が止め続ける。
+        return None
     except GuardError:
         # Existing but unreadable/non-canonical guard state cannot prove safety.
-        return True
+        return root, []
+    retired: dict[str, str] | None = None
+    blocking: list[Path] = []
     for preview_path in sorted(state.glob("preview-*.json")):
         try:
             _, preview_receipt = _receipt(state, str(preview_path), "preview", key)
-        except GuardError as exc:
-            if "expired" in str(exc):
+        except GuardExpired:
+            continue
+        except GuardError:
+            if retired is None:
+                retired = _retired_previews(state, key)
+            if retired.get(preview_path.name) == _sha256_file(preview_path):
                 continue
             # A malformed receipt inside canonical state cannot safely prove no pending mutation.
-            return True
+            blocking.append(preview_path)
+            continue
         resolution: tuple[str, Path, str] | None = None
         for kind, terminal_status in (
             ("completion", "executed-successfully"),
@@ -902,18 +1056,46 @@ def _has_pending_guard_context(payload: dict[str, Any]) -> bool:
                 resolution = (kind, candidate, terminal_status)
                 break
         if resolution is None:
-            return True
+            blocking.append(preview_path)
+            continue
         kind, resolution_path, terminal_status = resolution
         try:
             _, resolved = _receipt(state, str(resolution_path), kind, key)
         except GuardError:
-            return True
+            blocking.append(preview_path)
+            continue
         if (
             resolved.get("preview_receipt_id") != preview_receipt["receipt_id"]
             or resolved.get("status") != terminal_status
         ):
-            return True
-    return False
+            blocking.append(preview_path)
+    return (root, blocking) if blocking else None
+
+
+def _pending_deny_reason(root: Path, previews: list[Path]) -> str:
+    """Name what is pending and the exact canonical way out."""
+    reason = (
+        "A pending guard context blocks non-canonical Bash execution until its exact "
+        "preview -> confirmation -> authorize -> execute flow completes, is cancelled, "
+        f"or expires ({TTL_SECONDS}s after the preview)."
+    )
+    if not previews:
+        return reason + " The guard state itself is unreadable; inspect it by hand."
+    project_copy = root / GUARD_PLUGIN_REL / "scripts" / RUNNER_NAME
+    runner = project_copy if project_copy.is_file() else Path(__file__).absolute()
+    lines = [reason, "Pending previews:"]
+    for preview_path in previews:
+        lines.append(f"- {preview_path}")
+    lines.append(
+        "To abandon a preview you created, run exactly (one per preview): "
+        f"python3 {shlex.quote(str(runner))} cancel --project-root {shlex.quote(str(root))} "
+        f"--preview-receipt {shlex.quote(str(previews[0]))}"
+    )
+    lines.append(
+        "A preview that cancel rejects as tampered or unreadable must be inspected and "
+        "removed by a human."
+    )
+    return "\n".join(lines)
 
 
 def _deny(reason: str) -> dict[str, Any]:
@@ -951,11 +1133,9 @@ def pretool(*, runtime: str = "claude") -> dict[str, Any] | None:
             f"{GUARD_PLUGIN_REL.as_posix()}/scripts copy, with no shell operators, newlines, "
             "redirections, globs, comments, or expansions other than $NAME inside double quotes."
         )
-    if _has_pending_guard_context(payload):
-        return _deny(
-            "A pending guard context blocks non-canonical Bash execution until its exact "
-            "preview -> confirmation -> authorize -> execute flow completes or expires."
-        )
+    pending = _pending_guard_context(payload)
+    if pending is not None:
+        return _deny(_pending_deny_reason(*pending))
     if not any(pattern.search(command) for pattern in DIRECT_MUTATION_PATTERNS):
         return None
     return _deny(
@@ -1036,6 +1216,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     except (GuardError, OSError, KeyError, subprocess.SubprocessError) as exc:
         print(f"EXTERNAL_MUTATION_GUARD_ERROR: {exc}", file=sys.stderr)
+        return 2
+    except Exception as exc:  # noqa: BLE001 - 想定外の例外も fail-closed にする
+        # traceback と exit 1 のままだと、PreToolUse はそれを止めないエラーとして扱い、
+        # Bash を通してしまう。どの action でも exit 2 (pretool では拒否) に揃える。
+        print(
+            f"EXTERNAL_MUTATION_GUARD_ERROR: unexpected {type(exc).__name__}: {exc}",
+            file=sys.stderr,
+        )
         return 2
 
 

@@ -3,27 +3,8 @@
   "schemaVersion": 1,
   "workflowId": "run-prompt-create",
   "skill": "run-prompt-create",
-  "description": "run-prompt-create の usable-first フロー定義。実promptを生成し最小P0 guard後に提示し、利用者が選んだ場合のみdesign/elegant/governanceをpost-choiceで行う。",
-  "artifact_delivery_contract": {
-    "contract": "artifact-delivery-v1",
-    "state_machine": {
-      "initial": "artifact_created",
-      "states": ["artifact_created", "minimal_guard_passed", "artifact_presented", "user_choice_recorded", "semantic_evaluator_started", "handoff_complete"],
-      "transitions": [
-        {"from": "artifact_created", "event": "minimum_guard_pass", "to": "minimal_guard_passed"},
-        {"from": "minimal_guard_passed", "event": "present_actual_artifact", "to": "artifact_presented"},
-        {"from": "artifact_presented", "event": "record_user_choice", "to": "user_choice_recorded"},
-        {"from": "user_choice_recorded", "event": "accept-as-is", "to": "handoff_complete"},
-        {"from": "user_choice_recorded", "event": "light|standard|detailed", "to": "semantic_evaluator_started"},
-        {"from": "semantic_evaluator_started", "event": "improvement_complete", "to": "handoff_complete"}
-      ],
-      "pre_choice_forbidden": ["semantic-evaluator", "task-fork", "subagent", "multi-worker", "revise-loop"],
-      "accept_contexts": {"evaluator": 0, "improver": 0}
-    },
-    "phase_activation": "all-legacy-phases-after-semantic_evaluator_started",
-    "release": "explicit-only",
-    "exhaustive": "explicit-only"
-  },
+  "description": "run-prompt-create の usable-first フロー定義。実promptを生成し最小P0 guard後に提示し、利用者が診断を選んだ場合のみ design-evaluate (fork evaluator 1 つ) で C1-C4 を診断して改善の深さを 1 回だけ聞き、release を明示した場合のみ governance (fork した R3) を行う。数値の Gate は p0-lint の Gate 2 だけ。評価を省く専用モードは持たない。",
+  "artifact_delivery_contract": {"contract": "artifact-delivery-v1", "phase_activation": "all-legacy-phases-after-semantic_evaluator_started"},
   "phases": [
     {
       "id": "elicit",
@@ -35,10 +16,17 @@
       "exitHook": "validate-prompt-brief",
       "resourceIds": [
         "schemas/prompt-brief.schema.json",
-        "prompts/R1-elicit.md",
-        "prompts/R2-gate-review.md"
+        "prompts/R1-elicit.md"
       ],
       "delegateSkill": "run-prompt-elicit",
+      "execution": "依頼と会話から topic・target_skill・responsibility_id・mode を最尤推定し、run-prompt-elicit を --batch で呼ぶ (AskUserQuestion も interview agent も使わない)。仮定は brief の open_questions に残す。topic の手がかりが無い、または target_skill を特定できない standalone の依頼は brief を作らず exit 2 で止め、--topic 付きの起動例と、run-prompt-elicit の単独起動 → run-prompt-creator-7layer --skill-brief eval-log/prompt-brief.json --output <output_path> の 2 段の経路を示す。",
+      "mode_resolution": {
+        "$comment": "正本は prompts/R1-elicit.md 2.2。既存 prompt は target_skill の prompts/<R-id>-*.md で見つける。",
+        "responsibility_id": "target_skill の SKILL.md frontmatter responsibilities[].id の中からだけ推定する。依頼が名指しした R-id がそこに無ければ brief を作らず exit 2",
+        "mode_unspecified": "既存 prompt があれば update、無ければ create と推定し、open_questions に残す",
+        "update": "既存 prompt の path を brief の output_path に書き、build が run-prompt-creator-7layer の --output に渡す (7layer が既存を分解して冪等に更新する)",
+        "conflict": "--mode update で既存 prompt が無い、または --mode create で既存 prompt があるときは brief を作らず exit 2 (もう一方の mode の起動例を示す)"
+      },
       "fatal_exit_codes": [2],
       "handoff": "eval-log/handoff-after_prompt_elicit.json"
     },
@@ -52,9 +40,11 @@
       "exitHook": "emit-prompt-build-trace",
       "resourceIds": [
         "schemas/prompt-brief.schema.json",
-        "schemas/build-trace.schema.json"
+        "schemas/build-trace.schema.json",
+        "prompts/R2-gate-review.md"
       ],
       "delegateSkill": "run-prompt-creator-7layer",
+      "execution": "run-prompt-creator-7layer を --skill-brief eval-log/prompt-brief.json --responsibility-id <brief の responsibility_id> で起動する。brief に output_path があれば (mode=update の既存 prompt) --output に渡す。改善の周回と governance の差し戻しでは、戻ってきた required_fixes を直す対象として渡す。",
       "fatal_exit_codes": [1, 2],
       "handoff": "eval-log/handoff-after_prompt_build.json"
     },
@@ -66,7 +56,7 @@
       "dependsOn": ["build"],
       "entryHook": null,
       "exitHook": null,
-      "resourceIds": ["schemas/findings.schema.json"],
+      "resourceIds": ["schemas/findings.schema.json", "prompts/R2-gate-review.md"],
       "delegateSkill": null,
       "commands": [
         "python3 plugins/skill-governance-lint/scripts/lint-agent-prompt-section.py ${TARGET_AGENT_OR_SKILL}",
@@ -86,14 +76,15 @@
     {
       "id": "artifact-present-handoff",
       "step": "3b",
-      "gate": "delivery",
+      "gate": null,
       "title": "実promptの提示と試し方のhandoff",
       "dependsOn": ["p0-lint"],
       "events": ["artifact_created", "minimal_guard_passed", "artifact_presented"],
       "completion_gate": "prompt file exists AND parse/open/secret/corrupt guards PASS AND artifact_presented_at > artifact_created_at",
+      "presented_items": ["prompt の path", "試し方", "推定で決めた仮定 (eval-log/prompt-brief.json の open_questions の要約)"],
       "entryHook": null,
       "exitHook": null,
-      "resourceIds": ["schemas/handoff.schema.json"],
+      "resourceIds": ["schemas/handoff.schema.json", "prompts/R2-gate-review.md"],
       "delegateSkill": null,
       "fatal_exit_codes": [],
       "handoff": "eval-log/handoff-prompt_usable.json"
@@ -101,17 +92,19 @@
     {
       "id": "diagnostic-choice",
       "step": "3c",
-      "gate": "user-choice",
-      "title": "提示後の診断・改善深度選択",
+      "gate": null,
+      "title": "提示後の診断選択",
       "dependsOn": ["artifact-present-handoff"],
-      "choices": ["accept-as-is", "light", "standard", "detailed"],
+      "choices": ["accept-as-is", "diagnose"],
       "release_event": "explicit-only",
       "exhaustive_event": "explicit-only",
       "accept_as_is_evaluator_contexts": 0,
       "accept_as_is_improver_contexts": 0,
       "auto_release": false,
       "auto_exhaustive": false,
-      "resourceIds": ["schemas/handoff.schema.json"],
+      "release_event_recorded_in": "handoff.release_event",
+      "release_event_rule": "release は選択肢に入れず質問もしない。利用者が自分から release を求めたときだけ、その発言の引用を release_event に書く。依頼の時点で求めていたらこの phase の handoff に、指摘を見せたあとなら design-evaluate の handoff に書く。",
+      "resourceIds": ["schemas/handoff.schema.json", "prompts/R2-gate-review.md"],
       "delegateSkill": null,
       "fatal_exit_codes": [],
       "handoff": "eval-log/handoff-after_prompt_choice.json"
@@ -123,54 +116,51 @@
       "title": "選択後の設計評価 (C1-C4)",
       "dependsOn": ["diagnostic-choice"],
       "default_on": false,
-      "condition": "user_choice_recorded in [light,standard,detailed]",
+      "condition": "user_choice_recorded == diagnose",
+      "execution": "利用者が diagnose を選んだあと、1 context (fork) だけで C1-C4 を 1 回診断する。evaluator には深さを渡さない。指摘を見せたあとで改善の深さを 1 回だけ聞き (depth_choice)、選んだ深さの finding だけを build へ戻す。C1-C4 の評価はこの phase だけで行い、elegant-review などで自動的に評価し直さない。",
+      "depth_choice": {
+        "$comment": "selection は schemas/findings.schema.json の severity (high/medium/low/info) だけで決める (prompt の findings には goal 影響の欄が無い)。default は質問で推奨として先頭に出す選択肢で、利用者が選ばない限り記録しない。",
+        "asked": "once-after-findings-presented",
+        "options": ["findings-only", "light", "standard", "detailed"],
+        "default": "standard",
+        "selection": {"findings-only": "none", "light": "high", "standard": "high-or-medium", "detailed": "all-but-info"},
+        "max_iterations_by_option": {"findings-only": 0, "light": 1, "standard": 2, "detailed": 3},
+        "recorded_in": "handoff.improvement_depth",
+        "round": "選んだ finding を required_fixes に入れて build → p0-lint → design-evaluate (再診断) を 1 周とする。周回中は提示・診断選択・深さの質問を繰り返さず、選んだ finding が解消したら上限前でも止める。",
+        "round_recorded_in": "handoff.improvement_round",
+        "round_rule": "improvement_round は最初の診断を 0 とし、再診断ごとに 1 足す。max_iterations_by_option[improvement_depth] に達したら build へ戻さず、release_event があれば governance、無ければ report へ進む。周回中とは、今回の実行の design-evaluate の handoff (improvement_depth が記録済み) が今回の elicit の handoff より新しい状態を指す。improvement_round が 1 以上の handoff は深さを聞き直さないので approver=system_auto とし、記録済みの improvement_depth を引き継ぐ。"
+      },
+      "max_iterations": 3,
       "entry_gate": "artifact_created_at < artifact_presented_at < semantic_evaluator_started_at",
       "entryHook": null,
       "exitHook": null,
-      "resourceIds": ["schemas/findings.schema.json"],
+      "resourceIds": ["schemas/findings.schema.json", "prompts/R2-gate-review.md"],
       "delegateSkill": "assign-prompt-design-evaluator",
       "context": "fork",
       "fatal_exit_codes": [],
       "handoff": "eval-log/handoff-after_prompt_evaluator.json"
     },
     {
-      "id": "elegant-review",
+      "id": "governance",
       "step": 5,
       "gate": null,
-      "title": "選択後のパラダイム評価 (C1-C4)",
+      "title": "明示release選択後のgovernance 承認",
       "dependsOn": ["design-evaluate"],
       "post_choice_only": true,
-      "entryHook": "evaluate-create-gates",
-      "exitHook": null,
-      "condition": "new_prompt OR diff_lines > 30",
-      "resourceIds": [
-        "schemas/findings.schema.json",
-        "prompts/R2-gate-review.md"
-      ],
-      "delegateSkill": "run-elegant-review",
-      "context": "fork",
-      "decision_command": "python3 plugins/prompt-creator/skills/run-prompt-create/scripts/evaluate-create-gates.py --prompt-name ${PROMPT_NAME} --brief eval-log/prompt-brief.json",
-      "fatal_exit_codes": [1],
-      "handoff": "eval-log/handoff-after_prompt_elegant.json"
-    },
-    {
-      "id": "governance",
-      "step": 6,
-      "gate": null,
-      "title": "明示release選択後のgovernance 承認",
-      "dependsOn": ["elegant-review"],
-      "post_choice_only": true,
       "condition": "explicit_release_event_recorded == true",
+      "condition_evidence": "今回の実行の diagnostic-choice または design-evaluate の handoff に release_event (利用者の発言の引用) がある。accept-as-is のあとで release を求められても、findings が無く llm_reviewer を判定できないので governance は起動しない (report の扱いは prompts/R2-gate-review.md 2.2)",
       "entryHook": null,
       "exitHook": null,
       "resourceIds": [
         "prompts/R3-governance-decide.md",
-        "prompts/R2-gate-review.md",
         "schemas/handoff.schema.json"
       ],
-      "delegateSkill": "run-skill-rubric-governance",
+      "delegateSkill": null,
+      "subagent": "general-purpose",
+      "context": "fork",
+      "execution": "main context は Agent tool を subagent_type=general-purpose で起動する (会話を引き継ぐ fork 型は使わない)。渡すのは prompts/R3-governance-decide.md の path と R3 2.3 の入力の path だけで、main context は R3 を読まず、判定の見込みも書き添えない。subagent が auto_approve_conditions を evidence で 1 回判定し、governance の handoff を自分で書く。main context はその handoff を読んで report に写すだけで、governance_decision・approver を書かない。利用者に質問せず、他の skill も起動しない。",
       "preconditions": {
-        "$comment": "環境前提 (静的な運用構成値)。成果物の品質条件ではないため auto_approve_conditions から分離 (恒真の静的条件を合否条件に混ぜない)。値の正本は references/governance-params.json。いずれかが false の環境では auto_approve 評価に入らず run-skill-rubric-governance の手動承認フローへ。",
+        "$comment": "環境前提 (静的な運用構成値)。成果物の品質条件ではないため auto_approve_conditions から分離 (恒真の静的条件を合否条件に混ぜない)。値の正本は references/governance-params.json。いずれかが false の環境では auto_approve 評価に入らず blocked とし、理由を required_fixes に書いて report へ進む (on_blocked)。",
         "solo_operator_mode": "references/governance-params.json#/solo_operator_mode",
         "stable_frozen": "references/governance-params.json#/stable_frozen"
       },
@@ -185,11 +175,11 @@
         },
         {
           "condition": "layer_dependency_violations == 0",
-          "evidence": "artifact: 同 findings.json の bucket=C2 に severity high/medium の findings が 0 件 (c1-c4-criteria.md C2 基準)"
+          "evidence": "artifact: 同じ findings の bucket=C2 に severity high/medium の findings が 0 件 (c1-c4-criteria.md C2 基準)"
         },
         {
           "condition": "completion_checklist_verifiable == true",
-          "evidence": "script: plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py --input ${PROMPT_OUTPUT} exit 0 (5.3 完了チェックリスト非空) かつ findings.json の bucket=C4 に severity high の findings 0 件 (全項目 YES/NO 判定可能 = prompt-rubric C4-001/C4-002、l5-contract v2.0.0。旧 self_evaluation_checklist_present は旧構成の報酬化のため廃止)"
+          "evidence": "script: plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py --input ${PROMPT_OUTPUT} exit 0 (5.3 完了チェックリスト非空) かつ同じ findings の bucket=C4 に severity high の findings 0 件 (全項目 YES/NO 判定可能 = prompt-rubric C4-001/C4-002、l5-contract v2.0.0。旧 self_evaluation_checklist_present は旧構成の報酬化のため廃止)"
         },
         {
           "condition": "markdown_format_default_kept == true",
@@ -209,15 +199,21 @@
         },
         {
           "condition": "atomic_field_violations == 0",
-          "evidence": "artifact: findings.json に要素原子性 (1 フィールド=1 概念、50 字目安) 違反を指摘する severity high/medium の findings が 0 件 (evaluator Pass 3)"
+          "evidence": "artifact: 同じ findings に要素原子性 (1 フィールド=1 概念、50 字目安) 違反を指摘する severity high/medium の findings が 0 件 (evaluator Pass 3)"
         },
         {
           "condition": "translated_placeholder_residue == 0",
           "evidence": "script: plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/validate-prompt.py --input ${PROMPT_OUTPUT} --phase prompt exit 0 (未展開 {{...}} / TODO 残存検出) + prompt-rubric C4-003 regex_absent"
         }
       ],
+      "on_blocked": {
+        "next_phase": "report",
+        "report": "governance の handoff の required_fixes を report の governance_required_fixes にそのまま並べる",
+        "rework": "利用者が直すよう求めたときだけ、required_fixes を build へ渡し、build → p0-lint → design-evaluate (再診断。深さは聞き直さない) → governance を 1 周行う。1 回の依頼で 1 周。改善の深さの周回上限には数えず、再診断のあとは build へ戻さず governance へ進む",
+        "no_override": "skill は blocked を approved に書き換えない。preconditions が false の環境での承認はその環境のレビュー (例: PR review) で行い、この skill は記録しない"
+      },
       "user_question_budget": 0,
-      "user_question_budget_scope": "governanceは利用者のrelease選択receiptを消費するだけで、自動昇格や追加選択を行わない。",
+      "user_question_budget_scope": "governanceは利用者のrelease選択receiptを消費するだけで、自動昇格・追加の質問・追加選択を行わない。条件を満たさないときは required_fixes を付けて blocked を返す。",
       "fatal_exit_codes": [],
       "handoff": "eval-log/handoff-after_prompt_governance.json"
     },
@@ -229,24 +225,10 @@
       "dependsOn": ["artifact-present-handoff"],
       "entryHook": null,
       "exitHook": null,
-      "resourceIds": ["schemas/handoff.schema.json"],
+      "resourceIds": ["schemas/handoff.schema.json", "prompts/R2-gate-review.md"],
       "delegateSkill": null,
       "fatal_exit_codes": [],
       "handoff": "eval-log/handoff-prompt_done.json"
     }
-  ],
-  "fast_mode": {
-    "description": "後方互換の --fast もusable artifactを先に提示する。accept-as-is時はdesign/elegant/governanceをすべてskipし、evaluator/improverは0。",
-    "skip_phases": ["design-evaluate", "elegant-review", "governance"],
-    "dependency_override": {
-      "report.dependsOn": ["artifact-present-handoff"]
-    },
-    "required_evidence": [
-      "p0-lint PASS",
-      "prompt-build-trace schema PASS",
-      "diff_lines <= 30",
-      "new_prompt == false"
-    ],
-    "decision_command": "python3 plugins/prompt-creator/skills/run-prompt-create/scripts/evaluate-create-gates.py --prompt-name ${PROMPT_NAME} --brief eval-log/prompt-brief.json --fast"
-  }
+  ]
 }

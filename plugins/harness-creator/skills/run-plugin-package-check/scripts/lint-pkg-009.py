@@ -7,7 +7,7 @@
 # outputs:
 #   - stdout: PKG-009 result JSON（pkg_id・status・last_run_at・findings を必ず含む。lint の出力は analysis に入れる）
 #   - stderr: lint-external-refs.py の stderr と、止まった理由
-#   - exit: lint-external-refs.py の exit code（0 か、--fail-on-external で外部参照があれば 1）。
+#   - exit: lint-external-refs.py の exit code（0 か、--fail-on-external で外部参照があれば 1。読めない SKILL.md があれば 1）。
 #     lint に届かない・lint が JSON を返さないときは status=fail の JSON を出して exit 2
 # contexts: [C, E]
 # network: false
@@ -67,10 +67,13 @@ def fail_result(reason: str) -> dict:
 def normalize(payload: dict, source_exit_code: int) -> dict:
     """lint-external-refs.py --json の出力を PKG-009 の pass/fail にする。
 
-    外部参照 0 件かつ package contract の読み取りエラー 0 件だけを pass にする
-    (--fail-on-external を付けたかどうかで status は変えない)。
+    外部参照 0 件・package contract の読み取りエラー 0 件・走査した SKILL.md 1 本以上のときだけ pass にする
+    (--fail-on-external を付けたかどうかで status は変えない)。件数は reports の中身と別に
+    external_ref_count と skills_scanned でも確かめる (reports が欠けた出力を pass にしない)。
     """
     findings: list[str] = [f"package contract: {error}" for error in payload.get("contract_errors") or []]
+    # 読めなかった SKILL.md は外部参照の有無を確かめていないので fail にする (古い lint は key を出さない)
+    findings.extend(f"unreadable SKILL.md: {error}" for error in payload.get("scan_errors") or [])
     for report in payload.get("reports") or []:
         for ref in report.get("external_refs") or []:
             findings.append(f"{report.get('path')}:{ref.get('line')} {ref.get('ref')} ({ref.get('classification')})")
@@ -79,6 +82,12 @@ def normalize(payload: dict, source_exit_code: int) -> dict:
     counted = isinstance(external_count, int) and not isinstance(external_count, bool)
     if not counted:
         findings.append(f"lint-external-refs.py の external_ref_count を読めない: {external_count!r}")
+    elif external_count != 0:
+        findings.append(f"lint-external-refs.py の external_ref_count が 0 でない: {external_count}")
+    scanned = payload.get("skills_scanned")
+    # 1 本も走査していないなら、外部参照の有無を確かめていない
+    if not isinstance(scanned, int) or isinstance(scanned, bool) or scanned < 1:
+        findings.append(f"lint-external-refs.py が SKILL.md を 1 本も走査していない: skills_scanned={scanned!r}")
     return {
         "pkg_id": "PKG-009",
         "status": "pass" if counted and not findings else "fail",

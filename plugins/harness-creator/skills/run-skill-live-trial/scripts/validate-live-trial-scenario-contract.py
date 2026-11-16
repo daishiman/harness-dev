@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """live-trial の scenario 観測契約を検証する support module。
 
 観測の自己申告だけではなく、run directory 内の実在ファイルへ証拠参照を束縛する。

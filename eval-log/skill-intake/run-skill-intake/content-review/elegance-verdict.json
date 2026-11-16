@@ -2,7 +2,9 @@
   "target": {
     "plugin": "skill-intake",
     "skill": "run-skill-intake",
-    "skill_md_sha256": "9f94607030a12508384a075c24221aa2a670feaec834b6d20ac8b91d99999b76"
+    "skill_md_sha256": "13962c22c97908fe4cc69c0e8539da9fb27afcea020337cbffa83a80b8cd9c2f",
+    "reviewed_skill_md_sha256": "13962c22c97908fe4cc69c0e8539da9fb27afcea020337cbffa83a80b8cd9c2f",
+    "skill_dir_digest": "fee28a7a72d5e547ddaaccf09c347bfc63b25ab4caa85d7abbf1a5b3782a605f"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,11 +13,11 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 1
   },
-  "reviewer": "independent-content-reviewer (focused combined review, incremental profile)",
-  "reviewed_at": "2026-10-11T20:45:16Z",
-  "iterations": 3,
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-15T09:28:33Z",
+  "iterations": 2,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -25,15 +27,25 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "書き換えた起動行を、参照先の実在と引数の定義で照合した。plugin 直下の scripts/ に measure_value_realized.py・update_question_bank.py・validate-notion-ready.py が、skill 内の scripts/ に build-skipped-purpose.py がある。`--check-api` (validate-notion-ready.py:18)、`--derive-from-intake <intake.json> --out <qb-candidates.json>` (update_question_bank.py:136・157)、位置引数 interview と `--out` (build-skipped-purpose.py:117-118) は、書き換えた行の引数と一致する。",
-      "tests/test_skill_intake_notion_contract.py:252-253 の照合を `re.search(r'validate-notion-ready\\.py\"? --check-api', text)` に広げた修正は、解決済みパスを引用符で囲んだ形と素の形の両方を同じ指示として認めるだけで、script 名と `--check-api` の組み合わせは必須のままにしている。照合を緩めすぎておらず、素の形のままの publish・revise 側もこれまでどおり通る。",
-      "criteria: IN1 (manifest を SSOT として複製しない)・IN2 (スキル生成スキルの起動禁止を hook で強制)・OUT1 (薄い orchestrator) は、起動の書き方をそろえただけの今回の修正で崩れていない。業務ロジックは増えておらず、hook の配線 (SKILL.md:181) も変わっていない。3件とも評価した。"
+      "前回の指摘 1 (C1) は解消した。SKILL.md:163 から「100% 機械保証」「プロンプト層は意図説明」「保証の主体は hook 層」が消え、hook の強さが経路ごとに書かれた。Skill / Task は名前の正規化で決定的に遮断し、Bash は denylist の best-effort で、間接起動は捕まえられない。この部分は正本として名指しした ../../hooks/README.md の「保証範囲」と一致する。fail-open の 3 つの場合も hook-guard-skillgen.py の現物と一致する。lock 作成の失敗は WARN だけ (L135-141)、TTL は 6 時間 (L78・L114-116)、解釈できない入力は素通しし (L157-158)、解釈できない lock は無効として扱う (L118-119)。そのうえで「この隙間で生成を止めるのはプロンプト層の禁止だけなので軽く扱わない」と結論している。Key Rule 9 の見出しの「絶対に実行しない」、Gotcha 8、完了チェックリスト (SKILL.md:188) とも矛盾しない。frontmatter の IN2 は「機械強制」とだけ書き 100% を約束していないので、IN2 とも食い違わない。",
+      "前回の指摘 2 (C4) は、配布の自己完結の観点では解消した。test の所在の文が「harness repo の CI (harness-creator-kit-ci.yml の pytest ステップ) が repo root の tests/... で回帰検証している。この test は plugin の配布物には含まれない」となった。install 先の AI が、この file を探して失敗する余地は無くなった。実行時の手順でこの file を要るものは無い。CI が実際に `python3 -m pytest tests/ ...` (harness-creator-kit-ci.yml:72) で、この test を含む tests/ を回していることも確かめた。",
+      "前回の指摘 3 (C3) は解消した。Key Rule 6 (SKILL.md:159) と Gotcha 6 (SKILL.md:226) が `../../scripts/keychain_get_secret.py` になった。Additional Resources の `../../scripts/` と基点がそろい、実体 plugins/skill-intake/scripts/keychain_get_secret.py に解決できる。同じ行の hook の path も `../../hooks/hook-guard-skillgen.py`・`../../hooks/hooks.json`・`../../hooks/README.md` にそろい、3 つとも実在する。lint-external-refs.py の external_ref_count も 0 のまま。",
+      "今回の修正は L159・L163・L226 と references/keychain-setup.md の 2 行に閉じている。frontmatter・入出力契約・goal-seek の配線・manifest は変わっていない。前回 PASS とした共通の変更 3 つと固有の差分 (goal_seek の 3 キー削除) の判定も、そのまま成り立つ。IN1 (manifest を SSOT とする) と OUT1 (薄い orchestrator) にも影響は無い。"
     ],
-    "negative_feedback": [],
-    "iteration": 3,
+    "negative_feedback": [
+      "軽微・既存 (Additional Resources): Additional Resources は references/keychain-setup.md を「単独配布で自己完結するよう本 skill に同梱」と説明している (SKILL.md:238)。しかし keychain-setup.md の path は `${CLAUDE_PLUGIN_ROOT:-plugins/skill-intake}/scripts/...` で、CLAUDE_PLUGIN_ROOT が無いと cwd 相対の `plugins/skill-intake` に落ちる。今回 builder が直した L190・L213 も、前からある L118・L173・L199 も同じ書き方である。L118・L173・L199 はユーザーが自分の端末で打つコマンドで、そこでは CLAUDE_PLUGIN_ROOT が無いのが普通である。そのため、install した plugin では harness repo の clone の中でしか動かない。SKILL.md の Runtime root contract は「cwd から plugin root を推測しない」と定め、`${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` を使う。この reference の書き方は、その契約とも異なる。今回の修正で生じたものではなく、案内文で影響も小さいので FAIL にはしない。直し方の例: keychain-setup.md の冒頭に「`<PLUGIN_ROOT>` は install 先の skill-intake plugin の root (Claude Code では CLAUDE_PLUGIN_ROOT)」と 1 行足し、5 か所を `<PLUGIN_ROOT>/scripts/...` にそろえる。または `${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}` にそろえ、未設定のときの調べ方を書く。"
+    ],
+    "iteration": 2,
     "iteration_limit": 3,
-    "hook_trigger": "manual:fresh-review",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "elegance 側: 4条件 (矛盾・漏れ・整合・依存関係) と設計の筋の観点でまとめた。 incremental の focused review (iteration 3、上限3の最後の周回) で、exhaustive の30思考法は実施していない。builder とは別 context の独立レビュアーが、前回 (iteration 2) の negative_feedback の各項目の解消を行番号つきで現物で確かめ、修正と本体からの merge で生じた変更とその周辺について (a)矛盾 (b)漏れ (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を1回で判定し、同じ結果を elegance と rubric の2ファイルに分けて書いた。作者の修正要約は使わず、git diff HEAD と現物だけで判断した。HEAD には前回のレビュー以降のコミットが無く、差分はすべて作業ツリーの未コミット分で、plugin 側の変化は版の更新と artifact-delivery.json の runner_sha256 だけだった。rubric は render-findings-score.py --rubric-refs rubric.json (1.6.0) --kind skill で機械採点した (stdout だけで、ファイルは書いていない)。テストは pytest -q -p no:cacheprovider (plugins/skill-intake・plugins/system-spec-harness・plugins/system-dev-planner・tests/test_skill_intake_notion_contract.py) で 771 passed、rc=0。対象スキルの本体 (SKILL.md・prompts・references・scripts・agents) は編集していない。 読んだもの: git diff HEAD の SKILL.md (18行)・prompts/R1-main.md (6行)・tests/test_skill_intake_notion_contract.py (4行)、SKILL.md の 150-265 行、R1-main.md の 25-105 行と 150 行、参照先 script 4本の引数定義。迷った例: SKILL.md:158・242・258-261 と R1-main.md:31・63・81・100・101 には python3 の付かない script 名が残るが、成果物の表・理由の説明・resource の一覧・完了チェックリストの記述で、実行指示ではないので指摘に数えなかった。迷った例: R1-main.md:150 の出力指示は P11 の検証を『task-graph verifier を3入力実行する』とだけ書き、パスを書いていない。解決済みパス付きの起動は SKILL.md:234 にあり、引数の並びは R1-main.md:101 にあるので AI は辿れる。差分前からの書き方で、前回も拾っておらず、今回の修正で生じたものでもないので、指摘に数えず観察として残す (そろえるなら SKILL.md:234 と同じ形を書く)。"
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "Additional Resources"
+      ]
+    }
+  },
+  "notes": "全体の再レビューの 2 周目 (iteration 2)。1 周目の FAIL の指摘 3 件を builder (fix-skill-intake) が直した後、builder とは別 context の独立した評価者が判定した。builder の申告はうのみにせず、現物で確かめた。確かめたもの: SKILL.md の L159・L163・L226 と、その周辺の Key Rules・完了チェックリスト・Gotchas・Additional Resources。git diff HEAD で見た SKILL.md と keychain-setup.md の差分 (1 周目に判定した共通の変更のほかは、この 3 行と keychain-setup.md の 2 行だけ)。hook-guard-skillgen.py の全体、hooks/README.md の保証範囲、hooks/hooks.json、plugin-composition.yaml の invariant、harness-creator-kit-ci.yml の pytest ステップ、lint-external-refs.py の結果 (external_ref_count 0)。判定: C1 矛盾なし、C2 漏れなし、C3 整合、C4 依存整合。negative_feedback の 1 件は前からある軽微な点で、PASS のまま記録した。指摘 2 の判定 (観察): 配布の自己完結の観点では「明記」で足りる。ただし ref-pkg-contract の PKG-009 の規則文は「SKILL.md が plugin root の外を名指ししてよいのは、宣言したものと許可 prefix だけ」で、この test の path は今も宣言されていない。宣言で埋めようにも、lint の PATH_RE が tests/ を拾わないので、宣言は「使われていない repo_refs」として fail になる。lint 側の問題として、この skill の判定とは分けて報告する。規則の文面にも合わせたいなら、SKILL.md から test の file 名を外して「回帰テストは harness repo の CI にある (所在は ../../hooks/README.md)」と書けばよい。この skill の外の残り (判定とは別): plugin-composition.yaml:25 の invariant は今も「保証主体は hook 層」と書いている。plugins/skill-intake/README.md:490・546 と hook-guard-skillgen.py:5・20-23 は「100% ブロック」と書いている。どれも hooks/README.md の保証範囲と、直した SKILL.md:163 に食い違う。"
 }

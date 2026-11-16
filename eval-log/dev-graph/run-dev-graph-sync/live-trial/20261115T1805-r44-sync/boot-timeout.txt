@@ -1,0 +1,13 @@
+command: python3 plugins/harness-creator/skills/run-skill-live-trial/scripts/live-trial-boot.py "lt-20261115T1805-r44-sync-c03" "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/sync/fx" --run-id "20261115T1805-r44-sync" --target-skill "dev-graph:run-dev-graph-sync"
+started_utc: 2026-11-15T09:26:32Z
+ended_utc: 2026-11-15T09:28:06Z
+exit: 1
+stdout:
+TIMEOUT: lt-20261115T1805-r44-sync-c03 did not boot in 90s
+--- capture tail ---
+(空行 15 行のみ)
+after:
+- boot 自身が TIMEOUT の分岐で kill_session を呼び、session は消えていた (tmux ls に無し、backend has-session rc=1)
+- FX を cwd・引数に持つ claude process は残っていない (ps で確認)
+- ~/.claude.json の projects に FX の entry は作られていない (読むだけで確認)
+- fixture の git status は clean のまま

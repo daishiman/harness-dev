@@ -4,17 +4,26 @@
 # purpose: plugin ごとの artifact-delivery.json 投影を policy と central schema から生成・検査し、外部変更の SKILL.md へ正規の guard CLI ブロックと runtime root 節を置く
 # inputs:
 #   - argv: --repo-root, --check（既定）, --write, --migrate-external-guard, --plugin, --skill
+#           （--plugin と --skill は --migrate-external-guard の対象を絞るときだけ使える）
 #   - fs: references/artifact-delivery-policy.json, references/artifact-delivery.schema.json
 #   - fs: plugins/*/.claude-plugin/plugin.json, plugins/*/hooks/hooks.json, plugins/*/skills/*/SKILL.md
 #   - fs: policy が参照する skill-governance-adapters の runtime・schema・契約文書
+#   - fs: この script と同じ checkout の guard runner（shell 構文の判定に使う。--repo-root の guard と
+#         byte が違えば契約違反にする）
 # outputs:
-#   - stdout: ARTIFACT_DELIVERY_OK / ARTIFACT_DELIVERY_GENERATED / EXTERNAL_MUTATION_GUARD_MIGRATED
-#   - stderr: ARTIFACT_DELIVERY_ERROR（契約違反・読めない入力。exit 1）
+#   - stdout: ARTIFACT_DELIVERY_OK / ARTIFACT_DELIVERY_GENERATED / EXTERNAL_MUTATION_GUARD_MIGRATED（exit 0）
+#   - stderr: ARTIFACT_DELIVERY_ERROR（契約違反・読めない入力・書けない出力・symlink の書き先・
+#             何も選ばない --plugin/--skill。exit 1）
+#   - stderr: argparse の usage（引数の誤り: モードの同時指定、--migrate-external-guard なしの
+#             --plugin/--skill。exit 2）
 # contexts: [C, E]
 # network: false
 # write-scope: --check は書かない。--write は plugins/*/artifact-delivery.json。
 #              --migrate-external-guard は effect: external-mutation の plugins/*/skills/*/SKILL.md
 #              （frontmatter の runtime_root_policy、runtime root 節の置換と移動、guard CLI ブロック、直接実行の例の書き換え）
+#              --write は書き先かその途中の dir が symlink なら 1 件も書かずに止める。--migrate-external-guard は
+#              SKILL.md の実体が repo の外なら 1 件も書かずに止め、全件を作って検査してから書き、書く途中で
+#              失敗したら書いた分を元に戻す。どちらも各ファイルを同じ dir の一時ファイルから os.replace で置き換える。
 # dependencies: [pyyaml, jsonschema]
 # requires-python: ">=3.9"
 # ///
@@ -23,13 +32,17 @@ from __future__ import annotations
 
 import argparse
 import ast
+import contextlib
 import copy
 import hashlib
 import importlib.util
 import json
+import os
 import pathlib
 import re
+import secrets
 import shlex
+import stat
 import sys
 from typing import Any
 
@@ -117,7 +130,7 @@ EXPECTED_FORBIDDEN = {
     "multi-agent-review",
     "improvement-execution",
 }
-EXPECTED_CHOICES = ["accept-as-is", "light", "standard", "detailed"]
+EXPECTED_CHOICES = ["accept-as-is", "diagnose"]
 EXPECTED_POLICY_KEYS = {
     "schema_version",
     "schema_id",
@@ -224,6 +237,55 @@ def _read_text(path: pathlib.Path, missing: str = "required file missing") -> st
         raise ContractError(f"cannot read {path}: {exc}") from exc
 
 
+def _symlink_on_path(root: pathlib.Path, path: pathlib.Path) -> pathlib.Path | None:
+    """root から path までの要素 (path 自身も含む) のうち、最初に見つかった symlink を返す。
+
+    書き先が symlink だと、書き込みはそれを辿って --repo-root の外へ出られる。途中の dir の
+    symlink も同じなので、root より下の要素を 1 つずつ見る。root の外の path は契約違反。
+    """
+    try:
+        parts = path.relative_to(root).parts
+    except ValueError as exc:
+        raise ContractError(f"write target outside repo root: {path}") from exc
+    current = root
+    for part in parts:
+        current = current / part
+        if current.is_symlink():
+            return current
+    return None
+
+
+def _replace_file(path: pathlib.Path, text: str) -> None:
+    """path を同じ dir の一時ファイルから os.replace で置き換える。
+
+    途中で落ちても、半端に書いた file を path に残さない。新しい file の mode は
+    write_text と同じく umask に従い、既存の file は mode を引き継ぐ。hard link
+    (st_nlink > 1) の file は置き換えると他の名前が古い中身のまま切り離されるので、
+    従来どおりその場で書く。
+    """
+    try:
+        info: os.stat_result | None = os.lstat(path)
+    except FileNotFoundError:
+        info = None
+    if info is not None and info.st_nlink > 1:
+        path.write_text(text, encoding="utf-8")
+        return
+    temporary = path.with_name(f".{path.name}.{secrets.token_hex(8)}.tmp")
+    descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
+    try:
+        with open(descriptor, "w", encoding="utf-8", newline="") as handle:
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        if info is not None:
+            os.chmod(temporary, stat.S_IMODE(info.st_mode))
+        os.replace(temporary, path)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(temporary)
+        raise
+
+
 def _split_frontmatter(text: str) -> tuple[str, str] | None:
     """`---` だけの行で frontmatter を切り、(front, body) を返す。閉じが無ければ None。
 
@@ -273,9 +335,11 @@ def _hook_wiring(manifest_path: pathlib.Path) -> dict[str, Any]:
             document = _load_json(autoloaded)
             hooks = document.get("hooks", document)
     if isinstance(hooks, str):
-        rel = pathlib.PurePosixPath(hooks.lstrip("./"))
-        if rel.is_absolute() or ".." in rel.parts:
-            raise ContractError(f"external hooks path must stay inside plugin: {hooks}")
+        # 先頭の "./" は PurePosixPath が畳む。lstrip("./") は接頭辞ではなく文字の集合を剥がすので
+        # "../x" や ".x" まで "x" と読み、".." と絶対 path の検査が効かなくなる。
+        rel = pathlib.PurePosixPath(hooks)
+        if rel.is_absolute() or ".." in rel.parts or not rel.parts:
+            raise ContractError(f"external hooks path must stay inside plugin: {hooks!r}")
         external = _load_json(manifest_path.parent.parent / pathlib.Path(rel))
         hooks = external.get("hooks", external)
     if not isinstance(hooks, dict):
@@ -520,7 +584,7 @@ def validate_policy(root: pathlib.Path, policy: dict[str, Any]) -> None:
     choice = policy.get("user_choice", {})
     if choice.get("improvement_levels") != EXPECTED_CHOICES:
         raise ContractError(
-            "user_choice improvement levels must be accept-as-is/light/standard/detailed"
+            "user_choice improvement levels must be accept-as-is/diagnose"
         )
     if choice.get("exhaustive_event") != "exhaustive":
         raise ContractError("exhaustive must be a separate user event")
@@ -729,10 +793,19 @@ def _skill_language(text: str) -> str:
 
     日本語の Post-choice 見出しが行全体で一致すれば (前後の空白は無視) "ja"、
     なければ従来どおり "en"。Runtime root 節の挿入・ガードブロックの移行・
-    wiring の検査はすべてこの 1 つの判定に従う。
+    wiring の検査はすべてこの 1 つの判定に従う。見るのは本文の code fence の外の行だけ
+    (fence に例として書いた見出しで言語を取り違えない。frontmatter の値の ``` を本文の
+    fence の開きと読まないよう、frontmatter は外す)。
     """
-    lines = (line.strip() for line in text.splitlines())
+    body = "\n".join(_body(text).splitlines())  # 行の切り方は旧実装 (splitlines) に合わせる
+    lines = (line.strip() for _, line, inside in _fence_lines(body) if not inside)
     return "ja" if POST_CHOICE_HEADING_JA in lines else "en"
+
+
+def _body(text: str) -> str:
+    """frontmatter を除いた本文。frontmatter が無い (閉じない) 文書は全体が本文。"""
+    parts = _split_frontmatter(text)
+    return text if parts is None else parts[1]
 
 
 def _canonical_external_guard_block(language: str = "en") -> str:
@@ -893,7 +966,8 @@ def _runtime_root_extra_text(section: str) -> str:
     """旧 runtime root 節から正規形の行を除いた残り (skill 固有の文) を返す。
 
     正規形の行はブロックとして作り直すので捨ててよいが、それ以外の文は skill の作者が書いたもの。
-    黙って消さず、呼び出し側でブロックの直後へ移す。
+    黙って消さず、呼び出し側でブロックの直後へ移す。code fence の中の行は例として書かれたものなので、
+    正規形と同じ行も空行も、そのまま残す (空行を畳むのは fence の外だけ)。
     """
     canonical = {
         line.strip()
@@ -901,8 +975,16 @@ def _runtime_root_extra_text(section: str) -> str:
         for line in section_text.splitlines()[1:]
         if line.strip()
     }
-    kept = [line for line in section.splitlines() if line.strip() not in canonical]
-    return re.sub(r"\n{3,}", "\n\n", "\n".join(kept)).strip("\n")
+    kept: list[tuple[str, bool]] = []
+    # 行の切り方は旧実装 (splitlines) に合わせる (\r\n などの改行の扱いを変えない)。
+    for _, line, inside in _fence_lines("\n".join(section.splitlines())):
+        if not inside and line.strip() in canonical:
+            continue
+        # fence の外で空行が続けば 1 行に畳む (旧実装の "\n{3,}" → "\n\n" と同じ結果)。
+        if not inside and line == "" and kept and kept[-1] == ("", False):
+            continue
+        kept.append((line, inside))
+    return "\n".join(line for line, _ in kept).strip("\n")
 
 
 _FENCE_OPEN = re.compile(r" {0,3}(`{3,}|~{3,})")
@@ -910,31 +992,43 @@ _FENCE_CLOSE = re.compile(r" {0,3}(`{3,}|~{3,})[ \t]*")
 _PURPOSE_HEADING = re.compile(r"## (?:Purpose & Output Contract|目的と出力契約)[ \t]*")
 
 
-def _section_headings(body: str) -> list[tuple[int, str]]:
-    """code fence の外にある "## " 見出し行の (開始位置, 行の文字列) を順に返す。
+def _fence_lines(text: str):
+    """text の各行を (開始位置, 行の文字列, code fence の中か) で順に返す。
 
-    fence の中の "## " (例に書いた Markdown・shell の comment) を節の境界にすると、
-    ブロックを fence の途中へ挿したり、旧節の除去が fence を切ったりする。fence の判定は
-    CommonMark に合わせる: 行頭の空白 0-3 個に続く ``` か ~~~ (3 個以上) で開き、
-    同じ文字・同じ長さ以上の行で閉じる。閉じないまま終わった fence は末尾までが中身。
+    fence の開きと閉じの行も「中」として返す。fence の判定は CommonMark に合わせる:
+    行頭の空白 0-3 個に続く ``` か ~~~ (3 個以上) で開き、同じ文字・同じ長さ以上の行で閉じる。
+    閉じないまま終わった fence は末尾までが中身。
     """
-    headings: list[tuple[int, str]] = []
     fence: tuple[str, int] | None = None
     offset = 0
-    for line in body.split("\n"):
+    for line in text.split("\n"):
         if fence is None:
             opened = _FENCE_OPEN.match(line)
             # ``` の info string に ` は書けない (書いてあれば inline code で、fence ではない)。
             if opened and not (opened.group(1)[0] == "`" and "`" in line[opened.end():]):
                 fence = (opened.group(1)[0], len(opened.group(1)))
-            elif line.startswith("## "):
-                headings.append((offset, line))
+                yield offset, line, True
+            else:
+                yield offset, line, False
         else:
             closed = _FENCE_CLOSE.fullmatch(line)
             if closed and closed.group(1)[0] == fence[0] and len(closed.group(1)) >= fence[1]:
                 fence = None
+            yield offset, line, True
         offset += len(line) + 1
-    return headings
+
+
+def _section_headings(body: str) -> list[tuple[int, str]]:
+    """code fence の外にある "## " 見出し行の (開始位置, 行の文字列) を順に返す。
+
+    fence の中の "## " (例に書いた Markdown・shell の comment) を節の境界にすると、
+    ブロックを fence の途中へ挿したり、旧節の除去が fence を切ったりする (fence の判定は _fence_lines)。
+    """
+    return [
+        (offset, line)
+        for offset, line, inside in _fence_lines(body)
+        if not inside and line.startswith("## ")
+    ]
 
 
 def _section_end(headings: list[tuple[int, str]], after: int, body: str) -> int:
@@ -1001,7 +1095,10 @@ def _validate_runtime_root_wiring(path: pathlib.Path) -> None:
     text = _read_text(path)
     language = _skill_language(text)
     other = "en" if language == "ja" else "ja"
-    if re.search(rf"^{re.escape(RUNTIME_ROOT_CONTRACT_SECTIONS[other].splitlines()[0])}[ \t]*$", text, re.M):
+    # 見出しは本文の code fence の外の行だけを数える (fence に例として書いた見出しは節ではない)。
+    body = _body(text)
+    headings = _section_headings(body)
+    if any(line.rstrip(" \t") == RUNTIME_ROOT_CONTRACT_SECTIONS[other].splitlines()[0] for _, line in headings):
         raise ContractError(f"{path}: runtime root contract language mismatch")
     begin, end = RUNTIME_ROOT_BLOCK_BEGIN, RUNTIME_ROOT_BLOCK_END
     if begin in text or end in text:
@@ -1013,20 +1110,64 @@ def _validate_runtime_root_wiring(path: pathlib.Path) -> None:
             raise ContractError(f"{path}: runtime root canonical block drift")
     elif language == "ja":
         raise ContractError(f"{path}: Japanese runtime root requires a managed block; run migration")
+    else:
+        # 英語の skill は、まだ移行していない旧節も認める。ただし節が無い・空なのは、言語を問わず不合格
+        # (旧節を消すと、どこにも runtime root の決め方が書かれていない skill が通っていた)。
+        heading = RUNTIME_ROOT_CONTRACT_SECTIONS[language].splitlines()[0]
+        legacy = [start for start, line in headings if line.rstrip(" \t") == heading]
+        if len(legacy) != 1:
+            raise ContractError(
+                f"{path}: runtime root contract requires a managed block or exactly one {heading!r} "
+                f"section (found {len(legacy)}); run migration"
+            )
+        section = body[legacy[0]:_section_end(headings, legacy[0], body)]
+        if f"runtime_root_policy: {RUNTIME_ROOT_POLICY}" not in section:
+            raise ContractError(
+                f"{path}: legacy {heading!r} section does not state runtime_root_policy: "
+                f"{RUNTIME_ROOT_POLICY}; run migration"
+            )
+
+
+_GUARD_BLOCK_PATTERN = re.compile(
+    "|".join(
+        rf"\n?{re.escape(begin)}.*?{re.escape(end)}\n?"
+        for begin, end in EXTERNAL_GUARD_BLOCK_MARKERS.values()
+    ),
+    re.DOTALL,
+)
+
+
+def _migrated_external_skill(path: pathlib.Path, original: str) -> str:
+    """1 つの外部変更 SKILL.md を移行した後の全文を返す (書かない)。"""
+    # 既存のブロックは言語を問わず取り除き、ファイルの言語の正規形だけを入れ直す。
+    text = _GUARD_BLOCK_PATTERN.sub("\n", original)
+    text = _migrate_external_direct_examples(text)
+    text = _ensure_runtime_root_contract(text, path)
+    language = _skill_language(text)
+    heading = POST_CHOICE_HEADINGS[language]
+    heading_span = _heading_span(text, heading)
+    if heading_span is None:
+        raise ContractError(f"{path}: canonical post-choice execution section missing")
+    paragraph_start = text.find("\n\n", heading_span[1])
+    paragraph_end = text.find("\n\n", paragraph_start + 2)
+    if paragraph_start < 0 or paragraph_end < 0:
+        raise ContractError(f"{path}: post-choice execution paragraph malformed")
+    block = _canonical_external_guard_block(language)
+    return text[: paragraph_end + 2] + block + "\n\n" + text[paragraph_end + 2 :].lstrip("\n")
 
 
 def migrate_external_guard_blocks(root: pathlib.Path, plugin_names: set[str] | None = None, skill_names: set[str] | None = None) -> int:
-    """Mechanically place the canonical CLI contract in every external entrypoint."""
+    """Mechanically place the canonical CLI contract in every external entrypoint.
+
+    全件の移行後の文を先に作ってから書く (1 件でも作れなければ 1 件も書かない)。書く途中で
+    失敗したら、それまでに書いた file を元の中身へ戻してから止める。
+    """
+    root = root.resolve()
     logical_entrypoints = 0
+    matched_plugins: set[str] = set()
+    matched_skills: set[str] = set()
     seen_inodes: set[tuple[int, int]] = set()
-    # 既存のブロックは言語を問わず取り除き、ファイルの言語の正規形だけを入れ直す。
-    block_pattern = re.compile(
-        "|".join(
-            rf"\n?{re.escape(begin)}.*?{re.escape(end)}\n?"
-            for begin, end in EXTERNAL_GUARD_BLOCK_MARKERS.values()
-        ),
-        re.DOTALL,
-    )
+    planned: dict[pathlib.Path, tuple[str, str]] = {}
     for plugin_dir in discover_plugin_dirs(root):
         if plugin_names is not None and plugin_dir.name not in plugin_names:
             continue
@@ -1036,49 +1177,96 @@ def migrate_external_guard_blocks(root: pathlib.Path, plugin_names: set[str] | N
             if _frontmatter(path).get("effect") != "external-mutation":
                 continue
             logical_entrypoints += 1
-            identity = (path.stat().st_dev, path.stat().st_ino)
-            if identity in seen_inodes:
+            matched_plugins.add(plugin_dir.name)
+            matched_skills.add(path.parent.name)
+            # 実体で数える: symlink や hard link で同じ file を指す名前は 1 回だけ書く。
+            # 実体が repo の外なら書かない (--write の symlink の扱いと同じく、repo の外へ書かない)。
+            real = path.resolve()
+            try:
+                real.relative_to(root)
+            except ValueError as exc:
+                raise ContractError(f"refusing to migrate a SKILL.md outside the repo root: {path} -> {real}") from exc
+            info = real.stat()
+            if (info.st_dev, info.st_ino) in seen_inodes:
                 continue
-            seen_inodes.add(identity)
+            seen_inodes.add((info.st_dev, info.st_ino))
             original = _read_text(path)
-            text = block_pattern.sub("\n", original)
-            text = _migrate_external_direct_examples(text)
-            text = _ensure_runtime_root_contract(text, path)
-            language = _skill_language(text)
-            heading = POST_CHOICE_HEADINGS[language]
-            heading_span = _heading_span(text, heading)
-            if heading_span is None:
-                raise ContractError(f"{path}: canonical post-choice execution section missing")
-            paragraph_start = text.find("\n\n", heading_span[1])
-            paragraph_end = text.find("\n\n", paragraph_start + 2)
-            if paragraph_start < 0 or paragraph_end < 0:
-                raise ContractError(f"{path}: post-choice execution paragraph malformed")
-            block = _canonical_external_guard_block(language)
-            updated = (
-                text[: paragraph_end + 2]
-                + block
-                + "\n\n"
-                + text[paragraph_end + 2 :].lstrip("\n")
-            )
-            if updated != original:
-                path.write_text(updated, encoding="utf-8")
+            planned[real] = (original, _migrated_external_skill(path, original))
+    # 名前の綴りを誤った --plugin / --skill は 0 件の成功 (rc 0) ではなく誤りにする。
+    for flag, names, matched in (("--plugin", plugin_names, matched_plugins), ("--skill", skill_names, matched_skills)):
+        unmatched = sorted((names or set()) - matched)
+        if unmatched:
+            raise ContractError(f"{flag} selects no external-mutation SKILL.md: {', '.join(unmatched)}")
+    written: list[tuple[pathlib.Path, str]] = []
+    try:
+        for real, (original, updated) in planned.items():
+            if updated == original:
+                continue
+            _replace_file(real, updated)
+            written.append((real, original))
+    except OSError as exc:
+        restored, failed = [], []
+        for real, original in reversed(written):
+            try:
+                _replace_file(real, original)
+                restored.append(_relative(root, real))
+            except OSError:
+                failed.append(_relative(root, real))
+        raise ContractError(
+            f"migration write failed at {exc.filename or exc}: {exc}; "
+            f"restored {len(restored)} file(s)"
+            + (f"; could not restore: {', '.join(failed)}" if failed else "")
+        ) from exc
     return logical_entrypoints
 
 
 _SHELL_EXPANSION_CHECKER = None
 
 
+def _checker_guard_path() -> pathlib.Path:
+    """shell 構文の判定に使う guard runner。--repo-root ではなく、この script と同じ checkout のもの。
+
+    --repo-root は検査の対象 (入力) なので、そこの Python を実行しない。代わりに、対象の guard と
+    byte が同じことを _checker_guard_drift で確かめ、違えば判定を信用せず契約違反にする。
+    """
+    return _plugin_ref_path(
+        pathlib.Path(__file__).resolve().parents[1], EXPECTED_EXTERNAL_MUTATION_RUNTIME["runner_ref"]
+    )
+
+
+def _checker_guard_drift(runner_sha256: str) -> str | None:
+    """判定に使う guard が --repo-root の guard (sha256 = runner_sha256) と違えば、その理由を返す。"""
+    checker = _checker_guard_path()
+    try:
+        checker_sha256 = hashlib.sha256(checker.read_bytes()).hexdigest()
+    except OSError as exc:
+        return f"canonical shell syntax checker unreadable: {checker}: {exc}"
+    if checker_sha256 != runner_sha256:
+        return (
+            f"canonical shell syntax checker drift: {checker} is not byte-identical to the "
+            f"--repo-root runner ({EXPECTED_EXTERNAL_MUTATION_RUNTIME['runner_ref']}); "
+            "run this script from the checkout being checked"
+        )
+    return None
+
+
 def _guard_shell_expansion(command: str) -> bool:
     """Use the executable guard's parser as the single syntax contract."""
     global _SHELL_EXPANSION_CHECKER
     if _SHELL_EXPANSION_CHECKER is None:
-        source = pathlib.Path(__file__).resolve().parents[1] / "plugins/skill-governance-adapters/scripts/build-external-mutation-guard.py"
-        spec = importlib.util.spec_from_file_location("artifact_guard_shell_contract", source)
-        if spec is None or spec.loader is None:
-            raise ContractError("canonical shell syntax checker unavailable")
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
-        _SHELL_EXPANSION_CHECKER = module.has_unsafe_shell_expansion
+        source = _checker_guard_path()
+        try:
+            spec = importlib.util.spec_from_file_location("artifact_guard_shell_contract", source)
+            if spec is None or spec.loader is None:
+                raise ContractError("canonical shell syntax checker unavailable")
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            checker = module.has_unsafe_shell_expansion
+        except ContractError:
+            raise
+        except Exception as exc:  # 読めない・壊れた checker も traceback にせず止める (fail-closed)
+            raise ContractError(f"canonical shell syntax checker unavailable: {source}: {exc}") from exc
+        _SHELL_EXPANSION_CHECKER = checker
     return _SHELL_EXPANSION_CHECKER(command)
 
 
@@ -1094,13 +1282,29 @@ def _direct_external_mutation_instruction(text: str) -> str | None:
         re.IGNORECASE,
     )
     direct_remote = re.compile(
-        r"(?:\bcurl\b[^\n]*(?:-X|--request)\s*(?:POST|PUT|PATCH|DELETE)\b|"
+        r"(?:\bcurl\b[^\n]*(?:-X|--request)[\s=]*(?:POST|PUT|PATCH|DELETE)\b|"
         r"\bgh\s+(?:issue|pr)\s+(?:create|edit|close|reopen|merge|comment)\b|"
-        r"\bgh\s+api\b[^\n]*(?:-X|--method)\s*(?:POST|PUT|PATCH|DELETE)\b)",
+        r"\bgh\s+release\s+(?:create|edit|delete|delete-asset|upload)\b|"
+        r"\bgh\s+api\b[^\n]*(?:-X|--method)[\s=]*(?:POST|PUT|PATCH|DELETE)\b|"
+        # git の global option (-C <dir>・-c <k=v>・--git-dir=<dir> など) を挟んだ push も同じ。
+        r"\bgit(?:\s+(?:-[Cc]\s+\S+|--[a-z-]+(?:=\S+)?))*\s+push\b)",
         re.IGNORECASE,
     )
-    for raw_line in text.splitlines():
-        line = raw_line.strip()
+    # method を書かなくても body を付ければ POST になる (gh api -f/-F/--field/--raw-field/--input、
+    # curl -d/--data*)。明示の GET (gh api -X GET、curl -G/--get/-X GET) なら query なので除く。
+    implicit_post = (
+        (
+            re.compile(r"\bgh\s+api\b(?P<args>[^\n]*)", re.IGNORECASE),
+            re.compile(r"\s(?:-[fF]|--(?:field|raw-field|input)\b)"),
+            re.compile(r"(?:\s-X|\s--method)[\s=]*GET\b", re.IGNORECASE),
+        ),
+        (
+            re.compile(r"\bcurl\b(?P<args>[^\n]*)", re.IGNORECASE),
+            re.compile(r"\s(?:-d|--data(?:-raw|-binary|-urlencode)?\b)"),
+            re.compile(r"\s(?:-G\b|--get\b|(?:-X|--request)[\s=]*GET\b)", re.IGNORECASE),
+        ),
+    )
+    for line in _logical_lines(text):
         if not line or line.startswith("#"):
             continue
         if "build-external-mutation-guard.py" in line:
@@ -1122,16 +1326,45 @@ def _direct_external_mutation_instruction(text: str) -> str | None:
             continue
         if re.match(r"^(?:Construct|Set) <MUTATION_ARGV_JSON>", line):
             continue
+        checked = line
         if "setup-send-log-db.py" in line:
-            continue
-        matched = mutation_cli.search(line)
+            # --apply 付きは送信ログ DB を書き換える (guard も変更と数える)。--apply なしは読むだけだが、
+            # 名前の一部 "send-log-db.py" を送信 CLI と読まないよう、この名前だけを外して残りを検査する
+            # (行ごと飛ばすと、同じ行の別のコマンドや comment に名前を書くだけで検査を抜けられる)。
+            if re.search(r"\bpython3\b[^\n]*setup-send-log-db\.py[^\n]*\s--apply\b", line):
+                return f"direct mutation CLI bypasses canonical execute: {line[:160]}"
+            checked = line.replace("setup-send-log-db.py", "")
+        matched = mutation_cli.search(checked)
         if matched and not (
-            "notion-submit-improvement.py" in line and "--dry-run" in line
+            "notion-submit-improvement.py" in checked and "--dry-run" in checked
         ):
             return f"direct mutation CLI bypasses canonical execute: {line[:160]}"
-        if direct_remote.search(line):
+        if direct_remote.search(checked) or any(
+            (command := head.search(checked)) is not None
+            and body.search(command.group("args"))
+            and not safe.search(command.group("args"))
+            for head, body, safe in implicit_post
+        ):
             return f"direct remote mutation bypasses canonical execute: {line[:160]}"
     return None
+
+
+def _logical_lines(text: str):
+    """text を shell の論理行で返す (前後の空白は除く)。行末の "\\" で続く行は 1 行につなぐ。
+
+    "python3 \\" と次の行の "scripts/publish-notion-page.py" を別々に見ると、どちらの行も
+    直接実行の形にならず検査を抜ける。comment の行 (先頭が "#") の行末の "\\" は shell でも続かない。
+    """
+    pending = ""
+    for raw_line in text.splitlines():
+        line = f"{pending} {raw_line.strip()}".strip() if pending else raw_line.strip()
+        if line.endswith("\\") and not line.startswith("#"):
+            pending = line[:-1].rstrip()
+            continue
+        pending = ""
+        yield line
+    if pending:
+        yield pending
 
 
 def _validate_external_guard_wiring(path: pathlib.Path) -> None:
@@ -1297,6 +1530,9 @@ def expected_projections(root: pathlib.Path) -> dict[pathlib.Path, dict[str, Any
     validate_policy(root, policy)
     runtime = _external_runtime_projection(root, policy)
     mutation_runtime = _external_mutation_runtime_projection(root, policy)
+    drift = _checker_guard_drift(mutation_runtime["runner_sha256"])
+    if drift is not None:
+        raise ContractError(drift)
     projections = {
         plugin_dir / PROJECTION_NAME: build_projection(
             root,
@@ -1314,9 +1550,15 @@ def expected_projections(root: pathlib.Path) -> dict[pathlib.Path, dict[str, Any
 
 
 def write_projections(root: pathlib.Path) -> int:
+    root = root.resolve()
     expected = expected_projections(root)
+    # 1 件でも symlink を辿る書き先があれば、どれも書かない (repo の外へ書かない・半端に書かない)。
+    for path in expected:
+        symlink = _symlink_on_path(root, path)
+        if symlink is not None:
+            raise ContractError(f"refusing to write through symlink: {_relative(root, symlink)}")
     for path, projection in expected.items():
-        path.write_text(render_projection(projection), encoding="utf-8")
+        _replace_file(path, render_projection(projection))
     return len(expected)
 
 
@@ -1359,6 +1601,10 @@ def lint_repository(root: pathlib.Path) -> list[str]:
         schema = _load_json(_repo_path(root, SCHEMA_REL))
     except ContractError as exc:
         return [str(exc)]
+    # 判定に使う guard の drift は報告して検査を続ける (投影の hash drift なども併せて見せる)。
+    checker_drift = _checker_guard_drift(mutation_runtime["runner_sha256"])
+    if checker_drift is not None:
+        errors.append(checker_drift)
 
     plugin_dirs = discover_plugin_dirs(root)
     manifest_projection_paths = {plugin / PROJECTION_NAME for plugin in plugin_dirs}
@@ -1368,7 +1614,14 @@ def lint_repository(root: pathlib.Path) -> list[str]:
 
     for plugin_dir in plugin_dirs:
         path = plugin_dir / PROJECTION_NAME
-        if not path.is_file():
+        # symlink の投影は中身が一致しても不合格: --write はそこへ書けない (書けば repo の外へ出る)。
+        symlink = _symlink_on_path(root, path)
+        if symlink is not None:
+            errors.append(
+                f"{_relative(root, path)}: projection must be a regular file inside the repo, "
+                f"not reached through a symlink ({_relative(root, symlink)})"
+            )
+        elif not path.is_file():
             errors.append(f"{plugin_dir.name}: projection missing: {_relative(root, path)}")
         try:
             expected = build_projection(
@@ -1381,7 +1634,7 @@ def lint_repository(root: pathlib.Path) -> list[str]:
         except ContractError as exc:
             errors.append(str(exc))
             continue
-        if not path.is_file():
+        if symlink is not None or not path.is_file():
             continue
         try:
             actual = _load_json(path)
@@ -1430,7 +1683,11 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = _parser().parse_args(argv)
+    parser = _parser()
+    args = parser.parse_args(argv)
+    if (args.plugin or args.skill) and not args.migrate_external_guard:
+        # --check / --write は常に全 plugin を見る。絞ったつもりで全件の結果を受け取らないよう、引数の誤り (exit 2) にする。
+        parser.error("--plugin/--skill only limit --migrate-external-guard")
     root = args.repo_root.resolve()
     try:
         if args.migrate_external_guard:

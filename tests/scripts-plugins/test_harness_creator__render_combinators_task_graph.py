@@ -70,6 +70,15 @@ def test_fm_block_mentions_task_graph():
     assert "task-graph" in mod.GOAL_SEEK_FM_BLOCK
 
 
+def test_fm_block_does_not_repeat_paths_that_the_wiring_section_states():
+    # spec / progress / intermediate の path は配線節の本文が書く。frontmatter に同じ値を重ねても読む script は無い
+    for key in ("spec:", "progress:", "intermediate:"):
+        assert f"\n  {key}" not in mod.GOAL_SEEK_FM_BLOCK
+    for path in ("eval-log/goal-spec.json", "eval-log/{{skill_name}}-progress.json",
+                 "eval-log/{{skill_name}}-intermediate.jsonl"):
+        assert path in mod.GOAL_SEEK_WIRING_SECTION
+
+
 def _render(kind):
     r = subprocess.run([sys.executable, str(SCRIPT), "--kind", kind],
                        capture_output=True, text=True)

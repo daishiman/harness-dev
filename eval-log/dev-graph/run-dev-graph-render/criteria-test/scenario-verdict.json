@@ -4,10 +4,10 @@
     "plugin": "dev-graph",
     "skill": "run-dev-graph-render",
     "component_id": "C05",
-    "skill_md_sha256": "25b0d1afbfd4d8739f92a057496fe0c85945c24c6c986b415e13000478ab25c1"
+    "skill_md_sha256": "3b01d9d218a6d73f1c6efe49a7f2fffa5d023fd5ffde21459905a1f66201b47e"
   },
   "verdict": "PASS",
-  "reviewer": "/root/codex_acceptance_contract（現source/原証拠を独立照合。旧長文観測はiteration4/canonical-originals/positive-refreshの原bytesへ保持）",
+  "reviewer": "fresh-receipt-evaluator-run-dev-graph-render-r44-20261115",
   "loop_scope": "both",
   "iteration_limit": 3,
   "criteria_results": {
@@ -24,13 +24,14 @@
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-refresh-static-tests.json",
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/canonical-originals/positive-refresh/run-dev-graph-render/scenario-verdict.json"
       ],
-      "observed": "今回、原実行のHTMLを直接parseしてscript/src・link/href外部参照0、inline SVGありを確認。ci4_render_goalが実行したrender製品7testsのexit0部分を継承する。同log後段の旧canonical path照合失敗は履歴として保持し、その解消は今回のcanonical3受入で別途検査する。7件を自分で再実行したとは主張しない。"
+      "observed": "今回、原実行のHTMLを直接parseしてscript/src・link/href外部参照0、inline SVGありを確認。ci4_render_goalが実行したrender製品7testsのexit0部分を継承する。同log後段の旧canonical path照合失敗は履歴として保持し、その解消は今回のcanonical3受入で別途検査する。7件を自分で再実行したとは主張しない。\n2026-11-15再評価: SKILL.md の sha は HEAD 25b0d1af から現行 3b01d9d2 へ変わったが、差分は artifact_delivery の表記と選択肢の二択化 (accept-as-is/diagnose) だけで、IN1 本文と render-graph-html.py (git 差分なし) は不変。test_render_receipt.py 5件と test_runtime_coverage.py 11件を評価者が再実行し 16 passed rc=0。新run 20261115T1835-r44-render-codex の index.html・repeat-1・repeat-2 (共通 sha c4bf5ed6、10062 bytes) と browser DOM (cf547687、10342 bytes) を評価者の HTMLParser probe で解析し、script/src・link/href・外部URL・@import はいずれも0件、svg 1・path 12・inline script 2。現行 renderer で同じ graph.json (2ed57eab) を評価者が再描画し rc=0、出力 sha c4bf5ed6 で一致。"
     },
     "OUT1": {
       "status": "PASS",
       "verify_by": "live-trial",
       "evidence_kind": "live-trial",
       "test_refs": [
+        "eval-log/dev-graph/run-dev-graph-render/live-trial/20261115T1835-r44-render-codex/verdict.json",
         "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/verdict.json",
         "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/goal-evaluation.json",
         "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/transcript.jsonl",
@@ -44,9 +45,9 @@
         "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/fixture-final/eval-log/render-receipt-repeat.json",
         "eval-log/dev-graph/ci-repair-2026-11-02/codex-native-iteration4/render-observation-correction-review.json"
       ],
-      "observed": "同一原実行の4番観測指定漏れを別の訂正judgmentへ束縛。新actor0、旧DEGRADEDと原105ファイル保持を独立reviewで確認。browser DOMのinline SVG/5of13、receiptの13member集合/source_digest、二回render同一output SHAの全4観測が成立。current/frozen両sourceのnative適用・Read/原SHA/予算/fresh goalを再確認し、単一入力自走とは主張しない。",
+      "observed": "同一原実行の4番観測指定漏れを別の訂正judgmentへ束縛。新actor0、旧DEGRADEDと原105ファイル保持を独立reviewで確認。browser DOMのinline SVG/5of13、receiptの13member集合/source_digest、二回render同一output SHAの全4観測が成立。current/frozen両sourceのnative適用・Read/原SHA/予算/fresh goalを再確認し、単一入力自走とは主張しない。\n2026-11-15再評価: 新verdict 20261115T1835-r44-render-codex (Codex 0.165.0、2 turn) を評価者が照合した。overall の launch/completion/goal_fit/verdict は全PASS、downgrade_reason は null、scenario_id 一致、transcript sha b78b0382 一致。codex runtime の skill_dir_tree_sha を python3 -I で再計算し d55c985c で一致。transcript 41/43行で --receipt 付きの初回render が exit 0、59行で user が diagnose を返し、93/95-97行で親が repeat-1/2 の render と chrome-headless-shell (--dump-dom --screenshot) を実行して両方 exit_code 0。4観測を評価者が原ファイルから再計算した: (1) DOM と index.html の外部参照0、inline svg 1・path 12。(2) graph の LT-FEATURE-001 子13件中 done 5、DOM と画像に「active · feature · 5/13」、子集合は receipt node_ids P01-P13 と一致、Y=expected_count 13。(3) 子の source_lineage digest d85dfa3d が receipt source_digest と一致し、receipt_checks の problems は空。(4) index/repeat-1/repeat-2 の sha はすべて c4bf5ed6。browser stderr は OS通知・DNS監視・CVDisplayLink の警告で、最終行が PNG 138980 bytes の書込を記録し、DOM/PNG の sha は evidence と一致。監査子 (subagents/01a1de98) は親87行の spawn_agent (引数 task_name と message だけ、fork_turns なし) で起動され、session_meta に forked_from_id=親・subagent_history_start_ordinal 47 があり、2-45行で親履歴を継承した fork なので分離 context ではない。監査値は子が62行と80行の script で原ファイルから算出したもので、自己申告の転記ではないが、独立性は主張しない。render-live-trial-evidence.json は親が120行で書き、browser_exit_code 0 はリテラル (実際の exit は96行で0)。",
       "scenario_id": "render-feature-progress-receipt-positive-fixture-standard-v3-codex-v1",
-      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-render/live-trial/20261102T043829-codex-ci4-observation-correction/verdict.json"
+      "live_trial_verdict_ref": "eval-log/dev-graph/run-dev-graph-render/live-trial/20261115T1835-r44-render-codex/verdict.json"
     }
   }
 }

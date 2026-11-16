@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/skills/run-build-skill/scripts/build-improvement-gate.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 89,
+    "notes": "genuine review（sha256 39723849fbe596b42224293603377b6cb29b767ea0f6bbcd903979066c6e426b をレビュー。実行検証あり）。範囲: 全 1604 行。前回（39260c21…、1584 行）の後の変更、つまり検証用の model action を台帳に入れる _plan_verification_required（L1163-1192）、_reserve_run_budget（L1195-1216）の reserve_verification、入力だけで決まる _durable_claim_id（L1219-1226）、_budget_exhausted（L1229-1235）、claim（L1327-1345）と改善（L1453-1461）の予約を重点に読み、planner（plan-verification-obligations.py L470-476）と launcher（build-review-launch.py L534-546）の予約と照らした。確かめたこと: pytest は test_harness_creator__plan_improvement_gate.py が 175 passed。build_usable_draft_proof 31・build_review_launch 38、plugin 側の verification_obligation_planner 46・verification_evidence_input_guards 94 も pass。lint-script-frontmatter は OK。_plan_verification_required は planner の verification_required と同じ式（by_subject の正の値。planned>0 か subject が含まれていれば subject に planned を足す）で、planner が多めに予約済みなら added は 0（probe B4）。lock は state lock の後に台帳 lock で、launcher と同じ順。probe（scratchpad/cov3/gate/probe_gate.py。test の _claim・_complete・_select・_cli_claim_argv を流用）で: B2 検証の 80 が入った後に初回診断が足りないと、検証の予約は残り state は作らない。再試行は同じ claim id で二重に引かない（検証は実際の消費なので残ってよい）。B3 by_subject のキーに '#topup-' や前後の空白があると GateError。B5 claim の後に plan が変わると proof の不一致で GateError になり、改善時の top-up は実際には no-op。B10 subject が list の plan は proof の生成で ProofError になり、gate まで届かない。前回の指摘: (1) 型の違う値での TypeError の traceback → 残る（B8: review の severity が list と recommended_level が dict、B9: CLI で pre-diagnostic の selected_level が list のとき rc 1 と traceback）。(2) --out と --decision-out が state_dir の中の state と台帳を上書きできる件 → 残る（B6・B7）。(3) L290 の rglob が読めない subdir を黙って飛ばす件 → 残る（probe_rglob.py、Python 3.11.4）。(4) 責務が広い件 → 残る。指摘: [中] 型の違う JSON の値で TypeError が素通りし、exit 1 と traceback になる。frontmatter（L1-29）は不正な入力を exit 2 と宣言するが、main（L1592・L1595）は GateError と UNREADABLE_JSON_ERRORS（L99）しか捕まえない。L706・L994・L1043 は B8・B9 で実測した。残りの L487・L569・L760・L872・L950・L976・L1007・L1030 は前回と同じ形のままであることをコードで確かめた（今回は実行していない）。どれも state を書く前に落ちるので認可はしない。直し方: main で TypeError も exit 2 にするか、集合と比べる前に isinstance(str) で確かめる。[低] build-improvement-gate.py:1542-1556 の runtime_paths は target との重なりしか見ない。--out に run 台帳の path を渡すと rc 0 のまま台帳が plan で上書きされる（B6）。以後は read_ledger が『entries must be an array』で拒む。台帳は planner・gate・launcher が共有するので、run 全体が fail-closed で止まる（前回より影響が広い）。--out を durable state に向けた再 claim も rc 0 で state を上書きし、次の呼び出しは rc 2『durable review state missing required properties』で止まり続ける（B7）。直し方: state_dir の中の path を出力先として拒む。[低] build-improvement-gate.py:1207-1210 では、検証の予約（reserve_verification）だけで total を超えたときも、BudgetExhausted を component=initial_diagnosis として返す。L1334 の instruction は『初回診断 1 context に足りない』と言う（B1: 検証 81 で requested 81・remaining 80）。原因を取り違えて報告する。直し方: reserve_verification の BudgetExhausted は component=verification として返し、文言を分ける。[低] build-improvement-gate.py:290 の rglob は読めない subdir を黙って飛ばし、その部分を除いた manifest で claim する（権限が戻ると fingerprint が変わり止まるので、fail-closed 側）。直し方: os.walk の onerror で GateError にする。[低] 1604 行に、claim・level の解決・初回診断・改善の認可・run 予算・launch receipt の検証・出力の preflight が集まり、責務が広い。DEDUCTION: TypeError の traceback -5、--out による台帳と state の上書き -2、責務の集中 -2、rglob の黙殺 -1、検証の予算切れを初回診断の不足と報告する -1 → 89。"
+  },
+  "reviewed_by": "independent-code-review-20261115-cov3-gate",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

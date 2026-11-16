@@ -223,7 +223,6 @@ PENDING_RENAME_PATHS = {
     "plugins/harness-creator/skills/run-build-skill/scripts/resolve-skill-dirs.py",
     "plugins/harness-creator/skills/delegate-codex-skill-review/scripts/check-codex-installed.py",
     # PR #12: skill-intake / prompt-creator / harness-creator 拡張に伴う暫定 PENDING (Change Governance で rename 予定)
-    "plugins/prompt-creator/skills/run-prompt-create/scripts/evaluate-create-gates.py",
     "plugins/skill-intake/scripts/analyze_user_intent.py",
     "plugins/skill-intake/scripts/convert_v1_to_v2_context.py",
     "plugins/skill-intake/scripts/lint_subagent_seven_layer.py",

@@ -2,7 +2,8 @@
   "target": {
     "plugin": "system-briefing-book",
     "skill": "run-briefing-hearing",
-    "skill_md_sha256": "b16ede2b9356eb0e18b1c43c01399c1e2d8d7fe7f3f8daede03078ec4a9bcdcd"
+    "skill_md_sha256": "f2095eb3dbd5614ec560ad742db25f8bd367296408e283165774cf73c2693268",
+    "reviewed_skill_md_sha256": "b16ede2b9356eb0e18b1c43c01399c1e2d8d7fe7f3f8daede03078ec4a9bcdcd"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -38,5 +39,21 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "今回の評価対象は 2 つの差分。1 つは、既定の見た目を jp-web-design の標準カラーにし、配色の正を briefing.json の palette にして、design-tokens.mjs で tokens.css を検査する差分 (TOKENS-MISSING・TOKENS-INVALID のときは init --refresh-css で作り直す)。もう 1 つは、ヒアリングの質問を assets/data/hearing-catalog.json と hearing-catalog.mjs に組み直した差分。前回の verdict (cr-briefing-hearing-coverage-v1、iteration 2) とは別の差分なので、iteration 1 (上限 2) から数える。今の SKILL.md を shasum -a 256 で取り直した (b16ede2b9356eb0e18b1c43c01399c1e2d8d7fe7f3f8daede03078ec4a9bcdcd)。git diff --cached HEAD でこのスキルの差分を読み、SKILL.md がリンクする範囲だけを読んだ。読んだもの: このスキルの差分 (reference_refs の hearing-catalog.json、IN1・IN2・OUT1・OUT2 の文、:78、:104-105、:113、:135、:147、:157)、hearing-guide.md (組み直し後の全体)、assets/data/hearing-catalog.json、scripts/lib/hearing-catalog.mjs、workflow-manifest.json、document-structure.md の記入先の表、お手本の ヒアリング.md と 仕様書.md。やり方: incremental profile の 1 つの文脈で、(a) 矛盾 (b) 漏れ (c) 規約 (d) 依存関係 (e) rubric の high を、差分に関わる点だけ見た。5 つの SKILL.md の Markdown リンクと reference_refs・script_refs を python で全部解き、切れは 0 だった。design-contract.md・hearing-guide.md・document-structure.md・quality-rules.md・workflow.md・page-patterns.md のリンクも切れ 0。コード名と引数は grep と sed で実装の行と照らした。お手本 (examples/sample-haisha) を作業用フォルダに写して validate-briefing-docs.mjs --stage all を回し、exit 0・error 0・warn 0 だった。関係するテスト 211 件 (test_design_tokens、test_hearing_catalog、test_palette、test_build_briefing_scaffold、test_build_briefing_book、test_validate_briefing_docs、test_render_board_png) が pytest で通った。validate-frontmatter.py と lint-skill-description.py も exit 0。判定ファイルのほかは、リポジトリのファイルを変えていない。rubric 投影: 構造の観点: ## Gotchas は :149 にある。ファイル全体で 162 行で 300 行以下。frontmatter の変更は reference_refs に 1 行足したことと criteria の文で、criteria の id はそろっている。validate-frontmatter.py と lint-skill-description.py は exit 0。意味の観点の high は 0 で、(e) の「rubric の high が 0」を満たす。指摘は elegance 投影と同じものを載せた。判定: PASS。high は 0。前回の low 4 件のうち 3 件 (hearing-guide.md の B7、B9 と B11、document-structure.md とお手本の仕様書の写し) は解消した。残る 1 件 (お手本の H19・H34 の出どころ) は持ち越し・未解決 (findings_summary の inconsistency 1)。新しい指摘は無い。お手本の問いの文が今の catalog と違うことは、hearing-guide.md:110 (過去資料の質問文は当時の記録として残す) で決まっているので、指摘にしない。next_action は none。"
+  "notes": "今回の評価対象は 2 つの差分。1 つは、既定の見た目を jp-web-design の標準カラーにし、配色の正を briefing.json の palette にして、design-tokens.mjs で tokens.css を検査する差分 (TOKENS-MISSING・TOKENS-INVALID のときは init --refresh-css で作り直す)。もう 1 つは、ヒアリングの質問を assets/data/hearing-catalog.json と hearing-catalog.mjs に組み直した差分。前回の verdict (cr-briefing-hearing-coverage-v1、iteration 2) とは別の差分なので、iteration 1 (上限 2) から数える。今の SKILL.md を shasum -a 256 で取り直した (b16ede2b9356eb0e18b1c43c01399c1e2d8d7fe7f3f8daede03078ec4a9bcdcd)。git diff --cached HEAD でこのスキルの差分を読み、SKILL.md がリンクする範囲だけを読んだ。読んだもの: このスキルの差分 (reference_refs の hearing-catalog.json、IN1・IN2・OUT1・OUT2 の文、:78、:104-105、:113、:135、:147、:157)、hearing-guide.md (組み直し後の全体)、assets/data/hearing-catalog.json、scripts/lib/hearing-catalog.mjs、workflow-manifest.json、document-structure.md の記入先の表、お手本の ヒアリング.md と 仕様書.md。やり方: incremental profile の 1 つの文脈で、(a) 矛盾 (b) 漏れ (c) 規約 (d) 依存関係 (e) rubric の high を、差分に関わる点だけ見た。5 つの SKILL.md の Markdown リンクと reference_refs・script_refs を python で全部解き、切れは 0 だった。design-contract.md・hearing-guide.md・document-structure.md・quality-rules.md・workflow.md・page-patterns.md のリンクも切れ 0。コード名と引数は grep と sed で実装の行と照らした。お手本 (examples/sample-haisha) を作業用フォルダに写して validate-briefing-docs.mjs --stage all を回し、exit 0・error 0・warn 0 だった。関係するテスト 211 件 (test_design_tokens、test_hearing_catalog、test_palette、test_build_briefing_scaffold、test_build_briefing_book、test_validate_briefing_docs、test_render_board_png) が pytest で通った。validate-frontmatter.py と lint-skill-description.py も exit 0。判定ファイルのほかは、リポジトリのファイルを変えていない。rubric 投影: 構造の観点: ## Gotchas は :149 にある。ファイル全体で 162 行で 300 行以下。frontmatter の変更は reference_refs に 1 行足したことと criteria の文で、criteria の id はそろっている。validate-frontmatter.py と lint-skill-description.py は exit 0。意味の観点の high は 0 で、(e) の「rubric の high が 0」を満たす。指摘は elegance 投影と同じものを載せた。判定: PASS。high は 0。前回の low 4 件のうち 3 件 (hearing-guide.md の B7、B9 と B11、document-structure.md とお手本の仕様書の写し) は解消した。残る 1 件 (お手本の H19・H34 の出どころ) は持ち越し・未解決 (findings_summary の inconsistency 1)。新しい指摘は無い。お手本の問いの文が今の catalog と違うことは、hearing-guide.md:110 (過去資料の質問文は当時の記録として残す) で決まっているので、指摘にしない。next_action は none。",
+  "sha_rebinds": [
+    {
+      "from_sha": "b16ede2b9356eb0e18b1c43c01399c1e2d8d7fe7f3f8daede03078ec4a9bcdcd",
+      "to_sha": "0027fb92a55e5cef378c1a7334ea182ada2c6b8a75354b36971410379cc06cfa",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:50Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "0027fb92a55e5cef378c1a7334ea182ada2c6b8a75354b36971410379cc06cfa",
+      "to_sha": "f2095eb3dbd5614ec560ad742db25f8bd367296408e283165774cf73c2693268",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:59Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

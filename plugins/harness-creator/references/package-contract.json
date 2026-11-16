@@ -83,6 +83,66 @@
   "depends_on": [
     "skill-governance-adapters"
   ],
+  "repo_refs": [
+    {
+      "ref": "doc/ClaudeCodeスキルの設計書/",
+      "match": "prefix",
+      "reason": "skill の出典 (source) と本文の章の引用。設計書は repo の clone の中にだけあり、plugin には入れない。"
+    },
+    {
+      "ref": "doc/21",
+      "match": "exact",
+      "target": "doc/ClaudeCodeスキルの設計書/21-source-traceability.md",
+      "reason": "frontmatter の source-tier の注記 (backfill-source-tier.py が書く) が 21 章を章番号で呼ぶ。"
+    },
+    {
+      "ref": "doc/20",
+      "match": "exact",
+      "target": "doc/ClaudeCodeスキルの設計書/20-migration-path.md",
+      "reason": "run-migrate-audit の本文が 20 章の 8 区分を章番号で呼ぶ。"
+    },
+    {
+      "ref": "doc/20の8区分",
+      "match": "exact",
+      "target": "doc/ClaudeCodeスキルの設計書/20-migration-path.md",
+      "reason": "run-migrate-audit の frontmatter の完了条件が 20 章を章番号で呼ぶ (path の抽出が後ろの語まで続けて読む)。"
+    },
+    {
+      "ref": "doc/notion-schema/",
+      "match": "prefix",
+      "reason": "run-skill-feedback と run-build-skill が Notion の改善要望 schema を名指しする。repo の clone の中にだけある。"
+    },
+    {
+      "ref": "doc/harness-coverage-spec.md",
+      "match": "exact",
+      "reason": "run-build-skill が coverage の仕様を名指しする。repo の clone の中にだけある。"
+    },
+    {
+      "ref": "plugins/skill-governance-lint/",
+      "match": "prefix",
+      "reason": "repo の clone で使う開発時の兄弟 plugin (plugin-composition.yaml の cross-plugin invariant)。skill-governance-lint は harness-creator に依存するので、depends_on に入れると循環する。実行時は extract-plugin-root.py で解決する。"
+    },
+    {
+      "ref": "plugins/skill-governance-automation/",
+      "match": "prefix",
+      "reason": "repo の clone で使う開発時の兄弟 plugin (plugin-composition.yaml の cross-plugin invariant)。harness-creator に依存するので、depends_on に入れると循環する。"
+    },
+    {
+      "ref": "plugins/skill-governance-config/",
+      "match": "prefix",
+      "reason": "repo の clone で使う開発時の兄弟 plugin (plugin-composition.yaml の cross-plugin invariant)。harness-creator に依存するので、depends_on に入れると循環する。"
+    },
+    {
+      "ref": "plugins/skill-governance-migration/",
+      "match": "prefix",
+      "reason": "repo の clone で使う開発時の兄弟 plugin (plugin-composition.yaml の cross-plugin invariant)。harness-creator に依存するので、depends_on に入れると循環する。"
+    },
+    {
+      "ref": "plugins/prompt-creator/",
+      "match": "prefix",
+      "reason": "repo の clone で使う開発時の兄弟 plugin (plugin-composition.yaml の cross-plugin invariant)。prompt-creator は harness-creator に依存するので、depends_on に入れると循環する。"
+    }
+  ],
   "requirements": {
     "external_clis": [
       {

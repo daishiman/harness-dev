@@ -38,11 +38,11 @@
 ### 2.1 責務 (Single Responsibility)
 
 - 担当: ユーザー要望から skill-brief.json を構築する (Step 1 ヒアリング)
-- 非担当: Gate 承認 (R2)、Governance 判定 (R3)、build 実行 (R4 以降)
+- 非担当: Gate 承認 (R2)、build 実行 (run-build-skill へ委譲)。rubric governance は既定の流れに無い
 
 ### 2.2 ドメインルール
 
-- **CONST_010 (skill_name 命名)**: prefix-kebab パターン (`^(run|assign|ref|wrap)-[a-z0-9-]+$`) を満たす
+- **CONST_010 (skill_name 命名)**: prefix-kebab パターン (`^(ref|run|wrap|assign|delegate)-[a-z0-9]+(-[a-z0-9]+)*$` (`schemas/skill-brief.schema.json` の `skill_name.pattern` と同じ)) を満たす
   - **目的**: prefix-driven 構造の機械検証を可能にするため
   - **背景**: 自由命名は P0 lint を破壊する
 - **CONST_011 (prefix-kind 整合)**: prefix と kind が整合する
@@ -61,7 +61,7 @@
 | field | type | required | 説明 |
 |---|---|---|---|
 | topic | string | no | 要望キーワード |
-| mode | enum | no | `dialog` / `batch`、default `dialog` |
+| interaction_mode | enum | no | `dialog` / `batch`、default `dialog`。SKILL.md の mode (create / update) とは別 |
 | manifest | path | yes | workflow-manifest.json |
 | schema | path | yes | schemas/skill-brief.schema.json |
 | brief_path | path | no | E2: 上流 (`run-plugin-dev-plan` の handoff) が `render-skill-brief.py` で決定論射影した skill-brief.json。**提供時は R1 ヒアリングを skip し brief を直接消費する** (再ヒアリングなし) |
@@ -70,7 +70,7 @@
 ### 2.4 出力契約
 
 - schema: `schemas/skill-brief.schema.json` (additionalProperties: false)
-- 必須フィールド: skill_name / prefix / kind / hierarchy_level / trigger_conditions / boundary / responsibilities
+- 必須フィールド: `schemas/skill-brief.schema.json` の `required` (常に必須) と `allOf` (prefix / kind / hierarchy_level による条件付き必須) に従う。ここに並べ直さない (正本は schema。5.3 の停止条件も schema 検証の PASS を先頭に置く)
 - open_questions は `brief.open_questions[]` の string 配列 (maxItems 10)。解消可能な曖昧さは AI が最尤仮説で補い、判断が分かれる細部のみ OPEN_QUESTION(escalate) ラベル付きの文字列としてユーザーへ返す (代理決定・TODO(human) ラベル禁止)
 
 ## Layer 3: インフラ層 (外部依存)
@@ -121,7 +121,8 @@
 
 ### 5.3 完了チェックリスト (停止条件)
 
-- [ ] skill_name が prefix-kebab パターン (`^(run|assign|ref|wrap)-[a-z0-9-]+$`) を満たす
+- [ ] brief が `schemas/skill-brief.schema.json` の検証を通る (`required` 全件と `allOf` の条件付き必須。下の項目はその中で取り違えやすい点)
+- [ ] skill_name が prefix-kebab パターン (`^(ref|run|wrap|assign|delegate)-[a-z0-9]+(-[a-z0-9]+)*$` (`schemas/skill-brief.schema.json` の `skill_name.pattern` と同じ)) を満たす
 - [ ] prefix と kind が整合する
 - [ ] hierarchy_level=L2 なら rubric_refs が空でない
 - [ ] prefix=wrap なら base_skill 必須、delegate なら delegate_agent 必須

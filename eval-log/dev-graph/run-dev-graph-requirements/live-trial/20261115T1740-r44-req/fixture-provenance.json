@@ -1,0 +1,66 @@
+{
+  "run_id": "20261115T1740-r44-req",
+  "fixture_root": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/requirements/fx",
+  "control_dir": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/requirements/control",
+  "source": "plugins/dev-graph/tests/test_acceptance_gaps_a1.py:PlanRepo(git=True)",
+  "note": "受入シナリオ C04-OUT1-positive-ready-handoff-r2 用の合成入力。前回 (20261031T2305-pr86) と同じく既存の回帰テストの fixture helper で作り、今の ROOT の system-dev-planner promote-system-plan.py で正規 promote し、dev-graph register-package.py register で C02 登録した。前回の digest は写していない (今の閉包で作り直した)。合成の上流 findings・readiness は入力条件だけで、被験 requirements の評価根拠ではない。requirements の出力 (.dev-graph/requirements/・eval-log/run-dev-graph-requirements-*) は事前に置いていない。",
+  "provider": {
+    "root": "/Users/dm/orca/workspaces/harness/harness-creatorの改善",
+    "head": "c82c5d7e7890ab91bd6c440203cb1f421c6d33c1",
+    "worktree_dirty": true
+  },
+  "builder": {
+    "script": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/requirements/build-fixture.py",
+    "script_sha256": "69a00c8fc2973f34a2e5f0e878adee3786e65e711873f0c2a927c789aedde456",
+    "invocation": "PYTHONDONTWRITEBYTECODE=1 python3 -B build-fixture.py (cwd=ROOT)",
+    "fixture_promote_run_id": "lt-r44-fixture",
+    "steps": [
+      "PlanRepo(FX, git=True): git init + empty commit 'init' -> RT.make_repo -> RT.valid_readiness -> architecture-system / FEATURE-1 node と文書 -> graph revision 1",
+      "PlanRepo.promote('lt-r44-fixture'): RT.make_fixture(include_handoff=True) -> lock/findings/validation -> system-dev-planner/scripts/promote-system-plan.py",
+      "PlanRepo.register(): dev-graph/scripts/register-package.py register (13 task を graph revision 2 へ登録し文書を書く)",
+      "preflight (読むだけ): validate-system-plan.py / validate-graph-schema.py / validate-readiness-binding.py / guard-requirements-handoff.py --node FEATURE-1"
+    ],
+    "helper_sha256": {
+      "plugins/dev-graph/tests/test_acceptance_gaps_a1.py": "46e6e4117a5bd2718821d6ff19b7eddae72206d65180b0cd9030900efc20d425",
+      "plugins/system-dev-planner/tests/test_runtime.py": "cfdb2368dd941bf20e3e98f68bc1774f8e1acd45c1dfd61d59a724119719c2f0",
+      "plugins/dev-graph/tests/test_register_package.py": "551676878f0b41e0bdbeeb7cc0081585a0f5bd1900e02f66af03064299e353f5",
+      "plugins/system-dev-planner/scripts/promote-system-plan.py": "3c70ae9d194e466a7bf026957a7515a92943392e202ad4bd30761726eeadb093",
+      "plugins/dev-graph/scripts/register-package.py": "11771f946f2596966c5067e66da18fb55905e1d49885c21026ba405596e65149"
+    },
+    "tracker_spy_calls": 0
+  },
+  "published": ".dev-graph/plans/generations/feature-package-feat/c08646a47b6ceecd81f4ec2af7601e977208e5805533a5260388d5900d2caa23",
+  "source_digest": "sha256:c08646a47b6ceecd81f4ec2af7601e977208e5805533a5260388d5900d2caa23",
+  "feature_id": "FEATURE-1",
+  "receipt": ".dev-graph/state/registration-receipts/feat.json",
+  "fx_git_head": "56bb4b1e2b0206b8588b1264be9e308ee92eab22",
+  "preflight": {
+    "ref": "control/preflight.json",
+    "sha256": "2f10a2faf9e28b040f18184f4f82f3db92b8066ded76b47dee1231745b7c7bf2",
+    "validate_system_plan": "exit 0 status pass validated_digest=sha256:c08646a47b6ceecd81f4ec2af7601e977208e5805533a5260388d5900d2caa23 violations 0",
+    "c11": "exit 0 valid=true graph_validation pass node_readiness complete 15 (artifact_readiness enforced=false、architecture-system の heading_missing 10 件は advisory)",
+    "readiness_binding": "exit 0 status pass violations 0 graph.relation registered_snapshot graph.digest=sha256:e375a59b087b0c13ea95dca1de47a95f0868120b8475320124cbf9ddc904b1fc",
+    "guard": "exit 0 status handoff handoff=[FEATURE-1] handoff_count 1 missing_sections [] write_count 0"
+  },
+  "files_sha256": {
+    ".dev-graph/config.json": "b2e6be887504b8ccc3762d4109fd21c53da0ca6286c2c1d376f1083030bd0465",
+    ".dev-graph/locks/system-dev-plan-lock.json": "c4cd63f5458b5c35be2ce03de17d81064be2c2e95115457d3361663cae452330",
+    ".dev-graph/plans/generations/feature-package-feat/c08646a47b6ceecd81f4ec2af7601e977208e5805533a5260388d5900d2caa23/atomic-promotion-receipt.json": "2d9912b3b899c73897c698efa9d786e57baf88d494f9e8baff0b23f822797c62",
+    ".dev-graph/plans/generations/feature-package-feat/c08646a47b6ceecd81f4ec2af7601e977208e5805533a5260388d5900d2caa23/dev-graph-registration.json": "98ce7a983998674730a29867183d6c2189ad94829b4c70d03df5a29e88662498",
+    ".dev-graph/plans/generations/feature-package-feat/c08646a47b6ceecd81f4ec2af7601e977208e5805533a5260388d5900d2caa23/feature-package.json": "a742d04e376cc63ed6533e62547595d7fad4d46e6853f2bc0d0c4f46cd2201b2",
+    ".dev-graph/plans/generations/feature-package-feat/c08646a47b6ceecd81f4ec2af7601e977208e5805533a5260388d5900d2caa23/plan-findings.json": "7581e619a8872abe0c37b35c591d98ab9e1b8e7b82f5bc21f7cb0e91189c32ce",
+    ".dev-graph/plans/generations/feature-package-feat/c08646a47b6ceecd81f4ec2af7601e977208e5805533a5260388d5900d2caa23/staging-manifest.json": "b95ee9e92cd548d09a4e8f7d7d76b9b1637bc39f7172516b0347157ca2549100",
+    ".dev-graph/plans/generations/feature-package-feat/c08646a47b6ceecd81f4ec2af7601e977208e5805533a5260388d5900d2caa23/system-build-handoff.json": "2f26cb730900d5b46ca6b1bb4cc8d1dd9bd07cf95292ea08b769f6fcf197cf4f",
+    ".dev-graph/plans/generations/feature-package-feat/c08646a47b6ceecd81f4ec2af7601e977208e5805533a5260388d5900d2caa23/task-graph.json": "507a83333140712db23c2d1e775a08c3e31d006b8ef4e6906aa4c10dc08c0a60",
+    ".dev-graph/plans/generations/feature-package-feat/c08646a47b6ceecd81f4ec2af7601e977208e5805533a5260388d5900d2caa23/workstream-inventory.json": "a9b7d1d991b9a225b5e0b3bfa9e47faf938c3822e55ad323d47910cb8c036f63",
+    ".dev-graph/state/graph.json": "9c8e60bb898c36b245a2482818c75c4e58fc5fad182fcc1de791f364ad976212",
+    ".dev-graph/state/readiness.json": "fff9d2cf91488d5c293682f42d9c77ef0962719779b3425ab53bf4212eb0a63f",
+    ".dev-graph/state/registration-receipts/feat.json": "a3d6a55b06410665e4d086d62192c1a27116f35f6d9918984a7fbe7513d76f46",
+    "architecture/system.md": "42208bb15c8f780675e6f71f6537e785e22055e0202f33aeb827eb95962f626e",
+    "features/FEATURE-1.md": "d3d0c4931206f301e228575315b63d26a3e5777f4c509b3c3d729cfc848c9b83",
+    "features/feature.json": "ebb47d051b86539239ca31bc1cedf062c0bea4820b618d3879d2260bf90d12d8",
+    "system-spec/completeness-findings.json": "6e2c1a39f18e6379ee2cd1b6d9b5fe9a405308af2aea63b9e8f2bf4e0572e3e0",
+    "eval-log/system-spec-harness/audit-fork-ledger.jsonl": "46c82a61e0aad5de3309adcc928f2f6f36abbedab451a4372ee737e6ab89bfaa"
+  },
+  "files_sha256_full_list": "control/preflight.json#files_sha256 (53 files)"
+}

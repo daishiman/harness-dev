@@ -5,8 +5,12 @@
 # inputs:
 #   - argv: --target-plugin-slug S [--cycle-id C] [--discovered-inbox DIR] [--plan-dir PLAN_DIR]
 #           [--handoff H] [--task-events P] [--task-state P] [--completion-evidence P]
-#           [--summary-json P] [--target-knowledge-dir A]
-#           [--harness-knowledge-dir B] [--add-entry-path P] [--max-entries N] [--dry-run]
+#           [--runtime-ledger P] [--summary-json P] [--target-knowledge-dir A]
+#           [--harness-knowledge-dir B] [--add-entry-path P] [--max-entries N(>=1)] [--dry-run]
+#   - files (read-only): <inbox>/*.json, --task-state, <PLAN_DIR>/task-graph.json, --runtime-ledger と
+#           その artifact, --completion-evidence と evidence[] (repo root 内だけ), --summary-json,
+#           --task-events, task-state nodes の route_report, store の knowledge-index.json/router.json
+#   - subprocess: add_entry.py (knowledge 追記) / sync-native-surfaces.py --check --json (read-only)
 # outputs:
 #   - stdout: completion_gate JSON (全形に inbox_absent: bool を携帯 = inbox ディレクトリ不在
 #             「外ループ未発火」と 実在+全件処理済 の区別)
@@ -19,6 +23,11 @@
 #       blocked 時 (第2段=--task-state の blocked node 残存): blocked_tasks[]{id,blocked_reason}
 #                   (origin-failure/propagated 双方・id 昇順) + next_steps 分岐指示
 #                   [人手救済 (受入基準修正→再検証), emit-discovered-task による外ループ合流]
+#       blocked 時 (第3段=local required node 未完了): incomplete_required_tasks[]{id,state,phase_ref}
+#                   + runtime_pending_user_gate{status=accepted|missing|invalid|uncovered|not_needed,
+#                   path, deferred_task_ids, violations} (missing=ledger 不在 / invalid=読めない・壊れた
+#                   JSON・schema 違反 / uncovered=ledger は有効だが未完了 P13 node を保留していない。
+#                   壊れた ledger を不在へ、覆っていない ledger を不要へ畳まない)
 #       blocked 時 (実測 acceptance evidence 未達): completion_evidence_gate
 #                   に status/findings/failed_gates を保持し、証跡不在・自己矛盾・blocked gate を
 #                   pass へ畳まない
@@ -32,7 +41,9 @@
 #              entry 単位で try 隔離する (Loop A 失敗でも Loop B 継続)。蒸留 0 件を vacuous "ok" で偽装しない
 #   - stderr: usage / Loop A 未配線・add_entry 失敗の WARN 診断
 #   - exit: 0=gate ok (knowledge 記録の成否に依らず・疎結合) / 1=gate blocked (未処理 discovered-task、
-#           blocked node、completion evidence 未達、または native surface drift) / 2=usage/IO error (引数/parse のみ)
+#           blocked node、completion evidence 未達、または native surface drift) / 2=usage/IO error (引数、
+#           読めない・UTF-8 でない・壊れた JSON の入力、形の崩れた task-state/task-graph/summary-json、
+#           読めない inbox dir・task-events。stderr のみで JSON は出さず、何も書かない)
 #   - write-scope: <target-knowledge-dir> knowledge/ (Loop A) + <harness-knowledge-dir> knowledge/ (Loop B) (add_entry.py 委譲) + <task-events> task-events.jsonl (gate 判定 event append・TG-C02 append_event 再利用・--dry-run 時は書かない)
 # contexts: [C, E]
 # network: false
@@ -67,7 +78,19 @@ completion_gate:"blocked" とする (blocked を放置した completed 宣言を
 
 完了ゲート第3段: local required node はすべて done を必須とする。P13 の user-owned
 runtime 操作だけは build dir の runtime-evidence-ledger.json に local evidence=present と
-pending_user_gate が明記された場合に保留できる。
+pending_user_gate が明記された場合に保留できる。ledger は書き手 build-runtime-evidence-ledger.py
+が同じ validate_runtime_pending_ledger で検証してから書く。--runtime-ledger で場所を指定でき
+(省略時は task-state と同じ dir)、runtime_pending_user_gate.status は無いとき missing、
+読めない・壊れた JSON・schema 違反のとき invalid、ledger は有効だが保留していない未完了
+P13 node が残るとき uncovered とし、violations に診断を残す。
+
+入力の扱い: 読めない・UTF-8 でない・壊れた JSON の --task-state/task-graph/--summary-json/
+--task-events、形の崩れた task-state/task-graph (nodes が node object 配列でない、id が
+非空文字列でない・重複する) や summary-json、一覧を読めない inbox dir は exit 2 (何も書かない)。
+inbox の個々の form と completion evidence は従来どおり、読めなければ未処理 / invalid として
+gate を閉じる。--completion-evidence の evidence[] は evidence JSON の dir から repo root
+(.git を持つ最寄りの祖先、無ければ evidence JSON の dir) までだけを探し、その外を指す
+絶対パス・symlink は実在と認めない。
 
 完了ゲート第4段: task-graph のノード数と route report の自己申告だけで、実測要件
 (カバレッジ・precision/recall・独立監査等) を通過したことにしない。--completion-evidence
@@ -96,9 +119,11 @@ knowledge_record_status=ok_no_lessons + empty_reason で明示し vacuous "ok" �
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import hashlib
 import importlib.util
 import json
+import os
 import re
 import subprocess
 import sys
@@ -151,6 +176,66 @@ def _clip(text: str) -> str:
     return text[:_REPORT_MESSAGE_CLIP] + "…"
 
 
+class InputError(Exception):
+    """読めない・UTF-8 でない・壊れた JSON・形の崩れた入力 (main が exit 2 へ落とす)。"""
+
+
+def _read_json(path: Path, label: str) -> object:
+    """JSON 入力を読む。読めない入力は traceback でなく InputError にする (成功側へ倒さない)。"""
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise InputError(f"{label} 読込/parse 失敗 ({path}): {exc}") from exc
+
+
+def _task_nodes_shape_error(doc: object, label: str) -> str | None:
+    """task-state / task-graph の形を検査する。
+
+    nodes が配列でない、要素が object でない、id が非空文字列でない、id が重複する入力は
+    「done でない node が 0 件」と読めてしまい gate を素通りさせるため、不正入力として拒む。
+    """
+    if not isinstance(doc, dict):
+        return f"{label} が object でない"
+    nodes = doc.get("nodes")
+    if not isinstance(nodes, list):
+        return f"{label}.nodes が配列でない"
+    seen: set[str] = set()
+    for i, node in enumerate(nodes):
+        if not isinstance(node, dict):
+            return f"{label}.nodes[{i}] が object でない"
+        nid = node.get("id")
+        if not isinstance(nid, str) or not nid:
+            return f"{label}.nodes[{i}].id が非空文字列でない"
+        if nid in seen:
+            return f"{label}.nodes の id が重複: {nid}"
+        seen.add(nid)
+    return None
+
+
+def _summary_shape_error(summary: object) -> str | None:
+    """--summary-json (TG-C07 出力) のうち蒸留が読む部分の形を検査する。"""
+    if not isinstance(summary, dict):
+        return "--summary-json が object でない"
+    stall = summary.get("stall")
+    if stall is not None and not isinstance(stall, dict):
+        return "--summary-json.stall が object でない"
+    diagnosis = (stall or {}).get("diagnosis")
+    if diagnosis is not None and (
+        not isinstance(diagnosis, list) or any(not isinstance(d, dict) for d in diagnosis)
+    ):
+        return "--summary-json.stall.diagnosis が object 配列でない"
+    notes = summary.get("handoff_notes")
+    if notes is not None and (
+        not isinstance(notes, list) or any(not isinstance(n, dict) for n in notes)
+    ):
+        return "--summary-json.handoff_notes が object 配列でない"
+    for i, note in enumerate(notes or []):
+        for key in ("friction_points", "downstream_watchouts"):
+            if note.get(key) is not None and not isinstance(note.get(key), list):
+                return f"--summary-json.handoff_notes[{i}].{key} が配列でない"
+    return None
+
+
 # ── sibling importlib ロード (TG-C02 resolve_build_dir の SSOT 再利用) ─────────
 def _load_sibling(stem: str):
     """同一 scripts/ のハイフン名 module を importlib で読み込む。"""
@@ -175,22 +260,26 @@ def scan_pending_discovered(discovered_dir: Path) -> list[dict]:
     前提の裏返し。discovered_dir 不在は「発見タスク無し = 未処理 0 件」として空リストを返す。
     戻り値の各 dict は {path, status, discovering_task_id, change_level} (決定論順 = filename 昇順)。
     change_level (additive|structural) は needs_approval 判定に使う (読めない form は None)。
+    dir はあるが一覧を読めないときは OSError を送出する (Path.glob は読めない dir を空として
+    返し、未処理 form を見落として gate を通してしまうため os.listdir で一覧する)。
     """
     discovered_dir = Path(discovered_dir)
     if not discovered_dir.is_dir():
         return []
     pending: list[dict] = []
-    for form_path in sorted(discovered_dir.glob("*.json")):
+    names = sorted(n for n in os.listdir(discovered_dir) if fnmatch.fnmatchcase(n, "*.json"))
+    for form_path in (discovered_dir / n for n in names):
         try:
             form = json.loads(form_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             # 読めない form は処理不能 = 未処理扱い (block して人手介入を促す)。
             # change_level 不明 (None): drain 時に rejected 化され解決するため structural デッドロックは起きない。
             pending.append({"path": str(form_path), "status": None,
                             "discovering_task_id": None, "change_level": None})
             continue
         status = form.get("status") if isinstance(form, dict) else None
-        if status in PROCESSED_STATUSES:
+        # 文字列でない status (配列など) は処理済と認めない (set membership で TypeError にもしない)。
+        if isinstance(status, str) and status in PROCESSED_STATUSES:
             continue
         pending.append({
             "path": str(form_path),
@@ -265,6 +354,15 @@ def _gate_matches_node(gate_id: str, node: dict) -> bool:
     return any(marker in title for marker in _USER_GATE_TITLE_MARKERS.get(gate_id, ()))
 
 
+def _inside_dir(path: Path, directory: Path) -> bool:
+    """path の実体 (symlink を辿った先) が directory の中にあるか。"""
+    try:
+        path.resolve(strict=True).relative_to(directory.resolve(strict=True))
+    except (OSError, ValueError):
+        return False
+    return True
+
+
 def validate_runtime_pending_ledger(
     ledger: object,
     *,
@@ -314,7 +412,8 @@ def validate_runtime_pending_ledger(
         purpose = artifact.get("purpose")
         path_raw = artifact.get("path")
         digest = artifact.get("sha256")
-        if purpose not in _RUNTIME_ARTIFACT_PURPOSES:
+        # 文字列でない値は enum 外として扱う (dict/list の set membership は TypeError になる)。
+        if not isinstance(purpose, str) or purpose not in _RUNTIME_ARTIFACT_PURPOSES:
             errs.append(f"runtime evidence ledger.artifacts[{i}].purpose が enum 外")
         elif purpose in purposes:
             errs.append(f"runtime evidence ledger artifact purpose 重複: {purpose}")
@@ -330,10 +429,17 @@ def validate_runtime_pending_ledger(
             actual = ledger_path.parent / path
             if not actual.is_file():
                 errs.append(f"runtime evidence artifact 不在: {path_raw}")
+            elif not _inside_dir(actual, ledger_path.parent):
+                # 名前は build dir 相対でも、symlink で外を指すものは build dir の証跡と認めない。
+                errs.append(f"runtime evidence artifact が symlink で build dir の外を指す: {path_raw}")
             elif isinstance(digest, str) and _SHA256_RE.fullmatch(digest):
-                current = hashlib.sha256(actual.read_bytes()).hexdigest()
-                if current != digest:
-                    errs.append(f"runtime evidence artifact sha256 不一致: {path_raw}")
+                try:
+                    current = hashlib.sha256(actual.read_bytes()).hexdigest()
+                except OSError as exc:
+                    errs.append(f"runtime evidence artifact を読めない ({exc.__class__.__name__}): {path_raw}")
+                else:
+                    if current != digest:
+                        errs.append(f"runtime evidence artifact sha256 不一致: {path_raw}")
     missing_purposes = _RUNTIME_LOCAL_REQUIRED - purposes
     if missing_purposes:
         errs.append(f"runtime evidence ledger local artifact 欠落: {sorted(missing_purposes)}")
@@ -363,14 +469,16 @@ def validate_runtime_pending_ledger(
         task_ids = gate.get("task_ids")
         refs = gate.get("artifact_refs")
         reason = gate.get("reason")
-        if state not in _RUNTIME_GATE_STATES:
+        if not isinstance(state, str) or state not in _RUNTIME_GATE_STATES:
             errs.append(f"runtime evidence ledger.gates.{gate_id}.state が enum 外")
         if not isinstance(task_ids, list) or any(not isinstance(x, str) or not x for x in task_ids):
             errs.append(f"runtime evidence ledger.gates.{gate_id}.task_ids が文字列配列でない")
             task_ids = []
         elif len(task_ids) != len(set(task_ids)):
             errs.append(f"runtime evidence ledger.gates.{gate_id}.task_ids が重複")
-        if not isinstance(refs, list) or any(ref not in purposes for ref in refs):
+        if not isinstance(refs, list) or any(
+            not isinstance(ref, str) or ref not in purposes for ref in refs
+        ):
             errs.append(f"runtime evidence ledger.gates.{gate_id}.artifact_refs が実在 purpose を参照していない")
             refs = []
         elif len(refs) != len(set(refs)):
@@ -379,7 +487,7 @@ def validate_runtime_pending_ledger(
             errs.append(f"runtime evidence ledger.gates.{gate_id}: verified は artifact_refs 必須")
         if reason is not None and not isinstance(reason, str):
             errs.append(f"runtime evidence ledger.gates.{gate_id}.reason は string/null 必須")
-        if state in {"pending_user_gate", "not_applicable"} and (
+        if state in ("pending_user_gate", "not_applicable") and (
             not isinstance(reason, str) or not reason.strip()
         ):
             errs.append(f"runtime evidence ledger.gates.{gate_id}: {state} は reason 必須")
@@ -404,7 +512,7 @@ def _deferred_runtime_task_ids(ledger: object) -> set[str]:
     for gate_id, gate in ledger["gates"].items():
         if gate_id not in _RUNTIME_GATE_IDS or not isinstance(gate, dict):
             continue
-        if gate.get("state") not in {"pending_user_gate", "not_applicable"}:
+        if gate.get("state") not in ("pending_user_gate", "not_applicable"):
             continue
         task_ids = gate.get("task_ids")
         if isinstance(task_ids, list):
@@ -412,28 +520,74 @@ def _deferred_runtime_task_ids(ledger: object) -> set[str]:
     return out
 
 
+def select_ledger_graph_nodes(task_state: object, task_graph: object) -> list:
+    """ledger の task mapping を照合する node 列を返す (task-graph があればそれ、無ければ task-state)。
+
+    書き手 build-runtime-evidence-ledger.py も同じ関数で選ぶため、書く側と読む側で照合対象が
+    ずれない。
+    """
+    source = task_graph if isinstance(task_graph, dict) else task_state
+    nodes = source.get("nodes", []) if isinstance(source, dict) else []
+    # nodes が配列でない壊れた入力は、照合できる node が無いものとして扱う (例外で落とさない)。
+    return nodes if isinstance(nodes, list) else []
+
+
+def load_runtime_ledger(path: Path) -> tuple[object | None, str | None]:
+    """runtime ledger を読み、(ledger, 読込エラー) を返す。
+
+    ファイルが無ければ (None, None)。読めない・UTF-8 でない・壊れた JSON・最上位が null の
+    ときは (None, 診断文) を返す。無いことと壊れていることを同じ None に畳むと、
+    書き忘れと書き損じがどちらも「不在」と報告され、直す場所を取り違えるため分けて返す。
+    """
+    if not path.exists():
+        return None, None
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError) as exc:
+        return None, f"{_RUNTIME_LEDGER_NAME} を読めない ({path}): {exc}"
+    try:
+        ledger = json.loads(text)
+    except json.JSONDecodeError as exc:
+        return None, (
+            f"{_RUNTIME_LEDGER_NAME} が壊れた JSON ({path}): {exc.msg} "
+            f"(line {exc.lineno} column {exc.colno})"
+        )
+    if ledger is None:
+        return None, f"runtime evidence ledger が object でない ({path}): null"
+    return ledger, None
+
+
 def scan_incomplete_required_tasks(task_state: dict, task_graph: dict | None,
                                    runtime_ledger: object | None,
-                                   runtime_ledger_path: Path | None) -> tuple[list[dict], dict]:
+                                   runtime_ledger_path: Path | None,
+                                   *, ledger_load_error: str | None = None,
+                                   ) -> tuple[list[dict], dict]:
     """local required node の未完了を列挙する。
 
     P13 全体ではなく、schema-valid ledger が task id 単位で列挙した user-owned runtime
     gate だけを保留する。local apply/check/parity/freshness は ledger へ列挙しても保留不可。
+    runtime_ledger=None は ledger_load_error が無ければ「不在 (missing)」、あれば「壊れて
+    いる (invalid)」として報告する。ledger は有効でも、未完了 P13 node のうち ledger が保留して
+    いないものが残れば「未カバー (uncovered)」として報告する (不要 (not_needed) へ畳まない)。
     """
     state_nodes = task_state.get("nodes", []) if isinstance(task_state, dict) else []
     state_by_id = {
         n.get("id"): n for n in state_nodes
         if isinstance(n, dict) and isinstance(n.get("id"), str)
     }
-    graph_nodes = (task_graph.get("nodes", []) if isinstance(task_graph, dict) else state_nodes)
-    ledger_errors = validate_runtime_pending_ledger(
-        runtime_ledger,
-        ledger_path=runtime_ledger_path,
-        expected_graph_hash=task_state.get("graph_hash") if isinstance(task_state, dict) else None,
-        graph_nodes=graph_nodes,
-    ) if runtime_ledger is not None else [
-        f"{_RUNTIME_LEDGER_NAME} 不在"
-    ]
+    graph_nodes = select_ledger_graph_nodes(task_state, task_graph)
+    ledger_missing = runtime_ledger is None and ledger_load_error is None
+    if runtime_ledger is not None:
+        ledger_errors = validate_runtime_pending_ledger(
+            runtime_ledger,
+            ledger_path=runtime_ledger_path,
+            expected_graph_hash=task_state.get("graph_hash") if isinstance(task_state, dict) else None,
+            graph_nodes=graph_nodes,
+        )
+    elif ledger_load_error is not None:
+        ledger_errors = [ledger_load_error]
+    else:
+        ledger_errors = [f"{_RUNTIME_LEDGER_NAME} 不在"]
     ledger_ok = not ledger_errors
     ledger_deferred_ids = _deferred_runtime_task_ids(runtime_ledger) if ledger_ok else set()
     incomplete: list[dict] = []
@@ -454,12 +608,25 @@ def scan_incomplete_required_tasks(task_state: dict, task_graph: dict | None,
             deferred_p13.append(nid)
             continue
         incomplete.append({"id": nid, "state": state, "phase_ref": phase_ref})
+    uncovered_p13 = sorted(item["id"] for item in incomplete if item["phase_ref"] == "P13")
+    violations = [] if ledger_ok else ledger_errors
+    if p13_incomplete and not ledger_ok:
+        status = "missing" if ledger_missing else "invalid"
+    elif ledger_ok and uncovered_p13:
+        status = "uncovered"
+        violations = [
+            f"ledger が保留していない未完了 P13 node: {uncovered_p13} "
+            "(local node は done 必須、user gate は ledger の task_ids へ列挙する)"
+        ]
+    elif ledger_ok and deferred_p13:
+        status = "accepted"
+    else:
+        status = "not_needed"
     return sorted(incomplete, key=lambda item: item["id"]), {
-        "status": "accepted" if ledger_ok and deferred_p13 else (
-            "invalid" if p13_incomplete and not ledger_ok else "not_needed"),
+        "status": status,
         "path": None,
         "deferred_task_ids": sorted(deferred_p13),
-        "violations": [] if ledger_ok else ledger_errors,
+        "violations": violations,
     }
 
 
@@ -594,6 +761,8 @@ def distill_events(task_events: Path, summary: dict, limit: int = DEFAULT_MAX_EN
     # 1. stall summary の診断 (TG-C05 detect_stall 出力)。spec-gap=依存詰まり / build-failure=blocked 起点。
     stall = summary.get("stall") or {}
     for d in stall.get("diagnosis", []) or []:
+        if not isinstance(d, dict):
+            continue
         signal = "dependency-stall" if d.get("kind") == "spec-gap" else "blocked-origin"
         lessons.append({
             "signal": signal,
@@ -603,6 +772,8 @@ def distill_events(task_events: Path, summary: dict, limit: int = DEFAULT_MAX_EN
 
     # 2. route-build-report handoff_notes (friction_points / downstream_watchouts)。
     for hn in summary.get("handoff_notes", []) or []:
+        if not isinstance(hn, dict):
+            continue
         base_ref = {"file": hn.get("file"), "task_id": hn.get("task_id"), "route_id": hn.get("route_id")}
         for fp in (hn.get("friction_points") or []):
             lessons.append({"signal": "friction", "message": str(fp).strip(), "source_ref": dict(base_ref)})
@@ -614,13 +785,21 @@ def distill_events(task_events: Path, summary: dict, limit: int = DEFAULT_MAX_EN
 
     # 3. task-events.jsonl の signal イベント。
     if task_events is not None and Path(task_events).exists():
-        for idx, raw in enumerate(Path(task_events).read_text(encoding="utf-8").splitlines(), 1):
+        try:
+            events_text = Path(task_events).read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as exc:
+            # dir や UTF-8 でない file は読めない入力 (main が exit 2 へ落とす。書く前に起きる)。
+            raise InputError(f"--task-events 読込失敗 ({task_events}): {exc}") from exc
+        for idx, raw in enumerate(events_text.splitlines(), 1):
             raw = raw.strip()
             if not raw:
                 continue
             try:
                 ev = json.loads(raw)
             except json.JSONDecodeError:
+                continue
+            if not isinstance(ev, dict):
+                # object でない行は壊れた JSON 行と同じく event として扱わない。
                 continue
             lesson = _classify_event(ev, str(task_events), idx)
             if lesson is not None:
@@ -630,13 +809,14 @@ def distill_events(task_events: Path, summary: dict, limit: int = DEFAULT_MAX_EN
     seen: set[tuple[str, str]] = set()
     out: list[dict] = []
     for lesson in lessons:
+        # 追加前に上限を見る (limit<=0 で 1 件書いてしまわない)。
+        if len(out) >= limit:
+            break
         key = (lesson["signal"], lesson["message"])
         if key in seen:
             continue
         seen.add(key)
         out.append(lesson)
-        if len(out) >= limit:
-            break
     return out
 
 
@@ -723,7 +903,7 @@ def check_store_ready(store_dir: Path) -> str | None:
             continue
         try:
             data = json.loads(decl.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
             return f"{decl_name} 読込/parse 失敗: {exc}"
         if isinstance(data, dict) and "consult_at" in data:
             return None
@@ -760,15 +940,22 @@ def _collect_handoff_notes(task_state: dict) -> list[dict]:
     """task-state.json の各 node の consumer 運用 field handoff_notes を distill 用に集約する。"""
     notes: list[dict] = []
     for n in (task_state.get("nodes", []) if isinstance(task_state, dict) else []):
+        if not isinstance(n, dict):
+            continue
         hn = n.get("handoff_notes")
         if not isinstance(hn, dict):
             continue
-        if hn.get("friction_points") or hn.get("downstream_watchouts"):
+        # 配列でない値 (文字列など) は 1 文字ずつ蒸留されてしまうため取らない。
+        friction = hn.get("friction_points")
+        watchouts = hn.get("downstream_watchouts")
+        friction = friction if isinstance(friction, list) else []
+        watchouts = watchouts if isinstance(watchouts, list) else []
+        if friction or watchouts:
             notes.append({
                 "task_id": n.get("id"),
                 "file": n.get("route_report"),
-                "friction_points": hn.get("friction_points") or [],
-                "downstream_watchouts": hn.get("downstream_watchouts") or [],
+                "friction_points": friction,
+                "downstream_watchouts": watchouts,
             })
     return notes
 
@@ -790,18 +977,19 @@ def _collect_report_lessons(task_state: dict) -> list[dict]:
         if not isinstance(n, dict):
             continue
         report_path = n.get("route_report")
-        if not report_path or not Path(report_path).is_file():
+        if not isinstance(report_path, str) or not report_path or not Path(report_path).is_file():
             continue
         try:
             report = json.loads(Path(report_path).read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
             continue
         if not isinstance(report, dict):
             continue
         base_ref = {k: v for k, v in {
             "file": str(report_path), "task_id": n.get("id"), "route_id": report.get("route_id"),
         }.items() if v is not None}
-        for dv in report.get("deviations") or []:
+        deviation_items = report.get("deviations")
+        for dv in deviation_items if isinstance(deviation_items, list) else []:
             if isinstance(dv, str) and dv.strip():
                 deviations.append({"signal": "deviation", "message": _clip(dv),
                                    "source_ref": dict(base_ref)})
@@ -845,6 +1033,13 @@ def _build_parser() -> argparse.ArgumentParser:
             "blocked gate を completion_gate:blocked にする"
         ),
     )
+    p.add_argument(
+        "--runtime-ledger", default=None,
+        help=(
+            f"完了ゲート第3段の {_RUNTIME_LEDGER_NAME} (--task-state と併用。省略時は task-state と"
+            " 同じ dir)。無いときは status=missing、読めない・壊れた JSON は status=invalid と診断を返す"
+        ),
+    )
     p.add_argument("--summary-json", default=None,
                    help="summarize-task-progress.py 出力 (stall/handoff_notes を含む JSON)")
     p.add_argument("--target-knowledge-dir", default=None, help="Loop A: target harness の knowledge store dir")
@@ -852,9 +1047,21 @@ def _build_parser() -> argparse.ArgumentParser:
                    help="Loop B: harness-creator knowledge store dir")
     p.add_argument("--add-entry-path", default=str(
         _PLUGIN_ROOT / "skills/run-build-skill/templates/knowledge-skeleton/scripts/add_entry.py"))
-    p.add_argument("--max-entries", type=int, default=DEFAULT_MAX_ENTRIES)
+    p.add_argument("--max-entries", type=_positive_int, default=DEFAULT_MAX_ENTRIES,
+                   help="蒸留して書く knowledge entry の上限 (1 以上)")
     p.add_argument("--dry-run", action="store_true")
     return p
+
+
+def _positive_int(text: str) -> int:
+    """--max-entries 用: 1 以上の整数だけを受け、0 以下は usage error (exit 2) にする。"""
+    try:
+        value = int(text)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(f"整数でない: {text}") from exc
+    if value < 1:
+        raise argparse.ArgumentTypeError(f"1 以上が必要: {value}")
+    return value
 
 
 def _resolve_default_paths(args) -> tuple[Path, Path | None]:
@@ -889,18 +1096,27 @@ def check_completion_evidence(path: str | None, target_plugin_slug: str | None) 
         return {**base, "status": "missing", "findings": ["証跡 JSON が存在しない"]}
     try:
         data = json.loads(evidence_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         return {**base, "status": "invalid", "findings": [f"読込/parse 失敗: {exc}"]}
+
+    # 正本は repo-relative path。cwd へ依存せず、completion-evidence の dir から上へ探す。
+    # 探すのは repo root (.git を持つ最寄りの祖先。無ければ evidence の dir) までで、/ までは
+    # 遡らない ("etc/hosts" のような repo 外の file を証跡と認めない)。
+    search_start = evidence_path.resolve().parent
+    search_dirs = [search_start, *search_start.parents]
+    for index, directory in enumerate(search_dirs):
+        if (directory / ".git").exists():
+            search_dirs = search_dirs[: index + 1]
+            break
+    else:
+        search_dirs = [search_start]
+    evidence_root = search_dirs[-1]
 
     def evidence_ref_exists(ref: str) -> bool:
         candidate = Path(ref)
-        if candidate.is_absolute():
-            return candidate.is_file()
-        # 正本は repo-relative path。cwd へ依存せず、completion-evidence の配置から
-        # 上方探索して解決する。evidence file 同階層からの相対参照も許可する。
-        if (evidence_path.parent / candidate).is_file():
-            return True
-        return any((ancestor / candidate).is_file() for ancestor in evidence_path.parents)
+        paths = [candidate] if candidate.is_absolute() else [d / candidate for d in search_dirs]
+        # 名前が root 内でも、symlink や ".." で root の外を指すものは証跡と認めない。
+        return any(p.is_file() and _inside_dir(p, evidence_root) for p in paths)
 
     findings: list[str] = []
     if not isinstance(data, dict):
@@ -915,7 +1131,7 @@ def check_completion_evidence(path: str | None, target_plugin_slug: str | None) 
             f"target_plugin_slug 不一致: expected={target_plugin_slug} actual={evidence_slug}"
         )
     overall = data.get("overall_status")
-    if overall not in {"pass", "blocked"}:
+    if overall not in ("pass", "blocked"):
         findings.append("overall_status は pass|blocked 必須")
 
     gates = data.get("gates")
@@ -936,7 +1152,7 @@ def check_completion_evidence(path: str | None, target_plugin_slug: str | None) 
             findings.append(f"gate id 重複: {gate_id}")
         seen.add(gate_id)
         gate_status = gate.get("status")
-        if gate_status not in {"pass", "blocked"}:
+        if gate_status not in ("pass", "blocked"):
             findings.append(f"gate {gate_id} status は pass|blocked 必須")
         elif gate_status == "blocked":
             failed_gates.append(gate_id)
@@ -953,7 +1169,7 @@ def check_completion_evidence(path: str | None, target_plugin_slug: str | None) 
                     findings.append(f"pass gate {gate_id} の evidence file が存在しない: {ref}")
 
     computed = "blocked" if failed_gates else "pass"
-    if gates and overall in {"pass", "blocked"} and overall != computed:
+    if gates and overall in ("pass", "blocked") and overall != computed:
         findings.append(f"overall_status 自己矛盾: declared={overall} computed={computed}")
 
     for field in ("invalidated_task_ids", "invalidated_phase_refs"):
@@ -1002,7 +1218,13 @@ def _resolve_repo_root_for_generator(task_state_path: str | None, generator_rel:
 def _child_remediation_items(report: dict) -> list[dict]:
     """C01/reflector の構造化 report から人手修復に必要な項目だけを抜き出す。"""
     items: list[dict] = []
-    for adapter in report.get("adapters", []):
+
+    def _list(key: str) -> list:
+        # 壊れた child report (配列でない値) は parse gate として返すだけで、ここで落とさない。
+        value = report.get(key)
+        return value if isinstance(value, list) else []
+
+    for adapter in _list("adapters"):
         if not isinstance(adapter, dict):
             continue
         if adapter.get("remediation") or adapter.get("warning"):
@@ -1012,10 +1234,10 @@ def _child_remediation_items(report: dict) -> list[dict]:
                 "warning": adapter.get("warning"),
                 "remediation": adapter.get("remediation"),
             })
-    for conflict in report.get("conflicts", []):
+    for conflict in _list("conflicts"):
         if isinstance(conflict, dict):
             items.append({"source": "conflict", "detail": conflict})
-    for violation in report.get("violations", []):
+    for violation in _list("violations"):
         if isinstance(violation, dict):
             items.append({"source": "violation", "detail": violation})
     return items
@@ -1145,17 +1367,37 @@ def main(argv: list[str] | None = None) -> int:
         args = parser.parse_args(argv)
     except SystemExit as exc:
         return int(exc.code) if isinstance(exc.code, int) else 2
+    try:
+        return _run(args)
+    except InputError as exc:
+        # 読めない・形の崩れた入力は traceback にも gate ok にもせず usage/IO error とする。
+        print(str(exc), file=sys.stderr)
+        return 2
 
+
+def _run(args: argparse.Namespace) -> int:
+    """引数解析後の本体。読めない・形の崩れた入力は InputError を送出する (main が exit 2 へ)。
+
+    InputError はどれも knowledge や task-events を書く前の段で起きる。
+    """
     inbox_dir, task_events = _resolve_default_paths(args)
     if inbox_dir is None:
         print("--discovered-inbox か --target-plugin-slug のいずれかが必須", file=sys.stderr)
+        return 2
+    if args.runtime_ledger and not args.task_state:
+        # 第3段は --task-state が無いと走らないため、黙って無視せず usage error にする。
+        print("--runtime-ledger は --task-state と併用する", file=sys.stderr)
         return 2
 
     # inbox ディレクトリ不在 (外ループ未発火) と 実在+全件処理済 を全出力形で区別する。
     inbox_absent = not Path(inbox_dir).is_dir()
 
     # ── 外ループ完了ゲート第1段 (最優先): 未処理 discovered-task 残存 ──
-    pending = scan_pending_discovered(inbox_dir)
+    try:
+        pending = scan_pending_discovered(inbox_dir)
+    except OSError as exc:
+        # 一覧を読めない inbox を「未処理 0 件」と読むと gate を素通りするため不正入力とする。
+        raise InputError(f"--discovered-inbox 一覧失敗 ({inbox_dir}): {exc}") from exc
     if pending:
         # 未処理に structural が 1 件でもあれば --approved 二段受理が必要 (未承認だとデッドロック)。
         needs_approval = any(p.get("change_level") == "structural" for p in pending)
@@ -1183,11 +1425,11 @@ def main(argv: list[str] | None = None) -> int:
     # ── 完了ゲート第2段: --task-state の blocked node 残存 ──
     task_state: dict | None = None
     if args.task_state:
-        try:
-            task_state = json.loads(Path(args.task_state).read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            print(f"--task-state 読込/parse 失敗: {exc}", file=sys.stderr)
-            return 2
+        task_state = _read_json(args.task_state, "--task-state")
+        # [1,2] や {} を「未完了 node 0 件」と読んで gate を通さない。
+        shape_error = _task_nodes_shape_error(task_state, "--task-state")
+        if shape_error:
+            raise InputError(f"{shape_error} ({args.task_state})")
     blocked_tasks = scan_blocked_tasks(task_state) if task_state is not None else []
     if blocked_tasks:
         payload = {
@@ -1209,25 +1451,24 @@ def main(argv: list[str] | None = None) -> int:
     task_graph: dict | None = None
     if args.plan_dir:
         graph_path = Path(args.plan_dir) / "task-graph.json"
-        try:
-            task_graph = json.loads(graph_path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            print(f"task-graph 読込/parse 失敗 ({graph_path}): {exc}", file=sys.stderr)
-            return 2
+        task_graph = _read_json(graph_path, "task-graph")
+        # 照合元の graph が {} だと task-state の未完了 node を見ずに gate を通すため拒む。
+        shape_error = _task_nodes_shape_error(task_graph, "task-graph")
+        if shape_error:
+            raise InputError(f"{shape_error} ({graph_path})")
     runtime_ledger: object | None = None
     runtime_ledger_path: Path | None = None
+    ledger_load_error: str | None = None
     if args.task_state:
-        runtime_ledger_path = Path(args.task_state).parent / _RUNTIME_LEDGER_NAME
-        if runtime_ledger_path.is_file():
-            try:
-                runtime_ledger = json.loads(runtime_ledger_path.read_text(encoding="utf-8"))
-            except (OSError, json.JSONDecodeError):
-                runtime_ledger = None
+        runtime_ledger_path = (Path(args.runtime_ledger) if args.runtime_ledger
+                               else Path(args.task_state).parent / _RUNTIME_LEDGER_NAME)
+        runtime_ledger, ledger_load_error = load_runtime_ledger(runtime_ledger_path)
     runtime_ledger_gate = {"status": "not_needed", "path": None,
                            "deferred_task_ids": [], "violations": []}
     if task_state is not None:
         incomplete_tasks, runtime_ledger_gate = scan_incomplete_required_tasks(
-            task_state, task_graph, runtime_ledger, runtime_ledger_path)
+            task_state, task_graph, runtime_ledger, runtime_ledger_path,
+            ledger_load_error=ledger_load_error)
         runtime_ledger_gate["path"] = str(runtime_ledger_path) if runtime_ledger_path else None
         if incomplete_tasks:
             payload = {
@@ -1237,8 +1478,8 @@ def main(argv: list[str] | None = None) -> int:
                 "runtime_pending_user_gate": runtime_ledger_gate,
                 "next_steps": [
                     "local apply/check/parity/freshness を含む required task を done にし task-state を再同期する",
-                    f"user-owned runtime 保留は {_RUNTIME_LEDGER_NAME} schema に artifact hash、graph pin、"
-                    "gate state、対象 task id を明記する",
+                    f"user-owned runtime 保留は build-runtime-evidence-ledger.py で {_RUNTIME_LEDGER_NAME}"
+                    " を書く (artifact hash・graph pin・gate state・対象 task id を検証してから一括で書く)",
                 ],
             }
             if not args.dry_run:
@@ -1305,17 +1546,16 @@ def main(argv: list[str] | None = None) -> int:
     # ── gate ok: knowledge 蒸留 → entry 構築 ──
     summary: dict = {}
     if args.summary_json:
-        try:
-            summary = json.loads(Path(args.summary_json).read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            print(f"--summary-json 読込/parse 失敗: {exc}", file=sys.stderr)
-            return 2
+        summary = _read_json(args.summary_json, "--summary-json")
+        shape_error = _summary_shape_error(summary)
+        if shape_error:
+            raise InputError(f"{shape_error} ({args.summary_json})")
     report_lessons: list[dict] = []
     if task_state is not None:
         collected = _collect_handoff_notes(task_state)
         if collected:
-            summary.setdefault("handoff_notes", [])
-            summary["handoff_notes"].extend(collected)
+            # handoff_notes: null も空配列として扱う (setdefault は null を残すため使わない)。
+            summary["handoff_notes"] = [*(summary.get("handoff_notes") or []), *collected]
         report_lessons = _collect_report_lessons(task_state)
 
     lessons = distill_events(task_events, summary, limit=args.max_entries,

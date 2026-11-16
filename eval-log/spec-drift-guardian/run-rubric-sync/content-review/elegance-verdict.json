@@ -2,7 +2,8 @@
   "target": {
     "plugin": "spec-drift-guardian",
     "skill": "run-rubric-sync",
-    "skill_md_sha256": "8144d67b790499e4528bd08810ee504a2347ad63b8862b2e955be09adaacbf5a"
+    "skill_md_sha256": "8c22c6eee12d5ea9983fc44fb0d6c6b1db11348f9c0041d0fc17f6024b622c95",
+    "reviewed_skill_md_sha256": "8144d67b790499e4528bd08810ee504a2347ad63b8862b2e955be09adaacbf5a"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -38,5 +39,21 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は main のマージと external-mutation guard block の機械 migration により skill_md_sha256 が既存 verdict (7e7a52a0...) と乖離したことを受けた再束縛であり、content-review-protocol の incremental: unresolved semantic batch に従い focused combined review を 1 context で実行して (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定し、elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 実施内容: git diff HEAD で本 skill の差分全 3 hunk (frontmatter への runtime_root_policy: host-skill-path 追加 / `## Runtime root contract` 節 7 行の新設 / 決定論チェック節 2 行と Gotchas 配置非依存行の PLUGIN_ROOT 形への置換) を読み、SKILL.md 全 204 行を通読した。 (c) 規約整合: runtime_root_policy 宣言と Runtime root contract 節の対応を確認、SKILL.md 内の bare `${CLAUDE_PLUGIN_ROOT}` shell 起動行を grep で 0 件確認、effect=local-artifact に対し external_mutation_guard / receipt block がともに 0 件であることを grep -c で確認した。 (d) 依存関係整合: frontmatter が宣言した responsibility_refs 3 件 (prompts/R1-elicit.md, R2-plan.md, R3-apply.md)・schema_refs 4 件 (sync-proposal, sync-audit-verdict, triage-report, triage-verdict)・reference_refs 2 件 (references/apply-gate-policy.md, ../../references/field-impact-map/field-impact-map.json)・script_refs 2 件 (map-field-impact.py, check-triage-complete.py) と、本文が参照する agents/spec-impact-verifier.md・agents/rubric-sync-auditor.md の計 19 path の実在をファイル存在検査で確認し、欠損 0 件であった。 (a)(b): 差分は宣言追加と placeholder 置換に閉じており、Purpose & Output Contract・二段階モデル表・apply-gate G1-G5・feedback_contract criteria (IN1/OUT1/OUT2)・境界・配置先はいずれも改変されていない。前回 verdict が挙げていた Pre-choice section の low smell (mutation skill での「最小の実成果物」対「mutation 実行しない」の読み分けが暗黙) は、現行 Pre-choice 本文が「effect別のparse/open・secret・irreversible・corrupt guardだけを実行し」へ書き換わったことで解消しており、再掲しない。 未解決の medium 以上は 0 件、残る low 1 件は companion asset 側に残った bare `$CLAUDE_PLUGIN_ROOT` (Codex 経路で fail-closed 側に倒れる操作性の smell) であるため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、OUT2 の live-trial (rubric-sync-auditor SubAgent の実発火と AskUserQuestion 承認 gate の非素通り) を含む実行挙動の受け入れは別途実走証拠を要する。"
+  "notes": "本 verdict は main のマージと external-mutation guard block の機械 migration により skill_md_sha256 が既存 verdict (7e7a52a0...) と乖離したことを受けた再束縛であり、content-review-protocol の incremental: unresolved semantic batch に従い focused combined review を 1 context で実行して (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定し、elegance / rubric の 2 verdict へ分離投影したものである。30 思考法は実施しておらず、実施も申告しない。 実施内容: git diff HEAD で本 skill の差分全 3 hunk (frontmatter への runtime_root_policy: host-skill-path 追加 / `## Runtime root contract` 節 7 行の新設 / 決定論チェック節 2 行と Gotchas 配置非依存行の PLUGIN_ROOT 形への置換) を読み、SKILL.md 全 204 行を通読した。 (c) 規約整合: runtime_root_policy 宣言と Runtime root contract 節の対応を確認、SKILL.md 内の bare `${CLAUDE_PLUGIN_ROOT}` shell 起動行を grep で 0 件確認、effect=local-artifact に対し external_mutation_guard / receipt block がともに 0 件であることを grep -c で確認した。 (d) 依存関係整合: frontmatter が宣言した responsibility_refs 3 件 (prompts/R1-elicit.md, R2-plan.md, R3-apply.md)・schema_refs 4 件 (sync-proposal, sync-audit-verdict, triage-report, triage-verdict)・reference_refs 2 件 (references/apply-gate-policy.md, ../../references/field-impact-map/field-impact-map.json)・script_refs 2 件 (map-field-impact.py, check-triage-complete.py) と、本文が参照する agents/spec-impact-verifier.md・agents/rubric-sync-auditor.md の計 19 path の実在をファイル存在検査で確認し、欠損 0 件であった。 (a)(b): 差分は宣言追加と placeholder 置換に閉じており、Purpose & Output Contract・二段階モデル表・apply-gate G1-G5・feedback_contract criteria (IN1/OUT1/OUT2)・境界・配置先はいずれも改変されていない。前回 verdict が挙げていた Pre-choice section の low smell (mutation skill での「最小の実成果物」対「mutation 実行しない」の読み分けが暗黙) は、現行 Pre-choice 本文が「effect別のparse/open・secret・irreversible・corrupt guardだけを実行し」へ書き換わったことで解消しており、再掲しない。 未解決の medium 以上は 0 件、残る low 1 件は companion asset 側に残った bare `$CLAUDE_PLUGIN_ROOT` (Codex 経路で fail-closed 側に倒れる操作性の smell) であるため verdict は PASS。PASS の射程は design claim (静的設計 adequacy) に限り、OUT2 の live-trial (rubric-sync-auditor SubAgent の実発火と AskUserQuestion 承認 gate の非素通り) を含む実行挙動の受け入れは別途実走証拠を要する。",
+  "sha_rebinds": [
+    {
+      "from_sha": "8144d67b790499e4528bd08810ee504a2347ad63b8862b2e955be09adaacbf5a",
+      "to_sha": "f30db0a2a0c64c151727d7acd8912aa19ae129f0f4cbcdd53a5bb19bcbc98177",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:50Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "f30db0a2a0c64c151727d7acd8912aa19ae129f0f4cbcdd53a5bb19bcbc98177",
+      "to_sha": "8c22c6eee12d5ea9983fc44fb0d6c6b1db11348f9c0041d0fc17f6024b622c95",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:58Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

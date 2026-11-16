@@ -1,0 +1,511 @@
+{
+  "kind": "macro-decompose-dry-run-preview",
+  "stage": "pre_choice_usable_artifact",
+  "dry_run": true,
+  "macro_brief": "既存 render → 前回との差分 → 読者向け要約。共有 ARCH-LT-001 を再利用。",
+  "macro_existing_nodes": [
+    {
+      "artifact_kind": "architecture",
+      "artifact_subtypes": [
+        "backend"
+      ],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "architecture",
+          "candidate_path": "architecture/ARCH-LT-001.md",
+          "confidence": 0.96
+        },
+        {
+          "artifact_kind": "document",
+          "candidate_path": "docs/ARCH-LT-001.md",
+          "confidence": 0.21
+        }
+      ],
+      "classification_confidence": 0.96,
+      "classification_reason": "本文が architecture template の必須 section 構成と一致し、第二候補との margin が閾値を超えるため自動確定した",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "not_applicable"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "d3c8a29c4cfe3af72249da54d76f54738ec4286b21e0bd84479d1cc16d7c3763",
+        "evaluator": "run-dev-graph-node/R4-apply-template",
+        "evidence_ref": ".dev-graph/cache/content-review/ARCH-LT-001.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-09-07T06:10:00Z",
+      "depends_on": [],
+      "domain": "delivery-graph",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": null,
+      "file_path": "architecture/ARCH-LT-001.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "ARCH-LT-001",
+      "implementation_readiness": {
+        "checked_at": "2026-09-07T06:10:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "harness maintainers"
+      ],
+      "parent_feature": null,
+      "phase_ref": null,
+      "priority": "medium",
+      "project_id": "gm4b-render",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "architecture/",
+        "scripts/"
+      ],
+      "source_lineage": {
+        "imported_at": null,
+        "origin_kind": "manual",
+        "source_digest": null,
+        "source_path": null,
+        "source_plugin": null,
+        "source_version": null
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "live-trial",
+        "render"
+      ],
+      "target_date": null,
+      "template_id": "architecture",
+      "template_version": "1.0.0",
+      "title": "配信グラフ基盤 backend architecture",
+      "tracker_binding": "none",
+      "updated_at": "2026-09-07T06:10:00Z"
+    },
+    {
+      "acceptance": [
+        "出力 HTML の外部 resource 参照が 0 件である",
+        "feature card の進捗が graph 実値の完了 task 数と一致する",
+        "同一 graph に対する二回の render で output digest が一致する"
+      ],
+      "architecture_refs": [
+        "ARCH-LT-001"
+      ],
+      "artifact_kind": "feature",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "feature",
+          "candidate_path": "features/LT-FEATURE-001.md",
+          "confidence": 0.96
+        },
+        {
+          "artifact_kind": "document",
+          "candidate_path": "docs/LT-FEATURE-001.md",
+          "confidence": 0.21
+        }
+      ],
+      "classification_confidence": 0.96,
+      "classification_reason": "本文が feature template の必須 section 構成と一致し、第二候補との margin が閾値を超えるため自動確定した",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "not_applicable"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "aac2a99a70959acc3b2bbf02ec494790ab0d7712489a8e5fcbac4742257b7a15",
+        "evaluator": "run-dev-graph-node/R4-apply-template",
+        "evidence_ref": ".dev-graph/cache/content-review/LT-FEATURE-001.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-09-07T06:10:00Z",
+      "depends_on": [],
+      "domain": "delivery-graph",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": null,
+      "file_path": "features/LT-FEATURE-001.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "goal": "canonical graph から決定論的に生成した単一 HTML が feature/task/edge と実数進捗を表示している状態",
+      "graph_node_id": "LT-FEATURE-001",
+      "implementation_readiness": {
+        "checked_at": "2026-09-07T06:10:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "harness maintainers"
+      ],
+      "parent_feature": null,
+      "phase_ref": null,
+      "priority": "medium",
+      "project_id": "gm4b-render",
+      "pull_request_linkages": [],
+      "purpose": "graph 実値だけを根拠に依存構造と進捗を外部依存なしで提示できるようにするため",
+      "related_nodes": [],
+      "resource_scope": [
+        "features/",
+        "tasks/LT-FEATURE-001/"
+      ],
+      "scope_in": [
+        "canonical graph の読取と正規化",
+        "parent_feature 由来の進捗集計",
+        "inline SVG による描画"
+      ],
+      "scope_out": [
+        "GitHub Projects 同期",
+        "beads server 運用",
+        "閲覧者ごとの権限制御"
+      ],
+      "source_lineage": {
+        "imported_at": null,
+        "origin_kind": "manual",
+        "source_digest": null,
+        "source_path": null,
+        "source_plugin": null,
+        "source_version": null
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "live-trial",
+        "render"
+      ],
+      "target_date": null,
+      "template_id": "feature",
+      "template_version": "1.0.0",
+      "title": "graph 実値に基づく静的 render 可視化",
+      "tracker_binding": "none",
+      "updated_at": "2026-09-07T06:10:00Z"
+    }
+  ],
+  "new_feature_contracts": [
+    {
+      "artifact_kind": "feature",
+      "slug": "lt-render-diff",
+      "title": "render 結果の前回比較",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "tracker_binding": "beads",
+      "depends_on": [
+        "LT-FEATURE-001"
+      ],
+      "macro": {
+        "purpose": "render 間の変化を読み手が確認できるようにする",
+        "goal": "現在と前回の render の追加・削除・変更を特定できる状態",
+        "scope_in": [
+          "比較対象 render の識別",
+          "追加・削除・変更の差分出力"
+        ],
+        "scope_out": [
+          "render 基盤の再実装",
+          "P01..P13 task の生成",
+          "外部 tracker への実書込"
+        ],
+        "acceptance": [
+          "同じ render 同士では差分が0件",
+          "追加・削除・変更を区別できる",
+          "前回 render が無い場合は比較不能と示す"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    },
+    {
+      "artifact_kind": "feature",
+      "slug": "lt-render-summary",
+      "title": "render 差分の読者向け要約",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "tracker_binding": "beads",
+      "depends_on": [
+        "feature-lt-render-diff"
+      ],
+      "macro": {
+        "purpose": "差分の要点を短時間で把握できるようにする",
+        "goal": "差分に根拠を持つ要約を読み手が確認できる状態",
+        "scope_in": [
+          "差分の要点整理",
+          "根拠の差分への対応付け"
+        ],
+        "scope_out": [
+          "render 基盤の再実装",
+          "P01..P13 task の生成",
+          "外部 tracker への実書込"
+        ],
+        "acceptance": [
+          "要約の各記述が差分へ対応する",
+          "差分0件なら変更なしと示す",
+          "比較不能時に変化を捏造しない"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    }
+  ],
+  "c02_preview": {
+    "applied_count": 0,
+    "artifacts": [
+      {
+        "classification": {
+          "confidence": 1.0,
+          "decision": "c14_macro_contract",
+          "margin": 1.0
+        },
+        "file_path": "features/lt-render-diff.md",
+        "graph_node_id": "feature-lt-render-diff",
+        "implementation_readiness": "complete",
+        "missing_sections": [],
+        "readiness_fill": [],
+        "sha256_after": "98de4a4fbd7a90c20a18f74d8e6783b50295ac470cec1cfd0c1b550efe34ded5",
+        "sha256_before": null
+      },
+      {
+        "classification": {
+          "confidence": 1.0,
+          "decision": "c14_macro_contract",
+          "margin": 1.0
+        },
+        "file_path": "features/lt-render-summary.md",
+        "graph_node_id": "feature-lt-render-summary",
+        "implementation_readiness": "complete",
+        "missing_sections": [],
+        "readiness_fill": [],
+        "sha256_after": "356cd4b19ea4c6c3d897cdbc70118a0bf6d7339d3aa342ddfda6709cd87bfc8d",
+        "sha256_before": null
+      }
+    ],
+    "dry_run": true,
+    "graph_digest_after": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+    "graph_path": ".dev-graph/state/graph.json",
+    "graph_revision_after": 4,
+    "graph_revision_before": 3,
+    "input_sha256": "b1db6d6c86ef6ab6be721f94db4bbd52c9f9783d073b8ac3924474bbc450bd5f",
+    "node_ids": [
+      "feature-lt-render-diff",
+      "feature-lt-render-summary"
+    ],
+    "operation": "add",
+    "owner": "C02/run-dev-graph-node",
+    "planned_count": 2,
+    "planned_nodes": [
+      {
+        "artifact_kind": "feature",
+        "confirmation_status": "draft",
+        "depends_on": [
+          "LT-FEATURE-001"
+        ],
+        "evaluation_status": "pending",
+        "graph_node_id": "feature-lt-render-diff",
+        "implementation_readiness": {
+          "status": "complete"
+        },
+        "parent_feature": null,
+        "status": "draft",
+        "tracker_binding": "beads"
+      },
+      {
+        "artifact_kind": "feature",
+        "confirmation_status": "draft",
+        "depends_on": [
+          "feature-lt-render-diff"
+        ],
+        "evaluation_status": "pending",
+        "graph_node_id": "feature-lt-render-summary",
+        "implementation_readiness": {
+          "status": "complete"
+        },
+        "parent_feature": null,
+        "status": "draft",
+        "tracker_binding": "beads"
+      }
+    ],
+    "pre_write_validation": {
+      "findings": 0,
+      "validator": "validate-graph-schema.py"
+    },
+    "receipt_path": ".dev-graph/state/receipts/node-r000004-add.json",
+    "recorded_at": "2026-11-15T11:29:50.274453Z",
+    "repository_id": "local:sha256:c24e8d47bf35a67e20e3af03d14cc63a28402c96966cbd9a041c42f7e8f8638e",
+    "schema_version": "1.0.0",
+    "status": "preview",
+    "template_sources": [
+      "repository:feature.md"
+    ],
+    "valid": true,
+    "write_count": 0
+  },
+  "publication_report": {
+    "targets": [
+      {
+        "graph_node_id": "feature-lt-render-diff",
+        "binding": "beads",
+        "operation": "create epic（保留、実行なし）",
+        "decision": "blocked",
+        "reasons": [
+          "promotion_gate",
+          "cross_binding_dependency"
+        ],
+        "root_edge": {
+          "from": "feature-lt-render-diff",
+          "from_binding": "beads",
+          "to": "LT-FEATURE-001",
+          "to_binding": "none"
+        },
+        "c28_preview": ".dev-graph/cache/decompose-input/feature-lt-render-diff-c28.json",
+        "result": {
+          "blocked": [
+            {
+              "graph_node_id": "feature-lt-render-diff",
+              "planned": true,
+              "reason": "not confirmed/pass/readiness complete",
+              "state": {
+                "confirmation_status": "draft",
+                "evaluation_status": "pending",
+                "implementation_readiness": "complete"
+              }
+            }
+          ],
+          "dry_run": true,
+          "gate": {
+            "graph": ".dev-graph/state/graph.json",
+            "graph_revision": 3,
+            "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+            "planned_node_ids": [
+              "feature-lt-render-diff",
+              "feature-lt-render-summary"
+            ],
+            "planned_preview": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/cases/run-dev-graph-decompose3/fx/.dev-graph/cache/decompose-input/c02-preview.json"
+          },
+          "op": "create",
+          "reason": "promotion_gate",
+          "status": "blocked",
+          "write_count": 0
+        }
+      },
+      {
+        "graph_node_id": "feature-lt-render-summary",
+        "binding": "beads",
+        "operation": "create epic（保留、実行なし）",
+        "decision": "blocked",
+        "reasons": [
+          "promotion_gate",
+          "cross_binding_dependency"
+        ],
+        "root_edge": {
+          "from": "feature-lt-render-diff",
+          "from_binding": "beads",
+          "to": "LT-FEATURE-001",
+          "to_binding": "none"
+        },
+        "c28_preview": ".dev-graph/cache/decompose-input/feature-lt-render-summary-c28.json",
+        "result": {
+          "blocked": [
+            {
+              "graph_node_id": "feature-lt-render-summary",
+              "planned": true,
+              "reason": "not confirmed/pass/readiness complete",
+              "state": {
+                "confirmation_status": "draft",
+                "evaluation_status": "pending",
+                "implementation_readiness": "complete"
+              }
+            }
+          ],
+          "dry_run": true,
+          "gate": {
+            "graph": ".dev-graph/state/graph.json",
+            "graph_revision": 3,
+            "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+            "planned_node_ids": [
+              "feature-lt-render-diff",
+              "feature-lt-render-summary"
+            ],
+            "planned_preview": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/cases/run-dev-graph-decompose3/fx/.dev-graph/cache/decompose-input/c02-preview.json"
+          },
+          "op": "create",
+          "reason": "promotion_gate",
+          "status": "blocked",
+          "write_count": 0
+        }
+      }
+    ],
+    "edges": [
+      {
+        "from": "feature-lt-render-diff",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001",
+        "to_binding": "none",
+        "decision": "blocked",
+        "reason": "cross_binding_dependency"
+      },
+      {
+        "from": "feature-lt-render-summary",
+        "from_binding": "beads",
+        "to": "feature-lt-render-diff",
+        "to_binding": "beads",
+        "decision": "blocked",
+        "reason": "cross_binding_dependency",
+        "root_edge": {
+          "from": "feature-lt-render-diff",
+          "from_binding": "beads",
+          "to": "LT-FEATURE-001",
+          "to_binding": "none"
+        }
+      }
+    ],
+    "eligible_pre_evaluation_draft_count": 0,
+    "writes": {
+      "local_graph": 0,
+      "content": 0,
+      "receipt": 0,
+      "beads": 0,
+      "github": 0,
+      "projects": 0
+    }
+  },
+  "package_report": {
+    "feature": "LT-FEATURE-001",
+    "decision": "登録済み（登録の operation なし）",
+    "existing_receipt": ".dev-graph/state/package-registration-receipt-LT-FEATURE-001.json",
+    "new_package_generation": false
+  },
+  "guards": {
+    "json_parse": "pass",
+    "c02_pre_write_validation": {
+      "findings": 0,
+      "validator": "validate-graph-schema.py"
+    },
+    "original_protected_bytes_unchanged": true,
+    "original_graph_bytes_sha256": "2ed57eab5df249146b285318d5ac55027dcb4f67b4878e2199e2df684932fd0b",
+    "original_graph_canonical_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+    "independent_audit": "選択後に実施",
+    "outer_criteria": "external_pending"
+  }
+}

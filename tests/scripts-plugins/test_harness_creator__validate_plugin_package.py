@@ -372,6 +372,25 @@ def test_pkg_003_ds_store_does_not_break_shared_feedback_copy(tmp_path):
     assert MOD.check_pkg_003(a) == []
 
 
+def test_pkg_003_pytest_cache_does_not_break_shared_feedback_copy(tmp_path):
+    # 写しの中で pytest を回して .pytest_cache ができても、配布物の一致は崩れない (.gitignore 対象で CI には無い)
+    a = _plugin(tmp_path, "demo")
+    b = _plugin(tmp_path, "other")
+    _write_plugin_json(a, {"name": "demo"})
+    _write_plugin_json(b, {"name": "other"})
+    for plug in (a, b):
+        _write_skill(plug, "run-skill-feedback", _full_required_fm())
+    cache = a / "skills" / "run-skill-feedback" / ".pytest_cache" / "v" / "cache"
+    cache.mkdir(parents=True)
+    (cache / "lastfailed").write_text("{}", encoding="utf-8")
+
+    assert MOD.check_pkg_003(a) == []
+
+    # 名前が似ているだけのファイルは配布物として数え、違いは衝突として検出する
+    (a / "skills" / "run-skill-feedback" / ".pytest_cache.md").write_text("note\n", encoding="utf-8")
+    assert len(MOD.check_pkg_003(a)) == 1
+
+
 def _load_ssot():
     path = Path(__file__).resolve().parents[2] / "plugins" / "harness-creator" / "scripts" / "feedback_contract_ssot.py"
     spec = importlib.util.spec_from_file_location("feedback_contract_ssot_for_parity", path)
@@ -380,13 +399,14 @@ def _load_ssot():
     return mod
 
 
-@pytest.mark.parametrize("shape", ["plain", "empty_dir", "symlink", "bytecode", "nested_pycache_md", "ds_store"])
+@pytest.mark.parametrize(
+    "shape", ["plain", "empty_dir", "symlink", "bytecode", "nested_pycache_md", "ds_store", "pytest_cache"])
 def test_tree_fingerprint_matches_feedback_contract_ssot(tmp_path, shape):
     # PKG-003 の一致判定と feedback_contract_ssot.is_vendored_feedback_skill を食い違わせない。
     # 除外の定数と算出を写しているので、同じツリーで同じ digest になることを固定する
     ssot = _load_ssot()
-    assert (MOD._BYTECODE_CACHE_DIR, MOD._BYTECODE_SUFFIXES, MOD._FINDER_METADATA) == (
-        ssot._BYTECODE_CACHE_DIR, ssot._BYTECODE_SUFFIXES, ssot._FINDER_METADATA)
+    assert (MOD._BYTECODE_CACHE_DIR, MOD._BYTECODE_SUFFIXES, MOD._PYTEST_CACHE_DIR, MOD._FINDER_METADATA) == (
+        ssot._BYTECODE_CACHE_DIR, ssot._BYTECODE_SUFFIXES, ssot._PYTEST_CACHE_DIR, ssot._FINDER_METADATA)
     root = tmp_path / "skill"
     (root / "scripts").mkdir(parents=True)
     (root / "SKILL.md").write_text("---\nname: x\n---\n", encoding="utf-8")
@@ -405,6 +425,10 @@ def test_tree_fingerprint_matches_feedback_contract_ssot(tmp_path, shape):
     elif shape == "ds_store":
         (root / ".DS_Store").write_bytes(b"\x00finder")
         (root / "scripts" / ".DS_Store").write_bytes(b"\x00finder")
+    elif shape == "pytest_cache":
+        (root / ".pytest_cache" / "v" / "cache").mkdir(parents=True)
+        (root / ".pytest_cache" / "v" / "cache" / "lastfailed").write_text("{}", encoding="utf-8")
+        (root / ".pytest_cache.md").write_text("note\n", encoding="utf-8")
     assert MOD._tree_fingerprint(root) == ssot.directory_content_sha256(root)
 
 
@@ -800,11 +824,11 @@ def test_pkg_006_settings_broken_json_skipped(tmp_path):
     assert len(fs) == 1
 
 
-def test_pkg_006_invalid_shlex_command_falls_back_to_split(tmp_path):
+def test_pkg_006_invalid_shlex_command_is_not_a_registration(tmp_path):
     p = _plugin(tmp_path)
     (p / "hooks").mkdir(parents=True)
     (p / "hooks" / "guard.py").write_text("#!/usr/bin/env python3\n", encoding="utf-8")
-    # 閉じない引用符で shlex.split が ValueError -> .split() フォールバック
+    # 閉じない引用符の command は実行できない。split で登録成功に読み替えない。
     _write_plugin_json(p, {
         "name": "demo",
         "hooks": {
@@ -813,7 +837,9 @@ def test_pkg_006_invalid_shlex_command_falls_back_to_split(tmp_path):
             ]
         },
     })
-    assert MOD.check_pkg_006(p) == []
+    fs = MOD.check_pkg_006(p)
+    assert any("構造または command が不正" in f["evidence"] for f in fs)
+    assert any("未登録" in f["evidence"] for f in fs)
 
 
 def test_pkg_006_registered_command_without_file_is_finding(tmp_path):
@@ -1546,3 +1572,263 @@ def test_script_has_pep723_header():
     for key in ("name", "purpose", "inputs", "outputs", "contexts", "network",
                 "write-scope", "dependencies"):
         assert f"# {key}:" in head, key
+
+
+@pytest.mark.parametrize("body", [
+    "print('runs on import')\n",
+    "count += 1\n",
+    "if True:\n    run()\n",
+    "def broken(:\n",
+    "try:\n    run()\nexcept ImportError:\n    pass\n",
+    "try:\n    import optional\nexcept Exception:\n    pass\n",
+])
+def test_support_module_ast_rejects_execution_or_invalid_syntax(tmp_path, body):
+    script = tmp_path / "helper.py"
+    script.write_text(body, encoding="utf-8")
+    assert MOD.is_import_only_support_module(script) is False
+
+
+@pytest.mark.parametrize("body", [
+    '"""module docs"""\nimport os\nfrom pathlib import Path\nx = 1\ny: int = 2\n'
+    'def f():\n    run()\nclass C:\n    pass\n',
+    "try:\n    import optional\nexcept ImportError:\n    optional = None\n",
+    "from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n    from optional import Thing\n",
+    "import typing\nif typing.TYPE_CHECKING:\n    from optional import Thing\n",
+])
+def test_support_module_ast_accepts_declarations_and_optional_imports(tmp_path, body):
+    script = tmp_path / "helper.py"
+    script.write_text(body, encoding="utf-8")
+    assert MOD.is_import_only_support_module(script) is True
+
+
+@pytest.mark.parametrize("source,hooks", [
+    (source, value) for source in ("hooks-file", "plugin")
+    for value in (None, 3, {"PreToolUse": {}}, {"PreToolUse": [3]})
+] + [("hooks-file", [])])
+def test_pkg_006_invalid_hooks_map_is_finding(tmp_path, source, hooks):
+    p = _plugin(tmp_path)
+    if source == "hooks-file":
+        (p / "hooks").mkdir()
+        (p / "hooks" / "hooks.json").write_text(json.dumps({"hooks": hooks}), encoding="utf-8")
+    else:
+        _write_plugin_json(p, {"name": "demo", "hooks": hooks})
+    fs = MOD.check_pkg_006(p)
+    assert fs
+    assert all(Path(f["location"]).is_absolute() for f in fs)
+
+
+@pytest.mark.parametrize("prefix", ["${NOT_PLUGIN_ROOT}", "${CLAUDE_PLUGIN_ROOT_EXTRA}", "~/.claude"])
+def test_pkg_006_only_exact_plugin_root_tokens_register_hook(tmp_path, prefix):
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    (p / "hooks" / "guard.py").write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    (p / "hooks" / "hooks.json").write_text(
+        _hooks_json(f"python3 {prefix}/hooks/guard.py"), encoding="utf-8")
+    assert any("未登録" in f["evidence"] for f in MOD.check_pkg_006(p))
+
+
+@pytest.mark.parametrize("kind", ["command", "default-hook-file"])
+def test_pkg_006_symlink_cannot_depend_on_outside_plugin(tmp_path, kind):
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    if kind == "command":
+        outside = tmp_path / "outside.py"
+        outside.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+        (p / "hooks" / "guard.py").symlink_to(outside)
+        (p / "hooks" / "hooks.json").write_text(
+            _hooks_json("python3 ${CLAUDE_PLUGIN_ROOT}/hooks/guard.py"), encoding="utf-8")
+    else:
+        outside = tmp_path / "outside.json"
+        outside.write_text(_hooks_json("true"), encoding="utf-8")
+        (p / "hooks" / "hooks.json").symlink_to(outside)
+    assert any("plugin の中に無い" in f["evidence"] for f in MOD.check_pkg_006(p))
+
+
+def test_pkg_006_non_utf8_hook_file_is_finding(tmp_path):
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    (p / "hooks" / "hooks.json").write_bytes(b"\xff")
+    assert MOD.check_pkg_006(p)
+
+
+@pytest.mark.parametrize("target", ["missing.json", "hooks.json"])
+def test_pkg_006_broken_or_cyclic_default_hook_file_is_finding(tmp_path, target):
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    (p / "hooks" / "hooks.json").symlink_to(target)
+    assert MOD.check_pkg_006(p)
+
+
+def test_pkg_006_hook_file_read_error_is_finding(tmp_path, monkeypatch):
+    p = _plugin(tmp_path)
+    (p / "hooks").mkdir()
+    hook_file = p / "hooks" / "hooks.json"
+    hook_file.write_text(_hooks_json("true"), encoding="utf-8")
+    original = Path.read_text
+
+    def read_text(path, *args, **kwargs):
+        if path == hook_file:
+            raise PermissionError("blocked hook file")
+        return original(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", read_text)
+    fs = MOD.check_pkg_006(p)
+    assert len(fs) == 1
+    assert "JSON の object として読めない" in fs[0]["evidence"]
+
+
+@pytest.mark.parametrize("slug", ["../other", "a/b", "/tmp/demo", "", "Demo", "a_b", "-demo", "demo-"])
+def test_main_rejects_invalid_plugin_slug_before_resolution(tmp_path, slug):
+    root = _make_plugins_root(tmp_path)
+    proc = _run_cli([f"--plugin={slug}", "--plugins-root", str(root)])
+    assert proc.returncode == 2
+    assert "invalid --plugin" in proc.stderr
+    assert proc.stdout == ""
+
+
+@pytest.mark.parametrize("slug,accepted", [("1demo", False), ("a", False), ("demo--test", True)])
+def test_main_plugin_slug_matches_contract_schema(tmp_path, slug, accepted):
+    root = _make_plugins_root(tmp_path, name=slug)
+    proc = _run_cli([f"--plugin={slug}", "--plugins-root", str(root), "--check", "pkg-007"])
+    assert proc.returncode == (0 if accepted else 2)
+    if not accepted:
+        assert "invalid --plugin" in proc.stderr
+
+
+# PKG-007: 明示 script_refs と配布内完結性の境界
+
+def _pkg007_ref_skill(tmp_path, refs):
+    root = tmp_path / 'plugin'
+    folder = root / 'skills' / 'run-demo'
+    folder.mkdir(parents=True)
+    md = folder / 'SKILL.md'
+    md.write_text('---\nname: run-demo\n' + refs + '\n---\n本文\n')
+    return root, folder, md
+
+
+def _pkg007_ref_script(path, text='#!/usr/bin/env python3\n', mode=0o755):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text)
+    path.chmod(mode)
+    return path
+
+
+@pytest.mark.parametrize('refs', [
+    'script_refs:\n  - "scripts/check.py" # note',
+    "script_refs: ['scripts/check.py'] # note",
+])
+def test_pkg_007_refs_yaml_block_flow_quotes_comments(tmp_path, refs):
+    root, folder, _ = _pkg007_ref_skill(tmp_path, refs)
+    _pkg007_ref_script(folder / 'scripts/check.py')
+    assert MOD.check_pkg_007(root) == []
+
+
+@pytest.mark.parametrize('refs', [
+    'script_refs: scripts/check.py', 'script_refs: null', 'script_refs: [3]',
+    'script_refs: [scripts/check.py',
+    'script_refs: []\nscript_refs: []',
+    'script_refs: [""]',
+])
+def test_pkg_007_refs_malformed_yaml_or_refs_fail_at_source(tmp_path, refs):
+    root, _, md = _pkg007_ref_skill(tmp_path, refs)
+    fs = MOD.check_pkg_007(root)
+    assert len(fs) == 1
+    assert fs[0]['location'] == str(md)
+
+
+def test_pkg_007_refs_skill_candidate_precedes_plugin_candidate(tmp_path):
+    root, folder, _ = _pkg007_ref_skill(tmp_path, 'script_refs: [scripts/check.py]')
+    local = _pkg007_ref_script(folder / 'scripts/check.py', 'print(1)\n', 0o644)
+    _pkg007_ref_script(root / 'scripts/check.py')
+    fs = MOD.check_pkg_007(root)
+    assert len(fs) == 1
+    assert fs[0]['location'] == str(local)
+    assert 'shebang' in fs[0]['evidence'] and '+x' in fs[0]['evidence']
+
+
+@pytest.mark.parametrize('kind', ['broken', 'external'])
+def test_pkg_007_refs_invalid_first_candidate_is_not_rescued(tmp_path, kind):
+    root, folder, md = _pkg007_ref_skill(tmp_path, 'script_refs: [scripts/check.py]')
+    local = folder / 'scripts/check.py'
+    local.parent.mkdir()
+    target = tmp_path / 'outside.py'
+    if kind == 'external':
+        _pkg007_ref_script(target)
+    local.symlink_to(target)
+    _pkg007_ref_script(root / 'scripts/check.py')
+    fs = MOD.check_pkg_007(root)
+    assert len(fs) == 1
+    assert fs[0]['location'] == (str(md) if kind == 'broken' else str(target))
+
+
+def test_pkg_007_refs_missing_reference_fails_even_without_root_scripts(tmp_path):
+    root, _, md = _pkg007_ref_skill(tmp_path, 'script_refs: [scripts/missing.py]')
+    fs = MOD.check_pkg_007(root)
+    assert len(fs) == 1 and fs[0]['location'] == str(md)
+
+
+def test_pkg_007_refs_explicit_helper_is_not_exempt(tmp_path):
+    root, folder, _ = _pkg007_ref_skill(tmp_path, 'script_refs: [scripts/helper.py]')
+    _pkg007_ref_script(folder / 'scripts/helper.py', 'def helper():\n    pass\n', 0o644)
+    fs = MOD.check_pkg_007(root)
+    assert len(fs) == 1 and 'shebang' in fs[0]['evidence'] and '+x' in fs[0]['evidence']
+
+
+def test_pkg_007_refs_unreferenced_root_helper_keeps_existing_exemption(tmp_path):
+    root, _, _ = _pkg007_ref_skill(tmp_path, 'script_refs: []')
+    _pkg007_ref_script(root / 'scripts/helper.py', 'def helper():\n    pass\n', 0o644)
+    assert MOD.check_pkg_007(root) == []
+
+
+def test_pkg_007_refs_duplicate_aliases_and_root_scan_emit_one_finding(tmp_path):
+    root, folder, _ = _pkg007_ref_skill(tmp_path, 'script_refs: [scripts/a.py, scripts/b.py, ../../scripts/check.py]')
+    real = _pkg007_ref_script(root / 'scripts/check.py', 'print(1)\n', 0o644)
+    (folder / 'scripts').mkdir()
+    (folder / 'scripts/a.py').symlink_to(real)
+    (folder / 'scripts/b.py').symlink_to(real)
+    fs = MOD.check_pkg_007(root)
+    assert len(fs) == 1
+    assert fs[0]['location'] == str(real)
+    assert 'scripts/a.py' in fs[0]['evidence'] and 'scripts/b.py' in fs[0]['evidence']
+
+
+def test_pkg_007_refs_permission_contract_uses_mode_bits(tmp_path, monkeypatch):
+    root, folder, _ = _pkg007_ref_skill(tmp_path, 'script_refs: [scripts/check.py]')
+    _pkg007_ref_script(folder / 'scripts/check.py', mode=0o500)
+    monkeypatch.setattr(os, 'access', lambda *args: False)
+    assert MOD.check_pkg_007(root) == []
+
+
+def test_pkg_007_refs_reference_directory_is_not_script(tmp_path):
+    root, folder, _ = _pkg007_ref_skill(tmp_path, 'script_refs: [scripts/check.py]')
+    (folder / 'scripts/check.py').mkdir(parents=True)
+    fs = MOD.check_pkg_007(root)
+    assert len(fs) == 1 and '通常ファイル' in fs[0]['evidence']
+
+
+def test_pkg_007_declares_pyyaml_with_valid_pep723():
+    tomllib = pytest.importorskip("tomllib")
+    block = SCRIPT.read_text().split('# /// script\n', 1)[1].split('# ///', 1)[0]
+    metadata = tomllib.loads('\n'.join(line.removeprefix('# ') for line in block.splitlines()))
+    assert metadata['dependencies'] == ['PyYAML>=6.0']
+
+
+@pytest.mark.parametrize("failure", ["unreadable", "non-utf8"])
+def test_pkg_007_input_read_error_remains_exit2(tmp_path, monkeypatch, capsys, failure):
+    root, _, md = _pkg007_ref_skill(tmp_path, 'script_refs: []')
+    _write_package_contract(root)
+    if failure == "non-utf8":
+        md.write_bytes(b"\xff")
+    else:
+        original = Path.read_text
+
+        def read_text(path, *args, **kwargs):
+            if path == md:
+                raise PermissionError("blocked skill")
+            return original(path, *args, **kwargs)
+
+        monkeypatch.setattr(Path, "read_text", read_text)
+    _argv(monkeypatch, ["--plugin-dir", str(root), "--check", "pkg-007"])
+    assert MOD.main() == 2
+    captured = capsys.readouterr()
+    assert captured.out == "" and "入力を読めない" in captured.err

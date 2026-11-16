@@ -56,11 +56,12 @@
 | id | path | when_to_read |
 |---|---|---|
 | resource_map | references/resource-map.yaml | scope 解決時 |
-| cache | references/yaml-spec-cache.md | 仕様抽出時 (last_fetched 取得) |
+| index | references/yaml-spec-index.json | 仕様抽出の前 (節・見出しの行範囲と last_fetched を引く) |
+| cache | references/yaml-spec-cache.md | 仕様抽出時 (索引で引いた行範囲だけを offset/limit で読む。全文は読まない) |
 | diff | references/spec-diff-history.md | 履歴併記時 |
 
 ### 3.2 外部ツール / API
-- Read のみ (全文読取・文中検索を含む)。ネットワーク不使用 (fetch は GitHub Actions `update-yaml-spec.yml`)。
+- Read のみ。cache (約1MB) は全文を読まない: 先に索引を Read し、query に当たる見出しの `start_line`/`end_line` から `offset=start_line`・`limit=end_line-start_line+1` で cache を読む。フィールド名が見出しに無ければ、それを定義する見出し (`Frontmatter reference` など) の範囲を読み、その中で探す。ネットワーク不使用 (fetch は GitHub Actions `update-yaml-spec.yml`)。
 
 ## Layer 4: 共通ポリシー層
 
@@ -68,6 +69,8 @@
 - キャッシュ未配置 → `matches: []` + `staleness=missing` (exit 0)。
   - 目的: 週次 fetch 失敗時にも caller 側 orchestration を止めない。
   - 背景: 初回 fetch 前は cache 物理ファイルが存在しない設計のため exit 1 にはしない。
+- 索引が無い・索引の `last_fetched` が cache の `last_fetched:` と違う・読んだ範囲の 1 行目が見出しと合わない → 索引が古い。`matches: []` + `suggestions` に `python3 scripts/build-yaml-spec-cache.py --reindex` を入れて返す (exit 0)。
+  - 目的: ずれた行範囲から別の節を引用しない。全文 Read に逃げない。
 
 ### 4.2 観測 / ロギング
 - 標準出力に JSON。stderr は診断情報のみ (staleness 判定根拠など)。
@@ -87,6 +90,7 @@
 
 ### 5.3 完了チェックリスト (停止条件)
 - [ ] 全 matches[] が yaml-spec-cache.md の実在行から逐語引用されている
+- [ ] cache を全文読まず、索引で引いた行範囲だけを読んだ
 - [ ] 呼出元責務外の情報 (再 fetch 実行 / spec 改訂) を含まない
 - [ ] 出力が 50 行 / 2KB 目安以内に収まる
 - [ ] `last_fetched` の鮮度判定 (30 日閾値) を正しく行っている
@@ -125,6 +129,6 @@
 
 ## 出力指示 (LLM 実行時に読む箇所)
 
-LLM は `yaml-spec-cache.md` と `spec-diff-history.md` を `{{query}}` で検索し、
+LLM は `yaml-spec-index.json` で `{{query}}` に当たる見出しを選んで `yaml-spec-cache.md` のその行範囲だけを読み、`spec-diff-history.md` を `{{query}}` で検索し、
 `matches[]` + `staleness` フラグ + 変更履歴を JSON で返す。
 余計な前置き・後書き・思考過程出力は禁止。

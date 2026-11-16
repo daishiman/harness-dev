@@ -29,7 +29,7 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: schedule-graphとAgent verifier。
+- 使用資産: schedule-graph。C17 verifier は R3 では起動しない。呼び出し元の skill が R3 の返却を受けてから起動する (`../../agents/dev-graph-parallel-safety-verifier.md` の Layer 6)。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層

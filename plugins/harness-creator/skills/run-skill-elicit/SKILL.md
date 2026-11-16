@@ -46,32 +46,17 @@ feedback_contract: # per-skill 評価基準(SSOT=scripts/feedback_contract_ssot.
       loop_scope: outer
       text: 既出回答から導出可能な値を再質問せず AI が埋め設計用語を直接質問せず対話を5問以内に収め判断が分かれる細部のみ open_questions(escalate)へ退避しユーザーへ代理決定していない
       verify_by: elegant-review
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 ## Pre-choice usable artifact execution
 
-本スキルの最小の実成果物は`eval-log/skill-brief.json`とする。brief は下の「局面カタログ」に沿ったヒアリングを 1 回通して作る (manifest の intro→elicit→structure→validate)。実成果物を作る作業なので、4択より前に必ず行う。schema検証だけを最小guardとして通し、現物path・digest・要点を提示する。run-skill-createから呼ばれたときはcreateのGate 1がこの提示と承認を兼ね、ここで別に4択を聞かない。
-単独で呼ばれたときだけaccept-as-is/light/standard/detailedを記録し、accept-as-isはその場でhandoff完了とする。
+本スキルの最小の実成果物は`eval-log/skill-brief.json`とする。brief は下の「局面カタログ」に沿ったヒアリングを 1 回通して作る (manifest の intro→elicit→structure→validate)。実成果物を作る作業なので、2択より前に必ず行う。schema検証だけを最小guardとして通し、現物path・digest・要点を提示する。run-skill-createから呼ばれたときはcreateのGate 1がこの提示と承認を兼ね、ここで別に2択を聞かない。
+単独で呼ばれたときだけaccept-as-is/diagnoseを記録し、accept-as-isはその場でhandoff完了とする。
 
 ## Post-choice selected improvement execution
 
-light/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ、下のゴールシークループで brief を見直し・評価・修正する (2 回目以降のヒアリング)。workflow-manifest.json の phase_activation は全 skill 共通の値で、この skill ではこの 2 回目以降を指す。create 経由では4択を記録しないので 2 回目は行わず、1 回目の brief を create の Gate 1 に渡して終わる。release/exhaustiveは別の明示eventを必要とする。
+diagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ、下のゴールシークループで brief を見直し・評価・修正する (2 回目以降のヒアリング)。workflow-manifest.json の phase_activation は全 skill 共通の値で、この skill ではこの 2 回目以降を指す。create 経由では2択を記録しないので 2 回目は行わず、1 回目の brief を create の Gate 1 に渡して終わる。release/exhaustiveは別の明示eventを必要とする。
 
 
 # run-skill-elicit

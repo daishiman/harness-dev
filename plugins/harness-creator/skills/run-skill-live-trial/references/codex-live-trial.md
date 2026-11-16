@@ -24,9 +24,9 @@ system-specの独立監査では、起動前の`codex_audit_fixture`に取得元
 ## 成果物提示と選択
 
 1. main contextだけで最小の実成果物と最低限のguardを作る。
-2. assistant本文に実path・bytes SHA-256・開き方・深度の四択を提示する。tool出力や自己申告receiptだけでは提示にならない。
+2. assistant本文に実path・bytes SHA-256・開き方・現状で試すか診断するかの2択を提示する。tool出力や自己申告receiptだけでは提示にならない。
 3. fixtureの`artifact-choice-request.json`を待機状態で書き、turnを終える。outにはまだ書かない。
-4. controllerが本文・現物bytes・許可source・未応答ID・Agent未起動を確認し、本物のuser turnで`standard`を返す。
+4. controllerが本文・現物bytes・許可source・未応答ID・Agent未起動を確認し、本物のuser turnで`diagnose`を返す。
 5. actorは実返答の後にcanonical選択記録を保存し、後続の評価・Agentへ進む。
 
 controllerは選択receipt・署名・承認イベントを自作しない。外部変更の確認はこの深度選択とは別契約である。実native hookや正規guard consumerが未到達なら保留し、generic resumeを契約上の承認へ読み替えない。

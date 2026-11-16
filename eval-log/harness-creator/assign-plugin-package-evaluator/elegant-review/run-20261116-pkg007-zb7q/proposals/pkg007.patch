@@ -1,0 +1,177 @@
+--- plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py
++++ plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py
+@@ -1,21 +1,13 @@
+ #!/usr/bin/env python3
+ # /// script
+-# name: validate-plugin-package
+-# purpose: 1 つの plugin を PKG-002〜008 と PKG-014 で検査し、findings JSON を出す（読むだけで書かない。--output だけ書く）
+-# inputs:
+-#   - argv: [--check pkg-002..pkg-008|pkg-014|all] (--plugin-dir DIR | --plugin NAME [--plugins-root DIR]) [--output PATH|-]
+-#   - env: CLAUDE_PLUGIN_ROOT（--plugin-dir も --plugin も無いときの検査対象）
+-#   - files: <plugin>/.claude-plugin/plugin.json, references/package-contract.json, skills/*/SKILL.md, agents/, hooks/, scripts/, settings/*.json
+-# outputs:
+-#   - stdout: findings JSON（--output - のとき）
+-#   - stderr: 入力エラーの説明
+-#   - exit: 0=全 pass か not_applicable / 1=fail あり / 2=入力エラー（plugin ディレクトリが無い・--check が不正・読み書きできない）
+-# contexts: [C, E]
+-# network: false
+-# write-scope: --output に渡したファイルだけ
+-# dependencies: []
+-# requires-python: ">=3.9"
++# requires-python = ">=3.9"
++# dependencies = ["PyYAML>=6.0"]
+ # ///
++# レビュー用下書き。製品には未適用。
++# PKG-007 の frontmatter を PyYAML SafeLoader で読み、重複 key を拒否する。
++# 単独配布の実行例: uv run draft-validate-plugin-package.py --plugin-dir DIR --check pkg-007
++# python3 で実行する場合は PyYAML>=6.0 を事前にインストールする。
++
+ """PKG-002〜008 / PKG-014 sub-check 実装。
+ 
+ 正本仕様: doc/ClaudeCodeスキルの設計書/36-plugin-package-harness-contract.md
+@@ -745,33 +737,121 @@
+     return findings
+ 
+ 
++def _pkg007_script_refs(skill_md: Path) -> tuple[list[str], str | None]:
++    """YAML 宣言を検証する。注釈は YAML comment としてのみ受理する。"""
++    try:
++        import yaml
++    except ImportError as exc:
++        raise ValueError("PKG-007 requires PyYAML>=6.0 (uv run または依存を事前install)") from exc
++
++    class UniqueSafeLoader(yaml.SafeLoader):
++        pass
++
++    def unique_mapping(loader, node, deep=False):
++        result = {}
++        for key_node, value_node in node.value:
++            key = loader.construct_object(key_node, deep=deep)
++            try:
++                duplicate = key in result
++            except TypeError as exc:
++                raise yaml.constructor.ConstructorError(None, None, "invalid mapping key", key_node.start_mark) from exc
++            if duplicate:
++                raise yaml.constructor.ConstructorError(None, None, f"duplicate YAML key: {key!r}", key_node.start_mark)
++            result[key] = loader.construct_object(value_node, deep=deep)
++        return result
++
++    UniqueSafeLoader.add_constructor(yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG, unique_mapping)
++    text = skill_md.read_text(encoding="utf-8")
++    block = _frontmatter_block(text)
++    if block is None:
++        return [], "frontmatter が無い、または閉じられていない"
++    try:
++        fm = yaml.load(block, Loader=UniqueSafeLoader)
++    except yaml.YAMLError as exc:
++        return [], f"frontmatter YAML が不正: {exc}"
++    if not isinstance(fm, dict):
++        return [], "frontmatter は mapping でなければならない"
++    if "script_refs" not in fm:
++        return [], None
++    refs = fm["script_refs"]
++    if not isinstance(refs, list) or any(not isinstance(ref, str) or not ref.strip() for ref in refs):
++        return [], "script_refs は非空文字列の配列でなければならない（空配列は可）"
++    return refs, None
++
++
+ def check_pkg_007(plugin_dir: Path) -> list[dict]:
++    """下書き: 明示 script_refs と従来の root scripts 検査の和集合。"""
+     findings: list[dict] = []
++    root = plugin_dir.resolve()
++    # 実体ごとに集約する。missing は宣言元 SKILL.md に finding を置く。
++    candidates: dict[str, dict] = {}
++
++    def add_candidate(path: Path, source: Path | None, ref: str) -> None:
++        errors: list[str] = []
++        try:
++            real = path.resolve(strict=True)
++        except (OSError, RuntimeError) as exc:
++            real = path.absolute()
++            errors.append(f"実体が無い、または解決不能: {ref} ({type(exc).__name__})")
++        key = str(real)
++        item = candidates.setdefault(key, {
++            "path": path, "real": real, "sources": [], "errors": [], "explicit": False,
++        })
++        item["errors"].extend(errors)
++        if source is not None:
++            item["explicit"] = True
++            item["sources"].append(f"{source}: {ref}")
++            if errors:
++                item["missing_source"] = source
++
++    for skill_md in sorted((plugin_dir / "skills").glob("*/SKILL.md")):
++        try:
++            if not skill_md.resolve(strict=True).is_relative_to(root):
++                raise ValueError("plugin の外を指す SKILL.md")
++            refs, error = _pkg007_script_refs(skill_md)
++        except (OSError, RuntimeError) as exc:
++            refs, error = [], f"SKILL.md を読めない: {exc}"
++        except ValueError as exc:
++            if str(exc).startswith("PKG-007 requires"):
++                raise
++            refs, error = [], str(exc)
++        if error:
++            findings.append(make_finding("PKG-007", len(findings) + 1, str(skill_md), error))
++            continue
++        for ref in refs:
++            choices = [skill_md.parent / ref, plugin_dir / ref]
++            # lexists の最初を採用する。broken/external 第一候補から後方救済しない。
++            selected = next((path for path in choices if os.path.lexists(path)), choices[0])
++            add_candidate(selected, skill_md, ref)
++
+     scripts_dir = plugin_dir / "scripts"
+-    if not scripts_dir.exists():
+-        return findings
+-    idx = 1
+-    for sc in scripts_dir.glob("*"):
+-        if not sc.is_file():
+-            continue
+-        if sc.suffix not in {".py", ".sh"}:
+-            continue
+-        if is_import_only_support_module(sc):
+-            continue
+-        text_head = sc.read_text(errors="ignore")[:200] if sc.suffix in {".py", ".sh"} else ""
+-        if sc.suffix in {".py", ".sh"} and not text_head.startswith("#!"):
+-            findings.append(make_finding(
+-                "PKG-007", idx, str(sc),
+-                "shebang 欠落",
+-                suggested_fix="#!/usr/bin/env python3 または #!/usr/bin/env bash を先頭に追加"))
+-            idx += 1
+-        if text_head.startswith("#!") and not os.access(sc, os.X_OK):
+-            findings.append(make_finding(
+-                "PKG-007", idx, str(sc),
+-                "実行可能ビットなし (+x)",
+-                suggested_fix=f"chmod +x {sc}",
+-                auto_fixable=True))
+-            idx += 1
++    if scripts_dir.is_dir():
++        for path in sorted(scripts_dir.glob("*")):
++            if path.suffix in {".py", ".sh"} and (path.is_file() or path.is_symlink()):
++                add_candidate(path, None, str(path))
++
++    for key in sorted(candidates):
++        item = candidates[key]
++        path, real = item["path"], item["real"]
++        errors = item["errors"]
++        if not errors:
++            if not real.is_relative_to(root):
++                errors.append("script の実体が plugin の中に無い（PKG-009 の例外宣言では免除しない）")
++            elif not real.is_file():
++                errors.append("script の実体が通常ファイルでない")
++            elif not item["explicit"] and is_import_only_support_module(real):
++                continue
++            else:
++                if not real.read_bytes().startswith(b"#!"):
++                    errors.append("shebang 欠落")
++                if not real.stat().st_mode & 0o111:
++                    errors.append("実行可能ビットなし (+x)")
++        if errors:
++            evidence = "; ".join(dict.fromkeys(errors))
++            if item["sources"]:
++                evidence += " / 参照元: " + "; ".join(dict.fromkeys(item["sources"]))
++            location = str(item.get("missing_source", real))
++            findings.append(make_finding("PKG-007", len(findings) + 1, location, evidence))
+     return findings
+ 
+ 

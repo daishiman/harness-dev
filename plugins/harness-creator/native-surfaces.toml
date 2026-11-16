@@ -24,7 +24,11 @@ activation_requires = ["user-install", "user-enable", "user-hook-trust"]
 id = "harness-creator-external-intelligence-observe"
 owner = "harness-creator"
 event = "PostToolUse"
-matcher = "Bash|shell_command|exec_command|apply_patch|Skill|Edit|Write"
+# 成功した tool 呼び出しで記録するのは Skill の意味的失敗と Codex の exit code だけ。
+# Claude の Bash / Edit / Write の失敗は PostToolUseFailure で届き、成功応答には exit code が
+# 無いので、ここで拾っても 1 件も記録されない (毎回 python を起動するだけになる)。
+# Codex 名はそのまま Codex の matcher になる (build-hook-registry.py の translate_matcher)。
+matcher = "Skill|shell_command|exec_command|apply_patch"
 command = "python3 \"$CLAUDE_PLUGIN_ROOT/hooks/external-intelligence-observe.py\""
 delivery = "plugin"
 # Codex は plugin_hooks が removed で plugin 配下 hooks.json を読まない。

@@ -4,7 +4,7 @@ genuine な機能テスト (network 不要)。
 tests/scripts-root/test_root__lint_content_review.py が純関数 (_check_verdict 等) を
 網羅しているのに対し、本ファイルは未到達だった main() の全 exit path
 (no target / OK / FAIL)、フィルタ (EXEMPT_KINDS=ref 除外 / 削除 SKILL.md 除外)、
-_git_changed_skills の git diff パースと CalledProcessError フォールバック、
+_git_changed_skills の git diff -z パースと、git の失敗を exit 2 にすること、
 _check_verdict の残りの schema 分岐 (feedback_loop 各型 / iterations 型 /
 skill_md_sha256 欠落 / criteria 空) を網羅する。
 
@@ -147,7 +147,7 @@ def test_main_changed_only_parses_diff(env, monkeypatch, capsys):
     _write_verdicts(env["eval_log"], "p1", "run-c", sha)
 
     def fake_diff(cmd, cwd, text):
-        return "plugins/p1/skills/run-c/SKILL.md\nREADME.md\n"
+        return "plugins/p1/skills/run-c/SKILL.md\0README.md\0"  # git diff -z は NUL 区切り
 
     monkeypatch.setattr(LCR.subprocess, "check_output", fake_diff)
     rc = _run_main(monkeypatch, "--changed-only")
@@ -156,21 +156,23 @@ def test_main_changed_only_parses_diff(env, monkeypatch, capsys):
     assert "1 skill(s) verified" in out
 
 
-def test_main_changed_only_git_error_returns_no_target(env, monkeypatch, capsys):
+def test_main_changed_only_git_error_is_an_input_error(env, monkeypatch, capsys):
+    # git diff の失敗を「対象なし」(rc0) にすると、base を誤っただけで違反が隠れる (fail-open)。
     def boom(cmd, cwd, text):
         raise subprocess.CalledProcessError(128, cmd)
 
     monkeypatch.setattr(LCR.subprocess, "check_output", boom)
     rc = _run_main(monkeypatch, "--changed-only")
-    out = capsys.readouterr().out
-    assert rc == 0
-    assert "no target skill" in out
+    captured = capsys.readouterr()
+    assert rc == 2
+    assert "no target skill" not in captured.out
+    assert "git diff origin/main...HEAD failed" in captured.err
 
 
 def test_main_changed_only_ignores_non_skill_paths(env, monkeypatch, capsys):
     # SKILL.md でないパスのみ -> マッチ無し -> no target
     def fake_diff(cmd, cwd, text):
-        return "scripts/foo.py\nplugins/p1/skills/run-c/references/x.md\n"
+        return "scripts/foo.py\0plugins/p1/skills/run-c/references/x.md\0"
 
     monkeypatch.setattr(LCR.subprocess, "check_output", fake_diff)
     rc = _run_main(monkeypatch, "--changed-only")
@@ -183,9 +185,9 @@ def test_main_changed_only_ignores_non_skill_paths(env, monkeypatch, capsys):
 def test_git_changed_skills_parses_pairs(env, monkeypatch):
     def fake_diff(cmd, cwd, text):
         return (
-            "plugins/alpha/skills/run-a/SKILL.md\n"
-            "plugins/beta/skills/run-b/SKILL.md\n"
-            "plugins/alpha/skills/run-a/references/r.md\n"  # not SKILL.md
+            "plugins/alpha/skills/run-a/SKILL.md\0"
+            "plugins/beta/skills/run-b/SKILL.md\0"
+            "plugins/alpha/skills/run-a/references/r.md\0"  # not SKILL.md
         )
 
     monkeypatch.setattr(LCR.subprocess, "check_output", fake_diff)
@@ -198,7 +200,7 @@ def test_git_changed_skills_parses_pairs(env, monkeypatch):
 def test_main_changed_only_deleted_skill_skipped(env, monkeypatch, capsys):
     # git diff が削除された SKILL.md を返すが実ファイルは無い -> filter で除外
     def fake_diff(cmd, cwd, text):
-        return "plugins/p1/skills/gone/SKILL.md\n"
+        return "plugins/p1/skills/gone/SKILL.md\0"
 
     monkeypatch.setattr(LCR.subprocess, "check_output", fake_diff)
     rc = _run_main(monkeypatch, "--changed-only")
@@ -416,3 +418,143 @@ def test_main_requires_a_mode():
     )
     assert r.returncode == 2
     assert "one of the arguments" in r.stderr or "required" in r.stderr
+
+
+# ---------- 形の崩れた verdict があっても --all は残りの skill を検査する ----------
+
+def test_main_all_reports_a_malformed_verdict_and_keeps_checking(env, monkeypatch, capsys):
+    # 独立レビューの再現: verdict が null だと traceback (rc1) で止まり、ほかの skill の違反を報告しなかった
+    _, sha_a = _write_skill(env["plugins"], "p1", "run-a")
+    rdir = _write_verdicts(env["eval_log"], "p1", "run-a", sha_a)
+    (rdir / "elegance-verdict.json").write_text("null", encoding="utf-8")
+    _write_skill(env["plugins"], "p1", "run-b")  # verdict なし
+    _, sha_c = _write_skill(env["plugins"], "p1", "run-c")
+    _write_verdicts(env["eval_log"], "p1", "run-c", sha_c)
+
+    rc = _run_main(monkeypatch, "--all")
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert "3 violation(s)" in out
+    assert "p1/run-a: elegance-verdict.json schema: verdict must be a JSON object, got null" in out
+    assert "p1/run-b: elegance-verdict.json missing" in out
+    assert "p1/run-b: rubric-verdict.json missing" in out
+    assert "run-c" not in out  # 正しい skill は違反にならない
+
+
+def test_main_all_turns_an_unexpected_error_into_a_violation(env, monkeypatch, capsys):
+    # 想定していない形 (UTF-8 でない SKILL.md) で検査が例外を出しても、その skill の違反にして続ける
+    md, _ = _write_skill(env["plugins"], "p1", "run-a")
+    md.write_bytes(b"---\nkind: run\n---\n\xff\n")
+    sha_a = hashlib.sha256(md.read_bytes()).hexdigest()
+    _write_verdicts(env["eval_log"], "p1", "run-a", sha_a)
+    _write_skill(env["plugins"], "p1", "run-b")  # verdict なし
+
+    rc = _run_main(monkeypatch, "--all")
+    out = capsys.readouterr().out
+    assert rc == 1
+    assert "p1/run-a: elegance-verdict.json check-error: could not finish the check (UnicodeDecodeError" in out
+    assert "p1/run-b: elegance-verdict.json missing" in out
+
+
+def test_guarded_returns_the_check_result_or_a_check_error():
+    assert LCR._guarded(lambda value: value, None) is None
+    assert LCR._guarded(lambda value: value, "stale-sha: x") == "stale-sha: x"
+    assert LCR._guarded(lambda: 1 // 0) == (
+        "check-error: could not finish the check (ZeroDivisionError: integer division or modulo by zero)"
+    )
+
+
+# ---------- --changed-only: git の失敗は exit 2、path は -z で受ける ----------
+
+def test_main_changed_only_without_git_is_an_input_error(env, monkeypatch, capsys):
+    def no_git(cmd, cwd, text):
+        raise FileNotFoundError(2, "No such file or directory", "git")
+
+    monkeypatch.setattr(LCR.subprocess, "check_output", no_git)
+    rc = _run_main(monkeypatch, "--changed-only")
+    captured = capsys.readouterr()
+    assert rc == 2
+    assert "no target skill" not in captured.out
+    assert "FileNotFoundError" in captured.err
+
+
+def test_main_changed_only_outside_a_repository_is_an_input_error(env, monkeypatch, capsys):
+    # ROOT が git repo でないとき (実 git を呼ぶ)。上の階層の repo を拾わないよう ceiling を置く
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(env["tmp"].parent))
+    rc = _run_main(monkeypatch, "--changed-only", "--base", "HEAD")
+    captured = capsys.readouterr()
+    assert rc == 2
+    assert "no target skill" not in captured.out
+    assert "git diff HEAD...HEAD failed (CalledProcessError" in captured.err
+
+
+def test_git_changed_paths_asks_git_for_nul_separated_paths(env, monkeypatch):
+    seen = {}
+
+    def fake_diff(cmd, cwd, text):
+        seen["cmd"] = cmd
+        return "plugins/p1/skills/run-a/references/日本語.md\0plugins/p1/skills/run-a/SKILL.md\0"
+
+    monkeypatch.setattr(LCR.subprocess, "check_output", fake_diff)
+    assert LCR._git_changed_paths("origin/main") == {("p1", "run-a"): {"references/日本語.md", "SKILL.md"}}
+    assert seen["cmd"] == ["git", "diff", "--name-only", "-z", "origin/main...HEAD"]
+
+
+def _git(repo, *args):
+    subprocess.run(
+        ["git", "-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "commit.gpgsign=false", *args],
+        cwd=repo, check=True, capture_output=True,
+    )
+
+
+def test_changed_only_picks_up_a_non_ascii_reference_change(env, monkeypatch):
+    # 独立レビューの再現: core.quotePath=true (git の既定) だと references/日本語.md の変更が
+    # "plugins/..." と引用符つきで出て ^plugins/ に当たらず、--changed-only が取りこぼして rc0 だった
+    repo = env["tmp"]
+    monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(repo.parent))
+    _, sha = _write_skill(env["plugins"], "p1", "run-a")
+    ref = env["plugins"] / "p1" / "skills" / "run-a" / "references" / "日本語.md"
+    ref.parent.mkdir()
+    ref.write_text("before\n", encoding="utf-8")
+    digest = LCR._skill_dir_digest("p1", "run-a")
+    rdir = env["eval_log"] / "p1" / "run-a" / "content-review"
+    rdir.mkdir(parents=True)
+    for kind in ("elegance", "rubric"):
+        verdict = _good_verdict("p1", "run-a", sha, kind)
+        verdict["target"]["skill_dir_digest"] = digest
+        (rdir / f"{kind}-verdict.json").write_text(json.dumps(verdict), encoding="utf-8")
+    _git(repo, "init", "-q")
+    _git(repo, "config", "core.quotePath", "true")  # 利用者の global 設定に左右されないよう既定値に固定
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "base")
+    _git(repo, "tag", "base")
+    ref.write_text("after\n", encoding="utf-8")
+    _git(repo, "commit", "-q", "-am", "change the reference")
+
+    assert LCR._git_changed_paths("base") == {("p1", "run-a"): {"references/日本語.md"}}
+    assert LCR._git_changed_skills("base") == {("p1", "run-a")}
+    rc = _run_main(monkeypatch, "--changed-only", "--base", "base")
+    assert rc == 1  # 変えた reference が digest に当たり stale-dir-digest になる
+
+
+@pytest.mark.parametrize("content", ["null", "{not json", '{"target": []}', '["target"]'])
+def test_changed_only_checks_a_skill_whose_verdict_is_malformed(env, monkeypatch, content):
+    # 形の崩れた verdict を「digest なし」と読んで --changed-only の対象から外すと、壊れた記録が素通りする
+    _write_skill(env["plugins"], "p1", "run-a")
+    rdir = env["eval_log"] / "p1" / "run-a" / "content-review"
+    rdir.mkdir(parents=True)
+    (rdir / "elegance-verdict.json").write_text(content, encoding="utf-8")
+    monkeypatch.setattr(LCR, "_git_changed_paths", lambda base: {("p1", "run-a"): {"references/x.md"}})
+    assert LCR._has_dir_digest("p1", "run-a") is True
+    assert LCR._git_changed_skills("origin/main") == {("p1", "run-a")}
+
+
+# ---------- _expected_criteria_ids: 形の崩れた build trace ----------
+
+@pytest.mark.parametrize("trace", [[], ["run-x"], {"skill_name": ["run-x"], "feedback_contract": {"criteria": [{"id": "IN9"}]}}])
+def test_expected_criteria_ids_skips_a_malformed_global_build_trace(env, trace):
+    # 再現: eval-log/skill-build-trace.json が [] だと data.get で AttributeError、
+    # skill_name が配列だと set の in で unhashable だった。後方互換の best-effort 入力なので読み飛ばす
+    _write_skill(env["plugins"], "p1", "run-x")
+    (env["eval_log"] / "skill-build-trace.json").write_text(json.dumps(trace), encoding="utf-8")
+    assert LCR._expected_criteria_ids("p1", "run-x") == set()

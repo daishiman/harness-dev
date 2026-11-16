@@ -1231,3 +1231,217 @@ def test_out_is_replaced_atomically_without_leftovers(tmp_path: Path, capsys, mo
     assert json.loads(out.read_text(encoding="utf-8"))["subject"] == "types"
     assert sorted(p.name for p in out.parent.iterdir()) == ["plan.json"]
     capsys.readouterr()
+
+
+BUDGET = _load(
+    "run_model_budget_for_planner_test",
+    BUILD_SKILL / "scripts" / "validate-run-model-budget.py",
+)
+BUDGET_POLICY = ROOT / "skills" / "run-elegant-review" / "references" / "convergence-policy.json"
+
+
+def _generation_contract(count: int) -> dict:
+    return {
+        "schema_version": 1,
+        "subject": "run-budget",
+        "obligations": [
+            {
+                "id": f"build:{index}", "claim": f"build {index}", "kind": "generative",
+                "risk": "medium", "activation": "changed", "depends_on": [], "inputs": [],
+                "parameters": {"index": index}, "expected_evidence_paths": [f"{index}.txt"],
+                "model_required": True, "minimum_confidence": 0.9, "reuse": True,
+            }
+            for index in range(count)
+        ],
+    }
+
+
+def test_run_budget_reserves_this_plans_verification_in_the_gate_ledger(tmp_path: Path) -> None:
+    total = BUDGET.load_budget(BUDGET_POLICY)["total"]
+    state_dir = tmp_path / "review-state"
+    BUDGET.reserve(state_dir, "run-1", action_id="IRC-x", component="initial_diagnosis", count=1, total=total)
+    plan = PLANNER.build_plan(
+        _generation_contract(2), tmp_path, tmp_path / "evidence",
+        profile="build-only", run_id="run-1", max_model_actions=100,
+        run_budget_state_dir=state_dir,
+    )
+    # 予約した検証 2 は台帳に入るので、ledger_consumed は IRC の 1 と合わせて 3
+    assert plan["budget_gate"]["run_budget"] == {
+        "total": total, "ledger_consumed": 3, "verification_consumed": 0,
+        "verification_planned": 2, "verification_required": {"run-budget": 2}, "remaining": total - 3,
+    }
+    assert "run-model-action-budget-exceeded" not in plan["budget_gate"]["reasons"]
+    # 同じ plan をもう一度作っても、二重には引かない
+    again = PLANNER.build_plan(
+        _generation_contract(2), tmp_path, tmp_path / "evidence",
+        profile="build-only", run_id="run-1", max_model_actions=100,
+        run_budget_state_dir=state_dir,
+    )
+    assert again["budget_gate"]["run_budget"]["ledger_consumed"] == 3
+
+    # 台帳を上限まで埋めると、予約済みの 2 を超える 3 件目の検証は引けない
+    BUDGET.reserve(state_dir, "run-1", action_id="improve:x", component="bounded_improvement", count=total - 3, total=total)
+    exhausted = PLANNER.build_plan(
+        _generation_contract(3), tmp_path, tmp_path / "evidence",
+        profile="build-only", run_id="run-1", max_model_actions=100,
+        run_budget_state_dir=state_dir,
+    )
+    assert exhausted["budget_gate"]["status"] == "blocked"
+    assert "run-model-action-budget-exceeded" in exhausted["budget_gate"]["reasons"]
+    assert exhausted["budget_gate"]["run_budget"]["remaining"] == -1
+    # 使い切りのときは何も書かない
+    assert BUDGET.ledger_consumed(BUDGET.read_ledger(state_dir, "run-1")) == total
+
+
+def test_run_budget_counts_other_subjects_verification_in_the_same_run(tmp_path: Path) -> None:
+    total = BUDGET.load_budget(BUDGET_POLICY)["total"]
+    state_dir = tmp_path / "review-state"
+    state_dir.mkdir()
+    evidence_dir = tmp_path / "evidence"
+    first = PLANNER.build_plan(_generation_contract(1), tmp_path, evidence_dir, profile="build-only", run_id="run-2")
+    _write_receipt(evidence_dir, tmp_path, first, "build:0")
+    receipts = sorted(evidence_dir.glob("*.json"))
+    for index, path in enumerate(receipts):
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        # 同じ run で別の subject が使った検証 (run_id が同じ) と、別の run の検証 (数えない)
+        for run_id, subject, suffix in (("run-2", "sibling", "same-run"), ("run-9", "sibling", "other-run")):
+            doc.update(run_id=run_id, subject=subject, model_action_id=f"{suffix}-{index}")
+            (evidence_dir / f"{suffix}-{index}.json").write_text(json.dumps(doc), encoding="utf-8")
+    plan = PLANNER.build_plan(
+        _generation_contract(1), tmp_path, evidence_dir,
+        profile="build-only", run_id="run-2", max_model_actions=100,
+        run_budget_state_dir=state_dir,
+    )
+    assert plan["cost_summary"]["consumed_model_actions_by_subject"] == {"sibling": 1}
+    assert plan["cost_summary"]["consumed_model_actions"] == 1
+    run_budget = plan["budget_gate"]["run_budget"]
+    assert run_budget["verification_consumed"] == 1
+    assert run_budget["verification_required"]["sibling"] == 1
+    assert run_budget["ledger_consumed"] == sum(run_budget["verification_required"].values())
+    assert run_budget["remaining"] == total - run_budget["ledger_consumed"]
+
+
+def test_run_budget_refuses_a_state_dir_that_does_not_exist(tmp_path: Path) -> None:
+    import pytest
+
+    with pytest.raises(PLANNER.ContractError, match="state"):
+        PLANNER.build_plan(
+            _generation_contract(1), tmp_path, tmp_path / "evidence",
+            profile="build-only", run_id="run-3", max_model_actions=100,
+            run_budget_state_dir=tmp_path / "missing-state",
+        )
+    assert not (tmp_path / "missing-state").exists()
+
+
+def test_run_budget_is_absent_without_state_dir_and_requires_run_id(tmp_path: Path) -> None:
+    plan = PLANNER.build_plan(_generation_contract(1), tmp_path, tmp_path / "evidence", profile="build-only")
+    assert plan["budget_gate"]["run_budget"] is None
+    try:
+        PLANNER.build_plan(_generation_contract(1), tmp_path, tmp_path / "evidence", profile="build-only", run_budget_state_dir=tmp_path)
+    except PLANNER.ContractError as exc:
+        assert "--run-id" in str(exc)
+    else:
+        raise AssertionError("state dir without run_id must fail closed")
+
+
+# --- coverage 記録の [中] 指摘: 読めない receipt を黙って捨てて、同じ fingerprint の FAIL より PASS を優先しない ---
+
+
+def _pass_and_hidden_fail(tmp_path: Path) -> tuple[dict, Path, Path]:
+    """machine:a の PASS を evidence/ に、同じ fingerprint の FAIL を evidence/hidden/ に置く。"""
+    (tmp_path / "a.txt").write_text("alpha", encoding="utf-8")
+    (tmp_path / "b.txt").write_text("beta", encoding="utf-8")
+    evidence_dir = tmp_path / "evidence"
+    first = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
+    _write_receipt(evidence_dir, tmp_path, first, "machine:a", suffix="pass")
+    _write_receipt(evidence_dir / "hidden", tmp_path, first, "machine:a", status="FAIL", suffix="fail")
+    # 対照: 読めるうちは同じ fingerprint の PASS と FAIL の矛盾として escalate する
+    plan = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
+    assert _reasons(plan)["machine:a"] == "contradictory-current-evidence"
+    assert plan["unreadable_receipts"] == []
+    return first, evidence_dir, evidence_dir / "hidden" / "machine-a-fail.json"
+
+
+def test_fail_receipt_in_an_unlistable_subdirectory_blocks_reuse(tmp_path: Path) -> None:
+    import os
+
+    import pytest
+
+    if os.geteuid() == 0:
+        pytest.skip("root は chmod 000 のディレクトリも読める")
+    _, evidence_dir, _ = _pass_and_hidden_fail(tmp_path)
+    hidden = evidence_dir / "hidden"
+    hidden.chmod(0)
+    try:
+        plan = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
+    finally:
+        hidden.chmod(0o755)
+    # 以前は rglob が hidden/ を黙って飛ばし、FAIL を見ないまま PASS を reuse していた
+    assert _actions(plan)["machine:a"] == "escalate"
+    assert _reasons(plan)["machine:a"] == "unreadable-receipt-blocks-reuse"
+    (entry,) = plan["unreadable_receipts"]
+    assert entry["path"] == str(hidden.resolve()) and entry["error"].startswith("cannot list directory:")
+
+
+def test_fail_receipt_that_cannot_be_decoded_blocks_reuse(tmp_path: Path) -> None:
+    _, evidence_dir, fail = _pass_and_hidden_fail(tmp_path)
+    good = fail.read_bytes()
+    for broken, error in [
+        (b"\xff" + good, "not UTF-8"),
+        (good[:-1], "not JSON"),
+        (b"[" * 100000, "not JSON: nested too deeply"),
+    ]:
+        fail.write_bytes(broken)
+        plan = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
+        assert (_actions(plan)["machine:a"], _reasons(plan)["machine:a"]) == (
+            "escalate", "unreadable-receipt-blocks-reuse"), error
+        (entry,) = plan["unreadable_receipts"]
+        assert entry["path"] == str(fail.resolve()) and entry["error"].startswith(error), entry
+        # PASS の無い obligation は読めない receipt があっても今までどおり実行へ回す
+        assert _actions(plan)["machine:b"] == "check"
+
+
+def test_json_that_is_not_a_receipt_does_not_block_reuse(tmp_path: Path) -> None:
+    # plan などの receipt でない JSON は読めるので、どの obligation の FAIL でもないと分かる
+    _, evidence_dir, fail = _pass_and_hidden_fail(tmp_path)
+    for other in ("[]", '{"subject": "fixture", "obligations": []}', "1"):
+        fail.write_text(other, encoding="utf-8")
+        plan = PLANNER.build_plan(_contract(), tmp_path, evidence_dir, stage="release")
+        assert _actions(plan)["machine:a"] == "reuse", other
+        assert plan["unreadable_receipts"] == []
+
+
+def test_symlink_inside_a_linked_directory_is_hashed_by_its_target_content(tmp_path: Path) -> None:
+    # link 先ディレクトリの中の symlink を link 文字列だけで hash すると、その先を書き換えても fingerprint が変わらない
+    target = tmp_path / "real.txt"
+    target.write_text("v1", encoding="utf-8")
+    shared = tmp_path / "shared"
+    shared.mkdir()
+    (shared / "inner.txt").symlink_to("../real.txt")
+    (shared / "loop").symlink_to(".")  # いま展開しているリンク先へ戻るリンクでも止まる
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    (tree / "linked").symlink_to("../shared")
+    before = (PLANNER.snapshot_path(tmp_path, "tree")["sha256"], PLANNER.snapshot_path(tmp_path, "tree/linked")["sha256"])
+    target.write_text("v2", encoding="utf-8")
+    after = (PLANNER.snapshot_path(tmp_path, "tree")["sha256"], PLANNER.snapshot_path(tmp_path, "tree/linked")["sha256"])
+    assert before[0] != after[0] and before[1] != after[1]
+
+
+def test_checker_id_and_argv_types_are_checked(tmp_path: Path) -> None:
+    broken = [_one_obligation(checker=checker) for checker in (
+        {"id": 1, "argv": ["true"]},
+        {"id": "  ", "argv": ["true"]},
+        {"id": "fixture", "argv": "true"},
+        {"id": "fixture", "argv": []},
+        {"id": "fixture", "argv": ["true", 1]},
+        ["fixture", ["true"]],
+    )]
+    for contract in broken:
+        try:
+            PLANNER.build_plan(contract, tmp_path, tmp_path / "evidence", stage="release")
+        except PLANNER.ContractError as exc:
+            assert "checker" in str(exc)
+            continue
+        raise AssertionError(f"accepted a broken checker: {contract!r:.160}")
+    PLANNER.build_plan(_one_obligation(), tmp_path, tmp_path / "evidence", stage="release")

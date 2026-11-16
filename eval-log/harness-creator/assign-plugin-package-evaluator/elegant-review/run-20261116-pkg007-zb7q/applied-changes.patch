@@ -1,0 +1,517 @@
+--- plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py
++++ plugins/harness-creator/skills/assign-plugin-package-evaluator/scripts/validate-plugin-package.py
+@@ -37,6 +37,7 @@
+ 
+ from __future__ import annotations
+ import argparse
++import ast
+ import hashlib
+ import json
+ import os
+@@ -137,11 +138,11 @@
+ 
+ 
+ def is_import_only_support_module(path: Path) -> bool:
+-    """Return whether a file is an import-only support module.
+-
+-    The 500-line split convention creates ``.py`` helpers in hooks/ and
+-    scripts/. PKG-006/007 must not mistake those helpers for entry points,
+-    while still rejecting missing declarations for executable files.
++    """宣言だけの .py を除外する。未知の実行文・構文不正は除外しない。
++
++    単純/注釈付き代入は宣言として扱うが AugAssign は実行文とする。
++    optional import と TYPE_CHECKING は許可した宣言だけを含む場合に限る。
++    関数・class の内部までは entry point 判定の対象にしない。
+     """
+     if path.suffix != ".py":
+         return False
+@@ -150,7 +151,37 @@
+     text = path.read_text(encoding="utf-8", errors="ignore")
+     if text.startswith("#!"):
+         return False
+-    return not any(line.startswith("if __name__") for line in text.splitlines())
++    try:
++        body = ast.parse(text).body
++    except (SyntaxError, ValueError):
++        return False
++
++    def declarations(nodes: list[ast.stmt], *, allow_pass: bool = False) -> bool:
++        for node in nodes:
++            if isinstance(node, (ast.Import, ast.ImportFrom, ast.FunctionDef,
++                                 ast.AsyncFunctionDef, ast.ClassDef, ast.Assign, ast.AnnAssign)):
++                continue
++            if isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant) and isinstance(node.value.value, str):
++                continue
++            if allow_pass and isinstance(node, ast.Pass):
++                continue
++            if isinstance(node, ast.If) and (
++                isinstance(node.test, ast.Name) and node.test.id == "TYPE_CHECKING"
++                or isinstance(node.test, ast.Attribute) and node.test.attr == "TYPE_CHECKING"
++                and isinstance(node.test.value, ast.Name) and node.test.value.id == "typing"
++            ):
++                if declarations(node.body, allow_pass=True) and declarations(node.orelse, allow_pass=True):
++                    continue
++            if isinstance(node, ast.Try) and node.handlers and all(
++                isinstance(handler.type, ast.Name) and handler.type.id == "ImportError"
++                and declarations(handler.body, allow_pass=True) for handler in node.handlers
++            ) and all(isinstance(item, (ast.Import, ast.ImportFrom)) for item in node.body) and not node.finalbody:
++                if declarations(node.orelse, allow_pass=True):
++                    continue
++            return False
++        return True
++
++    return declarations(body)
+ 
+ 
+ def _parse_completeness_exemptions(fm: dict) -> dict[str, str]:
+@@ -534,13 +565,25 @@
+     hooks_dir = plugin_dir / "hooks"
+     settings_dir = plugin_dir / "settings"
+     actual_hooks = (
+-        {p for p in hooks_dir.glob("*") if p.is_file() and p.suffix in {".py", ".sh"}}
++        {p for p in hooks_dir.glob("*") if (p.is_file() or p.is_symlink()) and p.suffix in {".py", ".sh"}}
+         if hooks_dir.is_dir() else set()
+     )
+     registered: set[str] = set()
+     # (登録元, 登録された文字列, plugin 内で解決した path)
+     referenced: list[tuple[str, str, Path]] = []
+ 
++    def malformed(source: str) -> None:
++        findings.append(make_finding(
++            "PKG-006", len(findings) + 1, source,
++            "hooks の構造または command が不正",
++            suggested_fix="hooks を event ごとの配列と、その中の hooks 配列で構成する"))
++
++    def inside_plugin(path: Path) -> bool:
++        try:
++            return path.resolve().is_relative_to(plugin_dir.resolve())
++        except (OSError, RuntimeError):
++            return False
++
+     def register_hook_name(value: str) -> None:
+         registered.add(Path(value).name)
+ 
+@@ -549,42 +592,69 @@
+         target = plugin_dir / value if "/" in value else hooks_dir / value
+         referenced.append((source, value, target))
+ 
+-    def register_hook_commands(source: str, hooks: object) -> None:
++    def register_hook_commands(source: str, hooks: object, location: Path) -> None:
+         """Claude/Codex hook map に含まれる command entrypoint を登録する。"""
+         if not isinstance(hooks, dict):
++            malformed(str(location))
+             return
+         for event_hooks in hooks.values():
++            if not isinstance(event_hooks, list):
++                malformed(str(location))
++                continue
+             for entry in event_hooks if isinstance(event_hooks, list) else []:
+                 if not isinstance(entry, dict):
++                    malformed(str(location))
+                     continue
+-                inner = entry.get("hooks", [])
++                # settings の旧形式 {command: ...} も受理する。
++                inner = entry.get("hooks", [entry] if "command" in entry else [])
++                if not isinstance(inner, list):
++                    malformed(str(location))
++                    continue
+                 for hook in inner if isinstance(inner, list) else []:
++                    if not isinstance(hook, dict):
++                        malformed(str(location))
++                        continue
+                     command = hook.get("command") if isinstance(hook, dict) else None
++                    if "command" in hook and not isinstance(command, str):
++                        malformed(str(location))
++                        continue
+                     if not isinstance(command, str) or not command:
+                         continue
+                     try:
+                         tokens = shlex.split(command)
+                     except ValueError:
+-                        tokens = command.split()
++                        malformed(str(location))
++                        continue
+                     for token in tokens:
+                         if "/hooks/" not in token:
+                             continue
+-                        register_hook_name(token)
+                         prefix, rest = token.split("/hooks/", 1)
+-                        if rest and ("PLUGIN_ROOT" in prefix or prefix in {"", "."}):
++                        if rest and prefix in {"", ".", "${CLAUDE_PLUGIN_ROOT}", "$CLAUDE_PLUGIN_ROOT", "${PLUGIN_ROOT}", "$PLUGIN_ROOT"}:
++                            register_hook_name(token)
+                             referenced.append((source, token, hooks_dir / rest))
+ 
+     read_hook_files: set[Path] = set()
+ 
+     def register_hook_file(label: str, hook_file: Path) -> None:
+         """hooks file 1 つの command を登録する。同じ file を 2 回読まない。"""
+-        resolved = hook_file.resolve()
++        try:
++            resolved = hook_file.resolve()
++        except (OSError, RuntimeError):
++            findings.append(make_finding(
++                "PKG-006", len(findings) + 1, str(hook_file),
++                f"hooks file の実体を解決できない: {label}"))
++            return
+         if resolved in read_hook_files:
+             return
+         read_hook_files.add(resolved)
++        if not inside_plugin(resolved):
++            findings.append(make_finding(
++                "PKG-006", len(findings) + 1, str(hook_file),
++                f"hooks file の実体が plugin の中に無い: {label}"))
++            return
+         try:
+             hook_data = _load_json_object(hook_file)
+-        except OSError:
++        except (OSError, UnicodeError):
+             hook_data = None
+         if hook_data is None:
+             findings.append(make_finding(
+@@ -592,11 +662,11 @@
+                 f"hooks file を JSON の object として読めない: {label}",
+                 suggested_fix="hooks file を {\"hooks\": {<event>: [...]}} の JSON object に直す"))
+             return
+-        register_hook_commands(label, hook_data.get("hooks", {}))
++        register_hook_commands(label, hook_data.get("hooks", {}), hook_file)
+ 
+     # plugin.json に hooks キーが無くても、Claude Code は hooks/hooks.json を読む
+     default_hook_file = hooks_dir / "hooks.json"
+-    if default_hook_file.is_file():
++    if default_hook_file.is_file() or default_hook_file.is_symlink():
+         register_hook_file("hooks/hooks.json", default_hook_file)
+ 
+     plugin_json = plugin_dir / ".claude-plugin" / "plugin.json"
+@@ -604,15 +674,14 @@
+         data = _load_json_object(plugin_json) or {}
+         hooks = data.get("hooks", {})
+         if isinstance(hooks, dict):
+-            register_hook_commands("plugin.json hooks", hooks)
+-        resolved_root = plugin_dir.resolve()
++            register_hook_commands("plugin.json hooks", hooks, plugin_json)
++        elif not isinstance(hooks, str) and not (
++            isinstance(hooks, list) and all(isinstance(item, str) for item in hooks)
++        ):
++            malformed(str(plugin_json))
+         for hook_ref in [hooks] if isinstance(hooks, str) else _str_list(hooks):
+-            hook_file = (plugin_dir / hook_ref).resolve()
+-            try:
+-                hook_file.relative_to(resolved_root)
+-            except ValueError:
+-                hook_file = Path()
+-            if hook_file.is_file():
++            hook_file = plugin_dir / hook_ref
++            if inside_plugin(hook_file) and hook_file.is_file():
+                 register_hook_file(hook_ref, hook_file)
+             else:
+                 findings.append(make_finding(
+@@ -638,15 +707,19 @@
+             if data is None:
+                 continue
+             hooks = data.get("hooks", {})
++            # 旧 settings 形式の basename command だけを追加登録する。
+             if isinstance(hooks, dict):
+                 for event_hooks in hooks.values():
+                     for h in event_hooks if isinstance(event_hooks, list) else []:
+                         cmd = h.get("command") if isinstance(h, dict) else None
+-                        if isinstance(cmd, str) and cmd:
++                        if isinstance(cmd, str) and cmd and "/" not in cmd and len(cmd.split()) == 1:
+                             register_hook_name(cmd)
+-                register_hook_commands(f"settings/{cfg.name}", hooks)
++            register_hook_commands(f"settings/{cfg.name}", hooks, cfg)
+     idx = len(findings) + 1
+     for hook in sorted(actual_hooks):
++        referenced.append(("hooks/", hook.name, hook))
++        if not inside_plugin(hook) or not hook.is_file():
++            continue
+         if is_import_only_support_module(hook):
+             continue
+         if hook.name not in registered:
+@@ -655,14 +728,13 @@
+                 "hook ファイル実体は存在するが plugin hook 契約に未登録",
+                 suggested_fix=f"hooks/hooks.json または package contract に {hook.name} を追加"))
+             idx += 1
+-    plugin_root = os.path.normpath(plugin_dir)
+     seen: set[str] = set()
+     for source, value, target in referenced:
+         normalized = os.path.normpath(target)
+         if normalized in seen:
+             continue
+         seen.add(normalized)
+-        inside = normalized == plugin_root or normalized.startswith(plugin_root + os.sep)
++        inside = inside_plugin(Path(normalized))
+         if inside and Path(normalized).is_file():
+             continue
+         findings.append(make_finding(
+@@ -897,6 +969,10 @@
+     ap.add_argument("--output", default="-")
+     args = ap.parse_args()
+ 
++    if args.plugin is not None and not re.fullmatch(r"[a-z][a-z0-9-]*[a-z0-9]", args.plugin):
++        print(f"error: invalid --plugin slug: {args.plugin!r}", file=sys.stderr)
++        return 2
++
+     plugin_dir = _resolve_plugin_dir(args.plugin, args.plugin_dir, args.plugins_root)
+     if plugin_dir is None:
+         print("error: --plugin-dir, --plugin, or CLAUDE_PLUGIN_ROOT is required", file=sys.stderr)
+--- tests/scripts-plugins/test_harness_creator__validate_plugin_package.py
++++ tests/scripts-plugins/test_harness_creator__validate_plugin_package.py
+@@ -824,11 +824,11 @@
+     assert len(fs) == 1
+ 
+ 
+-def test_pkg_006_invalid_shlex_command_falls_back_to_split(tmp_path):
++def test_pkg_006_invalid_shlex_command_is_not_a_registration(tmp_path):
+     p = _plugin(tmp_path)
+     (p / "hooks").mkdir(parents=True)
+     (p / "hooks" / "guard.py").write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+-    # 閉じない引用符で shlex.split が ValueError -> .split() フォールバック
++    # 閉じない引用符の command は実行できない。split で登録成功に読み替えない。
+     _write_plugin_json(p, {
+         "name": "demo",
+         "hooks": {
+@@ -837,7 +837,9 @@
+             ]
+         },
+     })
+-    assert MOD.check_pkg_006(p) == []
++    fs = MOD.check_pkg_006(p)
++    assert any("構造または command が不正" in f["evidence"] for f in fs)
++    assert any("未登録" in f["evidence"] for f in fs)
+ 
+ 
+ def test_pkg_006_registered_command_without_file_is_finding(tmp_path):
+@@ -1570,3 +1572,124 @@
+     for key in ("name", "purpose", "inputs", "outputs", "contexts", "network",
+                 "write-scope", "dependencies"):
+         assert f"# {key}:" in head, key
++
++
++@pytest.mark.parametrize("body", [
++    "print('runs on import')\n",
++    "count += 1\n",
++    "if True:\n    run()\n",
++    "def broken(:\n",
++    "try:\n    run()\nexcept ImportError:\n    pass\n",
++    "try:\n    import optional\nexcept Exception:\n    pass\n",
++])
++def test_support_module_ast_rejects_execution_or_invalid_syntax(tmp_path, body):
++    script = tmp_path / "helper.py"
++    script.write_text(body, encoding="utf-8")
++    assert MOD.is_import_only_support_module(script) is False
++
++
++@pytest.mark.parametrize("body", [
++    '"""module docs"""\nimport os\nfrom pathlib import Path\nx = 1\ny: int = 2\n'
++    'def f():\n    run()\nclass C:\n    pass\n',
++    "try:\n    import optional\nexcept ImportError:\n    optional = None\n",
++    "from typing import TYPE_CHECKING\nif TYPE_CHECKING:\n    from optional import Thing\n",
++    "import typing\nif typing.TYPE_CHECKING:\n    from optional import Thing\n",
++])
++def test_support_module_ast_accepts_declarations_and_optional_imports(tmp_path, body):
++    script = tmp_path / "helper.py"
++    script.write_text(body, encoding="utf-8")
++    assert MOD.is_import_only_support_module(script) is True
++
++
++@pytest.mark.parametrize("source,hooks", [
++    (source, value) for source in ("hooks-file", "plugin")
++    for value in (None, 3, {"PreToolUse": {}}, {"PreToolUse": [3]})
++] + [("hooks-file", [])])
++def test_pkg_006_invalid_hooks_map_is_finding(tmp_path, source, hooks):
++    p = _plugin(tmp_path)
++    if source == "hooks-file":
++        (p / "hooks").mkdir()
++        (p / "hooks" / "hooks.json").write_text(json.dumps({"hooks": hooks}), encoding="utf-8")
++    else:
++        _write_plugin_json(p, {"name": "demo", "hooks": hooks})
++    fs = MOD.check_pkg_006(p)
++    assert fs
++    assert all(Path(f["location"]).is_absolute() for f in fs)
++
++
++@pytest.mark.parametrize("prefix", ["${NOT_PLUGIN_ROOT}", "${CLAUDE_PLUGIN_ROOT_EXTRA}", "~/.claude"])
++def test_pkg_006_only_exact_plugin_root_tokens_register_hook(tmp_path, prefix):
++    p = _plugin(tmp_path)
++    (p / "hooks").mkdir()
++    (p / "hooks" / "guard.py").write_text("#!/usr/bin/env python3\n", encoding="utf-8")
++    (p / "hooks" / "hooks.json").write_text(
++        _hooks_json(f"python3 {prefix}/hooks/guard.py"), encoding="utf-8")
++    assert any("未登録" in f["evidence"] for f in MOD.check_pkg_006(p))
++
++
++@pytest.mark.parametrize("kind", ["command", "default-hook-file"])
++def test_pkg_006_symlink_cannot_depend_on_outside_plugin(tmp_path, kind):
++    p = _plugin(tmp_path)
++    (p / "hooks").mkdir()
++    if kind == "command":
++        outside = tmp_path / "outside.py"
++        outside.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
++        (p / "hooks" / "guard.py").symlink_to(outside)
++        (p / "hooks" / "hooks.json").write_text(
++            _hooks_json("python3 ${CLAUDE_PLUGIN_ROOT}/hooks/guard.py"), encoding="utf-8")
++    else:
++        outside = tmp_path / "outside.json"
++        outside.write_text(_hooks_json("true"), encoding="utf-8")
++        (p / "hooks" / "hooks.json").symlink_to(outside)
++    assert any("plugin の中に無い" in f["evidence"] for f in MOD.check_pkg_006(p))
++
++
++def test_pkg_006_non_utf8_hook_file_is_finding(tmp_path):
++    p = _plugin(tmp_path)
++    (p / "hooks").mkdir()
++    (p / "hooks" / "hooks.json").write_bytes(b"\xff")
++    assert MOD.check_pkg_006(p)
++
++
++@pytest.mark.parametrize("target", ["missing.json", "hooks.json"])
++def test_pkg_006_broken_or_cyclic_default_hook_file_is_finding(tmp_path, target):
++    p = _plugin(tmp_path)
++    (p / "hooks").mkdir()
++    (p / "hooks" / "hooks.json").symlink_to(target)
++    assert MOD.check_pkg_006(p)
++
++
++def test_pkg_006_hook_file_read_error_is_finding(tmp_path, monkeypatch):
++    p = _plugin(tmp_path)
++    (p / "hooks").mkdir()
++    hook_file = p / "hooks" / "hooks.json"
++    hook_file.write_text(_hooks_json("true"), encoding="utf-8")
++    original = Path.read_text
++
++    def read_text(path, *args, **kwargs):
++        if path == hook_file:
++            raise PermissionError("blocked hook file")
++        return original(path, *args, **kwargs)
++
++    monkeypatch.setattr(Path, "read_text", read_text)
++    fs = MOD.check_pkg_006(p)
++    assert len(fs) == 1
++    assert "JSON の object として読めない" in fs[0]["evidence"]
++
++
++@pytest.mark.parametrize("slug", ["../other", "a/b", "/tmp/demo", "", "Demo", "a_b", "-demo", "demo-"])
++def test_main_rejects_invalid_plugin_slug_before_resolution(tmp_path, slug):
++    root = _make_plugins_root(tmp_path)
++    proc = _run_cli([f"--plugin={slug}", "--plugins-root", str(root)])
++    assert proc.returncode == 2
++    assert "invalid --plugin" in proc.stderr
++    assert proc.stdout == ""
++
++
++@pytest.mark.parametrize("slug,accepted", [("1demo", False), ("a", False), ("demo--test", True)])
++def test_main_plugin_slug_matches_contract_schema(tmp_path, slug, accepted):
++    root = _make_plugins_root(tmp_path, name=slug)
++    proc = _run_cli([f"--plugin={slug}", "--plugins-root", str(root), "--check", "pkg-007"])
++    assert proc.returncode == (0 if accepted else 2)
++    if not accepted:
++        assert "invalid --plugin" in proc.stderr
+--- plugins/harness-creator/skills/assign-plugin-package-evaluator/SKILL.md
++++ plugins/harness-creator/skills/assign-plugin-package-evaluator/SKILL.md
+@@ -97,7 +97,7 @@
+ | PKG-003 | `check_pkg_003` | 同じ plugins root の別 plugin と skill 名・agent 名が重なる。symlink で配った skill・agent は数えない。`run-skill-feedback` の配布コピーは中身が一致すれば衝突にしない（一致の判定では `__pycache__`・`.pyc`/`.pyo`・`.pytest_cache`・`.DS_Store` を除く） |
+ | PKG-004 | `check_pkg_004` | 自前 skill（symlink でない）の frontmatter が読めない、または `name`/`description`/`kind` が欠落か空値。`responsibility_refs`/`schema_refs`/`manifest` の欠落か空値は P1（`manifest` は理由付きの `completeness_exempt` で代えられる） |
+ | PKG-005 | `check_pkg_005` | `agents/*.md` の frontmatter `name` が無いか、ファイル名（拡張子を除く）と違う。自前 skill の `subagent_refs`（block 形式でも flow 形式 `[a, b]` でもよい。`agents/x.md` と書けば `x`）が指す `agents/<name>.md` が無い |
+-| PKG-006 | `check_pkg_006` | `hooks/` 直下の `*.py`/`*.sh` がどこにも登録されていない（名前は拡張子まで含めて完全一致で比べる。`guard` の登録は `guard.py` を満たさない。import されるだけの helper とみなした `.py` は数えない。helper とみなすのは、stem が識別子で、shebang が無く、行頭が `if __name__` の行が無いもの）。逆に、`hooks/hooks.json`（`plugin.json` に `hooks` キーが無くても Claude Code が読む既定の場所）、`plugin.json` の `hooks`（object ならその中身、文字列か文字列の配列なら指す hooks file の中身）、package contract と `plugin.json` の `entry_points.hooks`、`settings/*.json` の hook command のうち `${CLAUDE_PLUGIN_ROOT}/hooks/…` か `./hooks/…` を指すものに実体が無い、または plugin の外を指す。`plugin.json` の `hooks` が指す file が plugin の中に無い。hooks file が JSON の object として読めない |
++| PKG-006 | `check_pkg_006` | `hooks/` 直下の `*.py`/`*.sh` がどこにも登録されていない（名前は拡張子まで含めて完全一致で比べる。`guard` の登録は `guard.py` を満たさない。helper とみなした `.py` は数えない。helper 判定の正本は `validate-plugin-package.py` の `is_import_only_support_module`）。逆に、`hooks/hooks.json`（`plugin.json` に `hooks` キーが無くても Claude Code が読む既定の場所）、`plugin.json` の `hooks`（object ならその中身、文字列か文字列の配列なら指す hooks file の中身）、package contract と `plugin.json` の `entry_points.hooks`、`settings/*.json` の hook command のうち `${CLAUDE_PLUGIN_ROOT}/hooks/…` か `./hooks/…` を指すものに実体が無い、または plugin の外を指す。`plugin.json` の `hooks` が指す file が plugin の中に無い。hooks file が JSON の object として読めない |
+ | PKG-007 | `check_pkg_007` | plugin root 直下の `scripts/` にある `*.py`/`*.sh` に shebang が無い、または shebang があるのに `+x` が無い。PKG-006 と同じ判定で helper とみなした `.py` は見ない |
+ | PKG-008 | `check_pkg_008` | `settings/*.json` が JSON として読めない、最上位が object でない、`$schema` が無い（P1） |
+ | PKG-014 | `check_pkg_014` | `kind` / combinator 宣言と goal-seek / feedback runtime 設定・本文配線が不一致 |
+@@ -109,7 +109,7 @@
+ | PKG ID | 判定すること | script で判定しない理由 |
+ |---|---|---|
+ | PKG-003 | hook 名・permission 名が同じ marketplace の別 plugin と衝突しない | 何を同じ名前とみなすか（event と matcher の組・permission の pattern の包含）を機械的に決められない |
+-| PKG-006 | `hooks/` 直下で helper とみなして数えなかった `.py` が、本当に import されるだけである。top-level に import・def・class・代入・docstring 以外の文があれば、登録の要る hook として扱う | script の helper の判定は行の字面だけを見て、top-level の文を読まない |
++| PKG-006 | `hooks/` 直下で helper とみなして数えなかった `.py` が、本当に import されるだけである。機械判定が許容する代入・関数/class 定義に含まれる処理も読み、entry point なら登録の要る hook として扱う | `is_import_only_support_module` は AST の文の種類を判定し、代入右辺・decorator・関数/class 内部の実行意図までは判定しない |
+ | PKG-007 | SKILL.md の `script_refs` が指す script を skill ディレクトリ・plugin root の順に探し、plugin の中に実在して shebang と `+x` がある。参照先が `skills/*/scripts/` にあっても同じ。`script_refs` に載った `.py` は、PKG-006 の判定で helper とみなされる形でも shebang と `+x` を求める（catalog の「参照される scripts/*」に例外が無い）。plugin の中に無い参照は、repo root や別 plugin に実体があっても fail にする（install した plugin の中の path としては解決できない）。`package-contract.json` の宣言（`depends_on`・`repo_refs` など）と PKG-009 の既定の許可 prefix は、参照してよいかを PKG-009 が決めるためのもので、PKG-007 の fail を外さない。plugin root の `scripts/` で helper とみなして見なかった `.py` のうち `script_refs` に載っていないものも、PKG-006 の行と同じく top-level の文を読み、entry point なら shebang と `+x` を確かめる | `script_refs` には注釈付きの値が混じり、どの文字列がどの script を指すかを機械で決められない |
+ | PKG-008 | 34a 章 INV-1〜12 を満たし、Layer3（user・project 設定）とのマージで衝突しない | 不変条件の多くは他の設定層との組み合わせで決まり、settings 断片だけでは判定できない |
+ 
+--- plugins/harness-creator/skills/assign-plugin-package-evaluator/prompts/R1-run-pkg-check.md
++++ plugins/harness-creator/skills/assign-plugin-package-evaluator/prompts/R1-run-pkg-check.md
+@@ -31,7 +31,7 @@
+ ### 1.2 倫理ガード
+ 
+ - proposer ≠ approver（23章）: 本 worker は判定者であり改善実行はしない
+-- context: fork 強制（呼出元 context を継承しない）
++- context: fork 強制（`target_plugin` / `pkg_ids` / `options` の構造化入力のみを渡し、親 context の判断履歴は持ち込まない）
+ 
+ ## Layer 2: ドメイン層 (本質ロジック)
+ 
+@@ -125,15 +125,11 @@
+ - [ ] `unsupported_pkg_id` を受理せず exit 2 を返している
+ - [ ] target 配下に書込み副作用が発生していない
+ 
+-### 5.4 実行方式 (固定手順を持たないゴールシークループ)
++### 5.4 実行方式 (単発評価)
+ 
+-- 方針: 固定手順を列挙しない。§5.2 ゴール定義と §5.3 完了チェックリストを唯一の指針とし、入力状況に応じて必要な手順を都度設計・実行・自己評価する
+-- ループ:
+-  1. §5.3 の未充足項目を特定する
+-  2. 未充足を解消する手順を立案（入力検証 / plugin.json 読込 / not_applicable 確定 / `validate-plugin-package.py --check <id>` sub-process 起動 / 集約 / eval-log 保存 等から必要なものを選択）
+-  3. 立案手順を実行し `pkg_checks` と `verdict` を更新
+-  4. §5.3 で自己評価し全項目充足まで反復（上限: Layer 4 信頼度・最大反復）
+-- 逸脱時: ループ上限到達 / sub-process 連続失敗時は §4.1 に従い exit code を設定し、Layer 4 エスカレーション経路へ
++- 方針: 一度の採点で完結し、改善・再採点のループは回さない。§5.2 ゴール定義と §5.3 完了チェックリストで採点の網羅性を確かめる
++- 実行: 入力に応じて各対象 PKG ID の機械検査と評価者判定を実行し、findings の集約、verdict の集計、schema 検証、指定時の eval-log 保存を行う
++- 失敗時: 入力エラーは §4.1 に従い exit 2 で止める。sub-process 異常で終了した検査のみ `skip_reason` を記録し、残りの対象を採点する
+ 
+ ## Layer 6: オーケストレーション層
+ 
+@@ -156,7 +152,7 @@
+ 
+ ### 7.2 言語
+ 
+-- 本文: 日本語、findings の `message` フィールドは日本語、key / status enum は英語
++- 本文: 日本語、findings の `evidence` / `suggested_fix` フィールドは日本語、key / status enum は英語
+ 
+ ---
+ 
+@@ -164,4 +160,4 @@
+ 
+ LLM はここから下の指示のみを実行し、Layer 1〜7 はコンテキストとして参照する。
+ 
+-入力 `{{target_plugin}}` / `{{pkg_ids}}` / `{{options}}` を受け、Layer 5.2 ゴール定義と §5.3 完了チェックリストを停止条件とし、§5.4 ゴールシークループに従い手順を動的生成・実行する。最終的に Layer 2.4 の findings JSON のみを stdout に出力する。前置き・後書き・思考過程出力は禁止。exit code は §4.1 に従う。
++入力 `{{target_plugin}}` / `{{pkg_ids}}` / `{{options}}` を受け、§5.4 の単発評価を実行し、Layer 5.2 ゴール定義と §5.3 完了チェックリストで採点の網羅性を確かめる。最終的に Layer 2.4 の findings JSON のみを stdout に出力する。前置き・後書き・思考過程出力は禁止。exit code は §4.1 に従う。
+--- plugins/harness-creator/skills/assign-plugin-package-evaluator/references/evaluator-contract.md
++++ plugins/harness-creator/skills/assign-plugin-package-evaluator/references/evaluator-contract.md
+@@ -13,7 +13,7 @@
+ 
+ ## context: fork 理由
+ 
+-本 skill は規範採点（assign-skill-design-evaluator と同型）であり、親 context の sycophancy（自分が書いた package を甘く採点する罠）を排除するため context fork 必須。fork 後の入力は `target_plugin` 名のみで、親 context の判断履歴は持ち込まない。
++本 skill は規範採点（assign-skill-design-evaluator と同型）であり、親 context の sycophancy（自分が書いた package を甘く採点する罠）を排除するため context fork 必須。fork 後は `target_plugin` / `pkg_ids` / `options` の構造化入力のみを渡し、親 context の判断履歴は持ち込まない。
+ 
+ ## findings 出力規約
+ 
+--- plugins/harness-creator/skills/ref-pkg-contract/references/pkg-id-catalog.yaml
++++ plugins/harness-creator/skills/ref-pkg-contract/references/pkg-id-catalog.yaml
+@@ -55,7 +55,7 @@
+     package_modes: [bundle]
+     severity: P0
+     script: "assign-plugin-package-evaluator/scripts/validate-plugin-package.py --plugin <plugin> --check pkg-006"
+-    description: "hooks/*.{json,sh} が settings 断片の hooks 配列で全て参照、逆方向の未登録なし"
++    description: "hooks/*.{py,sh} が settings 断片の hooks 配列で全て参照、逆方向の未登録なし"
+ 
+   PKG-007:
+     name: "script 存在 + 実行可能"
+--- plugins/harness-creator/skills/run-elegant-review/scripts/validate_phase_order.py
++++ plugins/harness-creator/skills/run-elegant-review/scripts/validate_phase_order.py
+@@ -1,3 +1,4 @@
++#!/usr/bin/env python3
+ """Elegant-review の Phase 順序・signal・verdict 導出を検査する補助モジュール。
+ 
+ CLI と 30 paradigm の構造検査は validate-paradigm-coverage.py が所有し、本 module は
+--- plugins/harness-creator/skills/run-skill-live-trial/scripts/validate-live-trial-resource-budget.py
++++ plugins/harness-creator/skills/run-skill-live-trial/scripts/validate-live-trial-resource-budget.py
+@@ -1,3 +1,4 @@
++#!/usr/bin/env python3
+ """Validate scenario-bound live-trial budgets and transcript token accounting.
+ 
+ The budget is part of the scenario contract, not an operator-tunable hint.  A
+--- plugins/harness-creator/skills/run-skill-live-trial/scripts/validate-live-trial-scenario-contract.py
++++ plugins/harness-creator/skills/run-skill-live-trial/scripts/validate-live-trial-scenario-contract.py
+@@ -1,3 +1,4 @@
++#!/usr/bin/env python3
+ """live-trial の scenario 観測契約を検証する support module。
+ 
+ 観測の自己申告だけではなく、run directory 内の実在ファイルへ証拠参照を束縛する。

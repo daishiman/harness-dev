@@ -173,6 +173,15 @@ class InitCoverageTests(unittest.TestCase):
                                 {**os.environ, "CLAUDE_PROJECT_DIR": str(root)})
             self.assertEqual(code, 1)
 
+    # 空の --repo-root を env や git の root に倒すと、利用者が選んでいない場所へ書いてしまう
+    def test_empty_repo_root_writes_nothing(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td).resolve()
+            env = {**os.environ, "CLAUDE_PROJECT_DIR": str(root), "SYSTEM_DEV_PROJECT_ROOT": str(root)}
+            code, _, stderr = invoke(C10, ["--repo-root", ""], env)
+            self.assertEqual(code, 1, stderr); self.assertIn("--repo-root", stderr)
+            self.assertEqual(list(root.iterdir()), [])
+
 
 class HookCoverageTests(unittest.TestCase):
     def call(self, payload: dict, env: dict[str, str]) -> tuple[int, str]:

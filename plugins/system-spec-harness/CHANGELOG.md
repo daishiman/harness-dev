@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 0.1.29 — 2026-11-16
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
+## 0.1.28 — 2026-11-15
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## 0.1.27 — 2026-11-14
 
 - ref-system-design-knowledge の Gotchas から、harness-creator で削除された stop hook (`check-review-trigger.py`) への言及を外した。content-review の強制は CI / pre-push の `lint-content-review.py` だけになった。

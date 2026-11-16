@@ -6,14 +6,16 @@
 |---|---|---|
 | PKG-001 公式 CLI strict validate | **B (run-plugin-package-check)** | `claude plugin validate --strict` ラッパー |
 | PKG-002〜008 静的検査 | **本 skill** | findings JSON で返す |
-| PKG-009 外部参照ゼロ | **B** | 既存 `scripts/lint-external-refs.py` 直呼出 |
+| PKG-009 外部参照ゼロ | **B** | `run-plugin-package-check/scripts/lint-pkg-009.py` が skill-governance-lint の `lint-external-refs.py` を呼ぶ |
 | PKG-010 install smoke | **B** | `scripts/smoke-plugin-install.sh` |
 | PKG-011〜013 / PKG-015 出荷前 gate | **B** | uninstall/upgrade/permission/rubric |
 | PKG-014 runtime contract | **本 skill** | kind/combinator 宣言と実配線の静的整合を findings JSON で返す |
 
+package 検査は開発・配布時に実行し、通常の skill 起動では実行しない。repo 固有の参照 lint は `run-skill-feedback/workflow-manifest.json` の `build_validation` で開発時に実行し、通常 runtime へは持ち込まない。
+
 ## context: fork 理由
 
-本 skill は規範採点（assign-skill-design-evaluator と同型）であり、親 context の sycophancy（自分が書いた package を甘く採点する罠）を排除するため context fork 必須。fork 後の入力は `target_plugin` 名のみで、親 context の判断履歴は持ち込まない。
+本 skill は規範採点（assign-skill-design-evaluator と同型）であり、親 context の sycophancy（自分が書いた package を甘く採点する罠）を排除するため context fork 必須。fork 後は `target_plugin` / `pkg_ids` / `options` の構造化入力のみを渡し、親 context の判断履歴は持ち込まない。
 
 ## findings 出力規約
 
@@ -29,6 +31,7 @@
 ## 公式制約整合
 
 - 34章公式制約 a/b/e（plugin スコープ・permissions・外部参照）は **B が PKG-009/013 で検査**。本 skill は内部構造の整合性のみ
+- PKG-007 の対象範囲は catalog、実行規則は `validate-plugin-package.py` の `check_pkg_007` を正本とする。本文や他の `*_refs` の参照は PKG-007 では扱わず、PKG-009 等の別責務で扱う
 - 34a 章 INV-1〜12 は PKG-008 の script では見ない。script が見るのは `settings/*.json` の JSON 構文・最上位が object・`$schema` の有無だけで、INV-1〜12 と Layer3 衝突は評価者が読んで判定する（SKILL.md「評価者が読んで判定する条件」）。設定マージ時の動的検証は別 skill
 
 ## 改廃

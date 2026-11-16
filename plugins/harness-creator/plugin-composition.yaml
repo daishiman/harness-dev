@@ -5,7 +5,7 @@
 name: harness-creator
 description: Codex / Claude Code のハーネス (Skill / Agent / Hook / Command / Composition / Prompt / Workflow の統一 Capability と評価・統治機構の総体) を構築・評価・統治するメタプラグイン。
 kind: plugin-composition
-version: 1.4.65
+version: 1.4.67
 owner: team-platform
 since: 2026-05-17
 last-audited: 2026-07-13
@@ -24,7 +24,7 @@ contract:
     - "rubric_refs は L0→L1→L2 deep-merge 順を保つこと (enforcement: manual。skill-governance-lint/scripts/lint-rubric-refs-exist.py は存在のみ検証し順序は未検証。manual 維持の理由: rubric.json 側に layer 宣言フィールドが無く順序の機械突合はスキーマ拡張コスト過大、意図的残置)"
     - "elegant-review は Phase1(reset) → Phase2(3並列分析) → Phase3(改善) の順序を保つこと (enforcement: skills/run-elegant-review/scripts/validate-paradigm-coverage.py --phase-order。run dir の Phase1-3 成果物の存在+mtime 順序を機械検査)"
     - "hook の副作用境界(side_effect_scope)は manifest 上で宣言されたもののみ (enforcement: manual。manual 維持の理由: script ヘッダ規約 write-scope は存在するが宣言との自動突合は費用対効果で見送り、意図的残置)"
-    - "cross-plugin 参照は repo clone 開発環境で存在確認できる internal plugin に限定すること。harness-creator / prompt-creator は marketplace / bundle 配布対象ではない (allowed_cross_plugins: skill-intake, skill-governance-adapters, skill-governance-lint, skill-governance-automation, skill-governance-config, skill-governance-migration, prompt-creator) (enforcement: skill-governance-lint/scripts/lint-external-refs.py --fail-on-external)"
+    - "cross-plugin 参照は repo clone 開発環境で存在確認できる internal plugin に限定すること。harness-creator / prompt-creator は marketplace / bundle 配布対象ではない。許可の正本は references/package-contract.json で、install 先でも要る plugin は depends_on に、循環になるので depends_on に入れられない兄弟 plugin と設計書は repo_refs に宣言する (enforcement: skill-governance-lint/scripts/lint-external-refs.py --fail-on-external。repo_refs は参照ごとに repo clone での実在を確かめ、使われていない宣言は contract error にする)"
     - "Codex marketplace 単独 install で壊れる plugin 境界外 symlink を禁止する。外部 plugin は任意の開発時依存として明示し、harness-creator の配布必須資産にしない (enforcement: standalone package test + skill-governance-lint/scripts/lint-external-refs.py --fail-on-external)"
     - "knowledge-loop は immutable な curated seed と plugin package 外の external-intelligence runtime state に責務分離する。runtime の観測/重複統合/再利用/昇格の長い実装正本は配布可能な skill-governance-adapters の engine/adapter/caller/schema/contract 各1件だけとし、Harness Creator は engine/adapter の薄い互換転送と contract pointer だけを持つ。lessons-learned/ や knowledge/ へ hook が直接追記しない (enforcement: run-build-skill/scripts/lint-ssot-duplication.py + lint-knowledge-loop.py + external-intelligence anti-duplication tests)"
     - "runtime hook script は自 plugin root 外を import-time に fail-closed 依存しないこと(必須共有モジュールは plugin 内へ vendoring し byte 一致 lint で正本と同期/ローダは fail-soft で raise しない)。単独 install でも全フックが exit 0 を維持する。参照: skills/ref-cross-platform-runtime/references/runtime-portability.md 層1 (enforcement: scripts/lint-runtime-portability.py + scripts/lint-vendored-ssot.py)"
@@ -114,6 +114,7 @@ capabilities:
   - { kind: script, ref: skills/run-build-skill/scripts/build-improvement-gate.py, tier: core }
   - { kind: script, ref: skills/run-build-skill/scripts/build-usable-draft-proof.py, tier: core }
   - { kind: script, ref: skills/run-build-skill/scripts/build-review-launch.py, tier: core }
+  - { kind: script, ref: skills/run-build-skill/scripts/validate-run-model-budget.py, tier: core }
   - { kind: script, ref: skills/run-build-skill/scripts/validate-improvement-result.py, tier: core }
 
   # === Hooks (kind=hook) — plugin.json 配線と1対1対応 ===
@@ -140,6 +141,7 @@ dependencies:
   - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/build-improvement-gate.py, type: calls }
   - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/build-usable-draft-proof.py, type: calls }
   - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/build-review-launch.py, type: calls }
+  - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/validate-run-model-budget.py, type: calls }
   - { from: skills/run-build-skill,         to: skills/run-build-skill/scripts/validate-improvement-result.py, type: calls }
   - { from: skills/run-build-skill,         to: skills/run-skill-feedback,          type: emits }
   - { from: skills/run-build-skill,         to: skills/assign-skill-design-evaluator, type: calls }

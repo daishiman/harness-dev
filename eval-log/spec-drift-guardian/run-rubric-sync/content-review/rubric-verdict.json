@@ -2,7 +2,8 @@
   "target": {
     "plugin": "spec-drift-guardian",
     "skill": "run-rubric-sync",
-    "skill_md_sha256": "8144d67b790499e4528bd08810ee504a2347ad63b8862b2e955be09adaacbf5a"
+    "skill_md_sha256": "8c22c6eee12d5ea9983fc44fb0d6c6b1db11348f9c0041d0fc17f6024b622c95",
+    "reviewed_skill_md_sha256": "8144d67b790499e4528bd08810ee504a2347ad63b8862b2e955be09adaacbf5a"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -38,5 +39,21 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "本 verdict は cr-merge-guard-migration-v1 の focused combined review (1 context で (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定) の結果を rubric 観点へ投影したものであり、elegance-verdict.json と同一の読解に基づく。30 思考法は実施しておらず、実施も申告しない。 判定根拠: git diff HEAD で差分全 3 hunk を読み SKILL.md 全 204 行を通読、frontmatter 宣言 19 path (responsibility_refs 3 / schema_refs 4 / reference_refs 2 / script_refs 2 と本文参照の agent 定義 2 ほか) の実在をファイル存在検査で確認 (欠損 0)、SKILL.md 内 bare `${CLAUDE_PLUGIN_ROOT}` shell 起動行 0 件を grep で確認、effect=local-artifact に対し external_mutation_guard / receipt block がともに不在であることを grep -c で確認した。 規範採点の観点では、宣言と実体の対応 (combinators↔goal_seek/feedback_contract、runtime_root_policy↔Runtime root contract 節、effect↔guard 有無)、criteria の verify_by 妥当性、allowed-tools の最小権限、boundary の明示 (commit/PR/issue close を責務外と宣言、監査は C04・独立再導出は C03 へ委譲し proposer≠approver を保持) がいずれも満たされている。 high severity finding は 0 件。medium 以上の未解決も 0 件で、残る low 1 件は companion asset 側の placeholder 未移行という記述上の smell であるため verdict は PASS。PASS の射程は静的な規範適合に限り、OUT2 の live-trial 実走証拠は本 verdict に含まれない。"
+  "notes": "本 verdict は cr-merge-guard-migration-v1 の focused combined review (1 context で (a)矛盾なし (b)漏れなし (c)規約整合 (d)依存関係整合 (e)rubric high severity 0 を同時判定) の結果を rubric 観点へ投影したものであり、elegance-verdict.json と同一の読解に基づく。30 思考法は実施しておらず、実施も申告しない。 判定根拠: git diff HEAD で差分全 3 hunk を読み SKILL.md 全 204 行を通読、frontmatter 宣言 19 path (responsibility_refs 3 / schema_refs 4 / reference_refs 2 / script_refs 2 と本文参照の agent 定義 2 ほか) の実在をファイル存在検査で確認 (欠損 0)、SKILL.md 内 bare `${CLAUDE_PLUGIN_ROOT}` shell 起動行 0 件を grep で確認、effect=local-artifact に対し external_mutation_guard / receipt block がともに不在であることを grep -c で確認した。 規範採点の観点では、宣言と実体の対応 (combinators↔goal_seek/feedback_contract、runtime_root_policy↔Runtime root contract 節、effect↔guard 有無)、criteria の verify_by 妥当性、allowed-tools の最小権限、boundary の明示 (commit/PR/issue close を責務外と宣言、監査は C04・独立再導出は C03 へ委譲し proposer≠approver を保持) がいずれも満たされている。 high severity finding は 0 件。medium 以上の未解決も 0 件で、残る low 1 件は companion asset 側の placeholder 未移行という記述上の smell であるため verdict は PASS。PASS の射程は静的な規範適合に限り、OUT2 の live-trial 実走証拠は本 verdict に含まれない。",
+  "sha_rebinds": [
+    {
+      "from_sha": "8144d67b790499e4528bd08810ee504a2347ad63b8862b2e955be09adaacbf5a",
+      "to_sha": "f30db0a2a0c64c151727d7acd8912aa19ae129f0f4cbcdd53a5bb19bcbc98177",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:50Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "f30db0a2a0c64c151727d7acd8912aa19ae129f0f4cbcdd53a5bb19bcbc98177",
+      "to_sha": "8c22c6eee12d5ea9983fc44fb0d6c6b1db11348f9c0041d0fc17f6024b622c95",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:58Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

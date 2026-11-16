@@ -1,15 +1,19 @@
 # resource-map.yaml — 設計書06 第13条スキーマ準拠
 # ref-yaml-spec-fetcher の references/ ファイル索引
-# NOTE: yaml-spec-cache.md と spec-diff-history.md は週次更新で別途配置される
+# NOTE: 3 つとも GitHub Actions `update-yaml-spec.yml` (週次) が scripts/build-yaml-spec-cache.py で更新する
 resources:
+  - file: yaml-spec-index.json
+    topic: yaml-spec-cache.md の節・見出しごとの行範囲・bytes・truncated と cache_sha256 (cache と同時に機械生成)
+    read_when: cache を読む前に、要る見出しの行範囲 (offset/limit) を引くとき
+    status: generated  # cache と食い違えば `build-yaml-spec-cache.py --reindex` で作り直す (手で直さない)
   - file: yaml-spec-cache.md
-    topic: Claude Code 公式 frontmatter 仕様の週次キャッシュ (last_fetched 付き)
-    read_when: 公式仕様の現行値を参照したいとき
-    status: pending-fetch  # 初回取得は ref-yaml-spec-fetcher の手動取得手順に従う
+    topic: Claude Code 公式仕様ページ群と CHANGELOG の週次キャッシュ (last_fetched 付き、約1MB)
+    read_when: 公式仕様の現行値を参照したいとき (索引で引いた範囲だけを読む。全文は読まない)
+    status: fetched  # 週次で更新。CHANGELOG の節だけは新しい版の側を残して切り詰める (理由は節の末尾と索引の truncation)
   - file: spec-diff-history.md
     topic: キャッシュ更新ごとの差分履歴 (追加/削除/変更フィールド)
     read_when: 仕様が変わったか / いつ変わったかを確認したいとき
-    status: pending-fetch
+    status: fetched
 prompts:
   - file: ../prompts/R1-search-summarize.md
     purpose: R1 検索/要約 (query → matches[] + staleness フラグ)

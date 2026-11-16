@@ -1,0 +1,66 @@
+{
+  "test_count": 23,
+  "passed": 23,
+  "failed": 0,
+  "source_plugin": "dev-graph",
+  "runtime": "codex-native-subagent",
+  "test_sources": [
+    {
+      "path": "tests/test_semantic_contract_cli_scheduler_20260713.py",
+      "sha256": "d65a9bd10c1158b4a0155d728a3ae964c27980df79fbe81797dfdce5077bb5ec"
+    },
+    {
+      "path": "tests/test_schedule_dependency_exclusion_reporting.py",
+      "sha256": "556274764797f100ba9d6f596c09e252c1660aa30f5e197a3683b3a28cb6638d"
+    },
+    {
+      "path": "tests/test_schedule_binding_expiry_scope_max_parallel.py",
+      "sha256": "3ffb1540b4f44d505b3c1199586c5c9b696e2682492c2cdc8e378f672aef8996"
+    },
+    {
+      "path": "tests/test_schedule_resource_scope_paths.py",
+      "sha256": "3f00e3f97f920179c778c1322deb1d515898a147c83aa9b4b4e57e12e6ce6f7d"
+    },
+    {
+      "path": "tests/test_c27_c28_projection_contract.py",
+      "sha256": "109349e86ac8bf5f25b96f71b727395116a976aacc31e4b3b5a56f9af37bb9c2"
+    }
+  ],
+  "artifacts": {
+    "pytest_log": "eval-log/dev-graph/run-dev-graph-schedule/acceptance/pytest.log",
+    "junit": "eval-log/dev-graph/run-dev-graph-schedule/acceptance/junit.xml"
+  },
+  "criteria": {
+    "IN1": {
+      "status": "PASS",
+      "scope": "正規fixtureテスト",
+      "observed": "draft・unconfirmed・evaluation fail・readiness incomplete・未完了依存を自己readyおよびbd ready両経路から除外"
+    },
+    "OUT1": {
+      "status": "PASS",
+      "scope": "一般契約補助。live実fixtureの依存充足はC17独立評価を併用",
+      "observed": "直接依存、doneを経由する推移的未完了依存、親featureの入口依存を検査"
+    },
+    "OUT2": {
+      "status": "PASS",
+      "scope": "正規fixtureテスト",
+      "observed": "resource祖先/子孫・表記ゆれ・active/expired lease・resource空のpublic claim由来leaseを検査。max parallel遵守とfeature/task分離も検査"
+    },
+    "OUT3": {
+      "status": "PASS",
+      "scope": "正規fixtureテスト",
+      "observed": "suggested_branch canonical値とclaim command形式を検査。C27 claim G session S後にG session OTHERを要求し、already has ContractErrorを期待通り取得。同一node二重claim成功0件。branch切替とC02 projectionはmonkeypatch、lease writer本体は実実行"
+    }
+  },
+  "boundaries": {
+    "real_graph_mutation": false,
+    "real_lease_mutation": false,
+    "source_mutation": false,
+    "external_connection": false,
+    "old_evidence_used": false
+  },
+  "limitations": [
+    "この補助証拠はlive-trial verdictではない。実入力graphへのready判定はC17独立監査と結合する。",
+    "C27拒否テストは正規fixture内の本体実行であり、実task-api-usersへの二重claim操作は行っていない。"
+  ]
+}

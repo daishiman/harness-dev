@@ -25,7 +25,7 @@ responsibility_refs: [prompts/R1-search-summarize.md]
 Claude Code 公式 YAML frontmatter 仕様のローカルキャッシュを提供する（PF-G1-001）。
 
 **入力**: なし（Read-only辞書型）
-**出力**: `references/yaml-spec-cache.md` の内容（最終取得日時付き）
+**出力**: `references/yaml-spec-cache.md` のうち、索引 `references/yaml-spec-index.json` で引いた要る範囲（最終取得日時付き）
 
 **更新方式**: GitHub Actions（`update-yaml-spec.yml`）による週次自動取得を正式運用とする。
 実仕様ページ群（skills / settings / sub-agents / hooks / permissions / agent-teams / commands / plugins / plugins-reference / output-styles / tools-reference）と製品 CHANGELOG を取得して `references/yaml-spec-cache.md` を更新し、
@@ -35,13 +35,14 @@ Claude Code 公式 YAML frontmatter 仕様のローカルキャッシュを提�
 ## Key Rules
 
 1. **Read-only**: この ref スキル自身はファイルを書き込まない。キャッシュと差分履歴への書き込みは `update-yaml-spec.yml`（GitHub Actions）が担う。
-2. **キャッシュ参照**: 直接ネットワーク取得しない。`references/yaml-spec-cache.md` を Read する。
+2. **キャッシュ参照**: 直接ネットワーク取得しない。cache (約1MB) は全文を Read しない。先に `references/yaml-spec-index.json` を Read し (先頭の `sections` 表は 1 節 1 行、`headings.<節>` は `[level, start_line, end_line, bytes, title]`)、要る見出しの範囲だけを cache から `offset=start_line`・`limit=end_line-start_line+1` で Read する。読んだ範囲の 1 行目が見出しの title (節全体なら `## Source (<節>)`) でない、または索引と cache 3 行目の `last_fetched` が違うときは索引が古いので、行範囲を信じずに止め、harness repo での `python3 scripts/build-yaml-spec-cache.py --reindex` を案内する。
 3. **鮮度確認**: `last_fetched:` メタデータで取得日時を確認し、30日超過なら更新を推奨する。
 4. **差分報告**: 現行 `03-yaml-frontmatter-reference.md` との差分を指摘する。
 
 ## 参照ファイル
 
 - `references/yaml-spec-cache.md` — 公式仕様の週次キャッシュ
+- `references/yaml-spec-index.json` — cache の節・見出しごとの行範囲・bytes・truncated と cache_sha256 (cache と同時に機械生成。手で直さない)
 - `references/spec-diff-history.md` — 過去の差分履歴
 
 ## 公式ソース
@@ -52,7 +53,7 @@ Claude Code 公式 YAML frontmatter 仕様のローカルキャッシュを提�
 ## 手動取得手順（fallback・Actions障害時）
 
 1. 上記公式ソースをブラウザで開き、frontmatter 仕様セクションを目視確認する。
-2. 変更がある場合は `references/yaml-spec-cache.md` の本文を更新し、frontmatter の `last_fetched:` を当日 ISO 日付に書き換える。
+2. 変更がある場合は `references/yaml-spec-cache.md` の本文を更新し、frontmatter の `last_fetched:` を当日 ISO 日付に書き換える。続けて harness repo で `python3 scripts/build-yaml-spec-cache.py --reindex` を実行し、索引を作り直す（cache だけを直すと索引と食い違い、run-build-skill の `extract-yaml-spec-section.py` が exit 2 で止まる）。
 3. 旧版との差分（追加/削除/変更フィールド）を `references/spec-diff-history.md` に追記する（日付・変更要約・出典 URL）。
-4. 30日経過しても更新が無い場合は `last_fetched:` のみ更新し「変更なし確認」と記録する。
+4. 30日経過しても更新が無い場合は `last_fetched:` のみ更新し「変更なし確認」と記録する。この場合も 2 と同じく `--reindex` で索引を作り直す。
 5. 自動化は完了済（`update-yaml-spec.yml`）。今後の見直しは公式が機械可読スキーマ（JSON Schema 等）を提供した時点で `run-skill-rubric-governance` の Proposal として再評価する。

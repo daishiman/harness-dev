@@ -89,22 +89,7 @@ feedback_contract:
       loop_scope: outer
       text: スケジューラが起動するのと同じくユーザー操作なしで、FixtureProvider に読ませる検証用の入力データ（fixture）を使って1回きりの実行を走らせ、新着1件が一度だけ正規化ソースと登録簿（registry）へ反映され (二回目は0件、TemporaryFailure の後は再試行で回復)、スキルのセッション経由では ingested>0 のとき R3 相当を再実行してナレッジとグラフまで反映されることを、受入テストが確認する。
       verify_by: test
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 # run-ubm-youtube-ingest
@@ -132,11 +117,11 @@ artifact_delivery:
 
 ## 選ぶ前の実成果物の作成
 
-「目的と出力契約」の最小の実成果物か、外部変更のプレビューを親コンテキストで作る。effect に応じた最低限の検査（読み込めて開けるか・秘密情報・取り消せない操作・壊れたファイル）だけを行い、現物のパス・ハッシュ値・開き方か、プレビューの受領書を見せたうえで、現状で試す／軽微／標準／詳細のどれにするかを記録する（記録する値は順に `accept-as-is`・`light`・`standard`・`detailed`）。現状で試すなら外部変更を行わずに引き継ぎを完了とし、後続の節を実行しない。
+「目的と出力契約」の最小の実成果物か、外部変更のプレビューを親コンテキストで作る。effect に応じた最低限の検査（読み込めて開けるか・秘密情報・取り消せない操作・壊れたファイル）だけを行い、現物のパス・ハッシュ値・開き方か、プレビューの受領書を見せたうえで、現状で試すか診断するかを記録する（記録する値は順に `accept-as-is`・`diagnose`）。現状で試すなら外部変更を行わずに引き継ぎを完了とし、後続の節を実行しない。
 
 ## 選んだ深さでの改善の実行
 
-以下の既存の節（全体の流れ・ゴールシーク・評価・修正）と外部変更の安全手順は、軽微・標準・詳細のどれかが記録されて `semantic_evaluator_started` へ遷移したときだけ実行する。実際の外部変更は正規の `preview`→`hook-confirm`→`authorize`→`execute` の手順だけを通し、リリースと完全監査は別イベントとして明示されたときだけ行う。
+以下の既存の節（全体の流れ・ゴールシーク・評価・修正）と外部変更の安全手順は、「診断する」が記録されて `semantic_evaluator_started` へ遷移したときだけ実行する。実際の外部変更は正規の `preview`→`hook-confirm`→`authorize`→`execute` の手順だけを通し、リリースと完全監査は別イベントとして明示されたときだけ行う。
 
 <!-- external-mutation-guard-cli-ja:v1 -->
 ### 外部変更の受領書の手順（必須）

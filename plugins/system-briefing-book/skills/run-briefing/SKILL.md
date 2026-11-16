@@ -50,7 +50,7 @@ feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts
       verify_by: script
     - id: IN2
       loop_scope: inner
-      text: "確認点 3 か所 (要件定義書・仕様書・ページ構成) すべてで現物を見せてから accept-as-is/light/standard/detailed を聞き、選んだ値が _check/choices.json に 3 つそろい、light 以上を選んだ確認点だけ _check/review-<stage>.json が残っている"
+      text: "確認点 3 か所 (要件定義書・仕様書・ページ構成) すべてで現物を見せてから accept-as-is か diagnose かだけを聞き、選んだ値が _check/choices.json に 3 つそろい、diagnose を選んだ確認点だけ深さ (既定は standard) と _check/review-<stage>.json が残っている"
       verify_by: live-trial
     - id: IN3
       loop_scope: inner
@@ -64,22 +64,7 @@ feedback_contract: # per-skill 評価基準(SSOT=plugins/harness-creator/scripts
       loop_scope: outer
       text: "examples/sample-haisha と同じ素材構成の匿名素材で new を最後まで通し、利用者がまとめ HTML 1 つを開いて できること・しくみ・決めること を説明なしで読み取れ、素材にある判断材料 (今の手間の数字・本物の紙・CSV の列の区分・要件の札・あとで に回した要望のしくみ) がボードにそろって判断できる (_check/profile.json の missing に残るのは素材に無いものだけ)"
       verify_by: live-trial
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 runtime_root_policy: host-skill-path
 ---
 
@@ -89,7 +74,7 @@ runtime_root_policy: host-skill-path
 
 ## Post-choice selected improvement execution
 
-light / standard / detailed が記録されて `semantic_evaluator_started` へ進んだ確認点だけ、独立レビューとその指摘に基づく改善を行う。release / exhaustive は別の明示 event を要する。
+「診断する」(`diagnose`) が記録されて `semantic_evaluator_started` へ進んだ確認点だけ、独立レビューとその指摘に基づく改善を行う。深さは診断を選んだあとに決め、既定は standard とする。release / exhaustive は別の明示 event を要する。
 
 
 # 打ち合わせ資料づくりの入口
@@ -181,7 +166,7 @@ Skill `run-briefing-boards` に `boards` を渡す。render-board-png.mjs が ex
 boards が 3 回直しても error か warn が残って返ってきたら、残った検査コードとボード番号を見せて利用者に相談する。
 boards が 9 章に無い 決めること を返したら、Skill `run-briefing-docs` に 9 章へその Q だけ足してもらい (工程4 の「ボード:」行と同じ頼み方)、boards を通し直す。確認点は過ぎているので、その Q は打ち合わせで聞く。
 boards が仕様書の足りない章と画面番号を返したら、Skill `run-briefing-docs` にその箇所だけ書き足してもらい、boards を通し直す。
-確認点3 で light / standard / detailed が選ばれていたら、ここで同じ深さのまま `boards` を見てもらう (確認点の手順 5 と同じ。保存先は `_check/review-boards.json`)。
+確認点3 で diagnose が選ばれていたら、ここで同じ深さのまま `boards` を見てもらう (確認点の手順 5 と同じ。保存先は `_check/review-boards.json`)。
 
 ### 工程6 まとめ (自動)
 
@@ -209,20 +194,19 @@ book が exit1 なら、book が示した担当スキルへその行を渡して
    - 返ってきた Q 番号と H 番号の組を、Skill `run-briefing-docs` に `answers <資料フォルダ> <組>` で渡して反映し、その工程の `--stage` を通し直す。
    - answers が file が 変更点.md の error を返したら、revise の手順 4 と同じくその行を直し、同じ組でもう一度頼む。
    - answers が返した 閉じた Q と直した本文の場所を見せてから手順 3 へ進む。
-3. AskUserQuestion で次の 4 つから 1 つを記録する (header: 「確認点1」など)。
+3. AskUserQuestion で次の 2 つから 1 つを記録する (header: 「確認点1」など)。
 
    | 表示 | 記録する値 | 中身 |
    | --- | --- | --- |
-   | 標準で見る (おすすめ) | standard | 正確さ・言葉・見た目・シンプルさを見る |
+   | 診断する (おすすめ) | diagnose | 別の AI が 正確さ・言葉・見た目・シンプルさを見る |
    | このまま進める | accept-as-is | 見ないで次の工程へ |
-   | 軽く見る | light | 検査結果と、確認点ごとに決めた観点 1 つだけ |
-   | 詳しく見る | detailed | 4 観点に加えて素材との突き合わせを全部 |
 
+   深さを聞くための質問は足さない。diagnose の深さは standard とし、利用者が「軽く」と書き添えたら light、「詳しく」と書き添えたら detailed にする。
    確認点ごとに見る観点は [assign-briefing-evaluator の SKILL.md](../assign-briefing-evaluator/SKILL.md) の「深さ」を読む。
    利用者が自由入力で直したい点を書いたら、その点を担当スキルで直し、検査を通し直して同じ確認点をもう一度見せる。
-   選んだ値は `_check/choices.json` に確認点ごとに書く (例 `{"requirements": "accept-as-is", "spec": "standard", "pages": "light"}`)。同じ確認点を見直したら上書きする。
+   選んだ値は `_check/choices.json` に確認点ごとに書く (例 `{"requirements": {"choice": "accept-as-is"}, "spec": {"choice": "diagnose", "depth": "standard"}}`)。同じ確認点を見直したら上書きする。
 4. accept-as-is なら、次の工程へ進む。
-5. light / standard / detailed なら、Skill `assign-briefing-evaluator` に 確認点 (`requirements` / `spec` / `pages`)、深さ、資料フォルダ、素材フォルダ を渡す。
+5. diagnose なら、Skill `assign-briefing-evaluator` に 確認点 (`requirements` / `spec` / `pages`)、手順 3 で決めた深さ、資料フォルダ、素材フォルダ を渡す。
    - 返ってきた指摘 JSON を `_check/review-<確認点>.json` に保存する (保存はこのスキルの役目)。
    - 指摘 JSON の代わりに形の誤りの一覧が返ってきたら、保存せずに一覧を見せ、見直すか accept-as-is にするかを利用者に聞く。
    - 重さ high と medium の指摘は担当スキルに渡して直す。low は利用者に見せ、直すか 決めること へ回すかを選んでもらう ([quality-rules.md](../../references/quality-rules.md) の「重さの決め方 (独立レビュー)」を読む)。

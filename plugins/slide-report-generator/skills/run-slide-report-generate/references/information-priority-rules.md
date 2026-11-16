@@ -34,13 +34,13 @@ SRG の品質検査は S1〜S26 (ui-quality-reviewer)・RQ1〜RQ37 (report-quali
 ## 成果物と決定論ゲート
 
 - **成果物**: `information-priority-map.json` (1 deck / 1 report につき 1 件)。
-  schema = `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/schemas/information-priority-map.schema.json`
+  schema = `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/schemas/information-priority-map.schema.json`
   (system-spec-harness の正本を byte 一致で同梱した複製。`scripts/lint-vendored-ssot.py` が一致を強制する)。
   `artifact_kind` は slide なら `"slide-deck"`、report なら `"report"`。
 - **ゲート** (構成承認より前・fail-closed):
 
 ```bash
-python3 ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/scripts/validate-information-priority.py \
+python3 ${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/scripts/validate-information-priority.py \
   <出力先>/information-priority-map.json
 ```
 

@@ -314,3 +314,87 @@ def test_main_plugin_format_returns_ok(tmp_path, monkeypatch, capsys):
     out = json.loads(capsys.readouterr().out)
     assert out["status"] == "ok"
     assert out["format"] == "plugin"
+
+
+# ---- main() --plugin: 渡した plugin を調べる (run-skill-create Step 3 の経路) ----
+def _run_cli(*args: str) -> subprocess.CompletedProcess:
+    return subprocess.run([sys.executable, str(SCRIPT), *args], capture_output=True, text=True)
+
+
+def _target_plugin(tmp_path: Path, plugin_json: dict) -> Path:
+    target = tmp_path / "plugins" / "target-plugin"
+    (target / ".claude-plugin").mkdir(parents=True)
+    (target / ".claude-plugin" / "plugin.json").write_text(json.dumps(plugin_json), encoding="utf-8")
+    return target
+
+
+def test_main_without_plugin_inspects_own_plugin():
+    # 省略時は今の動作のまま: script を置いた skill-governance-automation 自身を読む
+    res = _run_cli()
+    assert res.returncode == 0, res.stderr
+    out = json.loads(res.stdout)
+    assert out["name"] == "skill-governance-automation"
+    assert Path(out["plugin_manifest"]) == SCRIPT.parents[1] / ".claude-plugin" / "plugin.json"
+
+
+def test_main_plugin_option_reads_target_plugin_json(tmp_path):
+    target = _target_plugin(tmp_path, {"name": "target-plugin", "version": "2.3.4", "description": "d"})
+    res = _run_cli("--plugin", str(target))
+    assert res.returncode == 0, res.stderr
+    out = json.loads(res.stdout)
+    assert out["status"] == "ok"
+    assert out["format"] == "plugin"
+    # 自分の plugin ではなく、渡した plugin の plugin.json を読んだ結果になっている
+    assert out["name"] == "target-plugin"
+    assert out["version"] == "2.3.4"
+    assert Path(out["plugin_manifest"]) == target / ".claude-plugin" / "plugin.json"
+    assert out["proposals"] == {}
+
+
+def test_main_plugin_option_rejects_invalid_target_even_though_own_plugin_is_valid(tmp_path):
+    # 自分の plugin.json は妥当なので、exit 1 になるのは対象を検査したときだけ
+    target = _target_plugin(tmp_path, {"name": "target-plugin"})
+    res = _run_cli("--plugin", str(target))
+    assert res.returncode == 1
+    out = json.loads(res.stdout)
+    assert out["status"] == "invalid_plugin_manifest"
+    assert set(out["missing"]) == {"version", "description"}
+    assert Path(out["plugin_manifest"]) == target / ".claude-plugin" / "plugin.json"
+
+
+@pytest.mark.parametrize("plugin_arg", ["plugins/<plugin>", "does-not-exist", ""])
+def test_main_plugin_option_missing_target_fails_closed(tmp_path, plugin_arg):
+    # 未展開の placeholder・存在しない dir・空文字は、自分の plugin へ戻って ok にしない
+    res = subprocess.run([sys.executable, str(SCRIPT), "--plugin", plugin_arg],
+                         capture_output=True, text=True, cwd=tmp_path)
+    assert res.returncode == 2
+    out = json.loads(res.stdout)
+    assert out["status"] == "plugin_not_found"
+    assert out["plugin"] == plugin_arg
+
+
+def test_main_plugin_option_legacy_target_proposes_and_applies_to_target_only(tmp_path):
+    target = tmp_path / "legacy-plugin"
+    skill = target / "skills" / "run-build-new"
+    skill.mkdir(parents=True)
+    (skill / "SKILL.md").write_text("# s", encoding="utf-8")
+    (target / "scripts" / "adapters").mkdir(parents=True)
+    manifest_path = target / "manifest.json"
+    manifest_path.write_text(json.dumps({"scripts": {"adapters": []}}), encoding="utf-8")
+    own_manifest = SCRIPT.parents[1] / "manifest.json"
+    own_existed = own_manifest.exists()
+
+    plan = _run_cli("--plugin", str(target))
+    assert plan.returncode == 1
+    out = json.loads(plan.stdout)
+    assert out["status"] == "needs_confirmation"
+    assert Path(out["manifest"]) == manifest_path
+    assert [s["name"] for s in out["proposals"]["skills"]] == ["run-build-new"]
+
+    applied = _run_cli("--plugin", str(target), "--apply")
+    assert applied.returncode == 0, applied.stderr
+    assert json.loads(applied.stdout)["status"] == "applied"
+    written = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert [s["name"] for s in written["skills"]] == ["run-build-new"]
+    # 書き込むのは対象の manifest.json だけで、script を置いた plugin には作らない
+    assert own_manifest.exists() == own_existed

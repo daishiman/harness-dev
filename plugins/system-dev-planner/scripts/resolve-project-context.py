@@ -9,7 +9,7 @@
 # outputs:
 #   - stdout: canonical repo context JSON (repo_root/root_source/repository_id/content roots/diagnostics)
 #   - stderr: containment / identity / config violations
-#   - exit: 0=OK / 1=usage or IO error / 2=fail-closed policy violation
+#   - exit: 0=OK / 1=usage or IO error (argparse の使い方の誤り・空の --repo-root / --feature-id / --feature-context・読めない/UTF-8 でない/JSON でない config と feature context・UTF-8 でない git の出力・stat できない path) / 2=fail-closed policy violation (object でない config・文字列でない section 値・空/絶対/'..' の path を含む。path の字面の誤りは root を読む前に返す)
 # contexts: [C, E]
 # network: false
 # write-scope: none
@@ -26,12 +26,14 @@ plugin source root (symlink 物理元) は code/assets のロードにだけ使�
 from __future__ import annotations
 
 import argparse
+import errno
 import hashlib
 import json
 import os
 import subprocess
 import sys
 import re
+from stat import S_ISLNK, S_ISREG
 from urllib.parse import urlsplit
 from datetime import datetime, timezone
 from pathlib import Path
@@ -46,6 +48,16 @@ SENTINEL_REPOSITORY_ID = "__DERIVED_AT_INIT__"
 # project-config.schema.json の repository_id pattern と同値 (SSOT は schema)。
 _GITHUB_ID = "github:"
 _LOCAL_ID = "local:sha256:"
+# project-config.schema.json の relative_path pattern の `(?![A-Za-z]:[\\/])` と同値。OS に依らず
+# drive つきの絶対 path を拒否する (`a:b` のような POSIX の正しい相対名は通す)
+_WINDOWS_ABS_RE = re.compile(r"[A-Za-z]:[\\/]")
+# RFC 3339 の date-time (5.6)。fromisoformat だけでは、区切りの無い basic 形式・時だけ・週の日付・
+# NUL 混じりも通る (通る範囲は 3.10〜3.13 で違う)。形はこの式で決め、日付と時刻の範囲だけを
+# fromisoformat に確かめさせる。数字は [0-9] に限る (\d は全角などの Unicode の数字も通す)
+_RFC3339_RE = re.compile(
+    r"(?P<date>[0-9]{4}-[0-9]{2}-[0-9]{2})[Tt](?P<time>[0-9]{2}:[0-9]{2}:[0-9]{2})(?:\.[0-9]+)?"
+    r"(?P<offset>[Zz]|[+-](?:[01][0-9]|2[0-3]):[0-5][0-9])"
+)
 
 
 class PolicyError(Exception):
@@ -61,12 +73,16 @@ def _now() -> str:
 
 
 def _git(repo: Path, *args: str) -> str | None:
-    """repo 内で git を実行し stdout を返す。失敗/未インストールは None。"""
+    """repo 内で git を実行し stdout を返す。失敗/未インストールは None、出力が UTF-8 でなければ UsageError。"""
     try:
         out = subprocess.run(
             ["git", "-C", str(repo), *args],
-            capture_output=True, text=True, timeout=10,
+            capture_output=True, encoding="utf-8", timeout=10,
         )
+    except UnicodeDecodeError as exc:
+        # 読めない出力を None (git が無い) と同じに扱うと、repository_id の出所が黙って remote から
+        # fingerprint に変わる。読めない config と同じく IO error (exit 1) で止める
+        raise UsageError(f"git {' '.join(args)} の出力が UTF-8 でない ({exc})") from exc
     except (OSError, subprocess.SubprocessError):
         return None
     if out.returncode != 0:
@@ -76,6 +92,29 @@ def _git(repo: Path, *args: str) -> str | None:
 
 def _realpath(p: Path) -> Path:
     return Path(os.path.realpath(p))
+
+
+# 「無い」とみなす errno (pathlib の _ignore_error と同じ組)。ほか (ENAMETOOLONG・EACCES など) は「確かめられない」
+_ABSENT_ERRNOS = frozenset({errno.ENOENT, errno.ENOTDIR, errno.EBADF, errno.ELOOP})
+
+
+def _stat(path: Path, what: str, *, follow: bool = True) -> os.stat_result | None:
+    """path を stat (follow=False なら lstat) し、無ければ None。確かめられなければ IO error (UsageError, exit 1)。
+
+    pathlib の exists / is_file / is_symlink に任せると、ENAMETOOLONG や EACCES が traceback になるか
+    False になるかが Python の版で変わる。errno を自分で分け、どの版でも同じ答えを返す。
+    """
+    try:
+        return os.stat(path) if follow else os.lstat(path)
+    except OSError as exc:
+        if exc.errno in _ABSENT_ERRNOS:
+            return None
+        raise UsageError(f"{what} を確かめられない: {path} ({type(exc).__name__}: {exc})") from exc
+
+
+def _is_file(path: Path, what: str) -> bool:
+    st = _stat(path, what)
+    return st is not None and S_ISREG(st.st_mode)
 
 
 # --------------------------------------------------------------------------- #
@@ -92,7 +131,11 @@ def resolve_repo_root(repo_root_arg: str | None, env: dict) -> tuple[Path, str, 
     source = None
     evidence: dict = {}
 
-    if repo_root_arg:
+    if repo_root_arg is not None:
+        if not repo_root_arg:
+            # 明示した空の root を、黙って env や git の候補に倒さない (書く側の init-project-layout もここを通る。
+            # 空の値を真偽値で落として渡さない呼ぶ側は、ここに届かない)
+            raise UsageError("--repo-root に空の値は渡せない")
         candidate = Path(repo_root_arg)
         source = "repo-root-flag"
     elif env.get("SYSTEM_DEV_PROJECT_ROOT"):
@@ -102,12 +145,16 @@ def resolve_repo_root(repo_root_arg: str | None, env: dict) -> tuple[Path, str, 
         candidate = Path(env["CLAUDE_PROJECT_DIR"])
         source = "trusted-env:CLAUDE_PROJECT_DIR"
     else:
-        toplevel = _git(Path.cwd(), "rev-parse", "--show-toplevel")
+        try:
+            cwd = Path.cwd()
+        except OSError as exc:  # cwd が消えている
+            raise UsageError(f"cwd を読めない ({type(exc).__name__}: {exc})") from exc
+        toplevel = _git(cwd, "rev-parse", "--show-toplevel")
         if toplevel:
             candidate = Path(toplevel)
             source = "git-toplevel"
         else:
-            marker = _find_marker_upwards(Path.cwd())
+            marker = _find_marker_upwards(cwd)
             if marker:
                 candidate = marker
                 source = "cwd-marker"
@@ -117,7 +164,7 @@ def resolve_repo_root(repo_root_arg: str | None, env: dict) -> tuple[Path, str, 
             "caller repository root を解決できない "
             "(--repo-root / SYSTEM_DEV_PROJECT_ROOT / CLAUDE_PROJECT_DIR / git / .dev-graph marker のいずれも無い)"
         )
-    if not candidate.exists():
+    if _stat(candidate, "repo root") is None:
         raise PolicyError(f"解決した repo root が存在しない: {candidate} (source={source})")
 
     root_real = _realpath(candidate)
@@ -134,7 +181,11 @@ def resolve_repo_root(repo_root_arg: str | None, env: dict) -> tuple[Path, str, 
         evidence["host_boundary_match"] = True
     else:
         evidence["host_declared"] = None
-        evidence["host_boundary_match"] = "undeclared-git-or-marker-accepted"
+        # host の宣言は無い。呼ぶ側が root を明示したのか、git や marker から拾ったのかを分けて残す
+        explicit = source in ("repo-root-flag", "trusted-env:SYSTEM_DEV_PROJECT_ROOT")
+        evidence["host_boundary_match"] = (
+            "undeclared-explicit-root-accepted" if explicit else "undeclared-git-or-marker-accepted"
+        )
 
     return root_real, source, evidence
 
@@ -142,7 +193,7 @@ def resolve_repo_root(repo_root_arg: str | None, env: dict) -> tuple[Path, str, 
 def _find_marker_upwards(start: Path) -> Path | None:
     cur = _realpath(start)
     for parent in [cur, *cur.parents]:
-        if (parent / DEFAULT_CONFIG_REL).is_file():
+        if _is_file(parent / DEFAULT_CONFIG_REL, ".dev-graph marker"):
             return parent
     return None
 
@@ -156,8 +207,6 @@ def derive_repository_id(repo_root: Path) -> tuple[str, str]:
 
     C10 init と同じ規則。返り値は (repository_id, source)。
     """
-    import hashlib
-
     remote = _git(repo_root, "remote", "get-url", "origin")
     gh = _parse_github_remote(remote) if remote else None
     if gh:
@@ -208,7 +257,6 @@ def _parse_github_remote(url: str) -> str | None:
 
 
 def _valid_repository_id(value: str) -> bool:
-    import re
     return bool(re.fullmatch(
         r"github:[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+|local:sha256:[0-9a-f]{64}", value
     ))
@@ -217,34 +265,39 @@ def _valid_repository_id(value: str) -> bool:
 # --------------------------------------------------------------------------- #
 # path guard (realpath containment)
 # --------------------------------------------------------------------------- #
-def guard_relative_path(repo_root: Path, rel: str) -> Path:
-    """repo-relative path を containment 検査し、resolve 済み絶対 path を返す。
-
-    absolute / 空 / '..' segment / NUL を拒否し、既存対象は strict realpath、
-    未作成対象は実在する最長親を realpath 化して commonpath 検査する。
-    root 外へ逃げる (symlink escape 含む) 場合は PolicyError (exit 2)。
-    """
+def _check_relative_literal(rel: str) -> Path:
+    """root を読まずに字面だけで決まる誤り (空 / NUL / absolute / drive / '..' segment) を PolicyError にする。"""
     if rel is None or rel == "":
         raise PolicyError("空の path は許可しない")
     if "\x00" in rel:
         raise PolicyError(f"NUL を含む path を拒否: {rel!r}")
     p = Path(rel)
-    if p.is_absolute() or (len(rel) >= 2 and rel[1] == ":"):
+    # p.drive は Windows の drive 相対 (`C:x`) を、正規表現は OS に依らず drive つきの絶対 path を拒否する
+    if p.is_absolute() or p.drive or _WINDOWS_ABS_RE.match(rel):
         raise PolicyError(f"absolute path を拒否 (repository 相対のみ許可): {rel}")
     if ".." in p.parts:
         raise PolicyError(f".. traversal を含む path を拒否: {rel}")
+    return p
+
+
+def guard_relative_path(repo_root: Path, rel: str) -> Path:
+    """repo-relative path を containment 検査し、resolve 済み絶対 path を返す。
+
+    字面の誤りは _check_relative_literal で拒否し、既存対象は strict realpath、
+    未作成対象は実在する最長親を realpath 化して commonpath 検査する。
+    root 外へ逃げる (symlink escape 含む) 場合は PolicyError (exit 2)。
+    """
+    p = _check_relative_literal(rel)
 
     repo_real = _realpath(repo_root)
     candidate = repo_root / p
-    if candidate.exists():
-        cand_real = _realpath(candidate)
-    else:
-        # 実在する最長の親を realpath 化する (作成予定対象)。
-        anchor = candidate.parent
-        while not anchor.exists() and anchor != anchor.parent:
-            anchor = anchor.parent
-        anchor_real = _realpath(anchor)
-        cand_real = anchor_real / candidate.relative_to(anchor) if anchor.exists() else candidate
+    # 葉そのものから、lexists で在る最長の path を探して realpath に通す (作成予定対象)。
+    # 葉が先の無い symlink でも、途中が壊れた symlink でも、exists だけを見ると飛ばしてしまい、
+    # 外を指していても素通りする。葉から始めれば、先の無い葉の symlink も解決先で確かめる。
+    anchor = candidate
+    while not os.path.lexists(anchor) and anchor != anchor.parent:
+        anchor = anchor.parent
+    cand_real = _realpath(anchor) / candidate.relative_to(anchor) if os.path.lexists(anchor) else candidate
 
     try:
         common = os.path.commonpath([str(repo_real), str(cand_real)])
@@ -261,12 +314,15 @@ def guard_relative_path(repo_root: Path, rel: str) -> Path:
 def validate_feature_context(repo_root: Path, feature_id: str, rel: str) -> dict:
     """Validate the only plan input before any staging path may be created."""
     path = guard_relative_path(repo_root, rel)
-    if not path.is_file():
+    if not _is_file(path, "feature context"):
         raise UsageError(f"feature context が見つからない: {rel}")
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise UsageError(f"feature context を読めない: {rel} ({exc})") from exc
+        # 一度だけ bytes で読み、検査する中身と sha256 を同じ bytes から取る (間の書き換えで食い違わない)
+        data = path.read_bytes()
+        value = json.loads(data.decode("utf-8"))
+    # ValueError は UnicodeDecodeError・JSONDecodeError と、4300 桁を超える int の文字列 (int の桁の上限) を含む
+    except (OSError, ValueError, RecursionError) as exc:
+        raise UsageError(f"feature context を読めない: {rel} ({type(exc).__name__}: {exc})") from exc
     if not isinstance(value, dict):
         raise PolicyError("feature context は JSON object 必須")
     required = {
@@ -293,35 +349,53 @@ def validate_feature_context(repo_root: Path, feature_id: str, rel: str) -> dict
             not isinstance(item, str) or not item.strip() for item in items
         ):
             raise PolicyError(f"feature context {key} は非空 string[] 必須")
+    updated_at = value["updated_at"]
+    match = _RFC3339_RE.fullmatch(updated_at) if isinstance(updated_at, str) else None
     try:
-        parsed = datetime.fromisoformat(str(value["updated_at"]).replace("Z", "+00:00"))
-        if parsed.tzinfo is None:
+        if match is None:
             raise ValueError
+        # 小数秒は式で確かめ済み (3.10 の fromisoformat は 3 桁と 6 桁しか読まない) なので外して渡す
+        offset = "+00:00" if match["offset"].upper() == "Z" else match["offset"]
+        datetime.fromisoformat(f"{match['date']}T{match['time']}{offset}")
     except ValueError as exc:
         raise PolicyError("feature context updated_at は timezone 付き RFC3339 必須") from exc
     architecture_paths: list[str] = []
     for ref in value["architecture_refs"]:
         target = guard_relative_path(repo_root, ref)
-        if not target.exists():
+        if _stat(target, "architecture_ref") is None:
             raise PolicyError(f"feature context architecture_ref が存在しない: {ref}")
         architecture_paths.append(ref)
     return {
         "path": rel,
         "graph_node_id": feature_id,
-        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "sha256": hashlib.sha256(data).hexdigest(),
         "architecture_refs": architecture_paths,
     }
 
 
 def _diagnose_content_symlink(repo_root: Path, rel: str, diagnostics: list) -> None:
-    """content symlink が broken/moved なら診断を積む (exists=False の symlink)。"""
-    p = repo_root / rel
-    if p.is_symlink() and not p.exists():
-        diagnostics.append({
-            "kind": "broken-content-symlink",
-            "path": rel,
-            "detail": "symlink が解決先を失っている (broken/moved)。C09 起動後の検査で拒否対象",
-        })
+    """content symlink が broken/moved なら診断を積む (exists=False の symlink)。
+
+    葉だけでなく途中の component も root 側から順に見る (`blink/sub` の `blink` が壊れていても拾う)。
+    途中の component のときは broken_component にその相対 path を足す。
+    """
+    parts = Path(rel).parts
+    for depth in range(1, len(parts) + 1):
+        p = repo_root.joinpath(*parts[:depth])
+        exists = _stat(p, "content path") is not None
+        link = None if exists else _stat(p, "content path", follow=False)
+        if link is not None and S_ISLNK(link.st_mode):
+            entry = {
+                "kind": "broken-content-symlink",
+                "path": rel,
+                "detail": "symlink が解決先を失っている (broken/moved)。C09 起動後の検査で拒否対象",
+            }
+            if depth < len(parts):
+                entry["broken_component"] = Path(*parts[:depth]).as_posix()
+            diagnostics.append(entry)
+            return
+        if not exists:
+            return  # ここから先は未作成 (作成予定)。symlink も無い
 
 
 # --------------------------------------------------------------------------- #
@@ -329,12 +403,13 @@ def _diagnose_content_symlink(repo_root: Path, rel: str, diagnostics: list) -> N
 # --------------------------------------------------------------------------- #
 def load_config(repo_root: Path, config_rel: str) -> dict:
     cfg_abs = guard_relative_path(repo_root, config_rel)
-    if not Path(cfg_abs).is_file():
+    if not _is_file(Path(cfg_abs), "repo-local config"):
         raise UsageError(f"repo-local config が見つからない: {config_rel} (init 未実行の可能性)")
     try:
         return json.loads(Path(cfg_abs).read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        raise UsageError(f"config を読めない: {config_rel} ({exc})") from exc
+    # ValueError は UnicodeDecodeError・JSONDecodeError と、4300 桁を超える int の文字列 (int の桁の上限) を含む
+    except (OSError, ValueError, RecursionError) as exc:
+        raise UsageError(f"config を読めない: {config_rel} ({type(exc).__name__}: {exc})") from exc
 
 
 def validate_and_resolve(
@@ -349,6 +424,8 @@ def validate_and_resolve(
     """
     diagnostics: list = []
 
+    if not isinstance(config, dict):
+        raise PolicyError(f"config は JSON object 必須 (実際は {type(config).__name__})")
     stored_id = str(config.get("repository_id", ""))
     if stored_id == SENTINEL_REPOSITORY_ID or not _valid_repository_id(stored_id):
         raise PolicyError(
@@ -372,12 +449,15 @@ def validate_and_resolve(
             raise PolicyError(f"config.{section} が object でない")
         resolved_roots[section] = {}
         for key, rel in sec.items():
-            abs_path = guard_relative_path(repo_root, str(rel))
-            _diagnose_content_symlink(repo_root, str(rel), diagnostics)
+            # schema の relative_path は文字列。str() で通すと null が「None」という path になる
+            if not isinstance(rel, str):
+                raise PolicyError(f"config.{section}.{key} は repository 相対 path の文字列必須: {rel!r}")
+            abs_path = guard_relative_path(repo_root, rel)
+            _diagnose_content_symlink(repo_root, rel, diagnostics)
             resolved_roots[section][key] = {"relative": rel, "absolute": str(abs_path)}
 
     extra = None
-    if extra_path:
+    if extra_path is not None:  # 空の --path も飛ばさず guard に通して断る
         extra_abs = guard_relative_path(repo_root, extra_path)
         _diagnose_content_symlink(repo_root, extra_path, diagnostics)
         extra = {"relative": extra_path, "absolute": str(extra_abs)}
@@ -394,9 +474,16 @@ def validate_and_resolve(
 # --------------------------------------------------------------------------- #
 # main
 # --------------------------------------------------------------------------- #
+class _ArgumentParser(argparse.ArgumentParser):
+    """使い方の誤りを UsageError (exit 1) にする。argparse の既定の exit 2 は policy の 2 と重なる。"""
+
+    def error(self, message):
+        raise UsageError(f"{message}\n{self.format_usage().rstrip()}")
+
+
 def build_context(argv: list[str] | None, env: dict, *, require_plan_roots: bool = True) -> dict:
     """require_plan_roots=False は C07 guard 専用 (validate_and_resolve 参照)。CLI は常に True。"""
-    parser = argparse.ArgumentParser(description="Resolve caller repository context (C09)")
+    parser = _ArgumentParser(description="Resolve caller repository context (C09)")
     parser.add_argument("--repo-root", default=None)
     parser.add_argument("--config", default=DEFAULT_CONFIG_REL)
     parser.add_argument("--path", default=None, help="追加で containment 検査する repo-relative path")
@@ -404,15 +491,24 @@ def build_context(argv: list[str] | None, env: dict, *, require_plan_roots: bool
     parser.add_argument("--feature-context", default=None, help="plan input の repo-relative feature JSON")
     parser.add_argument("--json", action="store_true", help="常に JSON を stdout に出す (既定)")
     args = parser.parse_args(argv)
+    # 引数だけで決まる誤りは、root・config・section を読む前に返す (直すべき所を取り違えさせない)
+    if (args.feature_id is None) != (args.feature_context is None):
+        raise UsageError("--feature-id と --feature-context は同時指定必須")
+    for flag, value in (("--feature-id", args.feature_id), ("--feature-context", args.feature_context)):
+        if value == "":
+            # 両方を空にした組を「feature を指定しない」と同じに扱わない (--path "" を断るのと揃える)
+            raise UsageError(f"{flag} に空の値は渡せない")
+    # path の字面の誤りも同じ。root や config の後に回すと、同じ引数でも repo の状態で exit と理由が変わる
+    for value in (args.config, args.path, args.feature_context):
+        if value is not None:
+            _check_relative_literal(value)
 
     repo_root, root_source, evidence = resolve_repo_root(args.repo_root, env)
     config = load_config(repo_root, args.config)
     resolved = validate_and_resolve(repo_root, config, args.path, require_plan_roots=require_plan_roots)
-    if bool(args.feature_id) != bool(args.feature_context):
-        raise UsageError("--feature-id と --feature-context は同時指定必須")
     feature_context = (
         validate_feature_context(repo_root, args.feature_id, args.feature_context)
-        if args.feature_id and args.feature_context else None
+        if args.feature_id is not None else None
     )
 
     plugin_root = env.get("CLAUDE_PLUGIN_ROOT")

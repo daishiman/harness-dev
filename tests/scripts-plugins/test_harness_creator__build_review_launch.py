@@ -102,11 +102,11 @@ def _gate_plan(tmp_path: Path, *, state_name: str = "state") -> dict:
         "target_manifest_sha256": binding["target_manifest_sha256"],
         "contract_binding_sha256": _canonical_sha(binding),
         "presentation_receipt_sha256": _canonical_sha(presentation),
-        "selected_level": "detailed",
+        "selected_level": "diagnose",
         "occurred_at": "2026-08-20T00:00:02Z",
     }
     pre_diagnostic = {
-        "selected_level": "detailed",
+        "selected_level": "diagnose",
         "presentation_receipt_sha256": _canonical_sha(presentation),
         "choice_event_sha256": _canonical_sha(pre_choice),
         "presentation_event_id": presentation["event_id"],
@@ -641,3 +641,84 @@ def test_skill_uses_only_c01_native_surface_apply_then_check():
     ) in text
     assert "評価Agent・改善Agentによる捏造" in text
     assert "別turn" in text
+
+
+# --- run-level model-action budget: the evaluator is not delivered without a reservation ---
+
+BUDGET_SCRIPT = RUN_BUILD / "scripts/validate-run-model-budget.py"
+BUDGET_POLICY = PLUGIN / "skills/run-elegant-review/references/convergence-policy.json"
+
+
+def _budget():
+    spec = importlib.util.spec_from_file_location("validate_run_model_budget_for_launch_test", BUDGET_SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    assert spec and spec.loader
+    spec.loader.exec_module(module)
+    return module, module.load_budget(BUDGET_POLICY)["total"]
+
+
+def test_legacy_claim_without_reservation_is_reserved_once_across_redelivery(mod, tmp_path: Path):
+    gate = _gate_plan(tmp_path)
+    state_dir = Path(gate["state_ref"]).parent
+    budget_mod, total = _budget()
+    mod.build_launch_request(gate, runtime="codex")
+    ledger = budget_mod.read_ledger(state_dir, gate["run_id"])
+    assert [(e["action_id"], e["count"]) for e in ledger["entries"]] == [(gate["initial_review"]["claim_id"], 1)]
+
+    receipt_path = mod.launch_state_path(Path(gate["state_ref"]))
+    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+    receipt["lease_expires_at"] = "2000-01-01T00:00:00Z"
+    receipt_path.write_text(json.dumps(receipt), encoding="utf-8")
+    mod.build_launch_request(gate, runtime="codex")
+    assert budget_mod.ledger_consumed(budget_mod.read_ledger(state_dir, gate["run_id"])) == 1
+
+
+def test_exhausted_run_budget_refuses_delivery_without_consumption(mod, tmp_path: Path):
+    gate = _gate_plan(tmp_path)
+    state_dir = Path(gate["state_ref"]).parent
+    budget_mod, total = _budget()
+    budget_mod.reserve(state_dir, gate["run_id"], action_id="prefill", component="bounded_improvement", count=total, total=total)
+    with pytest.raises(mod.LaunchError, match="run model-action budget"):
+        mod.build_launch_request(gate, runtime="codex")
+    assert not mod.launch_state_path(Path(gate["state_ref"])).exists()
+
+
+def test_cli_reports_zero_launches_when_the_run_budget_is_exhausted(tmp_path: Path):
+    gate = _gate_plan(tmp_path)
+    budget_mod, total = _budget()
+    budget_mod.reserve(Path(gate["state_ref"]).parent, gate["run_id"], action_id="prefill", component="bounded_improvement", count=total, total=total)
+    gate_path = tmp_path / "gate.json"
+    gate_path.write_text(json.dumps(gate), encoding="utf-8")
+    completed = subprocess.run([sys.executable, str(SCRIPT), "--gate-plan", str(gate_path), "--runtime", "codex"], capture_output=True, text=True, check=False)
+    assert completed.returncode == 2
+    refusal = json.loads(completed.stdout)
+    assert refusal["authorized"] is False and refusal["launch_count"] == 0
+    assert "run model-action budget" in refusal["error"]
+
+
+def test_verification_spend_counted_by_the_gate_also_binds_the_launcher(mod, tmp_path: Path):
+    # 古い claim (予約なし) を launcher が引き受けるとき、gate が数えた検証の消費も足し込む。
+    # 足さないと、台帳の外で使い切った分を launcher だけが見落として 1 context を出してしまう。
+    gate = _gate_plan(tmp_path)
+    _, total = _budget()
+    gate["run_budget"] = {**(gate.get("run_budget") or {}), "verification_model_actions": total}
+    with pytest.raises(mod.LaunchError, match="run model-action budget"):
+        mod.build_launch_request(gate, runtime="codex")
+    assert not mod.launch_state_path(Path(gate["state_ref"])).exists()
+
+
+@pytest.mark.parametrize("value", [-1, "3", 1.5, True, None])
+def test_malformed_verification_spend_is_refused_before_reserving(mod, tmp_path: Path, value):
+    gate = _gate_plan(tmp_path)
+    gate["run_budget"] = {"verification_model_actions": value}
+    budget_mod, _ = _budget()
+    with pytest.raises(mod.LaunchError, match="verification_model_actions"):
+        mod.build_launch_request(gate, runtime="codex")
+    assert budget_mod.read_ledger(Path(gate["state_ref"]).parent, gate["run_id"])["entries"] == []
+
+
+def test_a_run_budget_that_is_not_an_object_is_refused(mod, tmp_path: Path):
+    gate = _gate_plan(tmp_path)
+    gate["run_budget"] = []
+    with pytest.raises(mod.LaunchError, match="verification_model_actions"):
+        mod.build_launch_request(gate, runtime="codex")

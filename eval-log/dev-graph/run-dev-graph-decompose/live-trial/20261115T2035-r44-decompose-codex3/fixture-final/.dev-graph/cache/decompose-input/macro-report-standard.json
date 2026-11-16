@@ -1,0 +1,1056 @@
+{
+  "kind": "macro-decompose-dry-run-preview",
+  "stage": "standard_improved",
+  "dry_run": true,
+  "source_artifact": ".dev-graph/cache/decompose-input/macro-report.json",
+  "macro_brief": "render LT-FEATURE-001 → 前回比較 feature-lt-render-diff → 差分要約 feature-lt-render-summary。ARCH-LT-001を共有。",
+  "macro_nodes": [
+    {
+      "artifact_kind": "architecture",
+      "artifact_subtypes": [
+        "backend"
+      ],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "architecture",
+          "candidate_path": "architecture/ARCH-LT-001.md",
+          "confidence": 0.96
+        },
+        {
+          "artifact_kind": "document",
+          "candidate_path": "docs/ARCH-LT-001.md",
+          "confidence": 0.21
+        }
+      ],
+      "classification_confidence": 0.96,
+      "classification_reason": "本文が architecture template の必須 section 構成と一致し、第二候補との margin が閾値を超えるため自動確定した",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "not_applicable"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "d3c8a29c4cfe3af72249da54d76f54738ec4286b21e0bd84479d1cc16d7c3763",
+        "evaluator": "run-dev-graph-node/R4-apply-template",
+        "evidence_ref": ".dev-graph/cache/content-review/ARCH-LT-001.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-09-07T06:10:00Z",
+      "depends_on": [],
+      "domain": "delivery-graph",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": null,
+      "file_path": "architecture/ARCH-LT-001.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "graph_node_id": "ARCH-LT-001",
+      "implementation_readiness": {
+        "checked_at": "2026-09-07T06:10:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "harness maintainers"
+      ],
+      "parent_feature": null,
+      "phase_ref": null,
+      "priority": "medium",
+      "project_id": "gm4b-render",
+      "pull_request_linkages": [],
+      "related_nodes": [],
+      "resource_scope": [
+        "architecture/",
+        "scripts/"
+      ],
+      "source_lineage": {
+        "imported_at": null,
+        "origin_kind": "manual",
+        "source_digest": null,
+        "source_path": null,
+        "source_plugin": null,
+        "source_version": null
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "live-trial",
+        "render"
+      ],
+      "target_date": null,
+      "template_id": "architecture",
+      "template_version": "1.0.0",
+      "title": "配信グラフ基盤 backend architecture",
+      "tracker_binding": "none",
+      "updated_at": "2026-09-07T06:10:00Z"
+    },
+    {
+      "acceptance": [
+        "出力 HTML の外部 resource 参照が 0 件である",
+        "feature card の進捗が graph 実値の完了 task 数と一致する",
+        "同一 graph に対する二回の render で output digest が一致する"
+      ],
+      "architecture_refs": [
+        "ARCH-LT-001"
+      ],
+      "artifact_kind": "feature",
+      "artifact_subtypes": [],
+      "beads_linkage": null,
+      "classification_candidates": [
+        {
+          "artifact_kind": "feature",
+          "candidate_path": "features/LT-FEATURE-001.md",
+          "confidence": 0.96
+        },
+        {
+          "artifact_kind": "document",
+          "candidate_path": "docs/LT-FEATURE-001.md",
+          "confidence": 0.21
+        }
+      ],
+      "classification_confidence": 0.96,
+      "classification_reason": "本文が feature template の必須 section 構成と一致し、第二候補との margin が閾値を超えるため自動確定した",
+      "completion_evidence": {
+        "completed_at": null,
+        "evidence_refs": [],
+        "policy": "manual",
+        "reconciled_at": null,
+        "source": null,
+        "status": "not_applicable"
+      },
+      "confirmation_evidence": {
+        "evaluated_digest": "aac2a99a70959acc3b2bbf02ec494790ab0d7712489a8e5fcbac4742257b7a15",
+        "evaluator": "run-dev-graph-node/R4-apply-template",
+        "evidence_ref": ".dev-graph/cache/content-review/LT-FEATURE-001.json"
+      },
+      "confirmation_status": "confirmed",
+      "created_at": "2026-09-07T06:10:00Z",
+      "depends_on": [],
+      "domain": "delivery-graph",
+      "evaluation_status": "pass",
+      "execution_contexts": [],
+      "feature_package_id": null,
+      "file_path": "features/LT-FEATURE-001.md",
+      "github_project_linkages": [],
+      "github_publication": {
+        "labels": [],
+        "milestone": null,
+        "mode": "local_only",
+        "project_aliases": []
+      },
+      "goal": "canonical graph から決定論的に生成した単一 HTML が feature/task/edge と実数進捗を表示している状態",
+      "graph_node_id": "LT-FEATURE-001",
+      "implementation_readiness": {
+        "checked_at": "2026-09-07T06:10:00Z",
+        "missing_sections": [],
+        "status": "complete"
+      },
+      "issue_linkage": null,
+      "iteration": null,
+      "owners": [
+        "harness maintainers"
+      ],
+      "parent_feature": null,
+      "phase_ref": null,
+      "priority": "medium",
+      "project_id": "gm4b-render",
+      "pull_request_linkages": [],
+      "purpose": "graph 実値だけを根拠に依存構造と進捗を外部依存なしで提示できるようにするため",
+      "related_nodes": [],
+      "resource_scope": [
+        "features/",
+        "tasks/LT-FEATURE-001/"
+      ],
+      "scope_in": [
+        "canonical graph の読取と正規化",
+        "parent_feature 由来の進捗集計",
+        "inline SVG による描画"
+      ],
+      "scope_out": [
+        "GitHub Projects 同期",
+        "beads server 運用",
+        "閲覧者ごとの権限制御"
+      ],
+      "source_lineage": {
+        "imported_at": null,
+        "origin_kind": "manual",
+        "source_digest": null,
+        "source_path": null,
+        "source_plugin": null,
+        "source_version": null
+      },
+      "start_date": null,
+      "status": "active",
+      "tags": [
+        "live-trial",
+        "render"
+      ],
+      "target_date": null,
+      "template_id": "feature",
+      "template_version": "1.0.0",
+      "title": "graph 実値に基づく静的 render 可視化",
+      "tracker_binding": "none",
+      "updated_at": "2026-09-07T06:10:00Z"
+    },
+    {
+      "graph_node_id": "feature-lt-render-diff",
+      "artifact_kind": "feature",
+      "artifact_subtypes": [],
+      "title": "render 結果の前回比較",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "status": "draft",
+      "owners": [],
+      "tags": [],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "created_at": "2026-11-15T11:29:50.274453Z",
+      "updated_at": "2026-11-15T11:29:50.274453Z",
+      "depends_on": [
+        "LT-FEATURE-001"
+      ],
+      "related_nodes": [],
+      "resource_scope": [],
+      "purpose": "render 間の変化を読み手が確認できるようにする",
+      "goal": "現在と前回の render の追加・削除・変更を特定できる状態",
+      "scope_in": [
+        "比較対象 render の識別",
+        "追加・削除・変更の差分出力"
+      ],
+      "scope_out": [
+        "render 基盤の再実装",
+        "P01..P13 task の生成",
+        "外部 tracker への実書込"
+      ],
+      "acceptance": [
+        "同じ render 同士では差分が0件",
+        "追加・削除・変更を区別できる",
+        "前回 render が無い場合は比較不能と示す"
+      ],
+      "architecture_refs": [
+        "ARCH-LT-001"
+      ],
+      "parent_feature": null,
+      "feature_package_id": null,
+      "phase_ref": null,
+      "file_path": "features/lt-render-diff.md",
+      "template_id": "feature",
+      "template_version": "1.0.0",
+      "confirmation_status": "draft",
+      "evaluation_status": "pending",
+      "confirmation_evidence": {
+        "evaluator": null,
+        "evidence_ref": null,
+        "evaluated_digest": null
+      },
+      "source_lineage": {
+        "origin_kind": "generated",
+        "source_plugin": "dev-graph",
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "classification_confidence": 1.0,
+      "classification_reason": "declared by the C14 macro contract (run-dev-graph-decompose)",
+      "classification_candidates": [
+        {
+          "artifact_kind": "feature",
+          "confidence": 1.0,
+          "candidate_path": "features/lt-render-diff.md"
+        }
+      ],
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "issue_linkage": null,
+      "tracker_binding": "beads",
+      "beads_linkage": null,
+      "github_project_linkages": [],
+      "pull_request_linkages": [],
+      "execution_contexts": [],
+      "completion_evidence": {
+        "policy": "manual",
+        "status": "not_applicable",
+        "source": null,
+        "completed_at": null,
+        "reconciled_at": null,
+        "evidence_refs": []
+      },
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-11-15T11:29:50.274453Z"
+      }
+    },
+    {
+      "graph_node_id": "feature-lt-render-summary",
+      "artifact_kind": "feature",
+      "artifact_subtypes": [],
+      "title": "render 差分の読者向け要約",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "status": "draft",
+      "owners": [],
+      "tags": [],
+      "priority": null,
+      "start_date": null,
+      "target_date": null,
+      "iteration": null,
+      "created_at": "2026-11-15T11:29:50.274453Z",
+      "updated_at": "2026-11-15T11:29:50.274453Z",
+      "depends_on": [
+        "feature-lt-render-diff"
+      ],
+      "related_nodes": [],
+      "resource_scope": [],
+      "purpose": "差分の要点を短時間で把握できるようにする",
+      "goal": "差分に根拠を持つ要約を読み手が確認できる状態",
+      "scope_in": [
+        "差分の要点整理",
+        "根拠の差分への対応付け"
+      ],
+      "scope_out": [
+        "render 基盤の再実装",
+        "P01..P13 task の生成",
+        "外部 tracker への実書込"
+      ],
+      "acceptance": [
+        "要約の各記述が差分へ対応する",
+        "差分0件なら変更なしと示す",
+        "比較不能時に変化を捏造しない"
+      ],
+      "architecture_refs": [
+        "ARCH-LT-001"
+      ],
+      "parent_feature": null,
+      "feature_package_id": null,
+      "phase_ref": null,
+      "file_path": "features/lt-render-summary.md",
+      "template_id": "feature",
+      "template_version": "1.0.0",
+      "confirmation_status": "draft",
+      "evaluation_status": "pending",
+      "confirmation_evidence": {
+        "evaluator": null,
+        "evidence_ref": null,
+        "evaluated_digest": null
+      },
+      "source_lineage": {
+        "origin_kind": "generated",
+        "source_plugin": "dev-graph",
+        "source_path": null,
+        "source_version": null,
+        "source_digest": null,
+        "imported_at": null
+      },
+      "classification_confidence": 1.0,
+      "classification_reason": "declared by the C14 macro contract (run-dev-graph-decompose)",
+      "classification_candidates": [
+        {
+          "artifact_kind": "feature",
+          "confidence": 1.0,
+          "candidate_path": "features/lt-render-summary.md"
+        }
+      ],
+      "github_publication": {
+        "mode": "local_only",
+        "project_aliases": [],
+        "labels": [],
+        "milestone": null
+      },
+      "issue_linkage": null,
+      "tracker_binding": "beads",
+      "beads_linkage": null,
+      "github_project_linkages": [],
+      "pull_request_linkages": [],
+      "execution_contexts": [],
+      "completion_evidence": {
+        "policy": "manual",
+        "status": "not_applicable",
+        "source": null,
+        "completed_at": null,
+        "reconciled_at": null,
+        "evidence_refs": []
+      },
+      "implementation_readiness": {
+        "status": "complete",
+        "missing_sections": [],
+        "checked_at": "2026-11-15T11:29:50.274453Z"
+      }
+    }
+  ],
+  "macro_edges": [
+    {
+      "from": "feature-lt-render-diff",
+      "from_binding": "beads",
+      "to": "LT-FEATURE-001",
+      "to_binding": "none",
+      "decision": "blocked",
+      "reason": "cross_binding_dependency",
+      "root_edge": {
+        "from": "feature-lt-render-diff",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001",
+        "to_binding": "none"
+      },
+      "dep_add_called": false
+    },
+    {
+      "from": "feature-lt-render-summary",
+      "from_binding": "beads",
+      "to": "feature-lt-render-diff",
+      "to_binding": "beads",
+      "decision": "blocked",
+      "reason": "cross_binding_dependency",
+      "root_edge": {
+        "from": "feature-lt-render-diff",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001",
+        "to_binding": "none"
+      },
+      "dep_add_called": false
+    }
+  ],
+  "macro_contracts": [
+    {
+      "artifact_kind": "feature",
+      "slug": "lt-render-diff",
+      "title": "render 結果の前回比較",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "tracker_binding": "beads",
+      "depends_on": [
+        "LT-FEATURE-001"
+      ],
+      "macro": {
+        "purpose": "render 間の変化を読み手が確認できるようにする",
+        "goal": "現在と前回の render の追加・削除・変更を特定できる状態",
+        "scope_in": [
+          "比較対象 render の識別",
+          "追加・削除・変更の差分出力"
+        ],
+        "scope_out": [
+          "render 基盤の再実装",
+          "P01..P13 task の生成",
+          "外部 tracker への実書込"
+        ],
+        "acceptance": [
+          "同じ render 同士では差分が0件",
+          "追加・削除・変更を区別できる",
+          "前回 render が無い場合は比較不能と示す"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    },
+    {
+      "artifact_kind": "feature",
+      "slug": "lt-render-summary",
+      "title": "render 差分の読者向け要約",
+      "project_id": "gm4b-render",
+      "domain": "delivery-graph",
+      "tracker_binding": "beads",
+      "depends_on": [
+        "feature-lt-render-diff"
+      ],
+      "macro": {
+        "purpose": "差分の要点を短時間で把握できるようにする",
+        "goal": "差分に根拠を持つ要約を読み手が確認できる状態",
+        "scope_in": [
+          "差分の要点整理",
+          "根拠の差分への対応付け"
+        ],
+        "scope_out": [
+          "render 基盤の再実装",
+          "P01..P13 task の生成",
+          "外部 tracker への実書込"
+        ],
+        "acceptance": [
+          "要約の各記述が差分へ対応する",
+          "差分0件なら変更なしと示す",
+          "比較不能時に変化を捏造しない"
+        ],
+        "architecture_refs": [
+          "ARCH-LT-001"
+        ]
+      }
+    }
+  ],
+  "c02": {
+    "preview": ".dev-graph/cache/decompose-input/c02-preview.json",
+    "writer": "C02/run-dev-graph-node",
+    "contract": "c14_macro_contract",
+    "operation": "add --dry-run with macro",
+    "graph_revision_before": 3,
+    "graph_digest_after": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+    "applied_count": 0,
+    "write_count": 0,
+    "pre_write_validation": {
+      "findings": 0,
+      "validator": "validate-graph-schema.py"
+    }
+  },
+  "planned_snapshot": ".dev-graph/cache/decompose-input/planned-graph.json",
+  "schema_validation": ".dev-graph/cache/decompose-input/planned-schema-validation.json",
+  "publication_report": {
+    "targets": [
+      {
+        "graph_node_id": "ARCH-LT-001",
+        "artifact_kind": "architecture",
+        "binding": "none",
+        "status": "active",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": null,
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "外部 write なし",
+        "decision": "local_only"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001",
+        "artifact_kind": "feature",
+        "binding": "none",
+        "status": "active",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": null,
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "外部 write なし",
+        "decision": "local_only"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001-P01",
+        "artifact_kind": "task",
+        "binding": "beads",
+        "status": "done",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": "LT-FEATURE-001",
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "task",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/LT-FEATURE-001-P01-c28.json",
+        "preview_sha256": "63479a152c9e48937cb7d05e07715cc579d6e748d36d239ab74a5c93f3762287",
+        "decision": "pass",
+        "promotion_gate": "pass",
+        "planned": false,
+        "publication_parent_feature": "LT-FEATURE-001"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001-P02",
+        "artifact_kind": "task",
+        "binding": "beads",
+        "status": "done",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": "LT-FEATURE-001",
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "task",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/LT-FEATURE-001-P02-c28.json",
+        "preview_sha256": "49f56b19ffd7691823c206372a1950b286847a200dd15d056b442e995d05ff1c",
+        "decision": "pass",
+        "promotion_gate": "pass",
+        "planned": false,
+        "publication_parent_feature": "LT-FEATURE-001"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001-P03",
+        "artifact_kind": "task",
+        "binding": "beads",
+        "status": "done",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": "LT-FEATURE-001",
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "task",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/LT-FEATURE-001-P03-c28.json",
+        "preview_sha256": "4e1ee7d51706545bd6129022f915f7bcb6a6902e408eb2f586fa0707733667bf",
+        "decision": "pass",
+        "promotion_gate": "pass",
+        "planned": false,
+        "publication_parent_feature": "LT-FEATURE-001"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001-P04",
+        "artifact_kind": "task",
+        "binding": "beads",
+        "status": "done",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": "LT-FEATURE-001",
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "task",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/LT-FEATURE-001-P04-c28.json",
+        "preview_sha256": "1271fbfa69745deed2c8486950c32e1f41348f96545f7b02bd1e5594405a597c",
+        "decision": "pass",
+        "promotion_gate": "pass",
+        "planned": false,
+        "publication_parent_feature": "LT-FEATURE-001"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001-P05",
+        "artifact_kind": "task",
+        "binding": "beads",
+        "status": "done",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": "LT-FEATURE-001",
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "task",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/LT-FEATURE-001-P05-c28.json",
+        "preview_sha256": "09c03ffb0b00b5ad11d726207f64e80b6a06adf90435a303f74f90a749578d7f",
+        "decision": "pass",
+        "promotion_gate": "pass",
+        "planned": false,
+        "publication_parent_feature": "LT-FEATURE-001"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001-P06",
+        "artifact_kind": "task",
+        "binding": "beads",
+        "status": "active",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": "LT-FEATURE-001",
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "task",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/LT-FEATURE-001-P06-c28.json",
+        "preview_sha256": "1b1f42900489c7df23b0ef0efb79d22332e524e51cb1f31b4ef4aefd2f726a04",
+        "decision": "pass",
+        "promotion_gate": "pass",
+        "planned": false,
+        "publication_parent_feature": "LT-FEATURE-001"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001-P07",
+        "artifact_kind": "task",
+        "binding": "beads",
+        "status": "active",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": "LT-FEATURE-001",
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "task",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/LT-FEATURE-001-P07-c28.json",
+        "preview_sha256": "7ab707d726ad15dc5bfd5754a25182f823779d50452f2aee6683489eac000a05",
+        "decision": "pass",
+        "promotion_gate": "pass",
+        "planned": false,
+        "publication_parent_feature": "LT-FEATURE-001"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001-P08",
+        "artifact_kind": "task",
+        "binding": "beads",
+        "status": "active",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": "LT-FEATURE-001",
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "task",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/LT-FEATURE-001-P08-c28.json",
+        "preview_sha256": "ff27793431fc6dab89604ee6a4f1c46df2238c60b99d86156a4a19256f6b09a4",
+        "decision": "pass",
+        "promotion_gate": "pass",
+        "planned": false,
+        "publication_parent_feature": "LT-FEATURE-001"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001-P09",
+        "artifact_kind": "task",
+        "binding": "beads",
+        "status": "active",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": "LT-FEATURE-001",
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "task",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/LT-FEATURE-001-P09-c28.json",
+        "preview_sha256": "d994a36bb01e29c268b476ed282c79a807895a61e3b23a55402227babaf1c53b",
+        "decision": "pass",
+        "promotion_gate": "pass",
+        "planned": false,
+        "publication_parent_feature": "LT-FEATURE-001"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001-P10",
+        "artifact_kind": "task",
+        "binding": "beads",
+        "status": "active",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": "LT-FEATURE-001",
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "task",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/LT-FEATURE-001-P10-c28.json",
+        "preview_sha256": "ed4a2fdbe5ffe8efd11580cdb66f8fba79c0979b8147fd22e34c9214879b91fd",
+        "decision": "pass",
+        "promotion_gate": "pass",
+        "planned": false,
+        "publication_parent_feature": "LT-FEATURE-001"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001-P11",
+        "artifact_kind": "task",
+        "binding": "beads",
+        "status": "active",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": "LT-FEATURE-001",
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "task",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/LT-FEATURE-001-P11-c28.json",
+        "preview_sha256": "54aeba791eacce8e217239ea12439853292b18ab3d2f9526a9c3d0d0c1597d66",
+        "decision": "pass",
+        "promotion_gate": "pass",
+        "planned": false,
+        "publication_parent_feature": "LT-FEATURE-001"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001-P12",
+        "artifact_kind": "task",
+        "binding": "beads",
+        "status": "active",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": "LT-FEATURE-001",
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "task",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/LT-FEATURE-001-P12-c28.json",
+        "preview_sha256": "1e79b26cd5af735284a2477ae4ec0486cbe771e3f0d06745756b00e8470de472",
+        "decision": "pass",
+        "promotion_gate": "pass",
+        "planned": false,
+        "publication_parent_feature": "LT-FEATURE-001"
+      },
+      {
+        "graph_node_id": "LT-FEATURE-001-P13",
+        "artifact_kind": "task",
+        "binding": "beads",
+        "status": "active",
+        "confirmation_status": "confirmed",
+        "evaluation_status": "pass",
+        "implementation_readiness": "complete",
+        "parent_feature": "LT-FEATURE-001",
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "task",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/LT-FEATURE-001-P13-c28.json",
+        "preview_sha256": "431d90869f5c616dac94ae3704239b40952a3bb842c9005d6a6821a655cf1477",
+        "decision": "pass",
+        "promotion_gate": "pass",
+        "planned": false,
+        "publication_parent_feature": "LT-FEATURE-001"
+      },
+      {
+        "graph_node_id": "feature-lt-render-diff",
+        "artifact_kind": "feature",
+        "binding": "beads",
+        "status": "draft",
+        "confirmation_status": "draft",
+        "evaluation_status": "pending",
+        "implementation_readiness": "complete",
+        "parent_feature": null,
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "epic",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/feature-lt-render-diff-c28.json",
+        "preview_sha256": "363b01f29569ff7e32bc71006763985fe4d19d90caae6c49a0d1305b36ea596e",
+        "decision": "blocked",
+        "reasons": [
+          "promotion_gate",
+          "cross_binding_dependency"
+        ],
+        "root_edge": {
+          "from": "feature-lt-render-diff",
+          "from_binding": "beads",
+          "to": "LT-FEATURE-001",
+          "to_binding": "none"
+        },
+        "planned": true
+      },
+      {
+        "graph_node_id": "feature-lt-render-summary",
+        "artifact_kind": "feature",
+        "binding": "beads",
+        "status": "draft",
+        "confirmation_status": "draft",
+        "evaluation_status": "pending",
+        "implementation_readiness": "complete",
+        "parent_feature": null,
+        "graph_revision_before": 3,
+        "planned_graph_digest": "sha256:71d80822c13a8550bc46d426d01388456e9acdc24ed8def9a36434b8ce9ee572",
+        "operation": "create",
+        "issue_type": "epic",
+        "c28_preview": ".dev-graph/cache/decompose-input/improved/feature-lt-render-summary-c28.json",
+        "preview_sha256": "5c13734303a6cd266fc6045acdbf6f510774533a62fab93a79c8d9884afe1672",
+        "decision": "blocked",
+        "reasons": [
+          "promotion_gate",
+          "cross_binding_dependency"
+        ],
+        "root_edge": {
+          "from": "feature-lt-render-diff",
+          "from_binding": "beads",
+          "to": "LT-FEATURE-001",
+          "to_binding": "none"
+        },
+        "planned": true
+      }
+    ],
+    "edges": [
+      {
+        "from": "LT-FEATURE-001-P02",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001-P01",
+        "to_binding": "beads",
+        "decision": "create の後に張る edge",
+        "dep_add_called": false,
+        "reason": "両端の beads_linkage が無い"
+      },
+      {
+        "from": "LT-FEATURE-001-P03",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001-P02",
+        "to_binding": "beads",
+        "decision": "create の後に張る edge",
+        "dep_add_called": false,
+        "reason": "両端の beads_linkage が無い"
+      },
+      {
+        "from": "LT-FEATURE-001-P04",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001-P03",
+        "to_binding": "beads",
+        "decision": "create の後に張る edge",
+        "dep_add_called": false,
+        "reason": "両端の beads_linkage が無い"
+      },
+      {
+        "from": "LT-FEATURE-001-P05",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001-P04",
+        "to_binding": "beads",
+        "decision": "create の後に張る edge",
+        "dep_add_called": false,
+        "reason": "両端の beads_linkage が無い"
+      },
+      {
+        "from": "LT-FEATURE-001-P06",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001-P05",
+        "to_binding": "beads",
+        "decision": "create の後に張る edge",
+        "dep_add_called": false,
+        "reason": "両端の beads_linkage が無い"
+      },
+      {
+        "from": "LT-FEATURE-001-P07",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001-P06",
+        "to_binding": "beads",
+        "decision": "create の後に張る edge",
+        "dep_add_called": false,
+        "reason": "両端の beads_linkage が無い"
+      },
+      {
+        "from": "LT-FEATURE-001-P08",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001-P07",
+        "to_binding": "beads",
+        "decision": "create の後に張る edge",
+        "dep_add_called": false,
+        "reason": "両端の beads_linkage が無い"
+      },
+      {
+        "from": "LT-FEATURE-001-P09",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001-P08",
+        "to_binding": "beads",
+        "decision": "create の後に張る edge",
+        "dep_add_called": false,
+        "reason": "両端の beads_linkage が無い"
+      },
+      {
+        "from": "LT-FEATURE-001-P10",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001-P09",
+        "to_binding": "beads",
+        "decision": "create の後に張る edge",
+        "dep_add_called": false,
+        "reason": "両端の beads_linkage が無い"
+      },
+      {
+        "from": "LT-FEATURE-001-P11",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001-P10",
+        "to_binding": "beads",
+        "decision": "create の後に張る edge",
+        "dep_add_called": false,
+        "reason": "両端の beads_linkage が無い"
+      },
+      {
+        "from": "LT-FEATURE-001-P12",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001-P11",
+        "to_binding": "beads",
+        "decision": "create の後に張る edge",
+        "dep_add_called": false,
+        "reason": "両端の beads_linkage が無い"
+      },
+      {
+        "from": "LT-FEATURE-001-P13",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001-P12",
+        "to_binding": "beads",
+        "decision": "create の後に張る edge",
+        "dep_add_called": false,
+        "reason": "両端の beads_linkage が無い"
+      },
+      {
+        "from": "feature-lt-render-diff",
+        "from_binding": "beads",
+        "to": "LT-FEATURE-001",
+        "to_binding": "none",
+        "decision": "blocked",
+        "reason": "cross_binding_dependency",
+        "root_edge": {
+          "from": "feature-lt-render-diff",
+          "from_binding": "beads",
+          "to": "LT-FEATURE-001",
+          "to_binding": "none"
+        },
+        "dep_add_called": false
+      },
+      {
+        "from": "feature-lt-render-summary",
+        "from_binding": "beads",
+        "to": "feature-lt-render-diff",
+        "to_binding": "beads",
+        "decision": "blocked",
+        "reason": "cross_binding_dependency",
+        "root_edge": {
+          "from": "feature-lt-render-diff",
+          "from_binding": "beads",
+          "to": "LT-FEATURE-001",
+          "to_binding": "none"
+        },
+        "dep_add_called": false
+      }
+    ],
+    "eligible_pre_evaluation_draft_count": 0,
+    "eligible_promoted_existing_task_count": 13,
+    "writes": {
+      "local_graph": 0,
+      "content": 0,
+      "receipt": 0,
+      "beads": 0,
+      "github": 0,
+      "projects": 0
+    }
+  },
+  "package_report": {
+    "decision": "登録済み（登録の operation なし）",
+    "receipt": ".dev-graph/state/package-registration-receipt-LT-FEATURE-001.json",
+    "parent_feature": "LT-FEATURE-001",
+    "feature_package_id": "feature-package/LT-FEATURE-001",
+    "phase_refs": [
+      "P01",
+      "P02",
+      "P03",
+      "P04",
+      "P05",
+      "P06",
+      "P07",
+      "P08",
+      "P09",
+      "P10",
+      "P11",
+      "P12",
+      "P13"
+    ],
+    "task_count": 13,
+    "internal_edge_count": 12,
+    "new_planner_invocations": 0,
+    "new_task_count": 0,
+    "limitation": "既存source_lineageが参照するpublished task-spec bytesはfixtureに含まれない。登録済みpackageの構造とreceipt一致を検査し、source bytesの再認証や再登録は行わない。"
+  },
+  "readiness": {
+    "LT-FEATURE-001": "package登録済み。既存taskは5/13完了のためrenderは未完了",
+    "feature-lt-render-diff": "LT-FEATURE-001未完了、かつdraft/pending、cross_binding_dependency",
+    "feature-lt-render-summary": "feature-lt-render-diff未完了、かつdraft/pending、cross_binding_dependency"
+  },
+  "preservation": {
+    "original_graph_canonical_digest": "sha256:4356f126d4a0738348c6432b1d422513c72ac77a76b96ceae2ec22a1dfcc43b0",
+    "original_graph_bytes_sha256": "2ed57eab5df249146b285318d5ac55027dcb4f67b4878e2199e2df684932fd0b",
+    "protected_files": ".dev-graph/cache/decompose-input/original-digests.json"
+  },
+  "outer_criteria": {
+    "OUT1": "external_pending",
+    "OUT2": "external_pending",
+    "OUT3": "external_pending",
+    "OUT4": "external_pending",
+    "OUT5": "external_pending",
+    "OUT6": "external_pending",
+    "OUT7": "external_pending"
+  }
+}

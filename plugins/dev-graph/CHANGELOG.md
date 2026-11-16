@@ -1,5 +1,13 @@
 # 変更履歴
 
+## 0.1.35 — 2026-11-16
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
+## 0.1.34 — 2026-11-15
+
+- build-plugin-release.py の自動採番で作られた版。変更内容の記述は未記入。
+
 ## 0.1.33 — 2026-11-14
 
 - skill 受入証拠テストで、live-trial の受領と verdict が現行閉包より古い場合を既定で警告にした。鮮度の判断は harness-creator の `freshness_enforced` に揃え、`LIVE_TRIAL_ENFORCE_FRESHNESS=1` のときだけ FAIL にする。古いうえに FAIL の受領は警告に隠さず FAIL にする。

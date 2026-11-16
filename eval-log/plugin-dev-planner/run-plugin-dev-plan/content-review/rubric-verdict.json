@@ -2,19 +2,21 @@
   "target": {
     "plugin": "plugin-dev-planner",
     "skill": "run-plugin-dev-plan",
-    "skill_md_sha256": "5749bf5a15ccfbca0d15276a21dfa5e742396fa768910130776763563a73151e"
+    "skill_md_sha256": "297130c2276851a6a00ad68922b61bc17bdb57f6e4a13d90dc5fe333a1bfbc35",
+    "reviewed_skill_md_sha256": "297130c2276851a6a00ad68922b61bc17bdb57f6e4a13d90dc5fe333a1bfbc35",
+    "skill_dir_digest": "2b7f24f8adb87ec72de4a80cbd6dccda6fffbcb87a10432a9721fb2282c92448"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
   "findings_summary": {
     "contradiction": 0,
-    "omission": 2,
-    "inconsistency": 1,
+    "omission": 0,
+    "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 0
+    "smell": 2
   },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context) の rubric 投影",
-  "reviewed_at": "2026-10-04T22:30:28Z",
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-15T08:59:22Z",
   "iterations": 1,
   "human_review_required": false,
   "feedback_loop": {
@@ -26,19 +28,16 @@
       "OUT2"
     ],
     "positive_feedback": [
-      "依存関係の観点では、install 先で解決できない skill 相対の兄弟参照 (`../../../harness-creator/...`) を repo root 起点へ置き換え、参照先の実在と consumer lint の解決 (lint-skill-completeness.py の repo root 相対の解決) の両方で壊れないことを確認できた。scripts/lint-sibling-plugin-paths.py も OK。",
-      "記述規約の観点では、新しい書き方が lint-sibling-plugin-paths.py の docstring の方針 (repo-bundled 前提の plugin と frontmatter の *_refs は `plugins/<name>/...`) と一致し、配布注記 (SKILL.md:158) が基点の使い分け (cross-plugin は repo root 起点、skill 資産は self-relative) とその理由を 1 か所で述べている。",
-      "criteria IN1/IN2/OUT1/OUT2 の文言と検査経路は今回の書き換えで変わっていない。pytest 937 passed / 2 skipped で、前回確認した gate の挙動 (install 義務の到達、slug 正本、帰属拒否) も保たれている。"
+      "frontmatter の goal_seek から plan_dir/spec/progress/intermediate を消しても、置き場は「ゴールシーク配線」の本文 (specfm.plan_output_dir で <PLAN_DIR> を解決し、goal-spec.json・run-plugin-dev-plan-progress.json・run-plugin-dev-plan-intermediate.jsonl を置く) と io-contract §9 の表と .gitignore の 2 行で一意に定まっている。goal-seek-paradigm.md L83 の「path は本文に書き、frontmatter に重ねない」と同じ向き。"
     ],
     "negative_feedback": [
-      "[low / omission (差分外の既存文言)] 生成 plan への兄弟参照の指示 (io-contract F8 L257、主要ルール 8 L205、spec-reflection F8 L82、component-domain L89) が vendoring と self-derive だけを挙げ、新方針の resolver、`plugin:` 記法、出典表記、lint-sibling-plugin-paths を案内していない。矛盾ではなく、repo の CI (Makefile:162、harness-creator-kit-ci.yml:131) で親ディレクトリ起点の参照は止まるため low。",
-      "[low / inconsistency・前回からの持ち越し] component 帰属の検査は derive() leaf にしか掛からず、保存済み task-graph は条項の包含だけを見る。io-contract L209 は保存済み graph でも帰属を検出するように読める。gate の前に derive を必ず実行する手順があるため low。",
-      "[low / omission・前回からの持ち越し] 主要ルール 4 の移行方針の列挙に、P13 の entities_covered を [] に戻す手順が無い。gate のエラー文が直し方を示すため low。"
+      "[low] FM-005: description first phrase 'プラグイン構想から' is not a verb (frontmatter.description)",
+      "[medium] BD-002: missing '## Gotchas' (or '## つまずきやすい点') (body)"
     ],
     "iteration": 1,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "elegance 側 verdict と同じ focused combined review (builder とは別 context の独立 evaluator、incremental profile、1 回) を rubric 観点へ投影したもの。30 思考法は実施しておらず、実施したとも申告しない。採点の扱いを正確に述べる。ref-skill-design-rubric の全 rule を機械実行して数値 score を出したのではない。install 先での兄弟参照の修正差分 (前回 verdict の後に入った変更) を中心に、構造規範 (criteria IN1/IN2/OUT1/OUT2 との整合、記述規約、参照先の実在、consumer lint の解決、生成 plan への指示と新方針の整合、責務境界) を実読と決定論 lint・tests の実行で確認した。そのうえで combined review の単一判断として、high/medium の finding 0 件 (low 3 件のみ) を根拠に PASS とした。確認結果: plugin-dev-planner の pytest 937 passed / 2 skipped、scripts/lint-sibling-plugin-paths.py OK、repo 全体の scripts/validate-plugin-completeness.py exit 0。criteria_evaluated は本 skill frontmatter の feedback_contract.criteria 全 4 件。PASS の射程は design claim (静的設計 adequacy) に限る。install 先の cache からの起動と、consumer 側での P13 leaf の実行は評価対象外。"
+  "notes": "render-findings-score が機械採点 (score 87/threshold 80, sha256:22667118c1e69ad91f3c8e766ec314951f9b79e6eb5df446b5a50a82690f4ce9, scored 23/24) と LLM 判定 1 件 (BD-004) から生成した。"
 }

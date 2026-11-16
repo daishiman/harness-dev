@@ -1,0 +1,36 @@
+# Codex native実走: dev-graph:run-dev-graph-status
+
+$dev-graph:run-dev-graph-status --repo-root /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/cases/run-dev-graph-status/fx --id task-lt-task-001
+
+この run は scenario C18-OUT1-positive-read-only-status-fixture-standard-v2-codex-v1 の充足を確認するものです。
+1. the reported status, closed_at, and depends_on of task-lt-task-001 match the graph store values
+2. C11 validate-graph-schema exits 0 on the queried graph
+3. the graph digest is unchanged across the status run and GitHub/Beads writes are 0
+
+## ホスト別の主張
+これはCodexのnative $skill適用・native subagent・正規CLI・成果物を観測する試行。ClaudeのSkill tool、Claude Stop hookやplugin hookの動作を証明したとは扱わない。source SKILLの本文を改変せず読み、ホスト呼出し構文だけをnativeへ写す。
+
+## sourceの実Readと書込境界
+各native適用の最初に、注入されたSKILL.mdの実在path（初回は /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/providers/plugins/dev-graph/skills/run-dev-graph-status/SKILL.md）を、単独catの `tools.exec_command({cmd:"cat <literal absolute SKILL.md>",login:false,max_output_tokens:40000})` で全文Readする。outer execにも冒頭pragma `// @exec: {"max_output_tokens":40000}` を明示する。まとめcat・途中sed・shaだけ・注入本文だけをReadの代わりにしない。login:falseでユーザーstartup出力を混ぜず、内外max40000で全文を途中省略させない。以降のシェルCLIもlogin:falseで呼ぶ。PATH/ZDOTDIR/.zlogin自体は変更しない。必要責務promptも責務の出力前に読むが、無関係な全promptを実行する新条件は課さない。
+writer/validatorはこのsourcecopyの正規scriptだけ。native source rootは /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/providers/plugins 内。project .agents/skills はreadonly sourceへのsymlinkで本文を変更しない。actorの書込は /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/cases/run-dev-graph-status/fx と /Users/dm/orca/workspaces/harness/harness-creatorの改善/eval-log/dev-graph/run-dev-graph-status/live-trial/20261115T1835-r44-status-codex/out/status.json だけ。control/provider/source/旧fixture/旧証跡/userconfig/trust/auth/cache/PATH/HOME/CODEX_HOMEを変更しない。依存CLIごとのPLUGIN_ROOT/CLAUDE_PROJECT_DIRはC24に束縛したrootをprocess環境へ明示する。Pythonは `/usr/bin/arch -x86_64 /Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -B` を明示しPATHを変更しない。
+
+## 実成果物→実選択→独立監査
+main contextだけでsource出力契約の最小実成果物を作り、最小guardを通す。実在path・bytes SHA-256・開き方をassistant通常本文で提示し、accept-as-is/diagnoseの二択を尋ねる。tool_resultだけでは提示扱いにしない。
+続けて /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/cases/run-dev-graph-status/fx/artifact-choice-request.json へ次の5fieldsだけを書く。
+{"kind":"artifact-delivery-choice","state":"waiting_user_choice","target_skill":"<実際のqualified skill>","invocation_id":"<このnative呼出し固有ID>","artifacts":[{"path":"<FX内実在絶対path>","sha256":"<bytes hex64>"}]}
+checkpointを書いた後、そのturnの最後のassistant通常本文へ実path・digest・開き方・二択のすべてを載せてturnを終える。tool前コメントだけに置いて最後を「選択待ち」の一言で終えない。最終DONE/out markerはまだ書かない。controllerが本文と現物を照合し、本物の次user turnでdiagnoseを返す。それを受けてからcanonical選択記録を保存し、sourceが要求するnative subagent/auditor/semantic evaluatorを初めて起動する。pre-choiceのAgentは禁止。先に起動してから記録を作って順序を取り繕わない。
+診断の所見を示した後に、artifact_delivery の改善の段で改善の深さを選ぶことになったら、この task が事前に指定した `standard` を使う。深さは改善の段でだけ使い、初回の選択 (accept-as-is / diagnose) の記録には書かない。深さの質問で turn を終えない。
+これは既知fixture選択だけの対話例外で、人間への追加質問・未知UIgateへの応答・外部mutation承認を許さない。未知gateは停止し具体的に報告する。
+
+## 本題と入力
+本題前のinitと2task登録はcontrollerの正規CLI準備で完了する。これはstatusの行動証拠ではない。task-lt-task-001の実status/closed_at/depends_onをqueryし、status本題の前後graph digest不変、C11 exit0、外部write0を観測する。
+準備担当からのinputメモ: initとC02によるstatus入力は準備段階だけ。被験statusは未実行。
+
+## 後続native適用
+- 後続の別native適用はない。
+各後続操作に到達したら、必要な実入力fileをFX内で用意し、/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/cases/run-dev-graph-status/fx/native-operation-request.jsonへ次を保存してturnを終える。
+{"kind":"native-operation","state":"waiting_operation","operation_id":"<上記のid>","target_skill":"<上記qualified target>","args":"<上記のargsをbytes一致で>"}
+後続を自分でtoolへ読み替えて完了済みにせず、controllerの実user native適用を待つ。続くnative適用でも冒頭の単独cat全文Read・必要責務prompt・artifact提示/実選択順序を守る。全体の本題を終えるまで中間stageからout marker/DONEを出さない。
+
+## 最終完了マーカー
+成功/失敗/中断の最終時だけ、/Users/dm/orca/workspaces/harness/harness-creatorの改善/eval-log/dev-graph/run-dev-graph-status/live-trial/20261115T1835-r44-status-codex/out/status.jsonへ {"status":"PASS|FAIL|ERROR","scenario":"C18-OUT1-positive-read-only-status-fixture-standard-v2-codex-v1"} を1回Writeし、最後に `DONE: <status>` と1行報告する。部分的完了、期待結果の自己申告、未実走をPASSにしない。sourceが求めるgoal/progress/intermediateは各ownerのFX/eval-logへ残す。source正規gateや独立評価を自作driverで代用しない。外部(本物のBeads/GitHub/Projects/Notion)への接続・mutation0、plugin install0。予算はwall 1800秒、tokens 8000000。延長・clock resetをしない。

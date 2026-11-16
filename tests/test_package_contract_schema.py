@@ -17,6 +17,7 @@ HarnessHub-2ih / HarnessHub-65z (2026-07-21 検出):
 
 実 repo の plugins は一切書き換えず、否定ケースは全て in-memory の最小 contract で構築する。
 """
+import importlib.util
 import json
 import re
 from pathlib import Path
@@ -169,3 +170,85 @@ def test_reserved_ids_are_flagged_in_catalog():
     )
     # 予約中の ID は実装 script を持たない (持っていれば予約状態の解除漏れ)
     assert all(entries[pkg_id].get("script") is None for pkg_id in flagged)
+
+
+# --- repo_refs の形 (PKG-009 の宣言) -------------------------------------------------------
+# 形の規則の正本は lint-external-refs.py の parse_repo_refs。schema はそれを写したものなので、
+# 同じ case を両方に通して判定が一致することを確かめる (片方だけを直すと、schema は通るのに lint で
+# contract error になる宣言、またはその逆が生まれる)。(ref, match) の重複は lint だけが拒む (schema では書けない)。
+
+_LINT_SCRIPT = ROOT / "plugins" / "skill-governance-lint" / "scripts" / "lint-external-refs.py"
+
+
+def _lint_module():
+    spec = importlib.util.spec_from_file_location("lint_external_refs_for_schema_parity", _LINT_SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _with_repo_refs(entries) -> dict:
+    contract = _minimal_contract([])
+    contract["repo_refs"] = entries
+    return contract
+
+
+def _schema_accepts(entry) -> bool:
+    return not list(_validator().iter_errors(_with_repo_refs([entry])))
+
+
+def _lint_accepts(entry) -> bool:
+    return not _lint_module().parse_repo_refs([entry])[1]
+
+
+REPO_REF_VALID = [
+    {"ref": "doc/design/", "match": "prefix", "reason": "設計書"},
+    {"ref": "doc/ClaudeCodeスキルの設計書/sub/", "match": "prefix", "reason": "3 段の prefix"},
+    {"ref": "doc/a.md", "match": "exact", "target": "plugins/x/README.md", "reason": "移した先"},
+    {"ref": "../../../x/a.py", "match": "exact", "target": "plugins/x/a.py", "reason": "兄弟 plugin"},
+    # 末尾の `/` を重ねても範囲が狭まるだけ (lint は rstrip("/") してから segment を見る)
+    {"ref": "doc/design//", "match": "prefix", "reason": "r"},
+    # `.` で始まるだけの名前や `...` は `.`・`..` ではない
+    {"ref": ".github/workflows/", "match": "prefix", "reason": "r"},
+    {"ref": "doc/.../a.md", "match": "exact", "reason": "r"},
+]
+
+REPO_REF_INVALID = [
+    # target は exact のときだけ (allOf の 1 つめ)
+    {"ref": "doc/design/", "match": "prefix", "target": "doc/a.md", "reason": "r"},
+    # `../` で始まる ref は target が要る (allOf の 2 つめ)
+    {"ref": "../../../x/a.py", "match": "exact", "reason": "r"},
+    # prefix は `/` で終わる 2 段以上で、`.`・`..`・空の segment を含まない (allOf の 3 つめ)
+    {"ref": "doc/", "match": "prefix", "reason": "r"},
+    {"ref": "doc/design", "match": "prefix", "reason": "r"},
+    {"ref": "doc//design/", "match": "prefix", "reason": "r"},
+    {"ref": "doc/../design/", "match": "prefix", "reason": "r"},
+    {"ref": "doc:x/design/", "match": "prefix", "reason": "r"},
+    # ref は `../` で始まらなければ repo 相対 path
+    {"ref": "~/notes/a.md", "match": "exact", "reason": "r"},
+    {"ref": "doc/./a.md", "match": "exact", "reason": "r"},
+    {"ref": "C:/doc/a.md", "match": "exact", "reason": "r"},
+    # target は repo 相対 path
+    {"ref": "doc/a.md", "match": "exact", "target": "../a.md", "reason": "r"},
+    {"ref": "doc/a.md", "match": "exact", "target": "/etc/passwd", "reason": "r"},
+    {"ref": "doc/a.md", "match": "exact", "target": "~/a.md", "reason": "r"},
+    {"ref": "doc/a.md", "match": "exact", "target": "doc\\a.md", "reason": "r"},
+    {"ref": "doc/a.md", "match": "exact", "target": "doc//a.md", "reason": "r"},
+    # target を書かないときは key ごと省く (null は書き損じ)
+    {"ref": "doc/a.md", "match": "exact", "target": None, "reason": "r"},
+    # reason は空白だけでは理由にならない
+    {"ref": "doc/a.md", "match": "exact", "reason": "   "},
+    {"ref": "doc/a.md", "match": "glob", "reason": "r"},
+    {"ref": "doc/a.md", "match": "exact"},
+    {"ref": "doc/a.md", "match": "exact", "reason": "r", "allow": True},
+]
+
+
+@pytest.mark.parametrize("entry", REPO_REF_VALID)
+def test_repo_ref_valid_shapes_are_accepted_by_schema_and_lint(entry):
+    assert (_schema_accepts(entry), _lint_accepts(entry)) == (True, True)
+
+
+@pytest.mark.parametrize("entry", REPO_REF_INVALID)
+def test_repo_ref_invalid_shapes_are_rejected_by_schema_and_lint(entry):
+    assert (_schema_accepts(entry), _lint_accepts(entry)) == (False, False)

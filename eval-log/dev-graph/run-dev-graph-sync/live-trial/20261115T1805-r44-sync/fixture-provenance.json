@@ -1,0 +1,93 @@
+{
+  "run_id": "20261115T1805-r44-sync",
+  "fixture": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/sync/fx",
+  "note": "controller (lt-node) による fixture の準備。trial の session 開始前に行い、被験 skill の挙動ではない。前回の fixture (/private/tmp/harness-claude-ci11-20261103/cases/sync/fx) は消えていたので、pr86 の記録した手順で作り直した。",
+  "recipe_sources": [
+    "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261103T004404-claude-ci11c-sync/task.md (雛形。transcript.jsonl の cwd はすべて fixture root)",
+    "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261031T2343-pr86/fixture-provenance.json (seed・rekey・fake-gh patch・plugins の写し・exclude の手順)",
+    "plugins/dev-graph/scripts/resolve-repo-context.py (repository_id_for と worktree_id の導出)",
+    "plugins/dev-graph/tests/fixtures/live-trial-positive-scenarios.json (C03-OUT1-positive-second-sync-zero-r2 の fixture_contract)"
+  ],
+  "script": {
+    "build": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/sync/build-fx.py",
+    "build_sha256": "411e8c2289f249e4b986cc7772272c42214ede96731b7de54fc44762d3b418fa",
+    "verify": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/sync/verify-closure.py",
+    "verify_sha256": "08b54a987ee1d394dda8e9faebe134b01904486a8663a985bbf519b29f9f79da",
+    "build_output": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/sync/build-fx.out.json"
+  },
+  "seed": {
+    "path": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/20261005T171515-bzn4-sync",
+    "git_common_dir": "/Users/dm/dev/dev/個人開発/harness/eval-log/dev-graph/live-trial-fixtures/r5-sync/.git",
+    "head": "fbdcf2ba39d3380575156e174dc8e8d7e3479756",
+    "how": "seed で git archive HEAD (tracked 38 files だけ) を FX へ展開。seed は読むだけ (clean を確かめた)"
+  },
+  "commits": [
+    "349bdae79d18898021391e931d2ed957ce5ab504 chore(fixture): seed r5-sync fixture from bzn4-sync fbdcf2b",
+    "baffb8882500535bcfc53001856386b73ce580bd chore(fixture): rekey repository_id to this fixture repo",
+    "ced9afbc87766b0dd482d5074b4e82cac658f084 test(fixture): fake-gh answers Projects ITEM_QUERY and clear field (pr86 patch)"
+  ],
+  "tracked_files_committed": 38,
+  "rekey": {
+    "file": ".dev-graph/config.json",
+    "repository_id": [
+      "local:sha256:3392565b6f2846f6d0c97d35f0c3bd0135b3982cf2cbeb95d02e8d66801b9979",
+      "local:sha256:c9c260ed1ca4ea591307d52633c9014bf83b7123eb927614afc90a2b4ca76225"
+    ],
+    "derived_from": "remote 無しの新しい repo なので sha256(str(FX/.git の実 path))。resolve-repo-context.py --mode write の出力と一致",
+    "worktree_id": "wt_6498975933ca8c67 (config には書かれていない。C24 の出力と一致)",
+    "sha256": ["0a1ab445f5511c36e3e0656ae3f05690057111acd5dcf5ec9ee5b705591525f3", "d091ad72bcabb63a177acca1adec1404e11cf8d62cc4f4d4cbf1f54c5ead905d"]
+  },
+  "fake_gh_patch": {
+    "path": "tools/fake-gh.py",
+    "source": "eval-log/dev-graph/run-dev-graph-sync/live-trial/20261031T2343-pr86/fx-final/tree/tools/fake-gh.py",
+    "sha256_before": "6f63037f73f4104a9ffe2a17894ebd6a42440f740b5a7c28af21ad7193301c27",
+    "sha256_after": "025f9bddfb9d7200a5decab80b3e9ad48d2ec8882a495dcb6c877dde810816c7",
+    "mode": "0755 (seed のまま)",
+    "why": "seed の fake-gh は diff-github-project-fields.py の ITEM_QUERY と clearProjectV2ItemFieldValue に答えられない (pr86 の記録)。pr86 の fx-final に残る patch 済みの bytes を写し、sha256 が pr86 の sha256_after と一致することを確かめた。作り直しではなく復元"
+  },
+  "key_files_sha256": {
+    "github-adapter.json": "8e74cc2df2a5e54a0f3eeda258177b400cd359cfcbc7268d8d9d5338c469f322",
+    ".dev-graph/state/graph.json": "0cd59052b9da13902fd762da8626767fd6164865877b42a8f7fe30003ff095a9",
+    ".dev-graph/state/github-sync-snapshot.json": "d4a5c0a2ed5da5f90f5e16c7a65a3fd6eb894a75503abc56440b02f7a44b8ca4",
+    "tasks/T-SYNC-001.md": "71e52b10b8af896f7883c008e0b26af4c844ec9bcaa82ad16bb910e6c0095f6c",
+    "tasks/T-SYNC-002.md": "31be08783b1df3416d4faaed16326d0ef862efc958dff059f8084b2dd2fa7fb9"
+  },
+  "plugins_copy": {
+    "into": "FX/plugins/",
+    "plugins": ["dev-graph", "skill-governance-adapters"],
+    "why": "boot が pin するのは target plugin と manifest の dependencies (skill-governance-adapters) と package-contract の skill_dependencies[run-dev-graph-sync] (無し) だけ",
+    "how": "shutil.copytree(symlinks=True) (cp -Rp 相当。hooks/ の symlink は symlink のまま)",
+    "bytes_match": {"dev-graph": {"files": 223, "diff_count": 0}, "skill-governance-adapters": {"files": 33, "diff_count": 0}},
+    "closure_sha_root": "5819d9b0641d0018540d546e8f2998278a34bd99b27d9103f125e45caf427e09",
+    "closure_sha_copy": "5819d9b0641d0018540d546e8f2998278a34bd99b27d9103f125e45caf427e09",
+    "closure_match": true,
+    "closure_files": 52,
+    "closure_computed_by": "live-trial-verdict.py の skill_dir_tree_sha を読むだけで呼んだ (python3 -B)"
+  },
+  "git_exclude": "FX/.git/info/exclude に /plugins/ と /.claude/ を足した。fixture の git status は clean",
+  "fixture_check": {
+    "when": "起動の前。被験の外で、FX/plugins の script を python3 -B で回した (CLAUDE_PROJECT_DIR は外した)",
+    "results": [
+      "C11 validate-graph-schema.py --graph FX/.dev-graph/state/graph.json --repo-root FX: rc=0、graph_validation pass・violation 0・valid true",
+      "C24 resolve-repo-context.py --repo-root FX --mode write: rc=0、repository_id は rekey の値、diagnostics は default_branch_fallback_main だけ"
+    ]
+  },
+  "session_layout": {
+    "session_cwd": "FX (前回 ci11c と pr86 と同じ。UserPromptSubmit hook が FX の preview と照合できるように、session の cwd を fixture の root にする)",
+    "session_cwd_decision": "呼び出し元 (team-lead) が cwd = FX を承認。理由: preview を ROOT に作ると ROOT の全 session の Bash が止まり、repo 側の guard の preview を新しく出さない約束にも反するため。前例 ci11c・pr86 も cwd は FX",
+    "dev_graph_gh": {
+      "file": "FX/.claude/settings.local.json",
+      "content": "{\"env\":{\"DEV_GRAPH_GH\":\"<FX>/tools/fake-gh.py\"}} だけ (permissions・hooks・ほかの key は無し)",
+      "sha256": "d41ac214ece4df3b2af3b89151417ca678ee8658d45e0e1cefe11c3983654a83",
+      "how": "Write の道具で新しく作った。boot の --setting-sources local で cwd = FX の local settings として読まれる。呼び出し元が条件付きで承認。ROOT・~/.claude・ユーザーの settings には触っていない",
+      "git": "/.claude/ は FX/.git/info/exclude 済み。fixture の git status は clean のまま"
+    },
+    "trust": "~/.claude.json にも偽の HOME にも trust を書かない (呼び出し元の指示)。そのまま boot し、TIMEOUT なら正規の reap で片付けて報告する"
+  },
+  "plugins_sha_list": {
+    "file": "plugins-copy.sha256 (workdir)",
+    "sha256": "60abc0fdc4d816f253224bbd6e9829a3995004799fc20488fbb701c079164b82",
+    "entries": 256,
+    "how": "FX と ROOT のそれぞれで plugins/dev-graph と plugins/skill-governance-adapters の全 file の shasum -a 256 と symlink 1 件の readlink を並べ、2 つの一覧が byte 一致 (cmp) することを確かめた"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "policy_id": "artifact-delivery-v1",
+  "skill": "system-spec-harness:run-system-spec-compile",
+  "events": [
+    {"state": "artifact_created", "writer": "skills/run-system-spec-compile/scripts/compile-spec-doc.py compile", "exit": 0, "files": ["00-requirements-definition.md", "database.md", "auth.md", "ui-ux.md", "security.md", "infrastructure.md", "backend.md", "frontend.md", "maintenance-ops.md", "index.md"]},
+    {"state": "minimum_guard_pass", "gates": {"validate-coverage-matrix --require-complete": 0, "validate-source-citation": 0, "validate-design-knowledge-refs": 0}},
+    {"state": "artifact_presented", "path": "system-spec/index.md", "sha256": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2", "open_with": "Read / markdown viewer (entry: system-spec/index.md)"},
+    {"state": "user_choice_recorded", "choice": "diagnose", "source": "fixture pre-answered contract"},
+    {"state": "semantic_evaluator_started"}
+  ],
+  "chapter_sha256": {
+    "00-requirements-definition.md": "22d455478633a28463009e4dcf2de8f4ff785118f4f742e314101c81db309ebd",
+    "auth.md": "2685763323247da80547c4ffbfc7c1ee597da68b00beada25b01917b3df66548",
+    "backend.md": "c29d7550d1a8190eab992b8cb3c3b5ed0fb1e81f8045012242e755b6726415e3",
+    "database.md": "953c8eb428bbae121bd3476bf057cd1b019c05b758b803dd56cb36e6344fac3d",
+    "frontend.md": "c484d04806221660ed4fbdaef737d009258ba3426fc45f075de0f1a1f7fbe663",
+    "index.md": "f7f6476735e6ed5e07b2583a7d628b8cfd89227235c5745f3ae10681b8d545e2",
+    "infrastructure.md": "6ffdbecdd8cb2c02c6f12f95d45adb8081f12415c23b2535a2717f2207435c5d",
+    "maintenance-ops.md": "5e01010b07b37c9adf84e45251c80a0b19567671372684b379ef7ea8a87b8cdd",
+    "security.md": "39742c55afbb70d166d862520989acdad9699722a67fbc094bb83f312f095546",
+    "ui-ux.md": "f7061be71fe248d19a389dff0e196a0e05145997870afd342d2c7d1647b29444"
+  }
+}

@@ -25,11 +25,11 @@ precheck-layout の判定としきい値:
 
 | 判定 | 終了コード | しきい値 | 対応 |
 |------|-----------|----------|------|
-| PASS | 0 | 高さ使用率 < 85% | Phase 3（HTML生成）に進む |
-| WARN | 2 | 85% ≦ 使用率 ≦ 95% | 該当スライドIDをユーザーに提示し、承認を得てから Phase 3 に進む |
-| FAIL | 1 | 使用率 > 95% または個別カードでオーバーフロー検出 | HTMLを生成しない。structure-designer に差し戻し、改善提案に従って structure を修正してから再 precheck |
+| PASS | 0 | 高さ使用率 < 85% | R3（HTML生成）に進む |
+| WARN | 2 | 85% ≦ 使用率 ≦ 95% | 該当スライドIDと使用率を返答の仮定一覧（「詰まり気味として進めた」）に書き、R3 に進む。利用者へは R4 の提示で見せ、直すかは R6 で決める |
+| FAIL | 1 | 使用率 > 95% または個別カードでオーバーフロー検出 | HTMLを生成しない。structure-designer に差し戻し、改善提案に従って structure を修正してから再 precheck（差し戻しは 1 回まで。直した構成でも FAIL なら、FAIL スライドID と recommendations を主 skill へ返して止まる） |
 
-計算根拠: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/spec-registry.md` SR-1 / SR-3 / SR-4 および `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/unit-system.md` の vw 換算を使用。
+計算根拠: `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/spec-registry.md` SR-1 / SR-3 / SR-4 および `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/unit-system.md` の vw 換算を使用。
 
 決定論仕様の主要数値:
 
@@ -60,7 +60,7 @@ precheck-layout の判定としきい値:
 
 ### SVG図解
 
-- **CONST_004 (SVG2図解必須)**: サイクル・フロー・ファネル・ベン図・マインドマップ・フローチャート・成長曲線はインラインSVG2で描画。CSS absolute配置での図作成は禁止。${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/svg-diagram-primitives.md のパーツを使用。
+- **CONST_004 (SVG2図解必須)**: サイクル・フロー・ファネル・ベン図・マインドマップ・フローチャート・成長曲線はインラインSVG2で描画。CSS absolute配置での図作成は禁止。${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/svg-diagram-primitives.md のパーツを使用。
   - 目的: 拡縮で劣化せず、テーマ連携・印刷で正確に再現できる図解を保証
   - 背景: CSS absolute の図は要素ずれ・印刷崩れ・スケール非追従が起きやすい
 - **CONST_005 (SVGテーマ連携)**: SVGの fill/stroke に CSS変数を使用（例 `fill="var(--wave-blue)"`）。カラーコード直書き禁止。
@@ -129,7 +129,7 @@ precheck-layout の判定としきい値:
 - **CONST_019 (h2 CSS定義全スライドタイプ必須)**: slide-quote / slide-message / slide-list / slide-cycle / slide-flow 等すべての `.slide-TYPE h2` に `font-size: var(--fs-heading)` 定義必須。
   - 目的: 見出しサイズの一貫性確保とタイプ別の不揃い防止
   - 背景: 定義漏れタイプで h2 がブラウザ既定サイズになり階層が崩れる
-- **CONST_020 (コードブロックmax-height統一)**: code-block の max-height は面の高さの 60%（`calc(60 * var(--sv))`）。px 直書き禁止。overflow-y:auto。値の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/spec-registry.md` SR-10-01。
+- **CONST_020 (コードブロックmax-height統一)**: code-block の max-height は面の高さの 60%（`calc(60 * var(--sv))`）。px 直書き禁止。overflow-y:auto。値の正本は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/spec-registry.md` SR-10-01。
   - 目的: コード表示量を統一し、短すぎる枠でのスクロール多発を防ぐ
   - 背景: px 固定（旧 420px）は画面比率が変わると面に対する占有率が変わる。1920x1080 では内容枠の 54% しか使わず、コード面の充填率が 10 行で頭打ちになって `fill_policy.exceptions.code` の下限へ届かなかった
 - **CONST_021 (コードブロック書体)**: font-family は 'SF Mono', 'Fira Code', monospace。Noto Sans JP 禁止。
@@ -156,10 +156,10 @@ precheck-layout の判定としきい値:
 
 ### 画像・AI画像図解
 
-- **CONST_027 (画像フォーマット)**: 写真・スクリーンショット→WebP（品質85）、図解→インラインSVG、印刷専用→PNG。${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/image-format-guide.md 参照。
+- **CONST_027 (画像フォーマット)**: 写真・スクリーンショット→WebP（品質85）、図解→インラインSVG、印刷専用→PNG。${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/image-format-guide.md 参照。
   - 目的: 用途別に最適な画質・容量・印刷品質を選ぶ
   - 背景: 一律PNG等は容量肥大やWeb品質低下を招く
-- **CONST_028 (AI画像図解差し替え)**: ユーザーが明示した場合のみ Phase 3.2 で事前確認済み text-to-image バックエンドにより生成。明示指示がなければ SVG/CSS/JS/HTML で完結。通常は画像内テキスト禁止。`kanagawa-comic-diagram` の `image-only + baked-with-overlay` 時のみ短文・簡易表の焼き込みを許可し、正テキストは `overlayText` に残す。${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/ai-image-diagram-workflow.md / style-genome-packaging.md 参照。
+- **CONST_028 (AI画像図解差し替え)**: ユーザーが明示した場合のみ、R3（画像明示時）または R6 の ②（画像の所見があり、利用者が画像生成を明示したとき）に主 skill が ai-image-diagram-producer を起動し、事前確認済み text-to-image バックエンドにより生成。明示指示がなければ SVG/CSS/JS/HTML で完結。通常は画像内テキスト禁止。`kanagawa-comic-diagram` の `image-only + baked-with-overlay` 時のみ短文・簡易表の焼き込みを許可し、正テキストは `overlayText` に残す。${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/ai-image-diagram-workflow.md / style-genome-packaging.md 参照。
   - 目的: 意図しない画像化・画像内テキストの可読性低下を防ぐ
   - 背景: AI画像は文字・数値が崩れやすく、誤情報・編集不能の原因になる
 - **CONST_028A (生成画像フィット契約)**: 生成画像をスライド主キャンバスとして使う場合は `.ai-slide-canvas` に置き、既定を `object-fit: contain` にする。`.slide-bg` は装飾/補助レイヤ専用で、`cover` は `imageFit: cover-safe` と主要被写体の切れ目視確認がある場合だけ許可する。
@@ -168,10 +168,10 @@ precheck-layout の判定としきい値:
 
 ### デザイン品質
 
-- **CONST_029 (反転アクセント)**: 各スライドの強調は反転面（地色と文字色を入れ替えた面）1 個で作る。強調のために色を足さない。面に置く色は 地 / 文字 / 反転面 の 3 つ以内（SR-2-01 / SR-2-04 / SR-2-05。面積・彩度の上限は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_002 が正本）。
+- **CONST_029 (反転アクセント)**: 各スライドの強調は反転面（地色と文字色を入れ替えた面）1 個で作る。強調のために色を足さない。面に置く色は 地 / 文字 / 反転面 の 3 つ以内（SR-2-01 / SR-2-04 / SR-2-05。面積・彩度の上限は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_002 が正本）。
   - 目的: フォーカルポイントの明確化と単調配色の回避
   - 背景: 色を足して焦点を作ると面ごとに色相が増え、デッキ全体で統一が崩れる。反転は色数を増やさずに最大のコントラストを作れる
-- **CONST_030 (罫による階層表現)**: 影・グロウを意匠手段として使わない。区切りの既定は 1px の下罫、従属的な区切りは hairline、その面の主線だけ 2px。角丸は 0px（写真・図のみ例外）。線幅・hairline の値は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_003 / VGCONST_004 が正本（SR-2-09）。
+- **CONST_030 (罫による階層表現)**: 影・グロウを意匠手段として使わない。区切りの既定は 1px の下罫、従属的な区切りは hairline、その面の主線だけ 2px。角丸は 0px（写真・図のみ例外）。線幅・hairline の値は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/skills/run-slide-report-generate/references/visual-generation-rules.md` VGCONST_003 / VGCONST_004 が正本（SR-2-09）。
   - 目的: 奥行きの段階表現で要素の重要度・状態を伝える
   - 背景: 影は紙に出ないうえ、Chrome 印刷では影がカード周囲の薄いグレーの塗りになる。罫なら画面と紙で同じ階層が出る
 - **CONST_031 (アクセシビリティ必須)**: prefers-reduced-motion, focus-visible, sr-only, aria-live を実装。UIテキストの opacity は0.6以上。
@@ -195,15 +195,15 @@ precheck-layout の判定としきい値:
 - **CONST_036 (CDN使用)**: GSAP, FontAwesome, Google Fonts のみを CDN で使用（GSAP 3.12.2 / FontAwesome 6.5.1 ほか icons.md の代替可 / Noto Sans JP）。
   - 目的: 依存を限定し再現性・安定性を確保
   - 背景: 不定の外部依存はロード失敗・バージョン差で表示崩れを招く
-- **CONST_037 (テーマ準拠)**: 使用する色は style genome の palette 定義と一致すること。色数・アクセントの作り方の正本は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/skills/run-slide-report-generate/references/visual-generation-rules.md` §1。
+- **CONST_037 (テーマ準拠)**: 使用する色は style genome の palette 定義と一致すること。色数・アクセントの作り方の正本は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/skills/run-slide-report-generate/references/visual-generation-rules.md` §1。
   - 目的: スキル全体のビジュアル統一
   - 背景: パレット逸脱はブランド一貫性を損なう
 - **CONST_038 (list-item/ig-item全幅)**: list-container・ig-grid に `width:100%`、各item に `width:100%; box-sizing:border-box`。
   - 目的: カードリストを左端から全幅表示し中央寄り片寄りを防ぐ
   - 背景: 幅指定漏れでカードが縮こまり左右非対称になる事例があった
-- **CONST_039 (読者価値と深さの保持)**: 承認済み structure の読者中心入口（タイトルスライド・冒頭キーメッセージ・セクション扉の「共有課題→得たい変化」）・自分へ移す橋（兆候・問い・選択肢・次の行動）・本論の専門の深さ（確認済みの数字・手順・失敗・条件・限界）を HTML へ欠落なく射影する。LLM 経路で文言を推敲しても、正式名称・検索性・適用範囲を壊さず、素材にない数字・実績を足さない。構造自体の不足は本エージェントが発明せず structure-designer へ差し戻す。
+- **CONST_039 (読者価値と深さの保持)**: 仕様確定ゲートを通った structure の読者中心入口（タイトルスライド・冒頭キーメッセージ・セクション扉の「共有課題→得たい変化」）・自分へ移す橋（兆候・問い・選択肢・次の行動）・本論の専門の深さ（確認済みの数字・手順・失敗・条件・限界）を HTML へ欠落なく射影する。LLM 経路で文言を推敲しても、正式名称・検索性・適用範囲を壊さず、素材にない数字・実績を足さない。構造自体の不足は本エージェントが発明せず structure-designer へ差し戻す。
   - 目的: 入口ホリゾンタル・中身バーティカル（structure-design-rules.md CONST_008）を生成段階で一般論化・誇張へ退化させない。
-  - 背景: report 経路の CCONST_007（読者価値と深さの保持）と対。正本 `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/report-narrative-logic.md` §7。違反は deck-evaluator の D5 読者フックが検出する。
+  - 背景: report 経路の CCONST_007（読者価値と深さの保持）と対。正本 `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/report-narrative-logic.md` §7。違反は deck-evaluator の D5 読者フックが検出する。
 
 ## 5.6 生成規約（ドメインルール）
 
@@ -426,7 +426,7 @@ items.forEach(function (item, i) {
 
 ### 5.6.3 部分AI画像化（バランス型）合成パターン
 
-ユーザーが「部分AI画像化（バランス型）」を選択した場合の、背景画像＋HTMLオーバーレイ合成の実装規約。全面AI画像化（`${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/full-image-deck-method.md`）とは異なり、HTMLシャーシを残したまま画像を背景レイヤとして併存させる。
+ユーザーが「部分AI画像化（バランス型）」を選択した場合の、背景画像＋HTMLオーバーレイ合成の実装規約。全面AI画像化（`${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/full-image-deck-method.md`）とは異なり、HTMLシャーシを残したまま画像を背景レイヤとして併存させる。
 
 #### 形式振り分け（毎回ヒアリングで使い分け）
 
@@ -446,7 +446,7 @@ structure.md の各スライドに付与された形式区分と `pattern` / `te
 | `html-composite` | `overlay-only` | 画像は背景/モチーフ。説明文、表、数値、ラベルは必ずHTML/CSS/SVGで前面に描く。背景はラスター画像（`backgroundSource: raster`）の代わりに `backgroundSource: svg`（SVG/CSSで背景を描きラスター画像を作らない）も選べる |
 | `html-primary` | `none` | 画像を使わないか、淡いSVG/CSS背景地のみ。表・比較・数値はHTMLが主役 |
 
-`textPolicy` の値域（`baked-with-overlay` / `overlay-only` / `none`）と `pattern` / `backgroundSource` の定義は `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/style-genome-packaging.md` §4 を参照する（ここでは再定義しない）。
+`textPolicy` の値域（`baked-with-overlay` / `overlay-only` / `none`）と `pattern` / `backgroundSource` の定義は `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/style-genome-packaging.md` §4 を参照する（ここでは再定義しない）。
 
 #### レイヤ構造（z-index 規約）
 
@@ -633,7 +633,7 @@ structure.md の各スライドに付与された形式区分と `pattern` / `te
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
 ```
 
-アイコンライブラリ詳細: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/icons.md`（Bootstrap Icons、Material Symbols実装例含む）。推奨は FontAwesome 6 Free。
+アイコンライブラリ詳細: `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/icons.md`（Bootstrap Icons、Material Symbols実装例含む）。推奨は FontAwesome 6 Free。
 
 #### HTML骨格（分離形式 -- インラインCSS/JS禁止）
 
@@ -686,7 +686,7 @@ structure.md の各スライドに付与された形式区分と `pattern` / `te
 分離形式から1ファイルHTMLを生成する場合：
 
 ```bash
-node ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/build-single-html.js ./slide-dir/
+node ${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/scripts/build-single-html.js ./slide-dir/
 # → index-single.html が生成される
 ```
 
@@ -698,10 +698,10 @@ node ${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/scripts/build-single-html.js ./slid
 
 ### 5.6.7 PDF出力機能
 
-**詳細**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/references/print-layout.md`
+**詳細**: `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/references/print-layout.md`
 
 - **用紙**: A4横向き、1ページ1スライド
-- **印刷用CSS**: `${SRG_ROOT:-$CLAUDE_PLUGIN_ROOT}/vendor/assets/print-styles.css`をインライン埋め込み
+- **印刷用CSS**: `${SRG_ROOT:-${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}}/vendor/assets/print-styles.css`をインライン埋め込み
 - **操作**: `Cmd+P` (Mac) / `Ctrl+P` (Windows)
 
 PDF出力チェックリスト:

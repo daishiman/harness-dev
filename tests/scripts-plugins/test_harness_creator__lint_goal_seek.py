@@ -1124,3 +1124,67 @@ def test_subprocess_help_exits_0(flag):
     proc = _run([flag])
     assert proc.returncode == 0
     assert "usage:" in proc.stdout
+
+
+# --- 配線を持たない宣言 (harness-bqr) ----------------------------------------
+# `### ゴールシーク配線を持たない理由` の下に理由を書いた loop 実行系は配線系の 3 warning を
+# 出さない。理由が空の宣言と、配線と並んだ宣言は violation にする。
+
+_LOOP_HEAD = "---\nprefix: run\n---\n## ゴールシーク実行\n### 完了チェックリスト\n- [ ] done\n"
+
+
+def _declared(reason):
+    return _LOOP_HEAD + "\n### ゴールシーク配線を持たない理由\n" + reason + "\n## Gotchas\n- x\n"
+
+
+def test_no_wiring_declaration_suppresses_all_wiring_warnings(MOD, tmp_path):
+    p = _write(tmp_path, _declared("周回は 1 回だけで、記録は build trace が持つ。"))
+    findings, warnings = MOD.lint_file(p)
+    assert findings == []
+    assert warnings == []
+
+
+@pytest.mark.parametrize(
+    "reason",
+    ["", "   \n\n", "<!-- 理由をここに書く -->", "{{no_wiring_reason}}"],
+    ids=["empty", "blank", "comment-only", "placeholder"],
+)
+def test_no_wiring_declaration_with_empty_reason_is_a_violation(MOD, tmp_path, reason):
+    p = _write(tmp_path, _declared(reason))
+    findings, warnings = MOD.lint_file(p)
+    assert any("理由が空" in f for f in findings)
+    # 宣言として認めないので、配線系の warning は今までどおり出る
+    kinds = {MOD.warning_kind(w) for w in warnings}
+    assert kinds == set(MOD.WARNING_KINDS)
+
+
+def test_no_wiring_declaration_next_to_wiring_is_a_contradiction(MOD, tmp_path):
+    body = CLEAN_RUN + "\n### ゴールシーク配線を持たない理由\n配線は要らない。\n"
+    p = _write(tmp_path, body)
+    findings, warnings = MOD.lint_file(p)
+    assert any("が両方ある" in f for f in findings)
+    assert warnings == []  # 配線自体は揃っている
+
+
+def test_no_wiring_heading_is_not_taken_as_wiring(MOD):
+    body = _declared("理由。")
+    assert MOD.WIRING_SECTION_RE.search(body) is None
+    assert MOD.WIRING_HEADING_RE.search(body) is None
+    assert MOD.WIRING_SECTION_RE.search(CLEAN_RUN) is not None
+
+
+def test_no_wiring_declaration_quoted_in_prose_is_not_a_declaration(MOD, tmp_path):
+    body = _LOOP_HEAD + "- 宣言は `### ゴールシーク配線を持たない理由` の見出しで書く。\n"
+    p = _write(tmp_path, body)
+    findings, warnings = MOD.lint_file(p)
+    assert findings == []
+    assert {MOD.warning_kind(w) for w in warnings} == set(MOD.WARNING_KINDS)
+
+
+@pytest.mark.parametrize("skill", ["run-build-skill", "run-skill-create"])
+def test_declared_harness_creator_skills_need_no_grace(MOD, skill):
+    rel = f"plugins/harness-creator/skills/{skill}/SKILL.md"
+    findings, warnings = MOD.lint_file(ROOT / rel)
+    assert findings == []
+    assert warnings == []
+    assert not [entry for entry in MOD.GRANDFATHERED_WARNINGS if entry[0] == rel]

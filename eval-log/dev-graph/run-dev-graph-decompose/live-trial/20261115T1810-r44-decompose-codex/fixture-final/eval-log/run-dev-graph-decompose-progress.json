@@ -1,0 +1,43 @@
+{
+  "overall": "PASS",
+  "checklist": {
+    "macro_dag": {
+      "status": "achieved",
+      "evidence": "eval-log/integrity-audit.json: macro 4 nodes、循環0、task混入0"
+    },
+    "draft_publication_zero": {
+      "status": "achieved",
+      "evidence": ".dev-graph/cache/decompose-input/publication-complete-report.json: 新規draft2件promotion_gate blocked、既存promoted13件のみpass"
+    },
+    "ready_exact13_package": {
+      "status": "not_applicable",
+      "evidence": "新規ready feature0。差分の依存先LT-FEATURE-001は未完了、要約の依存先差分はdraft。既存入力exact13は独立監査で検査済み。dry-runでplanner起動なし。"
+    },
+    "c02_atomic_commit": {
+      "status": "not_applicable",
+      "evidence": ".dev-graph/cache/decompose-input/publication-complete-report.json: dry-runのためcommitなし、C02 pre_write_validation findings0、write_count0、全target operation/binding/判定/digest列挙"
+    },
+    "single_projection_authority": {
+      "status": "not_applicable",
+      "evidence": ".dev-graph/cache/decompose-input/publication-complete-report.json: dry-runのため投影なし。beads15 targetはC28のみ、none2 targetは外部writeなし、github/projects0"
+    },
+    "dryrun_zero_writes": {
+      "status": "achieved",
+      "evidence": ".dev-graph/cache/decompose-input/publication-complete-report.json: graph/content/receipt bytes不変、C02/C28 write_count0、fake-bdはversion/whereのみ、GitHub/Projects呼出しなし"
+    }
+  },
+  "inner_criteria": {
+    "IN1": "PASS"
+  },
+  "outer_criteria": {
+    "OUT1": "external_pending",
+    "OUT2": "external_pending",
+    "OUT3": "external_pending",
+    "OUT4": "external_pending",
+    "OUT5": "external_pending",
+    "OUT6": "external_pending",
+    "OUT7": "external_pending"
+  },
+  "semantic_evaluation": "eval-log/semantic-evaluation.json",
+  "integrity_audit": "eval-log/integrity-audit.json"
+}

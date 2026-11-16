@@ -259,6 +259,22 @@ def test_current_pointer_symlink_escape_fails_closed(tmp_path: Path) -> None:
     assert json.loads(proc.stdout)["violations"][0]["check"] == "V1-pointer-schema"
 
 
+def test_dangling_marker_symlink_never_writes_outside_the_repo(tmp_path: Path) -> None:
+    # harness-r3g: 目印の葉が「先の無い、repo の外への symlink」でも、--write-markers は外へ書かない。
+    # C09 を in-process で呼ぶ書き手の 1 本で、葉の realpath 検査が効いていることを確かめる。
+    root, _, _ = build_repo(tmp_path)
+    escaped = tmp_path / "outside" / "escaped-marker.json"
+    escaped.parent.mkdir(parents=True)
+    marker = root / LEGACY_REL / "SUPERSEDED.json"
+    marker.symlink_to(escaped)
+    proc = run(root, "--write-markers")
+    assert proc.returncode == 2, proc.stderr
+    assert not escaped.exists()
+    assert marker.is_symlink()
+    details = [v for v in json.loads(proc.stdout)["violations"] if v["check"] == "V7-supersession-marker"]
+    assert details and "repository 外" in details[0]["detail"]
+
+
 def test_manifest_entry_escaping_repo_fails_closed(tmp_path: Path) -> None:
     # 悪意ある manifest が `../` で repository 外の bytes を digest へ取り込む read escape を拒否
     root, _, generation = build_repo(tmp_path)

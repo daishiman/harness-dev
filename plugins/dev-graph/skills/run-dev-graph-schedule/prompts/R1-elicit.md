@@ -29,7 +29,7 @@
 
 ## Layer 3: インフラ層
 
-- 使用資産: ReadとAskUserQuestion。
+- 使用資産: Read。R1 は利用者に直接問わない。問いが要るときは問いの案を返し、呼び出し元の skill が user turn で問う。
 - path は caller repository context または skill-relative reference から解決し、環境固有の絶対 path を成果物へ保存しない。
 
 ## Layer 4: 共通ポリシー層

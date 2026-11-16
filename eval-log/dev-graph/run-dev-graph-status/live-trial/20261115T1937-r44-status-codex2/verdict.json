@@ -1,0 +1,178 @@
+{
+  "target_skill": "dev-graph:run-dev-graph-status",
+  "args": "--repo-root /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/cases/run-dev-graph-status2/fx --id task-lt-task-001",
+  "requested_model": "",
+  "actual_model": [
+    "gpt-6.1-sol"
+  ],
+  "nudge_count": 0,
+  "gate_response_count": 1,
+  "gate_kind": "contractual",
+  "gate_contract_evidence": [
+    "frontmatter.allowed-tools:AskUserQuestion"
+  ],
+  "goal_verdict": {
+    "result": "PASS",
+    "blockers": []
+  },
+  "goal_evaluation": {
+    "evidence_ref": "goal-evaluation.json",
+    "sha256": "c57dc7305067b24f98327f67afdad44115ebeb65abc4142bff956acc42f22d8e",
+    "result": "PASS",
+    "blockers": [],
+    "evaluator": {
+      "mode": "fresh-independent-context",
+      "id": "fresh-goal-evaluator-status-codex2-r44-20261115"
+    },
+    "transcript_sha256": "7e91293f1ab879056969dbf620cda5bc8753ef9a539f4dbe9eab0a20cf289591",
+    "evidence_refs": [
+      "task.md",
+      "transcript.jsonl",
+      "transcript/subagents/01a1decd-9b0f-7b33-bd94-ce7bdfd12569.jsonl",
+      "native-run-state.json",
+      "native-collection-validation.json",
+      "evidence-freeze.json",
+      "project-projection.json",
+      "public-copy-receipt.json",
+      "fixture-publication-receipt.json",
+      "out/status.json",
+      "fixture-final/.dev-graph/state/graph.json",
+      "fixture-final/.dev-graph/config.json",
+      "fixture-final/eval-log/status-report.json",
+      "fixture-final/eval-log/status-evidence.json",
+      "fixture-final/eval-log/status-context.json",
+      "fixture-final/eval-log/status-independent-audit.json",
+      "fixture-final/eval-log/run-dev-graph-status-goal-spec.json",
+      "fixture-final/eval-log/run-dev-graph-status-progress.json",
+      "fixture-final/eval-log/run-dev-graph-status-intermediate.jsonl",
+      "fixture-final/artifact-choice-request.json",
+      "fixture-final/artifact-choice.json"
+    ]
+  },
+  "invoked_skills": [
+    "dev-graph:run-dev-graph-status"
+  ],
+  "missing_goal_seek_artifacts": [],
+  "goal_seek_evidence_violations": [],
+  "overall": {
+    "launch": "PASS",
+    "completion": "PASS",
+    "goal_fit": "PASS",
+    "verdict": "PASS"
+  },
+  "skill_dir_tree_sha": "0bf2e16528b30512914660d8bf187038e37ea52d157e2852c0ab6dfd6a6e9f14",
+  "transcript_sha256": "7e91293f1ab879056969dbf620cda5bc8753ef9a539f4dbe9eab0a20cf289591",
+  "scenario_origin": "synthetic",
+  "environment": {
+    "claude_version": null,
+    "tmux": false,
+    "transcript_layer": "jsonl",
+    "permissions_mode": "workspace-write",
+    "runtime": "codex",
+    "codex_version": "0.165.0",
+    "native_transcript_format": "codex-rollout-jsonl",
+    "native_sandbox_contexts": [
+      {
+        "mode": "workspace-write",
+        "approval_policy": "never",
+        "network_access": false,
+        "writable_roots": [
+          "/Users/dm/orca/workspaces/harness/harness-creatorの改善/eval-log/dev-graph/run-dev-graph-status/live-trial/20261115T1937-r44-status-codex2/out",
+          "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/codex/cases/run-dev-graph-status2/fx"
+        ],
+        "special_write_roots": [],
+        "exclude_tmpdir_env_var": true,
+        "exclude_slash_tmp": true,
+        "profile_restricted": true
+      }
+    ],
+    "native_operation_turns": 0,
+    "single_input_autonomous": false,
+    "native_run_state_ref": "native-run-state.json",
+    "native_run_state_sha256": "12544a7f2064babad16137094370498ea9fa7d4ccd05f2e80e9a788fefc02b7c"
+  },
+  "tier": "live",
+  "downgrade_reason": null,
+  "timeline": {
+    "boot_s": null,
+    "poll_exit": "DONE",
+    "wall_clock_s": 188.0
+  },
+  "scenario_id": "C18-OUT1-positive-read-only-status-fixture-standard-v2-codex-v1",
+  "scenario_contract": {
+    "scenario_file": "plugins/dev-graph/tests/fixtures/live-trial-codex-scenarios.json",
+    "scenario_id": "C18-OUT1-positive-read-only-status-fixture-standard-v2-codex-v1",
+    "required_observations": [
+      "the reported status, closed_at, and depends_on of task-lt-task-001 match the graph store values",
+      "C11 validate-graph-schema exits 0 on the queried graph",
+      "the graph digest is unchanged across the status run and GitHub/Beads writes are 0"
+    ],
+    "observed": [
+      {
+        "index": 1,
+        "observation": "the reported status, closed_at, and depends_on of task-lt-task-001 match the graph store values",
+        "evidence_ref": "fixture-final/eval-log/status-report.json"
+      },
+      {
+        "index": 2,
+        "observation": "C11 validate-graph-schema exits 0 on the queried graph",
+        "evidence_ref": "fixture-final/eval-log/status-evidence.json"
+      },
+      {
+        "index": 3,
+        "observation": "the graph digest is unchanged across the status run and GitHub/Beads writes are 0",
+        "evidence_ref": "fixture-final/eval-log/status-independent-audit.json"
+      }
+    ],
+    "unobserved": [],
+    "args_divergence": {
+      "task_args_template": "--repo-root <contained-fixture-repo> --id task-lt-task-001",
+      "template_flags": [
+        "--id",
+        "--repo-root"
+      ],
+      "actual_flags": [
+        "--id",
+        "--repo-root"
+      ],
+      "missing_flags": [],
+      "extra_flags": [],
+      "matches": true
+    },
+    "task_contract": {
+      "declared": false,
+      "task_file": "task.md",
+      "task_file_exists": true,
+      "required_fragments": [],
+      "forbidden_fragments": [],
+      "missing_required_fragments": [],
+      "present_forbidden_fragments": [],
+      "matches": true
+    },
+    "invocation_contract": {
+      "forbidden_invoked_skills": [],
+      "present_forbidden_invoked_skills": [],
+      "matches": true
+    },
+    "resource_budget": {
+      "max_total_tokens": 8000000,
+      "max_wall_clock_s": 1800
+    },
+    "resource_usage": {
+      "wall_clock_s": 188.0,
+      "poll_state_ref": "poll-state.json",
+      "poll_state_sha256": "d7b9e2c189459197e670b4ff6c84deb0469afbed1b9b7420da5460dcc9d1b438",
+      "tokens": {
+        "input_tokens": 935398,
+        "cache_creation_input_tokens": 0,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 6881,
+        "total_tokens": 942279,
+        "assistant_messages": 21,
+        "transcript_files": 2,
+        "measured": true
+      },
+      "violations": []
+    }
+  }
+}

@@ -15,6 +15,8 @@
       token を argv (Authorization ヘッダ) にも出力呼び出し (print/write/logging, AST 走査) にも載せず、
       notion_config の解決順 (token=Keychain 既定/env は明示許可時のみ, DB ID=key 別 env > config) を挙動で満たす
       (SKILL.md feedback_contract IN2 の verify_by:lint の実体)
+  R9. 開発 lint の build_validation 宣言、実在・実行属性・argv・IN1/IN2 の対応と
+      runtime resource の skill 内完結を検査する (通常の skill 実行には追加しない)
 
 Usage:
   python3 scripts/lint-feedback-protocol.py [--strict]
@@ -174,6 +176,107 @@ def check_secret_resolution():
     return out
 
 
+def check_build_validation():
+    """R9: runtime から消した開発 lint が、検証契約からも消えることを防ぐ。"""
+    out = []
+    skill_dir = SKILL_MD.parent.resolve()
+    manifest_path = SKILL_MD.with_name("workflow-manifest.json")
+
+    def fail(message):
+        out.append(f"R9: {message}")
+
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        return [f"R9: workflow-manifest.json を読めない: {type(exc).__name__}"]
+    if not isinstance(manifest, dict):
+        return ["R9: workflow-manifest.json は object でなければならない"]
+    build = manifest.get("build_validation")
+    entry = build.get("lint_feedback_protocol") if isinstance(build, dict) else None
+    expected = {
+        "role": "build-lint", "scope": "repo", "path": "scripts/lint-feedback-protocol.py",
+        "argv": ["python3", "scripts/lint-feedback-protocol.py", "--strict"],
+    }
+    if not isinstance(entry, dict):
+        fail("build_validation.lint_feedback_protocol の明示宣言が無い、または型が不正")
+    else:
+        for key, value in expected.items():
+            if entry.get(key) != value:
+                fail(f"build_validation.lint_feedback_protocol.{key} が契約と一致しない")
+        criteria = entry.get("criteria")
+        if not isinstance(criteria, list) or sorted(str(value) for value in criteria) != ["IN1", "IN2"]:
+            fail("build_validation の criteria は IN1/IN2 を重複なく宣言する必要がある")
+        attributes = entry.get("attributes")
+        if not isinstance(attributes, dict) or any(attributes.get(key) is not True for key in ("shebang", "executable")):
+            fail("build_validation の shebang/executable は boolean true が必須")
+
+    lint_path = ROOT / expected["path"]
+    try:
+        lint_real = lint_path.resolve(strict=True)
+        if not lint_real.is_relative_to(ROOT.resolve()) or not lint_real.is_file():
+            fail("開発 lint の実体が repo 内の通常ファイルでない")
+        else:
+            with lint_real.open("rb") as stream:
+                if stream.read(2) != b"#!":
+                    fail("開発 lint に shebang が無い")
+            if not lint_real.stat().st_mode & 0o111:
+                fail("開発 lint に実行ビットが無い")
+    except (OSError, RuntimeError):
+        fail("開発 lint の実体を repo 内で解決・読取できない")
+
+    def runtime_path(value, label):
+        if not isinstance(value, str) or not value:
+            fail(f"{label} の path は非空文字列が必須")
+            return
+        if Path(value).name == "lint-feedback-protocol.py":
+            fail(f"開発 lint が runtime の {label} に残っている")
+        try:
+            path = (skill_dir / value).resolve(strict=True)
+            if Path(value).is_absolute() or not path.is_relative_to(skill_dir) or not path.is_file():
+                fail(f"{label} が skill 内の通常ファイルを指していない: {value}")
+        except (OSError, RuntimeError):
+            fail(f"{label} の実体が無い、または解決不能: {value}")
+
+    resources = manifest.get("resources")
+    if not isinstance(resources, list):
+        fail("runtime resources は配列が必須")
+    else:
+        for resource in resources:
+            if not isinstance(resource, dict):
+                fail("runtime resources の要素は object が必須")
+                continue
+            runtime_path(resource.get("path"), "resources")
+
+    try:
+        import yaml
+    except ImportError:
+        fail("SKILL.md frontmatter 検証に必要な PyYAML が無い")
+        return out
+    try:
+        text = SKILL_MD.read_text(encoding="utf-8")
+        match = re.match(r"\A---\n(.*?)\n---(?:\n|$)", text, re.S)
+        fm = yaml.safe_load(match.group(1)) if match else None
+    except (OSError, ValueError, yaml.YAMLError) as exc:
+        fail(f"SKILL.md frontmatter を検証できない: {type(exc).__name__}")
+        return out
+    if not isinstance(fm, dict):
+        fail("SKILL.md frontmatter は mapping が必須")
+        return out
+    refs = fm.get("script_refs", [])
+    if not isinstance(refs, list):
+        fail("runtime script_refs は配列が必須")
+    else:
+        for ref in refs:
+            runtime_path(ref, "script_refs")
+    feedback = fm.get("feedback_contract")
+    criteria = feedback.get("criteria") if isinstance(feedback, dict) else None
+    for cid in ("IN1", "IN2"):
+        matching = [item for item in criteria if isinstance(item, dict) and item.get("id") == cid] if isinstance(criteria, list) else []
+        if len(matching) != 1 or matching[0].get("verify_by") != "lint":
+            fail(f"feedback_contract の {cid} が一意な verify_by:lint へ対応していない")
+    return out
+
+
 def _check_resolution_order():
     """R8 (5): notion_config の解決順そのものを **挙動** で pin する。
 
@@ -185,13 +288,17 @@ def _check_resolution_order():
     そこで env を仕込んで実際に呼び、返り値で順序を確定させる。
     """
     out = []
-    ncdir = ROOT / "plugins" / "harness-creator" / "scripts"
+    # submit の実際の import と同じ優先順。同階層 loader が配布済みならそれを検証する。
+    ncdir = SUBMIT.parent
+    if not (ncdir / "notion_config.py").is_file():
+        ncdir = SUBMIT.parent.parent / "plugins" / "harness-creator" / "scripts"
     if not (ncdir / "notion_config.py").exists():
         return ["R8: notion_config.py が見つからない (解決順を検証できない)"]
-    import importlib, os
-    sys.path.insert(0, str(ncdir))
+    import importlib.util, os
     try:
-        nc = importlib.import_module("notion_config")
+        spec = importlib.util.spec_from_file_location("feedback_protocol_resolution_check", ncdir / "notion_config.py")
+        nc = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(nc)
     except Exception as e:  # noqa: BLE001
         return [f"R8: notion_config を import できない: {e}"]
 
@@ -271,6 +378,8 @@ def main():
 
     # R8
     violations.extend(check_secret_resolution())
+    # R9: 開発専用 contract を通常の skill 起動へ混ぜず、ここで厳格に検証する。
+    violations.extend(check_build_validation())
 
     if violations:
         print(f"[FAIL] feedback_protocol SSOT lint: {len(violations)} violation(s)")

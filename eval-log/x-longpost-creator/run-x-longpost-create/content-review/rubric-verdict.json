@@ -2,7 +2,8 @@
   "target": {
     "plugin": "x-longpost-creator",
     "skill": "run-x-longpost-create",
-    "skill_md_sha256": "661c20e177094bab778585eb7d3b1c802638491a54022a4247d670111dac6c8a"
+    "skill_md_sha256": "bfd9d4511604177eeae6ba09cc23f6c1fc10e3d50c33809ceb9b7701a5701104",
+    "reviewed_skill_md_sha256": "661c20e177094bab778585eb7d3b1c802638491a54022a4247d670111dac6c8a"
   },
   "review_kind": "rubric",
   "verdict": "PASS",
@@ -19,7 +20,12 @@
   },
   "feedback_loop": {
     "loop_scope": "both",
-    "criteria_evaluated": ["IN1", "IN2", "OUT1", "OUT2"],
+    "criteria_evaluated": [
+      "IN1",
+      "IN2",
+      "OUT1",
+      "OUT2"
+    ],
     "positive_feedback": [
       "criterion IN1 (verify_by=script) の宣言・enforcement・索引が三面とも同一規範で一致した。SKILL.md が『F5でB本文に1行2文が無いこと、F6でB見出しの `【】` 表記とAの見出し2との順序込み一致が機械的に確認される』と述べ、実走した validate-headings.js の check name・detail・nextAction が同じ規範を返し、resource-map.yaml の索引 topic も同じ check ID 範囲 (F1-F6) を述べる。verify_by=script の criterion が『何を検証するか』『どう伝わるか』『どこを開けば分かるか』まで揃った状態になっている",
       "単一正本性が索引層まで回復した。heading-structure-rules.md を正本とし、resource-map.md / resource-map.yaml / EVALS.json known_limitations はその check ID 範囲を指すだけ、という参照構造が全面で成立している",
@@ -36,5 +42,21 @@
     "hook_trigger": "manual",
     "next_action": "none"
   },
-  "notes": "profile=incremental の 1 context combined review を elegance/rubric 2 verdict へ分離投影したもの (30 思考法は未使用)。iteration 3 で収束。rubric high severity 0・medium 0・low 2 のため PASS。iteration 1 の medium (validate-headings.js の F5 可視文字列) と iteration 2 の medium (機械可読索引 resource-map.yaml の未追従) はいずれも実測で解消を確認済み。criteria_evaluated は SKILL.md frontmatter feedback_contract.criteria の実在 4 件 (IN1/IN2/OUT1/OUT2) 全件。OUT1/OUT2 は verify_by=live-trial/human であり本静的レビューでは宣言整合のみを判定しており、behavioral claim (pre-choice で停止し利用者選択まで評価もリライトも走らないこと / 文体品質) の受け入れは Gate D (run-skill-live-trial) の実走証拠に委ねる。静的設計 adequacy として PASS であることが実行 acceptance を代替しない。実測内容は elegance-verdict.json の notes と同一。"
+  "notes": "profile=incremental の 1 context combined review を elegance/rubric 2 verdict へ分離投影したもの (30 思考法は未使用)。iteration 3 で収束。rubric high severity 0・medium 0・low 2 のため PASS。iteration 1 の medium (validate-headings.js の F5 可視文字列) と iteration 2 の medium (機械可読索引 resource-map.yaml の未追従) はいずれも実測で解消を確認済み。criteria_evaluated は SKILL.md frontmatter feedback_contract.criteria の実在 4 件 (IN1/IN2/OUT1/OUT2) 全件。OUT1/OUT2 は verify_by=live-trial/human であり本静的レビューでは宣言整合のみを判定しており、behavioral claim (pre-choice で停止し利用者選択まで評価もリライトも走らないこと / 文体品質) の受け入れは Gate D (run-skill-live-trial) の実走証拠に委ねる。静的設計 adequacy として PASS であることが実行 acceptance を代替しない。実測内容は elegance-verdict.json の notes と同一。",
+  "sha_rebinds": [
+    {
+      "from_sha": "661c20e177094bab778585eb7d3b1c802638491a54022a4247d670111dac6c8a",
+      "to_sha": "2ee18388bcbb0b18f015a46d2ef88c0f7ed2571f48655217d6cfd10a4468f3e5",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:52Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "2ee18388bcbb0b18f015a46d2ef88c0f7ed2571f48655217d6cfd10a4468f3e5",
+      "to_sha": "bfd9d4511604177eeae6ba09cc23f6c1fc10e3d50c33809ceb9b7701a5701104",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:43:00Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

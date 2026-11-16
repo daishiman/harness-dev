@@ -2,7 +2,9 @@
   "target": {
     "plugin": "extract-system-blueprint",
     "skill": "run-extract-blueprint",
-    "skill_md_sha256": "827d9e893a184024c4db1ad0edc08e2211b19cc5a9337abbd069a3e431b3f0d7"
+    "skill_md_sha256": "f3a7d1f84e1ce2cbbf509c5ccc52fd049c87aa387c9849a42cbd877bde75ce52",
+    "reviewed_skill_md_sha256": "f3a7d1f84e1ce2cbbf509c5ccc52fd049c87aa387c9849a42cbd877bde75ce52",
+    "skill_dir_digest": "ad3861788f12727a1bb7b0451095d355abac1c57a8d0e493a92782de68bcc6b8"
   },
   "review_kind": "elegance",
   "verdict": "PASS",
@@ -11,11 +13,11 @@
     "omission": 0,
     "inconsistency": 0,
     "dependency_break": 0,
-    "smell": 4
+    "smell": 5
   },
-  "reviewer": "install-portability focused combined content review (incremental profile, independent evaluator context)",
-  "reviewed_at": "2026-10-04T22:29:26Z",
-  "iterations": 1,
+  "reviewer": "assign-skill-design-evaluator",
+  "reviewed_at": "2026-11-16T02:25:22Z",
+  "iterations": 3,
   "human_review_required": false,
   "feedback_loop": {
     "loop_scope": "both",
@@ -24,21 +26,53 @@
       "OUT1"
     ],
     "positive_feedback": [
-      "guard block の新しい 2 段構成 (preview の前に同梱 resolver を 1 回だけ実行し、表示された絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に埋める) は guard 側の canonical 判定と噛み合っている。guard は shlex で分解した argv に括弧などの shell 制御トークンがあれば拒否し、第 2 token の basename と flag 集合の完全一致で canonical 呼び出しを見分けるので、$(...) で resolver を埋め込む書き方は canonical と認識されない。解決を独立した 1 回に切り出す形がこの判定と両立する。",
-      "停止規則が fail-closed に直結している。resolver は未検出で exit 1、usage 誤りで exit 2 を返すので、本文の『非 0 なら外部変更をせずに止まり、skill-governance-adapters の install を案内する』で両方とも止まる。extract-system-blueprint の plugin.json の dependencies も skill-governance-adapters を宣言しており、案内先と依存宣言が一致する。",
-      "goal-seek 正本の引用を、install 先で存在しない兄弟 plugin への相対パス (../../../harness-creator/...) から、出典表記 (harness-creator plugin の skills/run-build-skill/references/goal-seek-paradigm.md、本 plugin には同梱しない) に変えた。plugin 名と plugin 内パスが残るので辿れる情報は失われておらず、引用先は harness-creator 側に実在する。『同梱しない』を明記したことで、読み手が本 plugin 内を探して迷うことも無い。ゴールシーク節は 6 ステップ (現状評価/手順生成/実行/検証/Anchor Step/反復) を本文に展開しているため、正本を読めない install 先でも手順は失われない。",
-      "C08 の fetch-authz hook (matcher は Bash と WebFetch) は URL を含まない Bash を通過させるので、新設の resolver 呼び出しに干渉しない。resolver の呼び出しは allowed-tools の範囲に収まり、<GUARD_PLUGIN_ROOT> は既存の角括弧 placeholder の置換規則に収まる。本文の validate-goal-seek-anchor.py への参照 (../../scripts/) は plugin 内で解決し、差分外で有効。"
+      "前回の medium (elegance:1: `--resume` の run で前の run の行が今回の選択の穴を隠す) は解けた。ゴールシーク配線の箇条 2 が `--resume` を含むどの run も最初の周回の前に 2 つの file を archive へ移すと定めたので、consumption 検査が読む file には今回の run の行しか無い。SKILL.md から取り出した移す処理と埋め込み検査で再現すると、移さない旧配線で `--resume` の run が C1 を飛ばした場合は exit 0 (task-graph consumption OK: 5 traced iterations) で穴が隠れたが、新しい配線では今回の file が exit 1 (iteration 0: dependency not previously selected for C2) になり、archive の dir は exit 0、正しく C1 を選んだ `--resume` の run は exit 0 だった。",
+      "移す先の dir を `os.mkdir` で新しく作れたときだけ移す方式は、POSIX の `os.rename` が移す先を黙って上書きする道を閉じている。移す処理の 3 通りは、(i) file が無いと exit 0 で何も作らない (archive の root も作らない)、(ii) 2 つの file があると exit 0 で両方が `run-extract-blueprint-archive/<UTC>/` へ移る、(iii) 移す先の dir が既にあると exit 1 (archive dir already exists; not starting loops) で、live の file も既存の archive も触られない。archive の root が file のときも exit 1 になる。止まる道はどれも周回の前に効くので fail-closed で、ゲートを緩める方向の変更は無い。",
+      "移す処理を『original_goal を決めたあと、post-choice の最初の周回の前』に置き、accept-as-is (周回 0 回) はどちらの file にも触れないと書いたので、pre-choice と post-choice の境目と run の境目が一致する。C1 の done trace (提示済み digest と guard receipt の選択・照合) は必ず新しい file の最初の周回に入り、『選択証跡なきdone を作らない』と矛盾しない。",
+      "外した『`--resume` の run で既存の 1 行目と original_goal を比べる』規則で、不変の性質は失われていない。validator が守る『1 file = 1 つの original_goal』は run ごとに file を分けたことで構造的に保たれ (validate() を直接呼んだ再現で、移したあとの新しい run、ゴールを変えた `--resume` の run、同じゴールの `--resume` の run のどれも、今回の file と archive の両方が exit 0)、goal-seek-paradigm の『original_goal は全周回で不変』も 1 つの loop の中の性質である。失ったのは、`--resume` の run の間でゴールが変わったことを機械で止める働きだけで、本文にこれに依る主張は無い (変更前の基準 before.md にもこの比較は無かった)。",
+      "`--resume` の意味を、Purpose & Output Contract の入力の行、ゴールシーク配線の箇条 2、R1-fetch の責務 (`--coverage-manifest-in` への再投入)、Key Rules 3 の multi-run resume で同じ語 (前 run の site coverage manifest から crawl を続ける新しい run) にそろえた。共有の goal-spec を読み取りだけにし、一致しないときは skill のゴール文と `spec_ref=inferred` を使う設計は、goal-seek-loop.schema.json の spec_ref と goal-seek-paradigm の iteration=0 の推定の規定に合う。progress の iteration を 0 から数え直し、original_goal_hash を今回の original_goal から求める規則も schema の定義と合う。",
+      "前回の low のうち、elegance:2 (`--resume` の入力契約と止まったあとの戻り方、accept-as-is の扱い)、elegance:7 (archive が溜まる件。`.gitignore` に `eval-log/run-extract-blueprint-archive/` を足し、残す理由を監査、消す主体を利用者と書いた) は解け、elegance:3 (決定論の不足) も移す処理を本文の python の block にしたことで実質解けた。"
     ],
     "negative_feedback": [
-      "[low / 差分由来・停止形態の記述漏れ] 前回 run の preview が完了も取消もされずに残っていると、新設の resolver 呼び出し自体が pending guard により PreToolUse で deny される。これは『resolver が非 0 で終わる』とは別の止まり方で、本文の停止規則はこの場合を名指ししていない。外部変更は起きないので fail-closed は保たれ、安全性への影響は無い。停止規則を『resolver が非 0 で終わるか、呼び出しが遮断されたら』まで広げると読み手が迷わない。",
-      "[low / 差分外の既存・判定外] guard block に取消の経路 (guard の cancel アクション。canonical な引数は --project-root と --preview-receipt) が書かれていない。新しい文言が遮断を明示したことで、利用者が preview を辞退したときに TTL (900 秒) が切れるまで Bash が使えなくなる点が目立つようになった。実際の遮断は execute の完了か取消まで続く。repo 共通の guard block の課題として扱う。",
-      "[low / 判定外寄り・version skew] resolver の最後の fallback (Claude と Codex の cache 全体から最新 version を選ぶ) は、hook として実際に動いている skill-governance-adapters と別の version を指しうる。通常はその手前の installed_plugins.json 経由で一致し、receipt 形式が version 間で互換な限り実害は無い。",
-      "[low / 差分外の既存・判定外 (rubric PD-002 の定義上の severity は medium)] 本文冒頭 30 行に『## Purpose』も『## Output Contract』も無い状態は HEAD の時点で既にあり (見出しは本文 43 行目)、今回の guard block への 12 行追記で本文 55 行目まで遠のいた。合否は変わっていないので本差分が持ち込んだ問題ではない。前回 verdict (2026-08-24) はこれを medium として記録したまま PASS にしていたが、今回は手順の定め (差分外の既存の問題は low として記録し判定の対象外) に従い、判定外の low へ分類を改めた。guard block と artifact-delivery wrapper を Purpose より前に置く repo 共通の配置に起因するため、横断課題として扱う。"
+      "[low / 差分由来・採否の判定] url の照合で、`goal` か `purpose` の文中から url を取り出す境目が決まっていない。再現では、『https://a.example.com/の章別…』や『対象は「https://a.example.com」。』は、空白で区切って取り出すと今回の url と一致せず、ASCII の url 文字だけで取り出すと一致した。既定 port (`https://a.example.com:443/`) はどちらの取り出し方でも一致しない。一致しないときは黙って `spec_ref=inferred` に倒れ、goal-spec の `constraints` と `forbidden_loosening` が落ちる (禁則と Key Rules の面では安全側)。`purpose` の文中の url での一致は、今回の url を比べる相手として挙げただけの別の依頼のゴールを採る余地も残す (前回 elegance:4 の残り)。取り出し方 (例: `https?://` から非 ASCII か空白の手前までを取り、末尾の句読点を除く) と既定 port の除去を書くか、goal-spec に対象 url の欄を持たせて比べる。一致しなかったことを完了レポートに書くとよい。",
+      "[low / 差分由来・言い方の狭さ] goal-spec の `constraints` と `forbidden_loosening` を『足すだけで、上の禁則・Key Rules 3 の低負荷不変を緩める根拠にはしない』と書いているが、守る対象として挙げているのは禁則と Key Rules 3 だけである。Key Rules 1・2・4 (fact ≠ inference ≠ gap、proposer ≠ approver、認可外へ egress しない) と完了チェックリストの gate も緩めない対象であることは文脈から読めるが、書かれていない。『本 skill の禁則・Key Rules・完了チェックリストのどれも緩める根拠にしない』と書くとよい。",
+      "[low / 差分由来・run の境目の運用] (a) 同じ root で 2 つの run が並行すると、後の run が先の run の live の file を移し、先の run はその後、新しい file へ追記するので trace が混ざる。変更前の『すべて同じ file へ追記』でも壊れていたので退行ではないが、『1 つの root で同時に動かす run は 1 つ』の前提を書くか、lock を置くとよい。(b) 2 つ目の rename だけが失敗すると (再現: OSError で exit 1)、本文どおり止まるので live の file に混ざった trace はできないが、やり直すと 1 つの run の 2 つの file が別の dir に分かれる (監査のときに対応がたどりにくい)。(c) 周回の途中で止まった run をやり直すと、その run の trace も archive へ移り、iteration は 0 から始まる。goal-seek-loop.schema.json の `last_consumed_intermediate_iteration` の説明にある crash recovery の道を本 skill では取らないことを、1 文書くとよい。",
+      "[low / 差分由来 + 差分外の既存 (前回 elegance:5)] root の決め方が節によって違う。移す処理と consumption 検査は `ESB_RUNTIME_ROOT` (`git -C PLUGIN_ROOT rev-parse --show-toplevel`、だめなら PLUGIN_ROOT) を使い、goal anchor の節は `--intermediate eval-log/...` を相対 path で渡し、validator は cwd の git で root を決める (repo でなければ cwd)。repo の中の plugin を repo の中で使う今の配置では一致するが、install した plugin (PLUGIN_ROOT が利用者の repo の外) では、goal-spec・archive・consumption 検査が plugin 側の eval-log を、goal anchor が cwd 側の eval-log を見て食い違いうる。箇条 1・2 の『repo-root (非 repo 環境では plugin-root)』の repo がどの repo かも決まっていない。あわせて、移す処理の block の 1 行目 `ESB_RUNTIME_ROOT=\"$(git …)\"` は `Bash(python3 *)` の pattern の外なので、許可の確認が出うる (consumption 検査と同じ形)。作者は follow-up に回した。",
+      "[low / 差分外の既存・判定外 (前回 elegance:6)] validate-goal-seek-anchor.py は REQUIRED_KEYS を確かめる前に `rows[0][\"original_goal\"]` を読むので、1 行目に original_goal が無いと KeyError の traceback で落ちる (非 0 なので止まりはするが、本文の『exit 1=配線バグ扱い』とは出方が違う)。0 行の file は『OK: 0 rows』で exit 0 になる。今回の配線では、移したあと最初の追記より前に goal anchor 検査を走らせると file 不在で exit 1 になるので『必ず追記後に起動する』は守られるが、空の file を作ってしまった場合は通る。作者は follow-up に回した。"
     ],
-    "iteration": 1,
+    "iteration": 3,
     "iteration_limit": 3,
-    "hook_trigger": "manual:install-portability",
+    "hook_trigger": "manual:full-rereview-after-scoped-finding",
     "next_action": "none"
   },
-  "notes": "【profile=incremental / focused combined review】builder とは別 context の独立 evaluator として、HEAD (f30813a) 以後の未コミット差分を 1 context で評価し、(a)矛盾なし (b)漏れなし (c)記述規約整合 (d)依存関係整合 (e)rubric high severity 0 を 1 回で判定した。単一の結合レビュー結果を elegance / rubric の 2 verdict へ分離投影しており、本ファイルは elegance 側 (4 条件) の投影である。30 思考法は実施しておらず、実施したとも申告しない。 【差分】skill 配下の変更は SKILL.md 1 件 (+16/-4) のみ。内容は 2 点: (i) guard block の差し替え。親ディレクトリ経由の兄弟 plugin 参照をやめ、preview の前に plugin 同梱の scripts/extract-plugin-root.py で skill-governance-adapters の root を 1 回解決し、得た絶対パスを <GUARD_PLUGIN_ROOT> として preview / authorize / execute に使う。(ii) ゴールシーク実行節の正本の引用を、相対パス (../../../harness-creator/skills/run-build-skill/references/goal-seek-paradigm.md) から『本 plugin には同梱しない』付きの出典表記へ変更。 【読んだもの】SKILL.md 全文 (337 行) と差分、plugin 同梱の resolver、skill-governance-adapters の guard script (Read ツールで canonical 判定・pending 中の遮断・cancel アクション・TTL を確認)、同 plugin の hooks.json、本 plugin の C08 fetch-authz hook (Bash の URL 無し呼び出しを通過させることを確認)、extract-system-blueprint の .claude-plugin/plugin.json、引用先 goal-seek-paradigm.md の harness-creator 側での実在、validate-goal-seek-anchor.py の plugin 内での実在。 【実行したもの】(1) 同梱 resolver を repo 上で実行し skill-governance-adapters の root を exit 0 で返すこと、存在しない名前で exit 1、引数なしで exit 2 を実測。(2) CLAUDE_CONFIG_DIR と CODEX_HOME を scratchpad に向けて install 配置 (<cache>/<marketplace>/<plugin>/<version>/) を模擬し、Claude と Codex の両 cache 配置で adapters を解決すること、adapters を外すと exit 1 になることを実測。(3) lint-vendored-ssot = 33 件 byte 一致、lint-sibling-plugin-paths --json = exit 0 / finding 0、同梱 resolver と正本の sha 一致と実行ビットを確認。(4) pytest -p no:cacheprovider で tests/scripts-root/test_root__extract_plugin_root.py と tests/test_lint_sibling_plugin_paths.py = 28 passed。(5) 本文冒頭 30 行の PD-002 条件を HEAD と現行で比較し、合否が変わらないことを確認。(6) 書き込み直前に shasum -a 256 で SKILL.md = 827d9e893a184024c4db1ad0edc08e2211b19cc5a9337abbd069a3e431b3f0d7 を実測。 【判定】(a) 矛盾 0: 新しい段落は既存の placeholder 置換規則・Runtime root contract・Gotchas と食い違わない。(b) 漏れ 0 (medium 以上): 引用の変更で辿れる情報は失われておらず、PreToolUse 遮断という停止形態が名指しされていない点は low。(c) 規約整合: 本文の引用は出典表記、frontmatter の external_mutation_guard.runtime_ref は plugin: 記法で、規約どおり。(d) 依存関係整合: 同梱 resolver が実在し、plugin.json が依存を宣言している。(e) rubric high severity 0。findings はすべて low で smell に計上した。前回 verdict の task-graph・Agent Team 境界・checklist-graph に関する確認は本差分で変わらない範囲にあり、再判定していない。criteria IN1 の決定論ゲート (authz/fetch/mermaid/doc) の経路は本差分で変わらず、OUT1 は behavioral claim のため live trial の実走証拠に委ねる。 【PASS の射程】design claim (静的設計 adequacy) に限る。guard flow (preview→hook-confirm→authorize→execute) と install 先での resolver の実挙動は behavioral claim であり、live trial の実走証拠を別途要する。"
+  "finding_locations": {
+    "elegance:1": {
+      "sections": [
+        "ゴールシーク配線"
+      ]
+    },
+    "elegance:2": {
+      "sections": [
+        "ゴールシーク配線"
+      ]
+    },
+    "elegance:3": {
+      "sections": [
+        "ゴールシーク配線"
+      ]
+    },
+    "elegance:4": {
+      "sections": [
+        "ゴールシーク配線",
+        "ゴールシーク検証（task-graph consumption）",
+        "ゴールシーク検証（goal anchor）"
+      ]
+    },
+    "elegance:5": {
+      "sections": [
+        "ゴールシーク検証（goal anchor）"
+      ]
+    }
+  },
+  "notes": "【profile=incremental / focused combined review / 全体の再レビュー】iteration 2 の FAIL (medium 1 件) を作者が直したあとの全体の再レビューで、feedback_loop.iteration は 3 (iteration_limit 3 の最後の回)。変更を書いた本人とは別の context の評価者として、SKILL.md の全文 (347 行) を 1 context で読み、結果を elegance (C1-C4) と rubric (render-findings-score.py が書く) の 2 verdict に分けて書いた。sha_rebinds は書いていない (全体の再レビューなので連鎖は始まり直す)。 【target】lint-content-review.py --print-target の出力をそのまま写した。skill_md_sha256 f3a7d1f8… は shasum -a 256 で測った値と一致した。 【読んだもの】SKILL.md 全文と SP/scoped-eb/before.md (sha256 0a2a0f01…) との diff (入力の行、ゴールシーク配線の箇条 1・2 と移す処理の block、consumption 検査の冒頭の 1 文)、git diff -- .gitignore、goal-seek-paradigm.md、goal-spec.schema.json、goal-seek-loop.schema.json (iteration・original_goal_hash・spec_ref・last_consumed_intermediate_iteration)、validate-goal-seek-anchor.py、同じ SKILL.md の task-graph consumption 検査と goal anchor 検査、prompts/R1-fetch.md、component-inventory.json の C01 の goal_seek、run-blueprint-apply の ゴールシーク配線、frontmatter の allowed-tools と feedback_contract.criteria (IN1・OUT1 を全件 criteria_evaluated に入れた)。 【C1 矛盾なし】`--resume` の意味が入力の行・箇条 2・R1-fetch・Key Rules 3 で一致する。consumption 検査の冒頭の『今回の run の trace だけ』と goal anchor の『初回』は、箇条 2 の 1 file = 1 run と、progress の original_goal_hash を今回の original_goal から求める規則に合う。 【C2 漏れなし】run の境目 (いつ移すか、止まる条件、止まったあとの戻り方、accept-as-is、archive の残し方、progress の数え直し) が書かれた。残る抜けは url の取り出し方、並行 run と中断した run の扱いで、いずれも low。 【C3 整合性】goal-seek-loop.schema.json (iteration 0 始まり、spec_ref の inferred、original_goal_hash) と goal-seek-paradigm (goal アンカーは単一系、iteration=0 の推定) に合う。rubric rule で採点できる規約整合 (PD-002 など) は rubric 側に任せ、ここに重ねて書いていない。 【C4 依存関係整合】test の _task_graph_verifier() が取り出す consumption 検査の block と、validator への path の渡し方は変わっていない。新しい block の python は Bash(python3 *) の範囲で動き、C08 hook (matcher Bash|WebFetch) は URL を含まない Bash を通す。 【再現】/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/scoped-eb/full3/cases-20261116T021922Z-581000/results.json (scratch の sim3.py が SKILL.md から移す処理と consumption 検査を取り出し、validator の validate() を import して回した)。移す処理: (i) file 無し exit 0・何も作らない、(ii) 2 file exit 0・両方が同じ dir へ、(iii) 移す先あり exit 1・live と既存 archive は無傷、(iv) progress だけ exit 0・1 つ移す、(v) 2 つ目の rename 失敗 exit 1・やり直すと別の dir、(vi) archive の root が file exit 1。consumption: 旧配線で C1 を飛ばした `--resume` の run exit 0 (穴が隠れる)、新配線の今回の file exit 1、archive exit 0、正しく選んだ `--resume` の run exit 0。validator: (a) 移したあとの新しい run は今回の file・archive とも exit 0、(b) ゴールを変えた `--resume` の run (移す) は両方 exit 0、同じゴールも exit 0、(c) 移さなかった場合はゴールが変わると exit 1 (original_goal_hash drift)、同じゴールだと exit 0 で consumption も exit 0 になり穴が隠れる。 【前回 7 件の行方】1 (medium) 解消、2 解消、3 実質解消、4 一部解消 (残りを elegance:1 へ)、5 未対応 (elegance:4 へ)、6 未対応 (elegance:5 へ)、7 解消。 【判定】C1-C4 に medium 以上の違反は無く、残る指摘は 5 件とも low なので PASS。rubric verdict は score 90 / threshold 80 で PASS、high 違反 0 (medium の PD-002 は差分外の既存で、前回の rubric verdict にもあった)。"
 }

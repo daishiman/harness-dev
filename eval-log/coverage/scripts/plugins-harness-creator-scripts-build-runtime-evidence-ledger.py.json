@@ -1,0 +1,18 @@
+{
+  "artifact": "plugins/harness-creator/scripts/build-runtime-evidence-ledger.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 83,
+    "notes": "genuine review（sha256 bc0635efd337bdd8422b7a24ab0cb0f60aab6cc33ef96115a305751468dcc71e をレビュー。実行検証あり）。範囲: build-runtime-evidence-ledger.py の全 308 行。読み手として共有する record-task-graph-knowledge.py（TG-C08、1671 行）の _task_nodes_shape_error・validate_runtime_pending_ledger・L462-465・L508-516 と、run-build-skill/schemas/runtime-evidence-ledger.schema.json も見た。確かめたこと: pytest を plugin 側でファイルごとに走らせ、ledger の test 31 件と TG-C08 の test 111 件がどちらも rc0。probe は /private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/cov3/ledger/ の probe_ledger.py（結果は probe_ledger.out.json）と probe_ledger_g5.py。今回の主張（L118-128 の _check_shapes が TG-C08 の _task_nodes_shape_error を使い、読み手と書き手の形検査がそろう）は確かめた。task-state の形を 9 通りに壊した入力（S1-S9）では、writer も reader（TG-C08 の dry-run）も rc2 で、traceback は出ない。gates の値に unhashable な値などを入れた G1-G4・G6-G8 は rc1 の invalid で、traceback は出ない。gates が配列の G9 は rc1。書いた ledger を TG-C08 で読む往復（RT）は通る。書込先が書けない WF は rc2 の input_error で、一時ファイルは残らない。--out が symlink の SL は link だけが置き換わり、外のファイルは無事（SL2 は rc2、SL3 は rc0）。--out が subdir・build dir の外・dotfile・.txt の O5 は rc2。前回の指摘: [中] unhashable な gates 値で traceback が出る件は直った（G1-G8）。[中] --out の名前を絞らない件は残る（O1-O3）。[低] write-scope の食い違いと [低] 書込失敗の exit/status も残る。指摘: [中] build-runtime-evidence-ledger.py:99-115 の resolve_out_path は、build dir の外・.json 以外・dotfile・symlink は拒むが、名前を絞らない。そのため --out に入力の task-state.json（O1）、route-C01 の local 証跡（O2）、build dir の gates ファイル（O3）を渡すと、rc0 の written で上書きする。O1 では task-state の nodes と graph_hash の pin が消え、O2 では ledger に書いた sha256 が直後に合わなくなる。直し方: --out の basename を runtime-evidence-ledger.json（決めた形の別名を許すなら runtime-evidence-ledger*.json）に絞る。あわせて --task-state・--gates・artifact の path と同じ path を拒む。[中] record-task-graph-knowledge.py:462-465 と 508-516（共有した読み手側）は、dict でない gate を continue で飛ばす。writer は L170-186 で gates をそのまま ledger に入れ、L189-197 で TG-C08 の検査を呼ぶ。そのため install=[] の gate を含む入力（G5）を rc0 の written で書く。reader も rc0 で、completion_gate ok、runtime_pending_user_gate accepted として受理する。schema は gate を必須の object と定めている。さらに stdout の gates からは install が消えるのに、ledger には install: [] が残り、二つの出力が食い違う。今回の「形検査を共有してそろえる」という方針は、task nodes には届いたが gates には届いていない。直し方: TG-C08 の該当 2 か所で、dict でない gate を invalid にする（共有関数に寄せる）。または writer の _check_shapes で、gates の各値が dict であることを確かめる。[低] build-runtime-evidence-ledger.py:83-87 の _read_json と 90-96 の _read_gates は、(OSError, UnicodeDecodeError, json.JSONDecodeError) だけを捕まえ、RecursionError を捕まえない。深く入れ子にした task-state（D1）と gates（D2）は、どちらも traceback が出て rc1 になる。reader も同じ。rc1 は「検証に落ちた（JSON を出す）」の意味なので、呼び手が取り違える。直し方: except に RecursionError を足し、input_error の rc2 にする。[低] L17-18 は「--out は同じ build_dir の中の別名 .json」を許すと書くが、L21 の write-scope は runtime-evidence-ledger.json だけを挙げる。直し方: 1 件目の修正と合わせて、どちらかに寄せる。[低] L15-16 の exit 2 の説明に書込失敗が無い。L296-302 は、書込の OSError を status input_error・rc 2 で返す（WF で確認）。L12-13 の status の一覧にも、書込失敗を表す値が無い。直し方: exit 2 の説明に書込失敗を足すか、status write_error を分ける。DEDUCTION: -8（[中] --out で入力と証跡を上書きする。L99-115）-4（[中] dict でない gate を writer も reader も受理する。TG-C08 L462-465・L508-516）-2（[低] RecursionError で traceback。L83-87・L90-96）-2（[低] write-scope の食い違い。L17-18・L21）-1（[低] 書込失敗の exit/status が宣言に無い。L15-16・L296-302）→ 83。"
+  },
+  "reviewed_by": "independent-code-review-20261115-cov3-ledger",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

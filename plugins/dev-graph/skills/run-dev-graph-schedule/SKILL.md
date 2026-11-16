@@ -13,7 +13,7 @@ argument-hint: "[--repo-root PATH] [--scope ID] [--max-parallel N]"
 allowed-tools: [Read, Bash, AskUserQuestion, Task, Skill, Agent]
 script_refs: [../../scripts/_common.py, ../../scripts/resolve-repo-context.py, ../../scripts/schedule-graph.py, ../../scripts/manage-worktree-lease.py, ../../scripts/bd-bridge.py, ../../scripts/build-parity-manifest.py]
 schema_refs: [../../schemas/graph-node.schema.json]
-reference_refs: [../../references/prompt-common-layers.md]
+reference_refs: [../../references/prompt-common-layers.md, ../../agents/dev-graph-parallel-safety-verifier.md]
 responsibility_refs:
   - prompts/R1-elicit.md
   - prompts/R2-plan.md
@@ -61,31 +61,16 @@ feedback_contract:
       loop_scope: outer
       text: "ready taskごとに一意なsuggested_branchとC09 worktree claim commandが返り、同一graph_node_idの二重claimはC27が0件に抑える"
       verify_by: test
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 ## Pre-choice usable artifact execution
 
-Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/light/standard/detailedを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
+Purpose & Output Contractの最小の実成果物をmain contextで作成する。effect別のparse/open・secret・irreversible・corrupt guardだけを実行し、現物path・digest・開き方を提示してからaccept-as-is/diagnoseを記録する。accept-as-isはその場でhandoff完了とし、後続sectionを実行しない。
 
 ## Post-choice selected improvement execution
 
-以下の既存workflow・goal-seek・評価・修正sectionはlight/standard/detailedが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
+以下の既存workflow・goal-seek・評価・修正sectionはdiagnoseが記録されて`semantic_evaluator_started`へ遷移した場合だけ実行する。release/exhaustiveは別の明示eventを必要とする。
 
 
 # run-dev-graph-schedule
@@ -124,7 +109,7 @@ python3 -B ../../scripts/manage-worktree-lease.py --repo-root "$DEV_GRAPH_ROOT" 
 ```bash
 python3 -B ../../scripts/schedule-graph.py --graph "$DEV_GRAPH_ROOT/.dev-graph/state/graph.json" \
   --ready-source bd-bridge --ready-json "$OUT/ready.json" --leases "$OUT/leases.json" \
-  --scope "<feature-id>" --max-parallel "<N>"
+  --scope "<feature-id>" --max-parallel "<N>" > "$OUT/schedule.json"
 ```
 
 github/none だけなら `--ready-source self` とし、`--ready-json` は渡さない。除外された候補は `excluded[]` (`dependency_unsatisfied` / `ready_payload_entry_absent` / `beads_parity_stale_or_unconfirmed`)、対応付けの失敗は `unmapped[]` に理由つきで出る。判定順序と理由の一覧は [schedule-graph-contract.md](../../references/schedule-graph-contract.md) を正本とする。
@@ -156,6 +141,9 @@ frontmatter の `goal_seek.engine: inline` / `fork: subagent` / `max_loops: 5` �
 - 開始時に C24 `resolve-repo-context.py --mode read` の JSON receipt を得て、`repo_root` が `content_roots.repository` の realpath と一致する場合だけ `DEV_GRAPH_ROOT=<receipt.repo_root>` に固定する。cwd から再解決しない。
 - 元のゴールを `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-goal-spec.json` へ、各 checklist の status/evidence を `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-progress.json` へ記録する。
 - 未達 responsibility を担当する `prompts/<R-id>.md` を読み、`Agent` で分離 context に fork する。ユーザー判断が必要な境界だけ `AskUserQuestion` を使う。
+  - Codex では `Agent` を `spawn_agent` に写し、`fork_turns="none"` を指定して親の履歴を受け継がせない (既定は親の履歴を子へ写すので、分離 context にならない)。子には正本の絶対 path と入力 (入力の path、上で固定した `DEV_GRAPH_ROOT` の値、C24 receipt の JSON、親が確定した `--scope`・`--max-parallel`・binding mode の値) だけを渡し、子が自分で全文を読む。子は repo root を cwd から解き直さない。親の会話や判定の要約は渡さない。子は利用者に問わない。問いが要るときは問いの案を親へ返し、親が user turn で問う。起動の受理を結果として扱わず、`wait_agent` で子の完了を待ってから最終応答を受け取る。`wait_agent` は timeout や、ほかの子の更新でも返るので、その子の完了が届くまで待ち直す。`task_name` は小文字・数字・underscore だけで作り、周回番号を付けて一意にする。同じ周回で同じ名前の子を起こし直すときは、試行番号を足す (例: `dev_graph_parallel_safety_verifier_loop2_a2`)。子にも読取専用の境界を渡す (この skill は graph/tracker/lease を変更しない)。
+    - responsibility の子: `task_name` は R-id を小文字にしてハイフンを underscore に変え、周回番号を付ける (例: `r3_schedule_loop2`)。渡す正本は `prompts/<R-id>.md` である。
+    - Purpose & Output Contract 5 の C17 独立 verifier の子: 親が R3 の子の完了を待ってから起動する。R3 の子は verifier を起動しない。`task_name` は `dev_graph_parallel_safety_verifier` に周回番号を付ける。渡す正本は `../../agents/dev-graph-parallel-safety-verifier.md` で、入力はその Layer 2 の 4 つの path で、graph snapshot は上の `schedule-graph.py` の `--graph` に渡した path、schedule receipt は R3 が書いた `$OUT/schedule.json`、lease snapshot は `$OUT/leases.json`、beads parity receipt は C28 が書いた `$OUT/ready.json` (`edge_parity` と `parity_provenance` を持つ) である。`$OUT/parity-manifest.json` は C28 への入力で、tracker 側の parity の結果ではないので、verifier へ receipt として渡さない。binding に beads を含まないときは beads parity receipt が無いので、無いことを verifier へ伝える。再検証も新しい子で行い、検証を終えた子へ追加の指示を送らない。
 - 各周回末に `$DEV_GRAPH_ROOT/eval-log/run-dev-graph-schedule-intermediate.jsonl` へ `original_goal`、`original_goal_hash`、`current_goal_snapshot`、`delta_from_original`、`merged_directive_for_next`、`drift_signal` を append-only で記録する。次周回は直前の `merged_directive_for_next` を必須入力にする。
 - 5周到達時に未達が残れば完了扱いせず、progress と blocker を親へ handoff する。全 checklist と `feedback_contract.criteria` が PASS のときだけ完了する。
 

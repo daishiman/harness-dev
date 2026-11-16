@@ -1,0 +1,80 @@
+{
+  "label": "node-r44",
+  "note": "試行開始前の orchestrator による fixture 準備であり、被験 skill の挙動ではない。",
+  "run_id": "20261115T1740-r44-node",
+  "prepared_at": "2026-11-15T08:42:23Z",
+  "fixture": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/node/fx",
+  "fixture_contract": "A contained initialized repository supplies one valid issue, task, specification, architecture, and document artifact in a single input batch.",
+  "why_rebuilt": "前回の PASS run (20261104T054426-pr89-node) の fixture /private/tmp/harness-pr89-20261104/cases/node/fx は消えている。repository_id は repo の path から導かれるため写しでは writer が c24_context_failed になる (20261031T2256-pr86 の smoke で確認済み)。そのため同じ手順で新しい path にその場で作り直した。",
+  "recipe_source": [
+    "eval-log/dev-graph/run-dev-graph-node/live-trial/20261031T2256-pr86/fixture-provenance.json (mkfx → build-init-scaffold.py --hook-source plugin を 2 回 → mixed-artifacts.json を置く、の手順)",
+    "eval-log/dev-graph/run-dev-graph-node/live-trial/20261104T054426-pr89-node/transcript.jsonl (前回 fixture の ls と mixed-artifacts.json の全文。git log は 'fixture: initial' → 'fixture: init scaffold, mixed artifacts, current plugin pin')",
+    "eval-log/dev-graph/run-dev-graph-node/live-trial/20261104T054426-pr89-node/evidence/ (graph.json・add-receipt.json の node 5 件と input_sha256)"
+  ],
+  "builder": {
+    "script": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/node/build-fx.py",
+    "script_sha256": "dd5b29c9103661668b1a4a5d65da6ba8870432cb15250faff656b7f974a3c1ba",
+    "argv": "python3 -B build-fx.py <ROOT> <FX> <scratchpad>/lt/node/prep",
+    "env": "CLAUDE_PROJECT_DIR を外し、PYTHONDONTWRITEBYTECODE=1",
+    "result_ref": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/node/prep/build-fx-result.json",
+    "result_sha256": "c49dbd48e686a0f78acb729dce3c628bedb3706bd0488fcb28eeee16a429e12b"
+  },
+  "prep_scripts": {
+    "plugins/dev-graph/scripts/build-init-scaffold.py": "3f8943a798bebef56cd6003877a1aecabac8082fb87af4f880287f306cb513d1",
+    "plugins/dev-graph/scripts/validate-graph-schema.py": "01dae1f9c1caf9b6ba82cacd2555a95d633c8aff1a1482de52f0bd27d82c4c62",
+    "plugins/dev-graph/scripts/validate-harness-link.py": "51858ec8637a567d944ee32ef972f23428e901e4e1113461a19e9c41ec86e9f8",
+    "plugins/dev-graph/scripts/resolve-repo-context.py": "f10a46146270c371b7faf3a7420e2537772b89af65b047b7898ecf1574ba1380"
+  },
+  "prep_scripts_note": "ROOT (この worktree) の今の閉包の script を使った。init は被験ではなく fixture の作り方なので Skill を通していない。",
+  "steps": [
+    {"step": "git init -b main + README.md 1 つを commit", "commit": "7a4722b fixture: initial"},
+    {"step": "build-init-scaffold.py --repo-root <FX> --hook-source plugin (1 回目)", "rc": 0, "status": "applied", "planned_changes": 36, "write_count": 36, "receipt_path": ".dev-graph/state/receipts/init-20261115T084223656289Z.json", "preflight": {"status": "pass", "link_state": "absent", "in_use": false}},
+    {"step": "build-init-scaffold.py (2 回目)", "rc": 0, "status": "noop", "planned_changes": 0, "write_count": 0},
+    {"step": "validate-graph-schema.py --graph <FX>/.dev-graph/state/graph.json --repo-root <FX>", "rc": 0, "valid": true, "findings": 0},
+    {"step": "git add -A + commit", "commit": "39c26dd fixture: canonical dev-graph init (build-init-scaffold.py --hook-source plugin)"},
+    {"step": "mixed-artifacts.json を pr86 fx-final/tree から写して commit (sha256 照合済み)", "commit": "15b889f fixture: one mixed input batch (issue/task/specification/architecture/document)"}
+  ],
+  "head": "15b889f1834a1ce7c13ace39857feddda9249aa0",
+  "working_tree_clean_at_handoff": true,
+  "input_batch": {
+    "path": "mixed-artifacts.json",
+    "source": "eval-log/dev-graph/run-dev-graph-node/live-trial/20261031T2256-pr86/fx-final/tree/mixed-artifacts.json",
+    "sha256": "17c13ee6a2ec3883b110dad5be0931de373fbe7b789d9df31f3c63e68b8bf57c",
+    "same_as_pr89": "前回 run の preview の input_sha256 (17c13ee6...) と、transcript に残る全文と一致",
+    "artifacts": [
+      "issue lt-search-empty-result",
+      "task lt-add-search-index",
+      "specification lt-note-search",
+      "architecture lt-search-service (backend, data)",
+      "document lt-search-runbook"
+    ],
+    "tracker_binding": "全件 none",
+    "expected_graph_revision": "入れていない。R3 の入力契約どおり、被験が R2 preview の graph_revision_before を apply の入力 (mixed-artifacts.apply.json) に入れる"
+  },
+  "files_sha256": {
+    "mixed-artifacts.json": "17c13ee6a2ec3883b110dad5be0931de373fbe7b789d9df31f3c63e68b8bf57c",
+    "README.md": "be000d029e59a61e3418fb0aa495c25f0dccd3b9cb22707e4205938d4c9f810e",
+    ".dev-graph/config.json": "bc311b88b792384e57ee0fb05d547869c02b8d6e33b535b7c68dc48cb0eafe02",
+    ".dev-graph/state/graph.json": "27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177"
+  },
+  "graph_at_handoff": {
+    "sha256": "27ef0078ae9bf6e61be1b9a6da5a5c94d30fbcd84db5f71d7c370e4e88e66177",
+    "canonical_digest": "sha256:ca0ab35f291236735a02f11a0b24cebfbdfd4782118c13af149192efceb1a245",
+    "graph_revision": 0,
+    "nodes": 0,
+    "same_bytes_as_pr86": "pr86 の graph_at_handoff.sha256 (27ef0078...) と一致"
+  },
+  "repository_id": "local:sha256:e925ad6ab4f42de21432113924f6b3445406978738190e29005c0eedfd842d47",
+  "differences_from_pr89_fixture": [
+    "前回の fixture にあった plugins/ (commit 名 'current plugin pin') は置いていない。前回も cwd は harness checkout で、boot が checkout の plugins/ を --plugin-dir で pin しており、fixture の plugins/ は使われていない。今回も boot は ROOT/plugins を pin する。",
+    "init と batch を 1 commit でなく 2 commit に分けた (pr86 の手順どおり)。",
+    "README.md は pr86 の文面 (56 byte)。前回の 84 byte の文面は残っていない。"
+  ],
+  "smoke": {
+    "dir": "/private/tmp/claude-501/-Users-dm-orca-workspaces-harness-harness-creator---/f6429ecb-7e3e-4750-b72b-ebfe022771f9/scratchpad/lt/node/smoke-fx",
+    "how": "同じ build-fx.py で別 path に作った複製に build-graph-node.py add --dry-run だけをかけた (本物の FX には何も流していない)",
+    "add_dry_run": {"rc": 0, "status": "preview", "valid": true, "planned_count": 5, "graph_revision_before": 0, "write_count": 0},
+    "routing": "issue-lt-search-empty-result→issues/, task-lt-add-search-index→tasks/, spec-lt-note-search→specs/, arch-lt-search-service→architecture/, doc-lt-search-runbook→docs/"
+  },
+  "session_root": "ROOT (/Users/dm/orca/workspaces/harness/harness-creatorの改善)。fx は scratchpad の別 dir。"
+}

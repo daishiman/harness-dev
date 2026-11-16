@@ -2,7 +2,8 @@
   "target": {
     "plugin": "dev-graph",
     "skill": "run-dev-graph-system-spec",
-    "skill_md_sha256": "10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049"
+    "skill_md_sha256": "bfabcc221ea2295fdf78cbaf197eac7d4a0a302d057770b4c4c3188767c1e68d",
+    "reviewed_skill_md_sha256": "10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049"
   },
   "reviewer": "review_c19_name（独立 incremental rename reviewer）",
   "reviewed_at": "2026-10-31T21:53:18.742906Z",
@@ -36,5 +37,21 @@
       "既存low制約を継続: 6キー/hash検査自体は各gateのexit/時刻を自動照合しない。本文の実測記録要求と独立Agent検証で運用する。renameで追加退行はない。"
     ]
   },
-  "notes": "incremental rename reviewとして4条件PASS。30思考法full reviewを再走したという主張ではなく、baselineからの限定rename差分の意味不変と安全境界を確認した。smell1は既存制約の継続。IN1/OUT1は変更影響の評価であり、今回host live-trial再走/OUT1実走PASSや過去周回IN1の証明ではない。"
+  "notes": "incremental rename reviewとして4条件PASS。30思考法full reviewを再走したという主張ではなく、baselineからの限定rename差分の意味不変と安全境界を確認した。smell1は既存制約の継続。IN1/OUT1は変更影響の評価であり、今回host live-trial再走/OUT1実走PASSや過去周回IN1の証明ではない。",
+  "sha_rebinds": [
+    {
+      "from_sha": "10b54fd1e3070f57a8a02de2a31fb93a57940e15ab108e6df96947836812f049",
+      "to_sha": "a55b203a6f293b42965401e1f90bebd98a5435a4587ad2469576a0747e51f746",
+      "replay": "artifact-delivery-v1",
+      "rebound_at": "2026-11-14T04:29:45Z",
+      "tool": "sync-content-review-sha"
+    },
+    {
+      "from_sha": "a55b203a6f293b42965401e1f90bebd98a5435a4587ad2469576a0747e51f746",
+      "to_sha": "bfabcc221ea2295fdf78cbaf197eac7d4a0a302d057770b4c4c3188767c1e68d",
+      "replay": "diagnostic-choice-2way",
+      "rebound_at": "2026-11-14T04:42:53Z",
+      "tool": "sync-content-review-sha"
+    }
+  ]
 }

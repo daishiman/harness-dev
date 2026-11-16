@@ -1,0 +1,18 @@
+{
+  "artifact": "scripts/tenant_runtime.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 92,
+    "notes": "genuine independent review（2026-11-16、sha256 948b223f50515d28292dc83375fa5a8c41bb8d1415021c9118003c4e821c9d65）。既存coverage recordが無いためcanonical全155行を当reviewerが1回通読した。moduleはimport時に秘密読取/書込/通信をせず、tenant同定とcredential参照名だけを解決。env selectorとtenant symlinkの衝突、slug制約、tenant JSON object/slug/path-parent整合、prefix必須とscoped env生成を確認。既存tests/test_tenant_tools.pyのselector衝突testを読んだ。追加のメモリ内probeでcredential_ref/scoped_secret_envの正常値及び空prefix fail-closedを実行確認（実secret/Keychainアクセス無し、suite再実行無し）。残る非blocking課題: credentials/purpose entryの型不正時にAttributeError、symlink loopのRuntimeError、非UTF-8 tenant JSONのUnicodeDecodeErrorはTenantConfigErrorへ正規化されない。public API内部の入力検証・error整形の改善余地として各-3/-3/-2、score92。今回配布copyはcode変更無しのbyte同一投影であり別LLM採点を行わない。"
+  },
+  "reviewed_by": "independent-code-review-20261116-meta-analyst-tenant-runtime",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

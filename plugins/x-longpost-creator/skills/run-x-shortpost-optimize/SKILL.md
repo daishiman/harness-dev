@@ -61,32 +61,17 @@ feedback_contract:
       loop_scope: outer
       text: "元文の主張が欠落しておらず、削られたのはフィラーと重複だけであると書き手が判断できること"
       verify_by: human
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 runtime_root_policy: host-skill-path
 ---
 
 ## Pre-choice usable artifact execution
 
-最小の実成果物 (短文投稿 1 本) を main context で作成する。この段階で通すのは絵文字ゼロという数えられる機械検証だけとし、`check-no-emoji.js` が終了コード 0 を返した時点で、現物の本文と選んだフォーマット名を提示して accept-as-is / light / standard / detailed を記録する。accept-as-is の場合はその場で handoff 完了とし、後続 section へ進まない。
+最小の実成果物 (短文投稿 1 本) を main context で作成する。この段階で通すのは絵文字ゼロという数えられる機械検証だけとし、`check-no-emoji.js` が終了コード 0 を返した時点で、現物の本文と選んだフォーマット名を提示して accept-as-is / diagnose を記録する。accept-as-is の場合はその場で handoff 完了とし、後続 section へ進まない。
 
 ## Post-choice selected improvement execution
 
-このゲートの対象は**意味評価・リライト・追加パターン生成**の3種だけである。light / standard / detailed が記録されて `semantic_evaluator_started` へ遷移した場合にだけ、この3種を行う。release と exhaustive は別の明示 event を必要とする。
+このゲートの対象は**意味評価・リライト・追加パターン生成**の3種だけである。diagnose が記録されて `semantic_evaluator_started` へ遷移した場合にだけ、この3種を行う。release と exhaustive は別の明示 event を必要とする。
 
 下の「実行手順」節はゲートの対象外である。この節は pre-choice の実成果物（短文投稿 1 本）を作る手順そのものなので、利用者の選択を待たずに main context で実行する。
 

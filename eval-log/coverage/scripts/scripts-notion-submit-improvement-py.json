@@ -1,1 +1,18 @@
-{"artifact":"scripts/notion-submit-improvement.py","type":"scripts","mechanical":true,"llm_eval":{"verdict":"PASS","score":83,"notes":"Compiles; notion_config.require_or_skip/get_db_id exist; --dry-run present, fail-closed when plugin page missing (exit 2), choices-validated enums, secret via token loader not hardcoded. Minor: tempfile leaks on subprocess.check_output failure (os.unlink after call, no try/finally); find_plugin_page can KeyError on unexpected 2xx shape."},"reviewed_by":"workflow-code-review","checked":["soundness","responsibility","error-handling","side-effect-safety","frontmatter"]}
+{
+  "artifact": "scripts/notion-submit-improvement.py",
+  "type": "scripts",
+  "mechanical": true,
+  "llm_eval": {
+    "verdict": "PASS",
+    "score": 90,
+    "notes": "genuine independent delta review（2026-11-16、sha256 cc749b001582809f9e7db18052eedceab730b79c2eb255a5a0a0d682526087f4）。今回の対象はSCRIPT_DIR/CONFIG_DIRとimport先選択の小差分。配布skill内では同階層notion_configを優先し、repo正本だけがplugins/harness-creator/scriptsへfallbackする。sys.pathへの挿入は従来同様で、削除したROOT/SCHEMA_DIRに残る使用がないことを隣接codeで確認。同階層loaderとtenant_runtimeがvendored asset台帳へ登録されているため単独配布で兄弟pluginを必要としない。token/DB解決経路やNotion API実行の既存意味を変更しない。LLM/兄弟repo走査の追加無し。前recordのtempfile cleanup/API応答shapeの課題は今回未変更。 検証根拠: 変更hunkと隣接契約・対応testを当reviewerが読んで評価した。親共有のpackage23件PASS、vendored330一致、feedback strict PASS、関連168test/PKG007 201test PASSを参照したが、当reviewer自身はsuiteを再実行していない。rendererの追加回帰7PASSは著者報告であり、当reviewerは修正hunkとtestを再通読した。追加LLMや自己文書の承認はしていない。前recordは今回run-dirのcoverage-history/meta_analystへ内容を保持してコピー済み。今回見た差分に残るblocking問題なし。"
+  },
+  "reviewed_by": "independent-code-review-20261116-meta-analyst-pkg007",
+  "checked": [
+    "soundness",
+    "responsibility",
+    "error-handling",
+    "side-effect-safety",
+    "frontmatter"
+  ]
+}

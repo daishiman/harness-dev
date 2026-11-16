@@ -34,22 +34,7 @@ schema_refs:
 reference_refs:
   - ../../references/stage-common.md
   - ../../references/essence.json
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 ---
 
 # 案件をまたいでヒアリングの知見を貯め、次の制作に生かす
@@ -68,13 +53,13 @@ artifact_delivery:
 
 ## 選ぶ前の実成果物の作成
 
-「Purpose & Output Contract」の最小の実成果物を親コンテキストで作る。ここでの実成果物は場面ごとに 1 つで、finalize の後は `learn-record` が台帳へ書いた 1 行と `learn-report` の出力を写した集計の要約案、新しいヒアリングの前は `learn-suggest` の参考値、質問を見直したいときは `learn-report` の出力を写した集計の要約案である。effect に応じた最低限の検査（読み込めて開けるか・秘密情報・取り消せない操作・壊れたファイル）だけを行い、現物（会話に示した要約案の本文と、台帳のパス・追記した行のハッシュ値・開き方）を見せたうえで、現状で試す／軽微／標準／詳細のどれにするかを記録する（記録する値は順に `accept-as-is`・`light`・`standard`・`detailed`）。現状で試すならその場で引き継ぎを完了とし、後続の節を実行しない。
+「Purpose & Output Contract」の最小の実成果物を親コンテキストで作る。ここでの実成果物は場面ごとに 1 つで、finalize の後は `learn-record` が台帳へ書いた 1 行と `learn-report` の出力を写した集計の要約案、新しいヒアリングの前は `learn-suggest` の参考値、質問を見直したいときは `learn-report` の出力を写した集計の要約案である。effect に応じた最低限の検査（読み込めて開けるか・秘密情報・取り消せない操作・壊れたファイル）だけを行い、現物（会話に示した要約案の本文と、台帳のパス・追記した行のハッシュ値・開き方）を見せたうえで、現状で試すか診断するかを記録する（記録する値は順に `accept-as-is`・`diagnose`）。現状で試すならその場で引き継ぎを完了とし、後続の節を実行しない。
 
 要約案は件数・母数・反例・insufficient をそのまま写した下書きで、改善仮説ではない。集計の解釈と改善仮説、人による採否は、次の節を通したときにだけ扱う。
 
 ## 選んだ深さでの改善の実行
 
-以下の既存の節（Gotchas・ゴールシーク実行）は、軽微・標準・詳細のどれかが記録されて `semantic_evaluator_started` へ遷移したときだけ実行する。リリースと完全監査は別イベントとして明示されたときだけ行う。
+以下の既存の節（Gotchas・ゴールシーク実行）は、「診断する」が記録されて `semantic_evaluator_started` へ遷移したときだけ実行する。リリースと完全監査は別イベントとして明示されたときだけ行う。
 
 ただし、Gotchas の台帳の規則（plugin の外の追記専用ファイル・保存しないもの・保存前の許可リスト検査・冪等）は、選ぶ前の `learn-record` にも掛かる。
 

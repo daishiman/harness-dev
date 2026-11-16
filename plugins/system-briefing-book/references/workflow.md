@@ -37,7 +37,7 @@
 | 要件定義.md、仕様書.md | run-briefing-docs |
 | `_src/` (init が作る tokens.css と common.css を除く)、PNG、briefing.json の pages | run-briefing-boards |
 | まとめ HTML | run-briefing-book |
-| `_check/review-<stage>.json`、`_check/choices.json` | run-briefing (assign-briefing-evaluator の返事と確認点で選んだ深さを保存) |
+| `_check/review-<stage>.json`、`_check/choices.json` | run-briefing (assign-briefing-evaluator の返事と、確認点で選んだ値と診断したときの深さを保存) |
 
 ## 既定のページ構成
 

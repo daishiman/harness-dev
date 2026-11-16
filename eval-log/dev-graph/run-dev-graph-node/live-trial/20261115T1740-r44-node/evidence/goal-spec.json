@@ -1,0 +1,16 @@
+{
+  "skill": "dev-graph:run-dev-graph-node",
+  "original_goal": "通常5 artifactを自動分類し、C14由来featureとsystem-dev-planner由来exact 13 phase tasksをそれぞれの専用契約で正規pathへatomic追加・更新し、graph/frontmatter/body/path/package整合を保つ",
+  "original_goal_hash": "eb23c32406fe579b89ef3f507313229c47d7d454f1ad5e63119d039f468a8ab2",
+  "run_request": "scenario C02-OUT1-positive-mixed-artifacts-r2: 5 kind add (pre-choice) -> consecutive update append_sections on all 5 -> direct feature add must fail-closed under C14",
+  "artifact_delivery": {
+    "pre_choice_receipt": ".dev-graph/state/receipts/node-r000001-add.json",
+    "presented": ["issues/lt-search-empty-result.md", "tasks/lt-add-search-index.md", "specs/lt-note-search.md", "architecture/lt-search-service.md", "docs/lt-search-runbook.md"],
+    "choice": "standard",
+    "choice_source": "isolated fixture pre-answer contract (task.md); recorded as diagnose -> semantic_evaluator_started",
+    "state": "semantic_evaluator_started"
+  },
+  "goal_seek": {"engine": "inline", "fork": "subagent", "max_loops": 5},
+  "checklist_ids": ["containment", "classification", "schema", "package", "receipt"],
+  "feedback_criteria_ids": ["IN1", "OUT1", "OUT2", "OUT3"]
+}

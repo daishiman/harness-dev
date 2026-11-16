@@ -29,13 +29,16 @@ jobs:
         id: fetch
         env:
           CACHE: plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-cache.md
+          INDEX: plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-index.json
         run: |
           # build 前に現行キャッシュを退避し、後段で実 diff を計算する
           cp "$CACHE" /tmp/prev-yaml-spec-cache.md 2>/dev/null || true
+          # cache と索引 (yaml-spec-index.json) を同時に書く。本文が同じ週はどちらも書き換えない
           python3 scripts/build-yaml-spec-cache.py
           echo "fetch_date=$(date -u +"%Y-%m-%dT%H:%M:%SZ")" >> "$GITHUB_OUTPUT"
-          # 本文が同じ週は script が cache を書き換えない。その週は記録・版上げ・commit・push を全部省く
-          if git diff --quiet -- "$CACHE"; then
+          # 変わっていない週は記録・版上げ・commit・push を全部省く。索引も見るのは、索引だけが
+          # 無い・古い状態 (untracked を含む) を次の commit で直すため (git diff は untracked を見ない)
+          if [ -z "$(git status --porcelain -- "$CACHE" "$INDEX")" ]; then
             echo "cache_changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "cache_changed=true" >> "$GITHUB_OUTPUT"
@@ -107,15 +110,20 @@ jobs:
       # governance-check の `build-plugin-release.py --check` が「上げ忘れ」で落ちる。
       # キャッシュは install で copy される中身なので fingerprint から除外できない
       # (build-plugin-release.py 冒頭「fingerprint から除外するもの」参照)。
-      # cache・history・版上げは 1 commit にまとめる。subject は aggregate-issue-diffs.py の
+      # cache・索引・history・版上げは 1 commit にまとめる。subject は aggregate-issue-diffs.py の
       # _CACHE_SUBJECT_TEMPLATE と一致させ、同 script は diff を cache の path に限って復元する。
       - name: Commit spec cache update with version bump
         if: steps.fetch.outputs.cache_changed == 'true'
+        env:
+          INDEX: plugins/harness-creator/skills/ref-yaml-spec-fetcher/references/yaml-spec-index.json
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           python3 scripts/build-plugin-release.py
           git add -u
+          # 索引は cache と同じ commit に入れる (別 commit だと読む側の sha256 照合が落ちる)。
+          # add -u は untracked を拾わないので明示する
+          git add -- "$INDEX"
           git diff --staged --quiet || git commit -m "chore: update yaml-spec-cache (${{ steps.fetch.outputs.fetch_date }})"
 
       - name: Push changes

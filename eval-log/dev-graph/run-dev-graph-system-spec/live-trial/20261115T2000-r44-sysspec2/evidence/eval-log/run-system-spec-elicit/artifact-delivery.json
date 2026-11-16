@@ -1,0 +1,13 @@
+{
+  "policy_id": "artifact-delivery-v1",
+  "skill": "system-spec-harness:run-system-spec-elicit",
+  "mode": "resume",
+  "events": [
+    {"state": "artifact_created", "artifact": "system-spec/spec-state.json", "note": "resume: existing state, no transition needed (未収集0)"},
+    {"state": "minimum_guard_pass", "gates": {"validate-coverage-matrix --require-complete --require-basis --require-foundation": 0, "validate-knowledge-graph --profile required-info ungrounded_blocking_items": []}},
+    {"state": "artifact_presented", "path": "system-spec/spec-state.json", "sha256": "09380939cfdf2a35afc32666445deb71785e6a82d781dbe7330b2a80ae747fb2", "open_with": "python3 -m json.tool <path>"},
+    {"state": "user_choice_recorded", "choice": "diagnose", "source": "fixture pre-answered contract"},
+    {"state": "semantic_evaluator_started", "result": "goal-seek loop: 未達0 (未収集0, foundation confirmed); no writer op required; independent hearing/matrix audits are owned by C05 evaluator"}
+  ],
+  "writer_ops_applied": 0
+}

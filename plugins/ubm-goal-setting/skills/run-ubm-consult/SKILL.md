@@ -87,22 +87,7 @@ feedback_contract:
       loop_scope: outer
       text: 実際の相談を使った実地試行（live-trial）で、非処方スタンス不変条件(具体解押し付けゼロ・共同判断ターンで引き出し質問≥1・解決策の主語=ユーザー)を守ったまま R1→R4 を完走し、セッション記録を validate-consult-session.py (persistence_consent=false 時は --ephemeral) が終了コード 0 で機械検証する。
       verify_by: live-trial
-artifact_delivery:
-  contract: artifact-delivery-v1
-  state_machine:
-    initial: artifact_created
-    states: [artifact_created, minimal_guard_passed, artifact_presented, user_choice_recorded, semantic_evaluator_started, handoff_complete]
-    transitions:
-      - {from: artifact_created, event: minimum_guard_pass, to: minimal_guard_passed}
-      - {from: minimal_guard_passed, event: present_actual_artifact, to: artifact_presented}
-      - {from: artifact_presented, event: record_user_choice, to: user_choice_recorded}
-      - {from: user_choice_recorded, event: accept-as-is, to: handoff_complete}
-      - {from: user_choice_recorded, event: "light|standard|detailed", to: semantic_evaluator_started}
-      - {from: semantic_evaluator_started, event: improvement_complete, to: handoff_complete}
-    pre_choice_forbidden: [semantic-evaluator, task-fork, subagent, multi-worker, revise-loop]
-    accept_contexts: {evaluator: 0, improver: 0}
-  release: explicit-only
-  exhaustive: explicit-only
+artifact_delivery: artifact-delivery-v1
 runtime_root_policy: host-skill-path
 ---
 
@@ -131,11 +116,11 @@ runtime_root_policy: host-skill-path
 
 ## 選ぶ前の実成果物の作成
 
-「目的と出力契約」の最小の実成果物を親コンテキストで作る。effect に応じた最低限の検査（読み込めて開けるか・秘密情報・取り消せない操作・壊れたファイル）だけを行い、現物のパス・ハッシュ値・開き方を見せたうえで、現状で試す／軽微／標準／詳細のどれにするかを記録する（記録する値は順に `accept-as-is`・`light`・`standard`・`detailed`）。現状で試すならその場で引き継ぎを完了とし、後続の節を実行しない。
+「目的と出力契約」の最小の実成果物を親コンテキストで作る。effect に応じた最低限の検査（読み込めて開けるか・秘密情報・取り消せない操作・壊れたファイル）だけを行い、現物のパス・ハッシュ値・開き方を見せたうえで、現状で試すか診断するかを記録する（記録する値は順に `accept-as-is`・`diagnose`）。現状で試すならその場で引き継ぎを完了とし、後続の節を実行しない。
 
 ## 選んだ深さでの改善の実行
 
-以下の既存の節（全体の流れ・ゴールシーク・評価・修正）は、軽微・標準・詳細のどれかが記録されて `semantic_evaluator_started` へ遷移したときだけ実行する。リリースと完全監査は別イベントとして明示されたときだけ行う。
+以下の既存の節（全体の流れ・ゴールシーク・評価・修正）は、「診断する」が記録されて `semantic_evaluator_started` へ遷移したときだけ実行する。リリースと完全監査は別イベントとして明示されたときだけ行う。
 
 `../../references/knowledge-retrieval-contract.md` をReadし、同契約の入力表に従って決定論の重み付き検索→候補の意味選択→親による実利用IDと取得済みユーザー反応の記録を実行する。検索結果を `knowledge_candidates` として担当役へ渡し、返された実使用を実際の出力と照合する。
 
@@ -221,7 +206,7 @@ python3 "${PLUGIN_ROOT:-${CLAUDE_PLUGIN_ROOT}}/scripts/validate-inline-goal-seek
 
 ## 関連資料
 
-- **プロンプト**: `prompts/R{1..4}-*.md` — 責務単位の 7 層プロンプトの正本（`prompt-creator` プラグインの `skills/run-prompt-creator-7layer/scripts/verify-completeness.py` で 7 層と l5-contract を検証する。本プラグインには同梱しない）。
+- **プロンプト**: `prompts/R{1..4}-*.md` — 責務単位の 7 層プロンプトの正本（`prompt-creator` プラグインの `plugins/prompt-creator/skills/run-prompt-creator-7layer/scripts/verify-completeness.py` で 7 層と l5-contract を検証する。本プラグインには同梱しない）。
 - **エージェント**: `phase3-coordinator`（対話原則「愛情ある厳しさ」引き出し型の前例。R3/R4 の翻訳3ステップと「品質基準（回答パターン別対応ルール）」の節を参照）。プラグイン直下の `agents/`。
 - **スクリプト**: `../../scripts/consult-harness-artifact-graph.py`（C07・読み取り専用のグラフ参照）/ `../../scripts/validate-consult-session.py`（話し手（`role`）・出所（`source`）・同意・分岐を検証する R4 の完了ゲート）。C06 は C07 の入力を作る上流であり、本スキルから直接呼ばない。
 - **参照資料**: `references/consult-frames.md`（思考フレーム カタログの正本）/ `references/session-record-format.md`（セッション記録の形式と置き場の契約）/ `references/resource-map.yaml`（必要な分だけ段階的に読むための索引）。

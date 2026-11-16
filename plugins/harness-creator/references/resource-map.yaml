@@ -23,7 +23,7 @@ references:
     read_when:
       - "Step 5 / 5.5 / 6 の三段ゲート設計を新規 plugin に展開する時"
       - "Gate 間で同一 finding が重複検出された時 (優先順位 A>B>C>D を適用)"
-      - "1 ゲートで複数次元採点する設計提案を検出した時 (アンチパターン)"
+      - "1 つの verdict に複数次元の合否を混ぜる設計提案を検出した時 (アンチパターン)"
     produced_by: team-platform
     consumed_by:
       - run-plugin-package-check
@@ -68,6 +68,7 @@ references:
       - "/capability-build が入力を明示・単一 route・task-graph route のいずれかへ分岐した後"
       - "選択した stage/profile の実コマンド、証跡 shape、停止・完了順序を確認する時"
       - "TG-C01〜TG-C09 の内外ループ、stall handback、native repair を実行する時"
+      - "user-owned runtime node を保留して終えるため build-runtime-evidence-ledger.py で runtime-evidence-ledger.json を書く時"
     produced_by: team-platform
     consumed_by:
       - capability-build
