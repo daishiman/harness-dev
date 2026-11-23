@@ -1,6 +1,94 @@
 # Spec Diff History
 
 このファイルは `.github/workflows/update-yaml-spec.yml` が週次自動更新する。最新が上。
+## 2026-11-23T05:42:41Z
+
+実仕様ページに変更を検知。
+
+```diff
+--- 
++++ 
+@@ -30,17 +30,26 @@
+ commands reference
+ .
+ Custom commands have been merged into skills.
+-A file at
++Your existing
++.claude/commands/
++files keep working. Claude can invoke them without you typing the command. Edit a command to stop Claude from invoking it on its own, or convert a command that needs more than one file to a skill:
++Stop Claude from invoking a command on its own
++: add
++disable-model-invocation: true
++to the command file’s
++frontmatter
++Add
++supporting files
++such as scripts
++: convert the command to a skill. For example, move
+ .claude/commands/deploy.md
+-and a skill at
++to
+ .claude/skills/deploy/SKILL.md
+-both create
++. The
++folder name becomes the command
++, so you still type
+ /deploy
+-and work the same way. Your existing
+-.claude/commands/
+-files keep working. Skills add optional features: a directory for supporting files, frontmatter to
+-control whether you or Claude invokes them
+-, and the ability for Claude to load them automatically when relevant.
++.
+ Claude Code skills follow the
+ Agent Skills
+ open standard, which works across multiple AI tools. Claude Code extends the standard with additional features like
+@@ -350,15 +359,17 @@
+ Cowork or cloud sessions
+ Project
+ .claude/skills/<skill-name>/SKILL.md
+-Sessions in this repository, but not
+-cloud threads in a project
++Sessions in this repository. For a project’s cloud threads, check
++which threads load it
+ . Commit it so your team gets it too
+ Nested
+ <subdir>/.claude/skills/<skill-name>/SKILL.md
+ Sessions started in or below
+ <subdir>
+-, but not cloud threads in a project. Outside those threads, a session started above it loads the skill once Claude works on files there. See
++. A session started above it can load the skill once Claude works on files there. See
+ monorepos and subdirectories
++. For a project’s cloud threads, check
++which threads load it
+ Additional directory
+ .claude/skills/<skill-name>/SKILL.md
+ in a directory you pass with
+@@ -613,9 +624,9 @@
+ cloud scheduled tasks
+ , don’t read
+ ~/.claude/skills/
+-on your machine. Both interactive and scheduled Cowork sessions load the skills enabled for your claude.ai account, synced at session start. Manage them from
+-Customize
+-in the Desktop app sidebar or from the skills settings on claude.ai.
++on your machine. Both interactive and scheduled Cowork sessions load the skills enabled for your claude.ai account, synced at session start. Manage those skills at
++claude.ai/customize/skills/yours
++.
+ If a skill exists only in
+ ~/.claude/skills/
+ on your machine, Claude Code reports that the skill was not found when a
+@@ -623,16 +634,14 @@
+ invokes it. This happens because each run starts as a fresh cloud session. To make a personal skill available in these sessions:
+ For Cowork sessions, cloud sessions, and cloud threads in a
+ project
+-, enable the skill for your claude.ai account. In a project’s cloud thread, skills committed to a repository’s
+-.claude/skills/
+-aren’t available.
++, enable the skill for your claude.ai account.
+ Some sessions in a self-hosted environment
+... (5201 more lines)
+```
+
 ## 2026-11-16T04:42:26Z
 
 実仕様ページに変更を検知。
